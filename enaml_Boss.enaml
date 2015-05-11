@@ -60,7 +60,7 @@ enamldef BossToolBar(ToolBar):
     Action:
         text = "Bases"
         triggered:: 
-             show_all_bases(bossarea, boss, BaseItem)
+             show_all_bases(bossarea, boss)
         tool_tip = "Show all bases"
     Action:
         separator=True
@@ -69,7 +69,7 @@ enamldef BossToolBar(ToolBar):
         Action:
             text = loop_item.name
             tool_tip = "Show base: {0}".format(loop_item.name)
-            triggered:: show_base2(bossarea, loop_item, BaseItem)#show_instrument(dyn_pages, loop_item)
+            triggered:: show_base(bossarea, loop_item)#show_instrument(dyn_pages, loop_item)
 
 def get_plot_items(inlist):
     if inlist==None:
@@ -160,65 +160,110 @@ def find_targets(dock_items, target_items=[]):
     overlap=list(set(targets).intersection(names))
     return overlap
 
-def find_target(dock_items, target_item):
-    names=(o.name for o in dock_items)
-    return target in items
+#def find_target(dock_items, target_item):
+#    names=(o.name for o in dock_items)
+#    return target in items
 
-def show_base2(area, instr, guiItem):
-    if instr!=None:
-        targets=find_targets(dock_items=area.dock_items(), target_items=instr.boss.bases)
-        if targets==[]:
-            item=guiItem(area, instr=instr)
-            op = InsertItem(item=item.name, position = 'left')
-            area.update_layout(op)
-        elif instr.name not in targets:
-            item=guiItem(area, instr=instr)
-            op = InsertTab(item=item.name, target=targets[0])
-            area.update_layout(op)
+#def show_base2(area, instr, guiItem):
+#    if instr!=None:
+#        targets=find_targets(dock_items=area.dock_items(), target_items=instr.boss.bases)
+#        if targets==[]:
+#            item=guiItem(area, instr=instr)
+#            op = InsertItem(item=item.name, position = 'left')
+#            area.update_layout(op)
+#        elif instr.name not in targets:
+#            item=guiItem(area, instr=instr)
+#            op = InsertTab(item=item.name, target=targets[0])
+#            area.update_layout(op)
 
-def show_all_bases(area, boss, guiItem):
+def show_all_bases(area, boss):
     for item in boss.bases:
-        show_base2(area, item, guiItem)
-
-def show_plot(area, plot):
-    targets=find_targets(dock_items=area.dock_items(), target_items=[tempclass()])
-    if targets==[]:
-        item=PlotItem(area, plotr=plot)
-        op = InsertItem(item=item.name, position = 'right')
-        area.update_layout(op)
-    elif "plot1" not in targets:
-        item=PlotItem(area, plotr=plot)
-        op = InsertTab(item=item.name, target=targets[0])
-        area.update_layout(op)
+        show_base(area, item)
 
 
-def show_basey(area, base, ItemType=DockItem,  position='left', InsertOP=InsertItem, TabOP=InsertTab, target_items=[tempclass()], **kwargs):
-    if base!=None:
-        targets=find_targets(dock_items=area.dock_items(), target_items=target_items) #base.boss.bases)
-        if targets==[]:
-            item=ItemType(area, **kwargs)
-            op = OP(item=item.name, position = position)
-            area.update_layout(op)
-        elif base.name not in targets:
-            item=ItemType(area, **kwargs)
-            op = InsertTab(item=item.name, target=targets[0])
-            area.update_layout(op)
+#    targets=find_targets(dock_items=area.dock_items(), target_items=[tempclass()])
+#    if targets==[]:
+#        item=PlotItem(area, plotr=plot)
+#        op = InsertItem(item=item.name, position = 'right')
+#        area.update_layout(op)
+#    elif "plot1" not in targets:
+#        item=PlotItem(area, plotr=plot)
+#        op = InsertTab(item=item.name, target=targets[0])
+#        area.update_layout(op)
 
-def show_base(area, base):
-    show_basey(area, base, ItemType=BaseItem, target_items=base.boss.bases, )
+#def show_ploty(area, plot, position='right', **kwargs):
+#    targets=find_targets(dock_items=area.dock_items(), target_items=[tempclass()])
+#    if targets==[]:
+#        item=PlotItem(area, **kwargs) #plotr=plot)
+#        op = InsertItem(item=item.name, position = position)#'right')
+#        area.update_layout(op)
+#    elif "plot1" not in targets:
+#        item=PlotItem(area, plotr=plot)
+#        op = InsertTab(item=item.name, target=targets[0])
+#        area.update_layout(op)
+
+
+#def show_basey(area, base, ItemType=DockItem,  position='left', InsertOP=InsertItem, TabOP=InsertTab, target_items=[tempclass()], **kwargs):
+#    if base!=None:
+#        targets=find_targets(dock_items=area.dock_items(), target_items=target_items) #base.boss.bases)
+#        print base.name not in targets
+#        if targets==[]:
+#            show_item(base.name, area, ItemType=ItemType, OP=InsertItem, position=position, **kwargs)
+            #item=ItemType(area, **kwargs)
+            #op = InsertOP(item=item.name, position = position)
+            #area.update_layout(op)
+#        elif base.name not in targets:
+#            show_item(base.name, area, target=targets[0], ItemType=DockItem, OP=InsertTab, **kwargs)
+            #item=ItemType(area, **kwargs)
+            #op = TabOP(item=item.name, target=targets[0])
+            #area.update_layout(op)
+
 def show_item(name, area, target=None, ItemType=DockItem, position='left', OP=InsertItem, **kwargs):
+    item=ItemType(area, **kwargs)
     if target==None:
-        target=name
-    dock_items=area.dock_items()
-    dock_names=(o.name for o in dock_items)
-    if name not in dock_names:
-        item=ItemType(area, **kwargs)
+        op = OP(item=name, position=position)
+    else:
         op = OP(item=name, target=target, position=position)
-        area.update_layout(op)
-
-enamldef BaseMain(MainWindow): main:
+    area.update_layout(op)  
+    
+def show_general_item(area, item, ItemType=DockItem, position='left', target_items=[tempclass()], **kwargs):
+    if item!=None:
+        targets = find_targets(dock_items=area.dock_items(), target_items=target_items)
+        if targets==[]:
+            show_item(item.name, area, ItemType=ItemType, OP=InsertItem, position=position, **kwargs)
+        elif item.name not in targets:
+            show_item(item.name, area, target=targets[0], ItemType=ItemType, OP=InsertTab, **kwargs)
+            
+def show_base(area, base):
+    show_general_item(area, base, ItemType=BaseItem, target_items=base.boss.bases, instr=base)
+    
+def show_plot(area, plot):
+    shoe_general_item(area, plot, ItemType=PlotItem, position='right', target_items=base.boss.plot_list, plotr=plot)     
+    
+    #dock_items=area.dock_items()
+    #dock_names=(o.name for o in dock_items)
+    #if name not in dock_names:
+    #    item=ItemType(area, **kwargs)
+    #    op = OP(item=name, target=target, position=position)
+    #    area.update_layout(op)
+#
+#enamldef BaseMain(MainWindow): main:
+#    attr boss
+#    attr instrin: None
+#    title="Base"
+#    #alias readpane
+#    #ReadSavePane: readpane:
+#    #    visible = True #False
+#    alias savepane
+#    SavePane: savepane:
+#        visible = False
+#    alias logpane
+#    LogPane: logpane:
+#        pass
+    
+enamldef BossMain(MainWindow): main:
     attr boss
-    attr instrin: None
+    attr base: None
     title="Base"
     #alias readpane
     #ReadSavePane: readpane:
@@ -229,9 +274,8 @@ enamldef BaseMain(MainWindow): main:
     alias logpane
     LogPane: logpane:
         pass
-    
-enamldef BossMain(BaseMain): main:
-    title="Boss"
+
+    #title="Boss"
 #    attr path : unicode=u''
 #    attr counter = 0
 #    initial_size=(500, 500)
@@ -251,7 +295,7 @@ enamldef BossMain(BaseMain): main:
         constraints = [mycont.width==bossarea.width, mycont.height==bossarea.height]
         alias bossarea
         DockArea: bossarea:
-            activated :: show_base2(bossarea, instrin, BaseItem)    
+            activated :: show_base(bossarea, base)    
 
 
 enamldef PlotMain(MainWindow): main:

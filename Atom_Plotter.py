@@ -261,6 +261,7 @@ class AllXYFormat(XYFormat):
                     setattr(self.plotter.xyfs[key], change['name'], change['value'])
 
 class Plotter(Atom):
+     name=Unicode()
      title=Unicode()
      xlabel=Unicode()
      ylabel=Unicode()

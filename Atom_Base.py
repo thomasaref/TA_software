@@ -102,7 +102,7 @@ class Base(Atom):
         with imports():
             from enaml_Boss import BossMain
         app = QtApplication()
-        view = BossMain(instrin=self, boss=self.boss)
+        view = BossMain(base=self, boss=self.boss)
         view.show()
         app.start()
 
