@@ -1,0 +1,17 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jan 15 14:44:46 2015
+
+@author: thomasaref
+
+demonstrates how to define custom enaml template for instrument
+"""
+from enaml.widgets.api import Container, Field
+
+
+enamldef InstrAltCont(Container):
+    Field:
+        pass
+    
+
+    

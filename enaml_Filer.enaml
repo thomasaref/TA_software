@@ -1,0 +1,164 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Feb 24 11:26:25 2015
+
+@author: thomasaref
+Implemements GUIs for saving and loading files
+"""
+
+from enaml.layout.api import vbox, hbox, spacer
+from enaml.widgets.api import (Container, Label, PushButton, Field, ObjectCombo, Window, FileDialogEx, MultilineField, GroupBox)
+
+enamldef SimpleFile(Container):
+    padding=0
+    constraints=[hbox(full_file_lbl, full_file_fld, spacer), full_file_fld.width==800]
+    Label: full_file_lbl:
+        text = 'Full path'
+    Field: full_file_fld:
+        text:=filer.file_path
+
+enamldef SimpleSave(Container):
+    padding=0
+    constraints=[hbox(savefile, browse_save, save, spacer)]
+    SimpleFile: savefile:
+        pass
+    PushButton: browse_save:
+        text = 'Browse'
+        clicked ::
+            path = FileDialogEx.get_save_file_name(current_path=filer.file_path)
+            if path:
+                filer.file_path = path
+                filer.do_save()
+    PushButton: save:
+        text = "Save"
+        clicked ::
+            filer.full_save(obj=coder, old_log_path=olp)
+
+enamldef SimpleRead(Container):
+    padding=0
+    constraints=[hbox(openfile, browse_open, read, spacer)]
+    SimpleFile: openfile:
+        pass
+    PushButton: browse_open:
+        text = 'Browse'
+        clicked ::
+            path = FileDialogEx.get_open_file_name(current_path=filer.file_path)
+            if path:
+                filer.file_path = path
+                filer.read()
+    PushButton: read:
+        text = "Read"
+        clicked ::
+            filer.read()
+
+enamldef FilerInterface(Container):
+    padding=0
+    constraints =[vbox(hbox(base_dir_lbl, base_dir_fld, base_dir, spacer),
+                       hbox(main_dir_lbl, main_dir, quality_lbl, quality, main_file_lbl, main_file, spacer)),
+                        main_dir.width==600, base_dir_fld.width==800, main_file.width==100]
+
+    Label: main_dir_lbl:
+        text = "Main dir:"
+    Field: main_dir:
+        text := filer.main_dir
+    Label: main_file_lbl:
+        text = "File name:"
+    Field: main_file:
+        text := filer.main_file
+    Label: base_dir_lbl:
+        text = 'Base directory'
+    PushButton: base_dir:
+        text = 'Browse'
+        clicked ::
+            path = FileDialogEx.get_existing_directory(current_path=filer.base_dir)
+            if path:
+                filer.base_dir = path
+    Field: base_dir_fld:
+        text := filer.base_dir
+    Label: quality_lbl:
+        text = "Quality:"
+    ObjectCombo: quality:
+        items = list(filer.get_member('quality').items)
+        selected := filer.quality
+
+enamldef ReadBox(Container):
+    constraints=[vbox(filread, simread)]
+    SimpleRead: simread:
+        pass
+    FilerInterface: filread:
+        pass
+
+enamldef SaveBox(Container):
+    constraints =[vbox(filsave, simsave)]
+    SimpleSave: simsave:
+        pass
+    FilerInterface: filsave:
+        pass
+
+enamldef SaveWrap(SaveBox):
+    attr filer
+    attr coder
+    attr olp
+
+enamldef ReadWrap(SimpleRead):
+    attr filer
+
+enamldef ReadSaveWrap(Container):
+    attr save_file
+    attr read_file
+    attr runcode
+    GroupBox:
+        SaveWrap:
+            filer=save_file
+            coder=runcode
+    ReadWrap:
+        filer=read_file
+    MultilineField:
+        text << unicode(read_file.data)
+
+enamldef SaveMain(Window):
+    attr save_file
+    attr read_file
+    attr coder
+    title="SaveBox test"
+    Container:
+        GroupBox:
+            SaveWrap:
+                filer=save_file
+        ReadWrap:
+            filer=read_file
+        MultilineField:
+            text << unicode(read_file.data)
+
+enamldef ReadBoxWrap(ReadBox):
+    attr filer
+
+enamldef ReadBoxMain(Window):
+    attr read_file
+    title="Read test"
+    Container:
+        ReadBoxWrap:
+            filer = read_file
+        MultilineField:
+            text << unicode(read_file.data)
+
+enamldef SimpleSaveMain(Window):
+    attr filer
+    title="SimpleSave test"
+    SimpleSave:
+        pass
+
+enamldef SimpleFileMain(Window):
+    attr filer
+    title="SimpleFile test"
+    SimpleFile:
+        pass
+
+enamldef FilerMain(Window):
+    attr filer
+    title="Filer test"
+    Container:
+        FilerInterface:
+            pass
+        SimpleFile:
+            pass

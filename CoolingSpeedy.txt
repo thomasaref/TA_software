@@ -1,0 +1,78 @@
+Ground the amplifier using the DC bias box. zip tie the box to the frame so it doesn't fall when moved.
+
+attach radiation shield making sure there is no touch. If necessary, the bottom of the radiation shield can be removed and one can lie on one's back and look up the cylinder with a flashlight to make sure there is no touch
+
+Attach the IVC. The indium should be greased with a very light coat of vacuum grease to aid in removal when the IVC is next opened.
+
+Pump the IVC to remove the majority of the air. A pressure of below 10^-5 mbar is overkill
+
+If the dilution unit has seen heavy use, hasn't been used in a while, or you are otherwise concerned it might not be good, pump the dilution unit for both the condenser and still lines (attach a short tube with an adapter and a T piece). Start with the condenser line to see how much pressure there is (it can be fairly high so open it slowly to avoid shocking the pump). Then open the still line and pump both. An hour or two of pumping both should be plenty. 2e-5 mbar is certainly overkill. One thing to be aware of is that excessive pumping can be a bad thing here as oils from the pump may diffuse into the internal parts of the fridge and cause problems over time.
+
+Tape the loose pipes of speedy to the IVC so they don't snag when lowering. Speedy does not have a sliding seal at the moment
+
+Insert speedy into the bath and line it up properly. The SMA ports for connecting stick out the same direction as the PXI ports do.
+
+Add an inch of helium gas to the IVC. The sorb on Speedy seems not to be working but Speedy generally doesn't need much exchange gas. Since it's such a small amount, we often use the detector helium bottle, but wall or from a dewar is fine.
+
+Turn on both the He4 and He3 pump and make sure they engage. Check in the back corridor that the recovery for the He4 pump is open. The power mains may need to be turned on and reset. Unfortunately, all the lights are burned out and the only way to see if there is power is by listening if the pumps turned on. The back pressure on the still pump (G2) shoots up fast at first (indicating the pump is on) but takes about half hour to reach equilibrium. Check G2 matches the previous recorded pressure.
+
+Connect all the lines and make sure they are pumped using the He4 Rotary pump. Keep the He3 pump running during this and make sure the manual valve backing up 13A is closed. If you need to pump the nitrogen trap only do it through 12A. Don't connect the recovery line yet and use the "flushing contraption for the 1K pot
+
+To pump the the various lines, use 1, 2, 7, 12A 2A,5A. Open the room temperature side valves (not the ones on the fridge) to get the air between the connection points. This would be the green valve on the condenser line and the newer bent valve on the Still line.
+
+Attach "the flushing contraption" to speedy's 1K pot (basically just valves so you can easily start and stop the pumping and flush with helium). make sure the needle valve is closed and pump everything out using the He4 pump. Turn off the pumping, flush with detector helium opening the needle valve. give it a minute close the needle valve, turn of the flushing and pump it all out. Repeat 2-3 times leaving the 1K line filled with helium, needle valve closed.
+
+You can now start adding nitrogen. Attach the special tube through the helium port, slide it all the way down and tighten it with the nut using a wrench (not too tight, there's a lot of torque on the tube)
+
+attach the nitrogen to the tube and start filling. You should get warm air out first, gradually getting colder. When steam stops coming out, you are starting to get liquid collecting. Monitor the temperature on the 4 probe diode. When it reaches 50 kOhms, you are in equilibrium with the nitrogen and can start taking it out. Apply air pressure to the helium recovery port and put the nitrogen that comes out into the nitrogen trap dewar.  There is usually not very much nitrogen in there and you will need to fill the trap extra. When the line unfreezes and the nitrogen liquid stops coming, and you start warming up a bit, you are done. 
+
+Check the needle valve is not blocked while flushing with helium gas
+
+Disconnect the nitrogen stuff, take out the tube and attach the helium recovery. Open the green manual valve up high near the igh and check the recovery is open in the back corridor. 
+
+Transfer Helium to the main bath. insert the transfer tube fully into the cryostat as soon as you start to get gas flowing through. Turn on the helium level detector and put it on fast so you can detect the level when it comes on scale. At first, just use the pressure from lowering the transfer tube in the Helium dewar. Then add pressure from the wall (low at first and gradually higher). Keep an eye on the recovery line. It should get cold and will eventually get icy. If it gets very icy, you are transferring too fast. When the helium level detector gets on scale, transfer at 0.1-0.2% and not more than 0.5%-1%. Fill the helium to about 25% and kill the pressure. You should be able to cool Speedy down using just 25-30 Liters of Heluium.
+
+Turn on the sorb heating to 40K. If the sorb is not coming on scale, you can also use 0.130 set power. There is a weak connection that prevents the sorb thermometer from reading sometimes.
+
+You can turn off the flushing when you have some volume of helium in the bath and check the needle valve is not frozen. Close it off and remove the flushing apparatus and replace it with just the 1K tube+valve. 
+
+Turn on the wheatstone bridge and check the mixing chamber resistance. You should see it increase from about 2.5-2.6 kOhm to closer to 3 kOhms
+When the internal thermometer saturates at low temperature. Give it 0.5-1 hour to pump out the exchange gas. 
+
+To check the exchange gas has been removed, start the 1K pot pumping and see if it drops below 1.6K. You will need to adjust the needle valve to a pressure of about 3. If you can't get below 1.8K, you probably have too much exchange gas still and the sorb is not handling it. In this case you will need to attach the external pump to the IVC using the big tube, an adapter and a bend(using the electronic valve that shuts off if there is a power outage) and pump overnight. You should check the electronic valve works as expected. Pump the tube out to 1e-5 before opening the IVC slowly. If you need to do this, turn off the IVC pumping and check the 1K pot is working before disconnecting it
+
+Cool the traps. nitrogen in nitrogen trap and helium in helium trap (could have inserted it earlier).
+
+Make sure the manual valve on the back of Speedy is open!
+
+Let a little bit of mix into the nitrogen trap by opening and closing 13A. Wait for the nitrogen to stop boiling (fumes come out of the top of the nitrogen trap dewar). 
+
+Open and close the 1 quickly to let mix into the helium trap. Wait a bit for it to equilibrate. 
+
+Open 1 again and open the condenser valve and still valve on the fridge
+
+Try first letting in gas just from the back of the still pump by opening and closing 13A. keep G2 above 100. Hopefully some pressure will show up at P2 and you will see the 1K pot working (temperature and G3 rises)
+
+Open the manual valves on the still. Use a combination of 9 and 13 to slowly let gas into the condenser. At some point, you can leave 13A open and just use 9. Each shot should make the pot work harder for a bit and then gradually drop the pressure in G1. Make sure the pot is not getting too much helium (temperature never quite goes below 1.5-1.6) or running dry (heats up a lot)
+
+When opening 9 doesn't keep your pressure up any more, close 9 and pump the dump using opening and closing 10 to get the rest of the mix. 
+
+When this no longer produces pressure, you are fully condensed and need to start circulation.
+Slowly open 6 to generate pressure in G2. 6 opens around 12.5 and you should use 0.1% clicks to begin with. As it becomes less sensitive to 6 opening, you can use larger steps.  Your goal is to get 6 fully open. 
+
+When P2 decrease to about 0.3, turn on the still heating to 5 mW. You'll see a slight increase in pressure because of this
+
+When 6 is fully open, speedy is essentially running and needs to circulate down to low temperatures (which takes an hour or two). You can control the pressure on G2 using 12A now.  A good setting is with G2 approx 160-180 mBar and you should hopefully get to 100 kOhm on the mixing chamber periodically (it's very sensitive in this range. Anything better than 50 kOhms can be considered a successful cool down).
+
+Collecting the mixture. Close 13A and open 9 (close 9 if G2 drops close to 100)
+Turn on the mixing chamber heater, and the still heater to max
+
+close the needle valve and stop pumping on the pot by closing 4A. Vent the pot to the main bath using 1A
+
+check Both manual valves to the dump should be open as they should be the entire time mix is in the fridge
+
+Make sure all the mixture is collected. G2 should reach it's previous logged value (566 mbar) and P1 should be below 0.01 mbar
+
+
+
+

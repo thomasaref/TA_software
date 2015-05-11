@@ -1,0 +1,164 @@
+
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[top=1 in,  bottom=1 in, left=1 in, right=1 in]{geometry}
+\usepackage{gensymb}
+
+\usepackage{amsfonts,amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{color}
+\definecolor{red}{rgb}{1, 0, 0}   %used for making comments in red color text remove before submit
+\definecolor{green}{rgb}{0, 0.7, 0}
+\definecolor{blue}{rgb}{0, 0, 1}
+\newcommand{\mc}{\textcolor{red}}  %used for making comments in red color text remove before submit
+\newcommand{\mt}{\textcolor{green}}  %used for making comments in red color text remove before submit
+\newcommand{\db}{\textcolor{blue}}  %used for making comments in red color text remove before submit
+\newcommand{\comment}[1]{}  %used for commenting out blocks of text remove before submit
+%\newcommand{\ve}[1]{\verb; #1;}
+\begin{document}
+%\author{Thomas Aref}
+
+\title{Code notes}
+\maketitle
+\noindent
+
+
+\section{Overview of the code}
+
+\subsection{}
+TAmeas is a python code based platform that seeks to combine easy GUI creation with automatic logging, data saving and plotting while maintaining a simple script based feel. It relies heavily on the ENAML language for GUI creation and thus uses Atom (a type/observation data structure). For plotting, it makes use of Enthought's Chaco library as well as matplotlib. The central theme is that various instruments can be programmed by the user (with a few shortcuts for ease of use built in) and these instruments are controlled by one central boss. The boss handles things such as data saving, logging and plotting which should all occur in one place. Once the instruments are running independently, they can then be combined into a script controlled by the boss so that multiple instruments work in unison. The concept of instrument can be extended to things such as data analysis or even drawing and thus instruments are sometimes referred to as slaves, with the boss becoming a master.
+
+
+\subsection{Atom\_Base.py}
+
+\verb;Atom_Base.py;
+ contains the Slave class which is the foundation of TAmeas. A Slave has a boss/master which in the case of a Slave is autoset by the set\_boss function to master (which is imported from the \verb;Atom_Boss; module so that it is a singleton. Thus every slave has one and the same master.)
+
+A Slave has a name which should really be set when initialized (in the future, should add autonaming if it isn't set).
+
+The slave has a desc which is a lengthier description of what the slave is for.
+
+The slave contains many lists. The all\_params list is a convenience list of all parameters that are added in subsequent children classes e.g. if I add "voltage" to a child class, it goes into all\_params while a reserved name such as "showing" is not added. This allows one to easily loop over "more interesting" variables. 
+
+The main\_params is a subset of all\_params which do not have the tag "sub" in their definition. This is used by the GUI to display main params prominently and not sub params. main\_params can be overwritten for some weak GUI control so that only the params named in main params are shown.
+
+reserved\_names is a list of everything that isn't a user param, e.g. I probably want to work with and save data from something called "voltage" but I don't want to be manipulating the name of the instrument. reserved\_names defaults to every member in the Slave class. It is overwritten in things such as the Instrument child class.
+
+full\_interface is boolean controlling the GUI control. the default display has a send operation being performed automatically when a value is updated so there is no need for a send button or a send\_now option. However, it is occasionally handy to display these explicitly e.g. when you are sending the same command such as FETCH? repeatedly over GPIB. 
+
+plot\_all is a Boolean override that allows you to plot everything by default. need to check this
+
+view allows custom GUIs to be used in ENAML easily. By default, the ENAML code associated with Slaves autogenerates a layout but this might not be what the user wants. Overwriting the view enum allows a custom ENAML layout to be used.
+
+plot\_keys. remove?
+
+update\_log takes a string and by default passes it to the boss' update log.
+
+show may need some work
+
+set\_log generates the log string for a given type when it is set (generally passing what was set to what value). It also includes a data\_save when a value is set
+
+\_\_setattr\_\_ is overwritten so that values are coerced, logged, and saved when set. This is more convenient than observing since if a value is set to the same thing as it already is, it is still logged and stored.
+
+{\_\_init} is overwritten to set the boss of the instrument to whatever is given by set\_boss, add the slave to the boss' instrument/slave list, add observers for containerlists, and add logging to any callable.
+
+{add\_plot} adds a whole plot to the boss plot\_list
+
+{add\_line\_plot} adds a line plot of data to the current plot\_list (needs updating)
+
+{add\_img\_plot} adds an image plot to the current plot in plot\_list (needs updating)
+
+some special tags are introduced:
+{full\_interface} true or false indicates if full interface is to be used for atom
+
+
+\subsection{Atom\_Instrument.py}
+{Atom\_Instrument.py} extends Slave to include a session (reference to an open session of communication), a busy boolean (if the instrument is busy, not properly implemented)
+a status (Closed or Active) to indicate if the instrument has been booted or closed
+{plot\_x} remove?
+{send\_now} a boolean to indicate if the send command should be invoked as soon as the value is set. it is observed to enforce the change
+
+booter (a callable do nothing function called when an instrument is booted meant to be overwritten in children
+closer a callable do nothing function called when an instrument is closed. meant to be overwritten in children)
+
+{reserved\_names} is updated by \_default\_reserved\_names not to include the additions
+
+boot uses booter to perform a boot command
+close uses closer to perform a close command
+
+Instrument implements a receive and send function. receive takes the name of the member you would like to call a get function on. send takes the name plus an optional value. Both function can take other params as keyword arguments. They also have an associated send and receive log functions to allow customization of the logging message
+
+when a value is received it is coerced and if it is an Enum is reverse mapped. if the member is a list, the associated members in the List are received.
+
+{\_\_setattr\_\_} is updated to implement the send\_now auto sending feature
+{set\_boss} is overwritten to make the boss boss
+
+init is updated so boater and closer become logged even though they are in reserved names
+
+special tags:
+\begin{enumerate}
+\item {set\_cmd}: the function called when a send is performed. The first argument of a set\_cmd must be a reference to the instrument itself, the second argument is the member itself. subsequent arguments must be members of that instrument
+\item {get\_cmd}: the function called when a receive is performed. the first argument must be a reference to the instrument itself. the second argument is the member itself. subsequent arguments must be members of that instrument
+
+\end{enumerate}
+
+
+
+\section{{Atom\_Boss}}
+
+implelements {boss\_log} a simple function logger (using boss)
+
+class Master:
+Contains run which is the main function of master. this is overwritten is subcode and is the code that is saved
+
+{read\_hdf5} is a reference to the data file to be read in (for data analysis)
+{save\_hdf5} is a reference to the data file to be written to ( for output)
+
+saving is a bool that controls if saving is active. this is automatically set to active if a {save\_hdf5} is created that is not buffer saving
+instruments is a list of all instruments/slaves. Saving defaults to false
+
+plottables is a dictionary of plottable members of instruments. if {plot\_all} of the instrument is true all variables become plowable. if no member of the instrument is designated as plowable, every member of the instrument becomes plowable
+
+master implements draw plot and {data\_save} but does nothing
+
+Boss extends Master by including a do nothing functions prepare and finish which can be overwritten. and adds run\_measurements which does prepare, run finish in order.
+
+saving is updated to be True by default
+
+{wants\_abort} is a boolean to signify when to break from a measurement but this relies on enaml's deferred call and is not implemented yet
+
+{close\_all} and {boot\_all} are convenience functions to boot every closed instrument and close every active instrument in boss
+
+{data\_save} is used for saving data. Floats and Ints are saved as points, ContainerLists as datasets, Unicode, Str, Bool and Enum as strings and Lists and Callables are not saved
+
+Boss introduces the custom tags:
+discard data is discarded and not save boolean
+save data is stored under measurement in the hdf5 if save is true and under set up if save is false
+
+boss and master are singleton creations of Boss and Master that can be imported to other modules (so there is only one boss or master)
+
+\section{{Atom\_HDF5} }
+{Atom\_HDF5} implements
+Filer:
+A generic filing system where a primary directory path dir\_path and file\_path are composed of a base\_dr, main\_dir, divider and main\_file. The main directory defaults to S followed by the year month day and time of saving
+
+Quality Filer extends Filer to add a quality enum of discard, less interesting and interesting
+
+{Read\_HDF5} extends Filer and adds a data dictionary
+it adds the open\_and\_read function which recursively reads all the data in an hdf5 file and puts it in a dictionary (also returns the dictionary)
+
+read txt is used to read text files
+
+{Save\_HDF5} can maker which creates the directory if it doesn't exist
+on can update\_log which both prints the log (if print\_log is true) and writes it to the log\_buffer or the file as preferred (buffer save)
+finally, it has the save\_code function which allows the file containing an object to be saved.
+
+the full save function makes the directories, flushes the buffers and saves the code
+
+there are functions for saving points, datasets and strings to hdf5
+
+%\bibliographystyle{unsrt}
+%\bibliography{SAWbib}
+
+\end{document}

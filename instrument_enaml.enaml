@@ -1,0 +1,136 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu May  7 11:20:09 2015
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import ToolBar
+
+
+#This code between the bars is just to demonstrate how to include a custom enaml template
+##------------------------------
+from enaml_TestTemp import InstrAltCont
+template InstrTemp(InstrView: "Field"): #Dummy template demonstrating custom Instrument layouts using the view variable
+    InstrAltCont:
+        pass
+##---------------------------------
+
+#The auto enaml layout for Instruments
+from enaml_Base import AutoInstrCont
+template InstrTemp(InstrView):
+    AutoInstrCont:
+        #minimum_size=1000
+        pass
+
+enamldef InstrumentToolBar(ToolBar):
+    dock_area='left'
+    Action:
+        text="Log"
+        triggered::
+            logpane.show()
+        tool_tip = "Show log"
+    Action:
+        text="Save"
+        triggered::
+            savepane.show()
+        tool_tip = "Show save pane"
+#    Action:
+#        text="Read"
+#        triggered::
+#            if savepane.visible:
+#                savepane.hide()
+#            readpane.show()
+            #print dir(savepane) #boss.run #readpane.show()
+#        tool_tip = "Show read pane"
+    Action:
+        text = "Plot"
+        triggered:: show_plot(bossarea, boss.plot) #show_pane(dyn_pages, 'Plot')
+        tool_tip = "Show plot"
+    Action:
+        separator=True
+    Action:
+        separator=True
+    Action: prepare:
+        text = "Prepare"
+        triggered :: boss.prepare()
+    Action: run:
+        text = "Run"
+        triggered :: boss.run()
+    Action: finish:
+        text = "Finish"
+        triggered :: boss.finish()
+    Action:
+        separator=True
+    Action:
+        separator=True
+    Action: run_measurement:
+        text = "Run Full"
+        triggered :: boss.run_measurement()
+    Action:
+        separator=True
+    Action:
+        separator=True
+    Action: abort:
+        text = "Abort"
+        triggered :: boss.wants_abort=True
+    Action:
+        separator=True
+    Action:
+        separator=True
+    Action:
+        text = "Boot All"
+        triggered::boss.boot_all()
+        tool_tip = "Boots all instruments"
+    Action:
+        text = "Close All"
+        triggered::boss.close_all()
+        tool_tip = "Closes all instruments"
+    Action:
+        separator=True
+    Action:
+        separator=True
+    Action:
+        text = "Instruments"
+        triggered:: show_all_instruments(bossarea, boss)#show_all_instruments(dyn_pages, boss)
+        tool_tip = "Show all instruments"
+    Action:
+        separator=True
+    Looper: loopy:
+        iterable := boss.bases
+        Action:
+            text = loop_item.name
+            tool_tip = "Show instrument: {0}".format(loop_item.name)
+            triggered:: show_instrument(bossarea, loop_item)#show_instrument(dyn_pages, loop_item)
+
+enamldef InstrumentItem(DockItem):
+    attr instr
+    name = instr.name
+    title = cap_case(instr.name)
+    DynamicTemplate:  #use of dynamic template allows custom instrument layouts if defined in enaml
+        base = InstrTemp
+        args = (instr.view,)
+
+enamldef InstrMain(MainWindow): main:
+    attr instrin
+    attr boss
+    title=instrin.name
+    BossToolBar:
+        pass
+    alias readpane
+    ReadSavePane: readpane:
+        visible = False
+    alias savepane
+    SavePane: savepane:
+        visible = False
+    alias logpane
+    LogPane: logpane:
+        pass
+    alias bossarea
+    Container: mycont:
+        constraints = [mycont.width==bossarea.width, mycont.height==bossarea.height]
+        alias bossarea
+        DockArea: bossarea:
+            layout = TabLayout(instrin.name)
+            InstrumentItem: ii:
+                instr=instrin

@@ -1,0 +1,383 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Dec 26 19:13:08 2014
+
+@author: thomasaref
+"""
+from enaml.widgets.api import (
+        Container, CheckBox, Field, ObjectCombo, MainWindow, Form, Label, PushButton, DockPane, ToolBar, Action, MPLCanvas, Window
+        )
+from enaml.widgets.color_dialog import ColorDialog
+from enaml.stdlib.fields import FloatField
+
+from enaml.core.api import Include, Looper, DynamicTemplate
+from enaml.layout.api import vbox, hbox, align, spacer
+#from enaml.widgets.api import (
+#    MainWindow, Notebook, Page, Container, PushButton, Field, Html, CheckBox, ObjectCombo, Form,
+#    StatusBar, StatusItem, Label, DockPane, MultilineField, Window, ToolBar, Action, ActionGroup, FileDialogEx
+#)
+#from enaml.widgets.api import Window, Container, MPLCanvas, CheckBox, ComboBox
+
+
+enamldef Main(Window):
+    attr figures
+    Container:
+        constraints = [
+            vbox(
+                hbox(cbox, check, pbbbb, spacer),
+                canvas,
+            ),
+            cbox.v_center == check.v_center,
+        ]
+        ObjectCombo: cbox:
+            items = ['one', 'two']
+            #index = 0
+        CheckBox: check:
+            text = 'Toolbar Visible'
+            checked := canvas.toolbar_visible
+        PushButton: pbbbb:
+            clicked:: figures["two"].show()
+        MPLCanvas: canvas:
+            figure << figures[cbox.selected]
+
+
+enamldef PlotFormat(Form):
+    Label:
+        text = "Title"
+    Field:
+        text := plotr.title
+    Label:
+        text = "X label"
+    Field:
+        text := plotr.xlabel
+    Label:
+        text = "Y label"
+    Field:
+        text := plotr.ylabel
+    Label:
+        text = "X axis"
+    ObjectCombo:
+        items=list(plotr.get_member('index_scale').items)
+        selected:=plotr.index_scale
+    Label:
+        text = "Y axis"
+    ObjectCombo:
+        items=list(plotr.get_member('value_scale').items)
+        selected:=plotr.value_scale
+    Label:
+        text = "add plot"
+    PushButton:
+        clicked::
+            plotr.add_plot("yo", "blah", [1,2,3])
+            plotr.add_plot(name="yo2", yname="bob", ydata=[9,5,7,3])
+
+    Label:
+        text = "add plot"
+    PushButton:
+        clicked :: plotr.append_data("yo2", [1,2,3])
+    Label:
+        text = "Save plot"
+    PushButton:
+        clicked :: plotr._save()
+    Label:
+        text = "add plot"
+    PushButton:
+        clicked :: plotr.add_img_plot()
+
+enamldef XYformat(Form):
+    attr xyf<<plotr.xyfs[it.selected]
+    padding = 0
+#    Label:
+#        text = "Color:"
+#    PushButton:
+#        text = "Color"
+#        clicked :: ColorDialog.get_color()
+    Label:
+        text = 'Redraw plot'
+    PushButton:
+        text = "Redraw"
+        clicked ::
+            xyf.redraw_plot() #print_stuff(xyf.rend_list)
+    Label:
+        text = "Item"
+    ObjectCombo: it:
+        items<<plotr.xyfs.keys()
+        selected="All"
+    Label:
+        text = "Plot type:"
+    ObjectCombo:
+        items=list(xyf.get_member('plot_type').items)
+        selected:=xyf.plot_type
+    Label:
+        text = "Line color:"
+        enabled << xyf.plot_type!="scatter"
+    ObjectCombo:
+        items=list(xyf.get_member('line_color').items)
+        selected:=xyf.line_color
+        enabled << xyf.plot_type!="scatter"
+    Label:
+        text = "Line Width:"
+    FloatField:
+        value := xyf.line_width
+    Label:
+        text = "Marker_size:"
+    FloatField:
+        value := xyf.marker_size
+    Label:
+        text = "Line Style:"
+    ObjectCombo:
+        items=list(xyf.get_member('line_style').items)
+        selected:=xyf.line_style
+    Label:
+        text = "Render style:"
+    ObjectCombo:
+        items=list(xyf.get_member('render_style').items)
+        selected:=xyf.render_style
+    Label:
+        text = "Marker:"
+    ObjectCombo:
+        items=list(xyf.get_member('marker').items)
+        selected:=xyf.marker
+    Label:
+        text = "OutLine Width:"
+    FloatField:
+        value := xyf.outline_width
+
+    Label:
+        text = "Outline color:"
+    ObjectCombo:
+        items=list(xyf.get_member('outline_color').items)
+        selected:=xyf.outline_color
+    Label:
+        text = "Inside color:"
+    ObjectCombo:
+        items=list(xyf.get_member('inside_color').items)
+        selected:=xyf.inside_color
+
+
+    #outline_color=ColorTrait('none')
+    #render_style=Enum('connectedpoints', 'hold', 'connectedhold')
+    #mycolors=List([ 'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan', 'magenta', 'orange'])
+
+enamldef XYfPane(DockPane):xyfp:
+   # attr plotr
+    dock_area='left' #'bottom'
+    #floating = True
+    title = "XY Format"
+    closed ::
+        dyn_pages.objects.remove(xyfp)
+    XYformat:
+        pass #xyf:=plotr.xyformat
+
+#def show_pf(dyn_pages):
+#    exists=False
+#    for pane in dyn_pages.objects:
+#        if pane.title=='Plot Format':
+#            pane.show()
+#            exists=True
+#    if not exists:
+#        pane=PlotfPane()
+#        dyn_pages.objects.append(pane)
+
+
+enamldef PlotfPane(DockPane): pfp:
+    dock_area='left' #'bottom'
+    title = "Plot Format"
+    closed ::
+        dyn_pages.objects.remove(pfp)
+    PlotFormat:
+        pass
+
+def show_pane(dyn_pages, title):
+    exists=False
+    for pane in dyn_pages.objects:
+        if pane.title==title:
+            pane.show()
+            exists=True
+    if not exists:
+        if title=='XY Format':
+            pane=XYfPane()
+        elif title=="Plot Format":
+            pane=PlotfPane()
+        elif title=="Plot":
+            pane=PlotPane()
+        dyn_pages.objects.append(pane)
+
+
+enamldef PlotToolBar(ToolBar):
+    dock_area='left'
+    Action:
+        separator=True
+    Action:
+        text = "Format"
+        triggered :: show_pane(dyn_pages, "XY Format")
+    Action:
+        separator=True
+    Action:
+        text = "Plot Format"
+        triggered :: show_pane(dyn_pages, "Plot Format")
+
+#    Action:
+#        text="Log"
+#        triggered::
+#            logpane.show()
+#    Action:
+#        text="boss"
+#        triggered::
+#            #boss.instruments.append(boss.instruments[0])
+#            #actionList=[]
+#            #for instr in boss.instruments:
+#            #    action=InstrAction(instr=instr)
+#            #    actionList.append(action)
+#            #instrs.objects=actionList
+#            print logpane.dock_area
+#            print dyn_pages.objects
+# #           print dir(mainw)
+#    Action:
+#        text=""
+#    Action:
+#        separator=True
+#    Action:
+#        text = "Instruments"
+#        triggered:: show_all_instruments(dyn_pages, boss)
+#    Action:
+#        text = "Boot All"
+#        triggered::boss.boot_all()
+#    Action:
+#        text = "Close All"
+#        triggered::boss.close_all()
+#    Action:
+#        separator=True
+##    Include: instrs:
+##        pass
+#    Looper: loopy:
+#        iterable := boss.instruments
+#        Action:
+#            text = loop_item.label
+#            #tool_tip = text
+#            triggered:: show_instrument(dyn_pages, loop_item)
+
+enamldef PlotPane(DockPane):pp:
+    #attr plotr
+    closed :: dyn_pages.objects.remove(pp)
+    dock_area='right'
+    Container:
+        PlotToolBar:
+            pass
+        padding = 0
+        #EnableCanvas: ecanvas:
+        #    constraints=[height==400, width==600]
+        #    component << plotr.plot
+
+enamldef PlotMain(MainWindow): plotmain:
+    attr plotr
+#    initial_size=(800,600)
+#    alias xy
+#    XYfPane: xy:
+#        plotr:=plot
+    #PlotPane:
+    #    pass#plotr:=plot
+#        window:=main
+#    alias logpane: logp
+#    LogPane: logp:
+#        pass
+    alias dyn_pages
+    Include: dyn_pages:
+        objects=[PlotPane()]
+
+#enamldef PlotView(Window): main:
+#    attr plotr
+#    #initial_size = (600, 400)
+#    Container:
+#        #constraints=[width==300, height==300]
+#        XYformat:
+#            xyf := plotr.xyformat
+#           # visible =False
+#        PushButton:
+#            text = "Add plot"
+#            clicked :: plotr.add_plot()
+#        EnableCanvas: ecanvas:
+#            constraints=[height==400, width==600]
+#            component << plotr.plot
+#
+
+
+
+#template InstrTemp(InstrView):
+#    AutoInstrCont:
+#        pass
+
+#template InstrTemp(InstrView: "Field"): #Dummy template demonstrating custom Instrument layouts using the view variable
+#    Container:
+#        Field:
+#            pass
+
+#enamldef InstrumentPane(DockPane): ip:
+#    attr instr
+#    closed :: dyn_pages.objects.remove(ip)
+#    title = instr.label
+#    dock_area='right'
+#    DynamicTemplate:  #use of dynamic template allows custom instrument layouts if defined in enaml
+#        base = InstrTemp
+#        args = (instr.view,)
+
+#
+#def show_all_instruments(dyn_pages, boss):
+#    for instr in boss.instruments:
+#        show_instrument(dyn_pages, instr)
+#
+#enamldef InstrAction(Action):
+#    attr instr
+#    text = instr.label
+#    triggered :: show_instrument(dyn_pages, instr)
+#
+
+#enamldef BossPane(DockPane):
+#    attr window
+#    dock_area='left'
+#    title = "boss"
+#    Form:
+#        #padding = 0
+##        PushButton: boot_all:
+##            text = "Boot All"
+##            clicked :: boss.boss_boot()
+##        PushButton: close_all:
+##            text = "Close All"
+##            clicked :: boss.boss_stop()
+#        PushButton:
+#            text = "Run"
+#            clicked ::
+#                boss.run_measurement()
+#        PushButton:
+#            text = "Abort"
+#            clicked ::
+#                pass
+#
+#        Label:
+#            text = "Save name:"
+#        Field:
+#            text := boss.save_dir
+#
+#        Label:
+#            text = "Quality:"
+#        ObjectCombo:
+#            items = list(boss.get_member('quality').items)
+#            selected := boss.quality
+##        Container: cont:
+##            constraints = [vbox(hbox(lbl, pb, spacer), fld), align('v_center', lbl,  pb),]
+#        Label: lbl:
+#            text = 'Base directory'
+#        PushButton: pb:
+#                text = 'Browse'
+#                clicked ::
+#                    path = FileDialogEx.get_existing_directory(window)
+#                    if path:
+#                        boss.base_dir = path
+#        Field: fld:
+#                read_only = True
+#                text << boss.base_dir
+#
+##        PushButton:
+##            pass
+#
+
