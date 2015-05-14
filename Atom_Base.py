@@ -247,6 +247,8 @@ class Base(Atom):
                  map_val=self.get_tag(name, 'mapping', {value:value})[value], unit=unit))
        elif self.get_type(name)==Dict:
            log_info("Set {instr} {label}".format(instr=self.name, label=label))
+       elif self.get_type(name)==Str:
+           log_info("Set {instr} {label} to {length} string".format(instr=self.name, label=label, length=len(value)))
        else:
            log_info("Set {instr} {label} to {value} {unit}".format(
                              instr=self.name, label=label, value=value, unit=unit))

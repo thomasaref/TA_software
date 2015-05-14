@@ -7,14 +7,14 @@ Created on Tue Mar 24 16:21:06 2015
 
 from Atom_Filer import Filer
 from LOG_functions import log_warning, log_info
-from atom.api import Dict
+from atom.api import Dict#, Event
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
 #from Atom_Save_File import Save_HDF5, Save_NP, Save_TXT, Save_DXF
 
 class Read_File(Filer):
     data=Dict()
-
+       
     def read(self):
         log_warning("read not implemented!")
 
