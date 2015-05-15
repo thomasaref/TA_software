@@ -57,7 +57,7 @@ class Filer(Atom):
     def _default_log_path(self):
         return self.dir_path+self.divider+self.log_name+".log"
 
-    @observe( "dir_path", "main_file", 'divider')
+    @observe( "dir_path", "log_name", 'divider')
     def log_path_changed(self, change):
         if change['type']!='create':
             self.log_path=self.dir_path+self.divider+self.log_name+".log"

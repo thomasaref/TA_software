@@ -7,16 +7,17 @@ Created on Tue Mar 24 16:21:06 2015
 
 from Atom_Filer import Filer
 from LOG_functions import log_warning, log_info
-from atom.api import Dict#, Event
+from atom.api import Dict, Event
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
 #from Atom_Save_File import Save_HDF5, Save_NP, Save_TXT, Save_DXF
 
 class Read_File(Filer):
     data=Dict()
-       
+    #read_event=Event()   
     def read(self):
         log_warning("read not implemented!")
+    #    self.read_event()
 
     def show(self):
         """stand alone for showing filer."""
@@ -87,10 +88,13 @@ class Read_TXT(Read_File):
         with open(self.file_path, 'r') as f:
             for line in f:
                 templist.append(line)
-        self.data["data"]=templist
+        self.data_distributor(templist)
         log_info("Read data from text file: {0}".format(self.file_path))
         return self.data
 
+    def data_distributor(self, templist):
+        self.data["data"]=templist
+        
 if __name__=="__main__":
     #a=Read_File()
     #a.read()

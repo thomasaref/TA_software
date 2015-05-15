@@ -37,8 +37,8 @@ class Save_File(Filer):
 #    def _default_string_buffer(self):
 #        return {SAVE_GROUP_NAME:{}, SETUP_GROUP_NAME:{}}
 
-    def _observe_buffer_save(self, change):
-        print change
+    #def _observe_buffer_save(self, change):
+    #    print change
 
     @observe( "dir_path")
     def filedir_path_changed(self, change):

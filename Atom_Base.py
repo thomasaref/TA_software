@@ -231,27 +231,28 @@ class Base(Atom):
 
     def set_log(self, name, value):
        """called when parameter of given name is set to value i.e. instr.parameter=value. Customized messages for different types. Also saves data"""
-       label=self.get_tag(name, 'label', name)
-       unit=self.get_tag(name, 'unit', "")
-       if self.get_type(name)==ContainerList:
-           log_info("Set {instr} {label} to {length} list {unit}".format(
-               instr=self.name, label=label, length=shape(getattr(self, name)), unit=unit))
-       elif self.get_type(name)==ndarray:
-           log_info("Set {instr} {label} to {length} array {unit}".format(
-               instr=self.name, label=label, length=shape(getattr(self, name)), unit=unit))
-       elif self.get_type(name)==Callable:
-           pass
-       elif self.get_type(name)==Enum:
-           log_info("Set {instr} {label} to {value} ({map_val}) {unit}".format(
-                 instr=self.name, label=label, value=value,
-                 map_val=self.get_tag(name, 'mapping', {value:value})[value], unit=unit))
-       elif self.get_type(name)==Dict:
-           log_info("Set {instr} {label}".format(instr=self.name, label=label))
-       elif self.get_type(name)==Str:
-           log_info("Set {instr} {label} to {length} string".format(instr=self.name, label=label, length=len(value)))
-       else:
-           log_info("Set {instr} {label} to {value} {unit}".format(
-                             instr=self.name, label=label, value=value, unit=unit))
+       if self.get_tag(name, 'log', True):
+           label=self.get_tag(name, 'label', name)
+           unit=self.get_tag(name, 'unit', "")
+           if self.get_type(name)==ContainerList:
+               log_info("Set {instr} {label} to {length} list {unit}".format(
+                   instr=self.name, label=label, length=shape(getattr(self, name)), unit=unit))
+           elif self.get_type(name)==ndarray:
+               log_info("Set {instr} {label} to {length} array {unit}".format(
+                   instr=self.name, label=label, length=shape(getattr(self, name)), unit=unit))
+           elif self.get_type(name)==Callable:
+               pass
+           elif self.get_type(name)==Enum:
+               log_info("Set {instr} {label} to {value} ({map_val}) {unit}".format(
+                     instr=self.name, label=label, value=value,
+                     map_val=self.get_tag(name, 'mapping', {value:value})[value], unit=unit))
+           elif self.get_type(name)==Dict:
+               log_info("Set {instr} {label}".format(instr=self.name, label=label))
+           elif self.get_type(name)==Str:
+               log_info("Set {instr} {label} to {length} string".format(instr=self.name, label=label, length=len(value)))
+           else:
+               log_info("Set {instr} {label} to {value} {unit}".format(
+                                 instr=self.name, label=label, value=value, unit=unit))
        self.data_save(name, value)
 
     def __setattr__(self, name, value):

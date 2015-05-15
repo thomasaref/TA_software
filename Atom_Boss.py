@@ -5,7 +5,7 @@ Created on Thu Feb 26 13:56:33 2015
 @author: thomasaref
 """
 from LOG_functions import log_info, log_warning#, SAVE_GROUP_NAME, SETUP_GROUP_NAME, log_debug
-from atom.api import Atom, Bool, Typed, ContainerList, Callable, Dict, Float, Int, FloatRange, Range, Unicode, Str, List, Enum
+from atom.api import Atom, Bool, Typed, ContainerList, Callable, Dict, Float, Int, FloatRange, Range, Unicode, Str, List, Enum, Event
 from Atom_Read_File import Read_File
 from Atom_Save_File import Save_File, Save_HDF5
 from Atom_Plotter import Plotter
@@ -15,7 +15,8 @@ from enaml.qt.qt_application import QtApplication
 class Boss(Atom):
     """Overall control class that runs main code and handles files, saving and plotting"""
     run=Callable()
-    read_file=Typed(Read_File, ())
+    read_file=Typed(Read_File)
+    read_event=Event()
     save_file=Typed(Save_File)
     saving=Enum(False, True, "No buffer")
     save_factory=Callable(Save_HDF5)
@@ -50,6 +51,16 @@ class Boss(Atom):
             elif self.saving==False:
                 self.save_file.buffer_save=True
 
+    def _default_read_file(self):
+        return Read_File()
+
+    def full_read(self):
+        self.read_file.read()
+        self.read_data_distribute()
+
+    def read_data_distribute(self):
+        log_warning("read_data_distribute not implemented!")
+        
     def _default_save_file(self):
         if self.saving==True:
             savefile=self.save_factory(buffer_save=False, base_dir=self.BASE_DIR, divider=self.DIVIDER,
