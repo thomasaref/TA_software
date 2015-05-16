@@ -221,9 +221,15 @@ def show_all_bases(area, boss):
 def show_item(name, area, target=None, ItemType=DockItem, position='left', OP=InsertItem, **kwargs):
     item=ItemType(area, **kwargs)
     if target==None:
-        op = OP(item=name, position=position)
+        if OP==InsertItem:
+            op = OP(item=name, position=position)
+        else:
+            op = OP(item=name)
     else:
-        op = OP(item=name, target=target, position=position)
+        if OP==InsertItem:
+            op = OP(item=name, target=target, position=position)
+        else:
+            op = OP(item=name, target=target)
     area.update_layout(op)  
     
 def show_general_item(area, item, ItemType=DockItem, position='left', target_items=[tempclass()], **kwargs):
@@ -265,6 +271,7 @@ enamldef BossMain(MainWindow): main:
     attr boss
     attr base: None
     title="Base"
+    initial_size=(1200,800)
     #alias readpane
     #ReadSavePane: readpane:
     #    visible = True #False

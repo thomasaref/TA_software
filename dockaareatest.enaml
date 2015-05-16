@@ -148,7 +148,8 @@ enamldef MyDockArea(DockArea):
         name = 'logger'
         title = 'Logger'
         Container:
-            MultilineField:
+            constraints=[hbox(mlf, spacer)]
+            MultilineField:mlf:
                 attr collector = LineCollector()
                 name = 'line-collector'
                 text << collector.text

@@ -21,6 +21,9 @@ from Atom_Base import Base
 from Atom_Instrument import Instrument
 #from EBL_Item import EBLPolygon
 import EBL_Item
+from enaml_Filer import ReadWrap, SaveWrap
+from Atom_Read_File import Read_File
+from Atom_Save_File import Save_File
 
 template ValView(name, model, modelType):
     """ This default specialization displays read-only text for the value."""
@@ -28,6 +31,16 @@ template ValView(name, model, modelType):
         read_only = True
         text << unicode(getattr(model, name))
 
+template ValView(name, model, modelType: Read_File):
+    """ This default specialization displays read-only text for the value."""
+    ReadWrap:
+        filer:=getattr(model, name)
+
+template ValView(name, model, modelType: Save_File):
+    """ This default specialization displays read-only text for the value."""
+    SaveWrap:
+        filer:=getattr(model, name)
+        
 class subarrview(Atom):
     instr=Typed(Atom)
     polyindex = Int()
@@ -394,8 +407,11 @@ template ValView(name, model, modelType: Int):
         
 template ValView(name, model, modelType: Str):
     """ A template specialization for Unicode using a MultilineField"""
+    #Container:
+        #constraints = [width == 800, height==600]
     MultilineField: mlf:
-        text := getattr(model, name)
+    #        constraints = [width == 800, height==600]
+            text := getattr(model, name)
 
 template ValView(name, model, modelType: Unicode):
     """A template specialization for Unicode using a field"""
@@ -525,25 +541,25 @@ enamldef BootClose(Container):
 
 
 template VarTemp(name, instr, InstrType: Base):
-    GroupBox: contents:
+    GroupBox: gbcontents:
         flat = True
         padding=0
-        constraints = [
-                        hbox( lbl, spacer, val, unt, spacer),#,
-                       align('top', val, unt), align('top', lbl, val),
-                          align('left', contents, 80, val) | 'medium']
+#        constraints = [hbox( lbl, val, unt),#,
+        #               align('top', val, unt), align('top', lbl, val),
+        #                  align('left', gbcontents, 80, val) | 'medium']#, width == contents_width, height==contents_height]
                         #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
 #                         (lbl.bottom == contents_bottom) | 'medium']
-        Label: lbl:
-            text = instr.get_tag(name, 'label', name)
+        #Label: lbl:
+        #    text = instr.get_tag(name, 'label', name)
         Container: val:
             padding = 0
+            #constraints = [width == contents_width, height==contents_height]
             DynamicTemplate: dyn:
                 base = ValView
                 args = (name, instr, instr.get_type(name))
-        Label: unt:
-            text = instr.get_tag(name, 'unit', "")
-            visible = instr.get_tag(name, 'unit')!=None
+        #Label: unt:
+        #    text = instr.get_tag(name, 'unit', "")
+        #    visible = instr.get_tag(name, 'unit')!=None
             
 template VarTemp(name, instr, InstrType: Instrument):
     GroupBox: contents:
@@ -553,7 +569,8 @@ template VarTemp(name, instr, InstrType: Instrument):
                         hbox( lbl, spacer, val, unt, snd_now, snd, rec, set_params, get_params, spacer),#,
                        align('top', val, rec), align('top', val, unt), align('top', lbl, val),
                          align('top', val, set_params), align('top', set_params, get_params),
-                         align('left', contents, 280, rec) | 'medium', align('left', contents, 80, val) | 'medium']
+                         align('left', contents, 280, rec) | 'medium', align('left', contents, 80, val) | 'medium',
+                        width == contents_width, height==contents_height]
                         #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
 #                         (lbl.bottom == contents_bottom) | 'medium']
         Label: lbl:

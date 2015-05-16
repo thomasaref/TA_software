@@ -6,7 +6,7 @@ Created on Thu Mar  5 20:50:49 2015
 """
 
 from Atom_Filer import Filer
-from atom.api import Bool, Dict, Unicode, observe, List
+from atom.api import Bool, Dict, Unicode, observe, List, Event
 import os
 import shutil
 import inspect
@@ -24,6 +24,7 @@ class Save_File(Filer):
     buffer_save=Bool(False)
     default_group_name=Unicode()
     group_names=List()
+    save_event=Event()
     #files_exist=Bool(False)
 
     def _default_data_buffer(self):
@@ -56,7 +57,7 @@ class Save_File(Filer):
         if not os.path.exists(self.file_path):
             self.create_file()
             if old_log_path==None:
-                make_log_file(self.dir_path+self.divider+self.log_name+".log") #start log file if it doesn't exist
+                pass#make_log_file(self.dir_path+self.divider+self.log_name+".log") #start log file if it doesn't exist
             else:
                 move_log_file(self.dir_path+self.divider+self.log_name+".log", old_log_path+".log") #move backup log to folder and
 
@@ -77,6 +78,7 @@ class Save_File(Filer):
         self.flush_buffers()
         if obj!=None:
             self.save_code(obj)
+        self.save_event()
 
 
     def flush_buffers(self):
@@ -148,7 +150,7 @@ class Save_HDF5(Save_File):
     def do_data_save(self, data, name, group_name, append):
         hdf5_data_save(file_path=self.file_path, data=data, name=name, group_name=group_name, append=append)
 
-from TXTNP_functions import create_txt,  save_txt_data, save_np_data
+from TXTNP_functions import create_txt,  save_txt_data, save_np_data, save_txt
 class Save_TXT(Save_File):
     def _default_file_type(self):
         return "text"
@@ -159,6 +161,10 @@ class Save_TXT(Save_File):
 
     def do_data_save(self, data, name, group_name, append):
         save_txt_data(self.dir_path+self.divider, data, name)
+        
+    def direct_save(self, data, write_mode='a'):
+        save_txt(file_path=self.file_path, data=data, write_mode=write_mode)
+        log_info("Direct save of data to: {}".format(self.file_path))
 
 class Save_NP(Save_TXT):
     def _default_file_type(self):

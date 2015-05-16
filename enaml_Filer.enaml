@@ -6,29 +6,29 @@ Created on Tue Feb 24 11:26:25 2015
 Implemements GUIs for saving and loading files
 """
 
-from enaml.layout.api import vbox, hbox, spacer
+from enaml.layout.api import vbox, hbox, spacer, align
 from enaml.widgets.api import (Container, Label, PushButton, Field, ObjectCombo, Window, FileDialogEx, MultilineField, GroupBox)
 
-enamldef SimpleFile(Container):
-    padding=0
-    constraints=[hbox(full_file_lbl, full_file_fld, spacer), full_file_fld.width==800]
-    Label: full_file_lbl:
-        text = 'Full path'
-    Field: full_file_fld:
-        text:=filer.file_path
+#enamldef SimpleFile(Container):
+#    padding=0
+#    constraints=[hbox(full_file_lbl, full_file_fld)]#, full_file_fld.width>=600]
+#    Label: full_file_lbl:
+#        text = 'Full path'
+#    Field: full_file_fld:
+#        text:=filer.file_path
 
 enamldef SimpleSave(Container):
     padding=0
-    constraints=[hbox(savefile, browse_save, save, spacer)]
-    SimpleFile: savefile:
-        pass
+    constraints=[hbox(save, save_file_fld, browse_save)]
+    Field: save_file_fld:
+        text:=filer.file_path
     PushButton: browse_save:
         text = 'Browse'
         clicked ::
             path = FileDialogEx.get_save_file_name(current_path=filer.file_path)
             if path:
                 filer.file_path = path
-                filer.do_save()
+                filer.full_save(obj=coder, old_log_path=olp)
     PushButton: save:
         text = "Save"
         clicked ::
@@ -36,9 +36,9 @@ enamldef SimpleSave(Container):
 
 enamldef SimpleRead(Container):
     padding=0
-    constraints=[hbox(openfile, browse_open, read, spacer)]
-    SimpleFile: openfile:
-        pass
+    constraints=[hbox(read, read_file_fld, browse_open)]# align('top', read_file_lbl, read_file_fld, browse_open, read) ]
+    Field: read_file_fld:
+        text:=filer.file_path
     PushButton: browse_open:
         text = 'Browse'
         clicked ::
@@ -97,9 +97,12 @@ enamldef SaveBox(Container):
 
 enamldef SaveWrap(SaveBox):
     attr filer
-    attr coder
-    attr olp
+    attr coder: None
+    attr olp: None
 
+enamldef SimpleSaveWrap(SimpleSave):
+    attr filer
+    
 enamldef ReadWrap(SimpleRead):
     attr filer
 
@@ -148,17 +151,17 @@ enamldef SimpleSaveMain(Window):
     SimpleSave:
         pass
 
-enamldef SimpleFileMain(Window):
-    attr filer
-    title="SimpleFile test"
-    SimpleFile:
-        pass
+#enamldef SimpleFileMain(Window):
+#    attr filer
+#    title="SimpleFile test"
+#    SimpleFile:
+#        pass
 
-enamldef FilerMain(Window):
-    attr filer
-    title="Filer test"
-    Container:
-        FilerInterface:
-            pass
-        SimpleFile:
-            pass
+#enamldef FilerMain(Window):
+#    attr filer
+#    title="Filer test"
+#    Container:
+#        FilerInterface:
+#            pass
+#        SimpleFile:
+#            pass

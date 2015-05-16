@@ -14,11 +14,18 @@ from enaml.qt.qt_application import QtApplication
 
 class Read_File(Filer):
     data=Dict()
-    #read_event=Event()   
-    def read(self):
-        log_warning("read not implemented!")
-    #    self.read_event()
+    read_event=Event()   
 
+    def read(self):
+        self.do_read()
+        self.read_event()
+        return self.data
+
+    def do_read(self):
+        log_warning("do_read not implemented!")
+
+ #   def _observe_read_event(self, change):
+ #       print change
     def show(self):
         """stand alone for showing filer."""
 #        if save_file==None:
@@ -50,20 +57,18 @@ class Read_HDF5(Read_File):
     def _default_file_type(self):
         return "HDF5"
 
-    def read(self):
+    def do_read(self):
         self.data=read_hdf5(self.file_path)
         log_info("Read data from hdf5 file: {0}".format(self.file_path))
-        return self.data
 
 class Read_NP(Read_File):
     """Reads data using numpy's loadtxt"""
     def _default_file_type(self):
         return "text data"
 
-    def read(self):
+    def do_read(self):
         self.data={"data":loadtxt(self.file_path)}
         log_info("Read data from numpy text file: {0}".format(self.file_path))
-        return self.data
 
 class Read_DXF(Read_File):
     def _default_file_type(self):
@@ -82,15 +87,14 @@ class Read_TXT(Read_File):
     def _default_file_type(self):
         return "text"
 
-    def read(self):
+    def do_read(self):
         """reads a text file"""
         templist=[]
         with open(self.file_path, 'r') as f:
             for line in f:
                 templist.append(line)
-        self.data_distributor(templist)
         log_info("Read data from text file: {0}".format(self.file_path))
-        return self.data
+        self.data_distributor(templist)
 
     def data_distributor(self, templist):
         self.data["data"]=templist

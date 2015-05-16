@@ -283,6 +283,8 @@ class Base(Atom):
         Finally, sets all Callables to be log decorated if they weren't already."""
         super(Base, self).__init__(**kwargs)
         #self.set_boss()
+        if self.name=="":
+            self.name="base{}".format(len(self.boss.bases))
         self.boss.bases.append(self)
        # plot_keys=[]
         for key in self.all_params:

@@ -57,9 +57,6 @@ class Boss(Atom):
     def full_read(self):
         self.read_file.read()
         self.read_data_distribute()
-
-    def read_data_distribute(self):
-        log_warning("read_data_distribute not implemented!")
         
     def _default_save_file(self):
         if self.saving==True:
@@ -74,6 +71,9 @@ class Boss(Atom):
     def draw_plot(self):
        pass
 
+    def old_log_path(self):
+        return self.BASE_DIR+self.DIVIDER+self.LOG_NAME
+        
     def full_save(self):
         self.save_file.full_save(obj=self.run, old_log_path=self.BASE_DIR+self.DIVIDER+self.LOG_NAME)
 
@@ -105,6 +105,18 @@ class Boss(Atom):
             if self.saving:
                 self.save_file.flush_buffers()
 
+    def read_data_distribute(self):
+        log_warning("read_data_distribute not tested!")
+        for key, item in self.read_file.data.iteritems():
+            target=filter(lambda x: x.name==key, self.bases)
+            if target!=[]:
+                for subkey, subitem in item.iteritems():
+                    if subkey in target[0].all_params:
+                        setattr(target[0], subkey, subitem)
+                    else:
+                        log_warning("target base does not have target param!")
+            else:
+                log_warning("target base not found!")
 boss=Boss()
 #master.save_file=Save_File()
 #master.save_file.test_logger()

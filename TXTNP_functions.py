@@ -24,9 +24,17 @@ def save_txt_data(dir_path, data, name, append=True):
     if type(data)==dict:
         print data
     else:
+        print dir_path+name
         name=name.replace(" ", "_")
         if type(data) not in [list, ndarray]:
             data=[data]
         with open(dir_path+name, 'a') as f:
             for d in data:
                 f.write(str(d)+"\n")
+                
+def save_txt(file_path, data, write_mode='a'):       
+    if type(data) not in [list, ndarray]:
+        data=[data]
+    with open(file_path, write_mode) as f:
+        for d in data:
+            f.write(str(d)+"\n")

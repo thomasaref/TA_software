@@ -49,7 +49,7 @@ class Filer(Atom):
             return self.file_name
 
     def _default_main_dir(self):
-        return strftime("S%Y-%m-%d_%H%M%S", localtime())
+        return strftime("S%Y_%m_%d_%H%M%S", localtime())
 
     def _default_file_path(self):
         return self.dir_path+self.divider+self.main_file
