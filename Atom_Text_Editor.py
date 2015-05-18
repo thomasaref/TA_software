@@ -59,14 +59,16 @@ class JDF_Editor(Text_Editor):
         assign_array=[]
         for n, line in enumerate(self.jdf_list):
             #if  n==4:
-            tempstr=line.split(";")[0] #remove comments
+            templist=line.split(";")
+            tempstr=templist[0].strip() #remove comments
             if ';' in line:
-                comment=line.split(';')[1]
-            if 'GLMPOS' in tempstr:
-                Px, Py, Qx, Qy=xy_string_split(tempstr) #get P and Q mark positions
+                comment=templist[1].strip()
+            if tempstr.startswith('GLMPOS'):
+                self.Px, self.Py, self.Qx, self.Qy=xy_string_split(tempstr) #get P and Q mark positions
+                #Px, Py, Qx, Qy
             elif 'JOB' in tempstr:
                 mgn_name, wafer_diameter, write_diameter=tempstr.split(",") #magazine name and wafer size
-                mgn_name=mgn_name.split("'")[1]
+                mgn_name=mgn_name.split("'")[1].strip()
             elif 'PATH' in tempstr:
                 inside_path=True
             elif "LAYER" in tempstr:
@@ -79,13 +81,20 @@ class JDF_Editor(Text_Editor):
                     else:
                         x_start, x_num, x_step, y_start, y_num, y_step=xy_string_split(tempstr) #for main array
                 elif 'ASSIGN' in tempstr:
-                    assign_type=tempstr.split("ASSIGN")[1].split("->")[0].split("+")
+                    assign_type=tempstr.split("ASSIGN")[1].split("->")[0].strip().split("+")
+                    
                     assign_num=[s.split(')') for s in tempstr.split("->")[1].split("(")]
-                    pos_assign=tempstr.split("->")[1]
-                    print array_num, assign_type, assign_num, pos_assign
+
+                    pos_assign=tempstr.split("->")[1].partition("(")[2].rpartition(")")[0].split(")")
+                    for item in pos_assign:
+                        if "(" in item:
+                            print item.split("(")[1].split(",")
+                        elif "," in item:
+                            print item.split(",")[1].strip()
+                    
+                    print array_num, assign_type, pos_assign
                     if array_num==0:
-                        assign_array.append((tempstr.split("ASSIGN")[1].split("->")[0],
-                                            comment))
+                        assign_array.append(("+".join(assign_type), comment))
                 elif 'CHMPOS' in tempstr:
                     M1x, M1y=tuple_split(tempstr)
                 elif "PEND" in tempstr:
@@ -108,9 +117,9 @@ class JDF_Editor(Text_Editor):
                     pattern_num=tempstr.split("(")[1].split(")")[0]
                     pattern_x=tempstr.split("(")[2].split(")")[0].split(",")[0]
                     pattern_y=tempstr.split("(")[2].split(")")[0].split(",")[0]
-                    print pattern_num, pattern_x, pattern_y, pattern_name
+                    #print pattern_num, pattern_x, pattern_y, pattern_name
 
-        print patterns
+        #print patterns
         print assign_array
 
 
@@ -188,6 +197,7 @@ if __name__=="__main__":
     a.read_file.read()
     print a.data
     a.jdf_parse()
+    print a.Px
     #print a.jdf_list
     #a.show()
     #print a.jdf_save_file.file_path
