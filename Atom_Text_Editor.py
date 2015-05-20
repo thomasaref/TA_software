@@ -8,7 +8,7 @@ A simple text editor driver allowing one to load, edit and save text files
 """
 
 from Atom_Base import Base
-from atom.api import Str, observe, Unicode, Typed, ContainerList, Int
+from atom.api import Str, observe, Unicode, Typed, ContainerList, Int, Float, Bool
 from Atom_Read_File import Read_TXT
 from Atom_Save_File import Save_TXT
 #from LOG_functions import log_info, log_debug, make_log_file, log_warning
@@ -43,21 +43,59 @@ def xy_string_split(tempstr):
 def tuple_split(tempstr):
     return tempstr.split("(")[1].split(")")[0].split(",")
 
-class JDF_Editor(Text_Editor):
-    jdf_list=ContainerList()
+class jdf_base(Base):
+    comment=Unicode()
     Px=Int()
     Py=Int()
     Qx=Int()
     Qy=Int()
 
+    GLMPOS_comment=Unicode()
+    
+    mgn_name=Unicode()
+    wafer_diameter=Float()
+    write_diameter=Float()
+    
+    stdcur=Int(2)
+    shot=Int(8)
+    resist=Int(165)
+    arrays=ContainerList()
+
+class jdf_array(Base):
+    """describes a jdf array. defaults to an array centered at 0,0 with one item. array_num=0 corresponds to the main array"""
+    array_num=Int()
+    x_start=Int()
+    x_num=Int(1)
+    x_step=Int()
+    y_start=Int()
+    y_num=Int(1)
+    y_step=Int()
+    M1x=Int()
+    M1y=Int()
+    assigns=ContainerList()
+    
+class jdf_assign(Base):
+    assign_type=ContainerList()
+    pos_assign=ContainerList()
+    
+    
+class JDF_Editor(Text_Editor):
+    #jdf_list=ContainerList().tag(private=True)
+    Px=Int()
+    Py=Int()
+    Qx=Int()
+    Qy=Int()
+    D=Bool()
+    U=Unicode("blahldsfkasdlfjdlafdslkfjfjkskglajlgk").tag(unit="Hz", min_width=300, no_spacer=True)
+    
     def jdf_parse(self):
-        self.jdf_list=self.data.split("\n")
+        jdf_list=self.data.split("\n")
         inside_path=False
         inside_layer=False
         patterns=[]
         array_num=0
         assign_array=[]
-        for n, line in enumerate(self.jdf_list):
+        for n, line in enumerate(jdf_list):
             #if  n==4:
             templist=line.split(";")
             tempstr=templist[0].strip() #remove comments
@@ -82,17 +120,16 @@ class JDF_Editor(Text_Editor):
                         x_start, x_num, x_step, y_start, y_num, y_step=xy_string_split(tempstr) #for main array
                 elif 'ASSIGN' in tempstr:
                     assign_type=tempstr.split("ASSIGN")[1].split("->")[0].strip().split("+")
+                    #assign_num=[s.split(')') for s in tempstr.split("->")[1].split("(")]
+                    pos_assign=[]
                     
-                    assign_num=[s.split(')') for s in tempstr.split("->")[1].split("(")]
-
-                    pos_assign=tempstr.split("->")[1].partition("(")[2].rpartition(")")[0].split(")")
-                    for item in pos_assign:
+                    for item in tempstr.split("->")[1].partition("(")[2].rpartition(")")[0].split(")"):
                         if "(" in item:
-                            print item.split("(")[1].split(",")
+                            xcor, ycor=item.split("(")[1].split(",")
+                            pos_assign.append((xcor, ycor))
                         elif "," in item:
-                            print item.split(",")[1].strip()
-                    
-                    print array_num, assign_type, pos_assign
+                            pos_assign.append(item.split(",")[1].strip())                    
+                    #print array_num, assign_type, pos_assign
                     if array_num==0:
                         assign_array.append(("+".join(assign_type), comment))
                 elif 'CHMPOS' in tempstr:
@@ -117,9 +154,9 @@ class JDF_Editor(Text_Editor):
                     pattern_num=tempstr.split("(")[1].split(")")[0]
                     pattern_x=tempstr.split("(")[2].split(")")[0].split(",")[0]
                     pattern_y=tempstr.split("(")[2].split(")")[0].split(",")[0]
-                    #print pattern_num, pattern_x, pattern_y, pattern_name
+                    print pattern_num, pattern_x, pattern_y, pattern_name
 
-        #print patterns
+        print patterns
         print assign_array
 
 
@@ -198,7 +235,8 @@ if __name__=="__main__":
     print a.data
     a.jdf_parse()
     print a.Px
+    print [a.get_tag(aa, 'label', aa) for aa in a.all_params]
     #print a.jdf_list
-    #a.show()
+    a.show()
     #print a.jdf_save_file.file_path
 #/Volumes/aref/jbx9300/job/TA150515B/IDTs

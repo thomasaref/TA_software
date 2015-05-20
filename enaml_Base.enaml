@@ -32,12 +32,12 @@ template ValView(name, model, modelType):
         text << unicode(getattr(model, name))
 
 template ValView(name, model, modelType: Read_File):
-    """ This default specialization displays read-only text for the value."""
+    """ Displays a read file interface"""
     ReadWrap:
         filer:=getattr(model, name)
 
 template ValView(name, model, modelType: Save_File):
-    """ This default specialization displays read-only text for the value."""
+    """Displays a save file interface"""
     SaveWrap:
         filer:=getattr(model, name)
         
@@ -400,23 +400,26 @@ template ValView(name, model, modelType: FloatRange):
         
 template ValView(name, model, modelType: Int):
     """ A form control template specialization for Int members using a spin box"""
-    SpinBox:
-        value := getattr(model, name)
-        minimum=model.get_tag(name, 'low', 0)
-        maximum=model.get_tag(name, 'high', 32767)
+    #SpinBox:
+    #    value := getattr(model, name)
+    #    minimum=model.get_tag(name, 'low', 0)
+    #    maximum=model.get_tag(name, 'high', 32767)
+        
+    LabelUnit(name, model, SpinBox): sb:
+        sb.content.value := getattr(model, name)
+        sb.content.minimum=model.get_tag(name, 'low', 0)
+        sb.content.maximum=model.get_tag(name, 'high', 32767)
+        #panel.lbl.text=model.get_tag(name, 'label', name)
         
 template ValView(name, model, modelType: Str):
     """ A template specialization for Unicode using a MultilineField"""
-    #Container:
-        #constraints = [width == 800, height==600]
     MultilineField: mlf:
-    #        constraints = [width == 800, height==600]
             text := getattr(model, name)
-
+        
 template ValView(name, model, modelType: Unicode):
     """A template specialization for Unicode using a field"""
-    Field:
-        text := getattr(model, name)
+    LabelUnit(name, model, Field): fd:
+        fd.content.text := getattr(model, name)
 
 template ValView(name, model, modelType: Callable):
     """A template specialization for Unicode using a field"""
@@ -450,8 +453,30 @@ template ValView(name, model, modelType: Enum):
 
 template ValView(name, model, modelType: Bool):
     """ A form control template specialization for Bool members using CheckBox"""
-    CheckBox:
-        checked := getattr(model, name)
+    LabelUnit(name, model, CheckBox): cb:
+        cb.content.checked := getattr(model, name)
+
+def constraints_gen(name, model, lbl, content, unt):
+    if model.get_tag(name, "no_spacer", False):
+        return [hbox(lbl, content, unt)]      
+    else:
+        return [hbox(lbl, content, unt, spacer), content.width>=model.get_tag(name, 'min_width', 150)]
+    
+template LabelUnit(name, model, Content):
+    """ Create a container with Ok | Cancel buttons."""
+    Container:
+        alias content
+        constraints = constraints_gen(name, model, lbl, content, unt) #[
+#           hbox(lbl, content, unt, spacer), content.width>=model.get_tag(name, 'min_width', 150)
+ #       ]
+        Content: content:
+            pass
+        Label: lbl:
+            text = model.get_tag(name, 'label', name)
+        Label: unt:
+            text = model.get_tag(name, 'unit', "")
+            visible = model.get_tag(name, 'unit')!=None            
+      
 
 #def worker(var, func_str):
 #    p=-1
