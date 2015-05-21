@@ -10,7 +10,7 @@ from enaml.widgets.api import (RawWidget, Container, Field, Form, SpinBox, Group
                                ProgressBar, PushButton, CheckBox, MultilineField, ScrollArea, ObjectCombo, Slider)
                                
 from enaml.layout.api import hbox, vbox, spacer, align
-from enaml.core.api import DynamicTemplate, Looper, d_
+from enaml.core.api import DynamicTemplate, Looper, d_, Include
 from enaml.stdlib.fields import FloatField
 from enaml.application import deferred_call
 from threading import Thread
@@ -24,6 +24,7 @@ import EBL_Item
 from enaml_Filer import ReadWrap, SaveWrap
 from Atom_Read_File import Read_File
 from Atom_Save_File import Save_File
+from Atom_Text_Editor import jdf_array
 
 template ValView(name, model, modelType):
     """ This default specialization displays read-only text for the value."""
@@ -282,6 +283,12 @@ template ArrView(name, instr, inside_type: tuple):
     arrcont:
         mydata:= tuplearrview(instr=instr, name=name, mytype=tuple)
 
+template show_value_view(mydata, inside_type):
+    """ This default specialization displays read-only text for the value."""
+    Field:
+        read_only = True
+        text << unicode(mydata)
+        
 template show_value_view(mydata, inside_type: EBL_Item.EBLPolygon):
     Container:
         padding=0
@@ -333,12 +340,65 @@ def inside_type(name, instr):
          pass
     return instr.get_tag(name, "inside_type", intype)
      
+#template ValView(name, model, modelType: ContainerList):
+#    Container: val:
+#            padding = 0
+#            DynamicTemplate: dyn:
+#                base = ArrView
+#                args = (name, model, inside_type(name, model))
+
+
+#    ObjectCombo: val:
+#        items = list(model.get_member(name).items)
+#            selected := getattr(model, name)
+        
+def cl(name, model, index, vtype):
+    #print name, model, index, type(getattr(model, name)[index])
+    #indmodel=getattr(model, name)[index]
+    if isinstance(getattr(model, name)[index], Base):
+        return [#ObjectCombo(items=[ii.name for ii in getattr(model, name)], selected=getattr(model, name)[index].name), 
+                AutoFormWrap(instr=getattr(model, name)[index])]
+    elif isinstance(getattr(model, name)[index], float):
+        return [FloatField(value=getattr(model, name)[index])]
+    else:
+        return [Field(read_only = True, text=unicode(getattr(model, name)[index]))]
+        
 template ValView(name, model, modelType: ContainerList):
-    Container: val:
+    Container:
+        #attr index = 0
+        constraints = [hbox(ind, val, insert_btn, pop_btn), ind.width==100]
+        SpinBox: ind:
+            #value := index
+            minimum=0
+            maximum << max(0, len(getattr(model, name))-1)
+        #Field: val2:
+         #   text<<unicode(getattr(model, name)[ind.value].x_start)
+        Container: val:
             padding = 0
-            DynamicTemplate: dyn:
-                base = ArrView
-                args = (name, model, inside_type(name, model))
+            Include:
+                objects << cl(name, model, ind.value, type(getattr(model, name))) #[AutoFormWrap(instr=getattr(model, name)[ind.value])]
+            #Looper:
+            #    iterable << getattr(model, name)[index].main_params #model.return_vars
+            #    DynamicTemplate:
+            #        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+            #        args=(loop_item, getattr(model, name)[index], type(getattr(model, name)[index]))
+            
+#            DynamicTemplate: dyn:
+#                base = ValView
+#                args = (name, model, model.get_type(name))
+        PushButton: insert_btn:
+            text="Insert"
+            clicked:: pass #mydata.insert()
+            visible << model.get_tag(name, "full_interface", False)
+        PushButton: pop_btn:
+            text="Remove"        
+            clicked:: pass #mydata.pop()
+            visible << model.get_tag(name, "full_interface", False)            
+
+            #padding = 0
+            #DynamicTemplate: dyn:
+            #    base = ArrView
+            #    args = (name, model, inside_type(name, model))
 
 template ValView(name, model, modelType: List):
         GroupBox:
@@ -400,16 +460,11 @@ template ValView(name, model, modelType: FloatRange):
         
 template ValView(name, model, modelType: Int):
     """ A form control template specialization for Int members using a spin box"""
-    #SpinBox:
-    #    value := getattr(model, name)
-    #    minimum=model.get_tag(name, 'low', 0)
-    #    maximum=model.get_tag(name, 'high', 32767)
-        
-    LabelUnit(name, model, SpinBox): sb:
-        sb.content.value := getattr(model, name)
-        sb.content.minimum=model.get_tag(name, 'low', 0)
-        sb.content.maximum=model.get_tag(name, 'high', 32767)
-        #panel.lbl.text=model.get_tag(name, 'label', name)
+    SpinBox:
+        value := getattr(model, name)
+        minimum=model.get_tag(name, 'low', -2147483648)
+        maximum=model.get_tag(name, 'high', 2147483647)  
+
         
 template ValView(name, model, modelType: Str):
     """ A template specialization for Unicode using a MultilineField"""
@@ -418,8 +473,8 @@ template ValView(name, model, modelType: Str):
         
 template ValView(name, model, modelType: Unicode):
     """A template specialization for Unicode using a field"""
-    LabelUnit(name, model, Field): fd:
-        fd.content.text := getattr(model, name)
+    Field:
+        text := getattr(model, name)
 
 template ValView(name, model, modelType: Callable):
     """A template specialization for Unicode using a field"""
@@ -453,29 +508,29 @@ template ValView(name, model, modelType: Enum):
 
 template ValView(name, model, modelType: Bool):
     """ A form control template specialization for Bool members using CheckBox"""
-    LabelUnit(name, model, CheckBox): cb:
-        cb.content.checked := getattr(model, name)
+    CheckBox:
+        checked := getattr(model, name)
 
-def constraints_gen(name, model, lbl, content, unt):
-    if model.get_tag(name, "no_spacer", False):
-        return [hbox(lbl, content, unt)]      
-    else:
-        return [hbox(lbl, content, unt, spacer), content.width>=model.get_tag(name, 'min_width', 150)]
+#def constraints_gen(name, model, lbl, content, unt):
+#    if type(model.get_tag(name, "width", 0))!=int:
+#        return [hbox(lbl, content, unt)]      
+#    else:
+#        return [hbox(lbl, content, unt, spacer), content.width>=model.get_tag(name, 'width', 150)]
     
-template LabelUnit(name, model, Content):
-    """ Create a container with Ok | Cancel buttons."""
-    Container:
-        alias content
-        constraints = constraints_gen(name, model, lbl, content, unt) #[
-#           hbox(lbl, content, unt, spacer), content.width>=model.get_tag(name, 'min_width', 150)
- #       ]
-        Content: content:
-            pass
-        Label: lbl:
-            text = model.get_tag(name, 'label', name)
-        Label: unt:
-            text = model.get_tag(name, 'unit', "")
-            visible = model.get_tag(name, 'unit')!=None            
+#template LabelUnit(name, model, Content):
+#    """ Create a container with Ok | Cancel buttons."""
+#    Container:
+#        alias content
+#        constraints = constraints_gen(name, model, lbl, content, unt) #[
+##           hbox(lbl, content, unt, spacer), content.width>=model.get_tag(name, 'min_width', 150)
+# #       ]
+#        Content: content:
+#            pass
+#        Label: lbl:
+#            text = model.get_tag(name, 'label', name)
+#        Label: unt:
+#            text = model.get_tag(name, 'unit', "")
+#            visible = model.get_tag(name, 'unit')!=None            
       
 
 #def worker(var, func_str):
@@ -564,27 +619,33 @@ enamldef BootClose(Container):
                     items = instr.all_params
                     selected := instr.plot_x
 
+def constraints_gen(name, model, lbl, val, unt, contents_width, contents_top, contents_left):
+    if type(model.get_tag(name, "width", 0))!=int:
+        return [hbox(lbl, val, unt)]      
+    else:
+        return [hbox(lbl, val, unt, spacer), val.width>=model.get_tag(name, 'width', contents_width/5),
+                align('bottom', val, unt), align('bottom', lbl, val)]
+                 #contents_top == val.top, contents_left == lbl.left,]
 
 template VarTemp(name, instr, InstrType: Base):
     GroupBox: gbcontents:
         flat = True
         padding=0
-#        constraints = [hbox( lbl, val, unt),#,
+        constraints = constraints_gen(name, instr, lbl, val, unt, contents_width, contents_top, contents_left) #[hbox( lbl, val, unt),#,
         #               align('top', val, unt), align('top', lbl, val),
         #                  align('left', gbcontents, 80, val) | 'medium']#, width == contents_width, height==contents_height]
                         #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
 #                         (lbl.bottom == contents_bottom) | 'medium']
-        #Label: lbl:
-        #    text = instr.get_tag(name, 'label', name)
+        Label: lbl:
+            text = instr.get_tag(name, 'label', name)
         Container: val:
             padding = 0
-            #constraints = [width == contents_width, height==contents_height]
             DynamicTemplate: dyn:
                 base = ValView
                 args = (name, instr, instr.get_type(name))
-        #Label: unt:
-        #    text = instr.get_tag(name, 'unit', "")
-        #    visible = instr.get_tag(name, 'unit')!=None
+        Label: unt:
+            text = instr.get_tag(name, 'unit', "")
+            visible = instr.get_tag(name, 'unit')!=None
             
 template VarTemp(name, instr, InstrType: Instrument):
     GroupBox: contents:
@@ -683,7 +744,7 @@ enamldef AutoForm(Container):
         base = AutoFormBody
         args = (instr,)
 
-
+    
 enamldef AutoBaseCont(Container):
         padding = 0
         constraints = [width == contents_width, height==contents_height]
@@ -693,6 +754,10 @@ enamldef AutoBaseCont(Container):
                 padding = 0
                 AutoForm: var1:
                     pass
+
+enamldef AutoFormWrap(AutoBaseCont):
+    attr instr
+    
 
 enamldef AutoInstrCont(Container):
         padding = 0

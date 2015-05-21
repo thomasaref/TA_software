@@ -63,6 +63,7 @@ class Base(Atom):
     #showing=Bool(False) #remove?
     full_interface=Bool(False).tag(private=True) #checked by GUI but applies more to instrument
     plot_all=Bool(False).tag(private=True)
+    show_base=Bool(True).tag(private=True) #boolean that controls if base appears in boss toolbar
     view=Enum("Auto").tag(private=True)
 
     #plot_keys=List() #remove?
@@ -285,7 +286,8 @@ class Base(Atom):
         #self.set_boss()
         if self.name=="":
             self.name="base{}".format(len(self.boss.bases))
-        self.boss.bases.append(self)
+        if self.show_base:
+            self.boss.bases.append(self)
        # plot_keys=[]
         for key in self.all_params:
             if self.get_type(key)==ContainerList:

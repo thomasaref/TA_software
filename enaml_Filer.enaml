@@ -53,9 +53,10 @@ enamldef SimpleRead(Container):
 
 enamldef FilerInterface(Container):
     padding=0
-    constraints =[vbox(hbox(base_dir_lbl, base_dir_fld, base_dir, spacer),
-                       hbox(main_dir_lbl, main_dir, quality_lbl, quality, main_file_lbl, main_file, spacer)),
-                        main_dir.width==600, base_dir_fld.width==800, main_file.width==100]
+    constraints =[vbox(hbox(base_dir_lbl, base_dir_fld, base_dir),
+                       hbox(main_dir_lbl, main_dir, quality_lbl, quality, main_file_lbl, main_file)),
+#                        main_dir.width==600, base_dir_fld.width==800, 
+                        main_file.width==contents_width/5]
 
     Label: main_dir_lbl:
         text = "Main dir:"

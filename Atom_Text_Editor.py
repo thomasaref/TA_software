@@ -8,7 +8,7 @@ A simple text editor driver allowing one to load, edit and save text files
 """
 
 from Atom_Base import Base
-from atom.api import Str, observe, Unicode, Typed, ContainerList, Int, Float, Bool
+from atom.api import Str, observe, Unicode, Typed, ContainerList, Int, Float, Bool, List, Atom, Coerced, Instance
 from Atom_Read_File import Read_TXT
 from Atom_Save_File import Save_TXT
 #from LOG_functions import log_info, log_debug, make_log_file, log_warning
@@ -16,9 +16,9 @@ from Atom_Save_File import Save_TXT
 class Text_Editor(Base):
     main_file=Unicode("idt.jdf").tag(private=True)
     dir_path=Unicode("/Users/thomasaref/Dropbox/Current stuff/TA_software").tag(private=True)
-    data=Str().tag(discard=True, log=False)
-    read_file=Typed(Read_TXT)
-    save_file=Typed(Save_TXT)
+    data=Str().tag(discard=True, log=False, width="max", label="")
+    read_file=Typed(Read_TXT).tag(width="max")
+    save_file=Typed(Save_TXT).tag(width='max')
 
     #def _default_name(self):
     #    return "base{0}".format(len(self.boss.bases))
@@ -43,6 +43,25 @@ def xy_string_split(tempstr):
 def tuple_split(tempstr):
     return tempstr.split("(")[1].split(")")[0].split(",")
 
+
+class jdf_array(Base):
+    """describes a jdf array. defaults to an array centered at 0,0 with one item. array_num=0 corresponds to the main array"""
+    #array_num=Int()
+    x_start=Int()
+    x_num=Int(1)
+    x_step=Int()
+    y_start=Int()
+    y_num=Int(1)
+    y_step=Int()
+    M1x=Int()
+    M1y=Int()
+    
+    def _default_show_base(self):
+        return False
+        
+    def _default_main_params(self):
+        return ['x_start', 'x_num', 'x_step', 'y_start', 'y_num', 'y_step', 'M1x', 'M1y']
+        
 class jdf_base(Base):
     comment=Unicode()
     Px=Int()
@@ -59,20 +78,19 @@ class jdf_base(Base):
     stdcur=Int(2)
     shot=Int(8)
     resist=Int(165)
-    arrays=ContainerList()
-
-class jdf_array(Base):
-    """describes a jdf array. defaults to an array centered at 0,0 with one item. array_num=0 corresponds to the main array"""
-    array_num=Int()
-    x_start=Int()
-    x_num=Int(1)
-    x_step=Int()
-    y_start=Int()
-    y_num=Int(1)
-    y_step=Int()
-    M1x=Int()
-    M1y=Int()
-    assigns=ContainerList()
+    arrays=ContainerList().tag(width='max')
+    
+    def add_array(self, x_start, x_num, x_step, y_start, y_num, y_step, M1x=0, M1y=0):
+        temparray=jdf_array(name="jdf_array{0}".format(len(self.arrays)), show_base=False)
+        temparray.x_start=x_start
+        temparray.x_num=x_num
+        temparray.x_step=x_step
+        temparray.y_start=y_start
+        temparray.y_num=y_num
+        temparray.y_step=y_step
+        temparray.M1x=M1x
+        temparray.M1y=M1y
+        self.arrays.append(temparray)  
     
 class jdf_assign(Base):
     assign_type=ContainerList()
@@ -81,12 +99,7 @@ class jdf_assign(Base):
     
 class JDF_Editor(Text_Editor):
     #jdf_list=ContainerList().tag(private=True)
-    Px=Int()
-    Py=Int()
-    Qx=Int()
-    Qy=Int()
-    D=Bool()
-    U=Unicode("blahldsfkasdlfjdlafdslkfjfjkskglajlgk").tag(unit="Hz", min_width=300, no_spacer=True)
+    jdf=Typed(jdf_base, ())
     
     def jdf_parse(self):
         jdf_list=self.data.split("\n")
@@ -102,7 +115,7 @@ class JDF_Editor(Text_Editor):
             if ';' in line:
                 comment=templist[1].strip()
             if tempstr.startswith('GLMPOS'):
-                self.Px, self.Py, self.Qx, self.Qy=xy_string_split(tempstr) #get P and Q mark positions
+                self.jdf.Px, self.jdf.Py, self.jdf.Qx, self.jdf.Qy=xy_string_split(tempstr) #get P and Q mark positions
                 #Px, Py, Qx, Qy
             elif 'JOB' in tempstr:
                 mgn_name, wafer_diameter, write_diameter=tempstr.split(",") #magazine name and wafer size
@@ -118,6 +131,7 @@ class JDF_Editor(Text_Editor):
                         x_start, x_num, x_step, y_start, y_num, y_step=xy_string_split(tempstr)
                     else:
                         x_start, x_num, x_step, y_start, y_num, y_step=xy_string_split(tempstr) #for main array
+                    self.jdf.add_array(x_start=x_start, x_num=x_num, x_step=x_step, y_start=y_start, y_num=y_num, y_step=y_step)
                 elif 'ASSIGN' in tempstr:
                     assign_type=tempstr.split("ASSIGN")[1].split("->")[0].strip().split("+")
                     #assign_num=[s.split(')') for s in tempstr.split("->")[1].split("(")]
@@ -134,6 +148,8 @@ class JDF_Editor(Text_Editor):
                         assign_array.append(("+".join(assign_type), comment))
                 elif 'CHMPOS' in tempstr:
                     M1x, M1y=tuple_split(tempstr)
+                    self.jdf.arrays[-1].M1x=M1x
+                    self.jdf.arrays[-1].M1y=M1y
                 elif "PEND" in tempstr:
                     inside_path=False
             elif inside_layer:
@@ -230,13 +246,15 @@ for i, item in enumerate(AssignArray):
 
 if __name__=="__main__":
     a=JDF_Editor()#dir_path="/Volumes/aref/jbx9300/job/TA150515B/IDTs", main_file="idt.jdf")
-    b=Text_Editor()
+    b=jdf_base()
+    b.arrays.extend((jdf_array(), jdf_array(x_start=5)))
     a.read_file.read()
     print a.data
     a.jdf_parse()
-    print a.Px
-    print [a.get_tag(aa, 'label', aa) for aa in a.all_params]
+    a.jdf.arrays.append(4.5)
+    #print a.Px
+    #print [a.get_tag(aa, 'label', aa) for aa in a.all_params]
     #print a.jdf_list
-    a.show()
+    b.show()
     #print a.jdf_save_file.file_path
 #/Volumes/aref/jbx9300/job/TA150515B/IDTs
