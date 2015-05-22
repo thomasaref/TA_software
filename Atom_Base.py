@@ -90,6 +90,14 @@ class Base(Atom):
         #        main_params.append(item)
         #return main_params
 
+    def copy(self):
+        tempbase=type(self)()
+        for name in self.all_params:
+            setattr(tempbase, name, getattr(self, name))
+        for name in self.reserved_names:
+            setattr(tempbase, name, getattr(self, name))
+        return tempbase
+        
     def data_save(self, name, value):
         """shortcut to data saving"""
         self.boss.data_save(self, name, value)

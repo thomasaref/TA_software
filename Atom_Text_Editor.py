@@ -78,7 +78,7 @@ class jdf_base(Base):
     stdcur=Int(2)
     shot=Int(8)
     resist=Int(165)
-    arrays=ContainerList().tag(width='max')
+    arrays=ContainerList().tag(width='max', inside_type=jdf_array)
     
     def add_array(self, x_start, x_num, x_step, y_start, y_num, y_step, M1x=0, M1y=0):
         temparray=jdf_array(name="jdf_array{0}".format(len(self.arrays)), show_base=False)
@@ -252,9 +252,13 @@ if __name__=="__main__":
     print a.data
     a.jdf_parse()
     a.jdf.arrays.append(4.5)
+    a.jdf.arrays.append(4)
+    
     #print a.Px
     #print [a.get_tag(aa, 'label', aa) for aa in a.all_params]
     #print a.jdf_list
+    #print b.get_member('arrays').item.validate_mode[1]
+
     b.show()
     #print a.jdf_save_file.file_path
 #/Volumes/aref/jbx9300/job/TA150515B/IDTs

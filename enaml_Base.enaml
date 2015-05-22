@@ -16,7 +16,7 @@ from enaml.application import deferred_call
 from threading import Thread
 from time import sleep
 from numpy import ndarray
-from atom.api import observe, Atom, Callable, Tuple, Typed, Dict, List, Float, Int, Unicode, Enum, Bool, Str, ContainerList, Range, FloatRange, Instance
+from atom.api import observe, Atom, Callable, Tuple, Typed, Dict, List, Float, Int, Unicode, Enum, Bool, Str, ContainerList, Range, FloatRange, Instance, Event
 from Atom_Base import Base
 from Atom_Instrument import Instrument
 #from EBL_Item import EBLPolygon
@@ -351,50 +351,180 @@ def inside_type(name, instr):
 #    ObjectCombo: val:
 #        items = list(model.get_member(name).items)
 #            selected := getattr(model, name)
+ 
+enamldef FloatFieldWrap(Container):
+    attr invalue    
+    FloatField:
+        value:=float(invalue)
+def container_list_view(name, model, index, vtype):
+    #this generates a view of an element in a container list
+    if len(getattr(model, name))!=0:
+        if isinstance(getattr(model, name)[index], Base): #base template
+            return [#ObjectCombo(items=[ii.name for ii in getattr(model, name)], selected=getattr(model, name)[index].name), 
+                    AutoFormWrap(instr=getattr(model, name)[index])]
+        elif type(getattr(model, name)[index]) in [float, int]: #number template
+            return [FloatFieldWrap(invalue=float(getattr(model, name)[index]))]
+        elif type(getattr(model, name)[index]) in [unicode, str]:
+            return [Field(text=unicode(getattr(model, name)[index]))]
+        else:
+            return [Field(read_only = True, text=unicode(getattr(model, name)[index]))]
+    return []
+    
+template CLView(name, model, index, vtype: Base):
+    AutoFormWrap:
+        instr:=getattr(model, name)[index]
+
+template CLView(name, model, index, vtype):
+    Field:
+        read_only=True
+        text<<unicode(getattr(model, name)[index])
+
+template CLView(name, model, index, vtype: float):
+    FloatField:
+        value:=getattr(model, name)[index]
+
+template CLView(name, model, index, vtype: int):
+    IntField:
+        value:=getattr(model, name)[index]
+
+template CLView(name, model, index, vtype: str):
+    IntField:
+        value:=getattr(model, name)[index]
+
+
+template ValView(name, model, modelType: List):
+        GroupBox:
+            padding = 0
+            visible << getattr(model, name)!=[]
+            title = instr.get_tag(name, 'label', name)+" variables:"
+            Looper:
+                    iterable << getattr(model, name) #model.return_vars
+                    DynamicTemplate:
+                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+                        args=(loop_item, model, type(model))
+
+
+template ValView(name, model, modelType: FloatRange):
+    """ A form control template specialization for Float members"""
+    Container: 
+        constraints=[hbox(sel, min_lbl, sel_slider, max_lbl)]
+        FloatField: sel:
+            value:=getattr(model, name)
+            minimum = ft.minimum
+            maximum = ft.maximum
+        Slider: sel_slider:
+            tracking = False
+            FloatTransform: ft:
+                minimum=model.get_tag(name, 'low')
+                maximum=model.get_tag(name, 'high')
+                value :=getattr(model, name)
+                precision=model.get_tag(name, 'precision', 100)
+        Label: min_lbl:
+                text << str(ft.precision)
+        Label: max_lbl:
+            text << str(ft.maximum)
         
-def cl(name, model, index, vtype):
-    #print name, model, index, type(getattr(model, name)[index])
-    #indmodel=getattr(model, name)[index]
-    if isinstance(getattr(model, name)[index], Base):
-        return [#ObjectCombo(items=[ii.name for ii in getattr(model, name)], selected=getattr(model, name)[index].name), 
-                AutoFormWrap(instr=getattr(model, name)[index])]
-    elif isinstance(getattr(model, name)[index], float):
-        return [FloatField(value=getattr(model, name)[index])]
-    else:
-        return [Field(read_only = True, text=unicode(getattr(model, name)[index]))]
+template ValView(name, model, modelType: Int):
+    """ A form control template specialization for Int members using a spin box"""
+    SpinBox:
+        value := getattr(model, name)
+        minimum=model.get_tag(name, 'low', -2147483648)
+        maximum=model.get_tag(name, 'high', 2147483647)  
+
         
+template ValView(name, model, modelType: Str):
+    """ A template specialization for Unicode using a MultilineField"""
+    MultilineField: mlf:
+            text := getattr(model, name)
+        
+template ValView(name, model, modelType: Unicode):
+    """A template specialization for Unicode using a field"""
+    Field:
+        text := getattr(model, name)
+
+template ValView(name, model, modelType: Callable):
+    """A template specialization for Unicode using a field"""
+    Container:
+        padding = 0
+        constraints = [hbox(pb1, gb1), align('top', pb1, gb1)]
+        PushButton: pb1:
+            text = 'Run'
+            clicked :: getattr(instr, name)(instr) #do_it_if_needed(var, "receive") #receive()
+            enabled << not instr.busy
+        GroupBox: gb1:
+            padding = 0
+            visible = getattr(model, name).run_params!=[]
+            title = instr.get_tag(name, 'label', name)+" parameters:"
+            Looper: get_loop:
+                    iterable << getattr(model, name).run_params
+                    DynamicTemplate:
+                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+                        args=(loop_item, instr, type(instr))
+
+template ValView(name, model, modelType: Enum):
+    """ A form control template specialization for Enum members using ObjectCombo."""
+    Container:
+        padding = 0
+        constraints = [ hbox(val, enm_val)]
+        ObjectCombo: val:
+            items = list(model.get_member(name).items)
+            selected := getattr(model, name)
+        Label: enm_val:
+            text := unicode(model.get_tag(name, 'mapping', {getattr(model, name):getattr(model, name)})[getattr(model, name)])
+
+template ValView(name, model, modelType: Bool):
+    """ A form control template specialization for Bool members using CheckBox"""
+    CheckBox:
+        checked := getattr(model, name)        
+#class NewSpinBox(SpinBox):
+#    updet=d_(Event())
+#    oldvalue=d_(Int())
+#    def _observe_value(self, change):
+#        print change 
+#        if change['type']=='update':
+#            self.oldvalue=change['oldvalue']
+#            self.updet()
+       
+
 template ValView(name, model, modelType: ContainerList):
     Container:
-        #attr index = 0
         constraints = [hbox(ind, val, insert_btn, pop_btn), ind.width==100]
         SpinBox: ind:
-            #value := index
             minimum=0
             maximum << max(0, len(getattr(model, name))-1)
         #Field: val2:
          #   text<<unicode(getattr(model, name)[ind.value].x_start)
         Container: val:
             padding = 0
-            Include:
-                objects << cl(name, model, ind.value, type(getattr(model, name))) #[AutoFormWrap(instr=getattr(model, name)[ind.value])]
+            #Include: #dyno: #the objects are replaced every time ind.value is updated which is not super effecient but allows different objects in the list
+            #    objects << container_list_view(name, model, ind.value, type(getattr(model, name))) #[AutoFormWrap(instr=getattr(model, name)[ind.value])]
             #Looper:
             #    iterable << getattr(model, name)[index].main_params #model.return_vars
             #    DynamicTemplate:
             #        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
             #        args=(loop_item, getattr(model, name)[index], type(getattr(model, name)[index]))
             
-#            DynamicTemplate: dyn:
-#                base = ValView
-#                args = (name, model, model.get_type(name))
+            DynamicTemplate: dyn:
+                base = CLView
+                args << (name, model, ind.value, type(getattr(model, name)[ind.value]))
         PushButton: insert_btn:
             text="Insert"
-            clicked:: pass #mydata.insert()
-            visible << model.get_tag(name, "full_interface", False)
+            clicked:: 
+                if len(getattr(model, name))==0:
+                    intype=model.get_tag(name, 'inside_type')() #if inside_type is not specified for an empty array, this will generate an error
+                else:
+                    temptype=getattr(model, name)[ind.value]
+                    if isinstance(temptype, Base):
+                        intype=temptype.copy()
+                    else:
+                        intype=type(temptype)()
+                getattr(model, name).insert(ind.value, intype) #pass #mydata.insert()
+            #visible << model.get_tag(name, "full_interface", False)
         PushButton: pop_btn:
             text="Remove"        
-            clicked:: pass #mydata.pop()
-            visible << model.get_tag(name, "full_interface", False)            
-
+            clicked:: getattr(model, name).pop(ind.value)
+            #visible << model.get_tag(name, "full_interface", False)            
+            enabled << len(getattr(model, name))>0
             #padding = 0
             #DynamicTemplate: dyn:
             #    base = ArrView
