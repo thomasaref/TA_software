@@ -55,13 +55,13 @@ class jdf_array(Base):
     y_step=Int()
     M1x=Int()
     M1y=Int()
-    
+
     def _default_show_base(self):
         return False
-        
+
     def _default_main_params(self):
         return ['x_start', 'x_num', 'x_step', 'y_start', 'y_num', 'y_step', 'M1x', 'M1y']
-        
+
 class jdf_base(Base):
     comment=Unicode()
     Px=Int()
@@ -70,16 +70,16 @@ class jdf_base(Base):
     Qy=Int()
 
     GLMPOS_comment=Unicode()
-    
+
     mgn_name=Unicode()
     wafer_diameter=Float()
     write_diameter=Float()
-    
+
     stdcur=Int(2)
     shot=Int(8)
     resist=Int(165)
     arrays=ContainerList().tag(width='max', inside_type=jdf_array)
-    
+
     def add_array(self, x_start, x_num, x_step, y_start, y_num, y_step, M1x=0, M1y=0):
         temparray=jdf_array(name="jdf_array{0}".format(len(self.arrays)), show_base=False)
         temparray.x_start=x_start
@@ -90,17 +90,17 @@ class jdf_base(Base):
         temparray.y_step=y_step
         temparray.M1x=M1x
         temparray.M1y=M1y
-        self.arrays.append(temparray)  
-    
+        self.arrays.append(temparray)
+
 class jdf_assign(Base):
     assign_type=ContainerList()
     pos_assign=ContainerList()
-    
-    
+
+
 class JDF_Editor(Text_Editor):
     #jdf_list=ContainerList().tag(private=True)
     jdf=Typed(jdf_base, ())
-    
+
     def jdf_parse(self):
         jdf_list=self.data.split("\n")
         inside_path=False
@@ -136,13 +136,13 @@ class JDF_Editor(Text_Editor):
                     assign_type=tempstr.split("ASSIGN")[1].split("->")[0].strip().split("+")
                     #assign_num=[s.split(')') for s in tempstr.split("->")[1].split("(")]
                     pos_assign=[]
-                    
+
                     for item in tempstr.split("->")[1].partition("(")[2].rpartition(")")[0].split(")"):
                         if "(" in item:
                             xcor, ycor=item.split("(")[1].split(",")
                             pos_assign.append((xcor, ycor))
                         elif "," in item:
-                            pos_assign.append(item.split(",")[1].strip())                    
+                            pos_assign.append(item.split(",")[1].strip())
                     #print array_num, assign_type, pos_assign
                     if array_num==0:
                         assign_array.append(("+".join(assign_type), comment))
@@ -249,16 +249,17 @@ if __name__=="__main__":
     b=jdf_base()
     b.arrays.extend((jdf_array(), jdf_array(x_start=5)))
     a.read_file.read()
-    print a.data
+    #print a.data
     a.jdf_parse()
+    #c=Base()
     a.jdf.arrays.append(4.5)
     a.jdf.arrays.append(4)
-    
+
     #print a.Px
     #print [a.get_tag(aa, 'label', aa) for aa in a.all_params]
     #print a.jdf_list
     #print b.get_member('arrays').item.validate_mode[1]
 
-    b.show()
+    a.show()
     #print a.jdf_save_file.file_path
 #/Volumes/aref/jbx9300/job/TA150515B/IDTs
