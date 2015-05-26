@@ -19,6 +19,7 @@ template BaseTemp(BaseView):
 from enaml_Plotter import PlotAreaContainer as PlotContainer
 from enaml_Filer import SaveWrap, ReadWrap, ReadSaveWrap
 from TA_Fundamentals import cap_case
+from atom.api import Atom, Str, Instance, Event
 
 enamldef BossToolBar(ToolBar):
     dock_area='left'
@@ -106,13 +107,41 @@ enamldef PlotBox(GroupBox):
         ObjectCombo: xvar:
             items = boss.plottables[xinstr.selected]
 
-enamldef LogPane(DockPane):
+#class LOG(Atom):
+#    logstr=Str()
+#    old_sys_stdout=Instance(type(sys.stdout))
+    
+#    def write(self, str):
+#        logstr+=str
+
+import sys    
+class WriteDockPane(DockPane):
+    #def _observe_visible(self, change):
+    #    print change
+    
+    def write(self,str):
+        self.logstr+=str
+
+    def redirect_stdout(logpane):
+        if logpane.visible:
+            sys.stdout=logpane
+        else:
+            sys.stdout=logpane.old_stdout
+                
+enamldef LogPane(WatchedDockPane): lp:
+    attr old_stdout=sys.stdout
+    attr logstr=""
     dock_area='bottom'
     title = "Log"
+    visible:: 
+        redirect_stdout(lp)
+        print "now it's vis"
+    activated :: print "log pane activated"
+    closed:: print "log pane closed"  
     Container:
         padding = 0
         MultilineField: mlf:
-            text << boss.save_file.log_str
+            text << lp.logstr
 
 enamldef SavePane(DockPane):
     dock_area='top'
@@ -280,7 +309,7 @@ enamldef BossMain(MainWindow): main:
         visible = False
     alias logpane
     LogPane: logpane:
-        pass
+        pass  
 
     #title="Boss"
 #    attr path : unicode=u''
