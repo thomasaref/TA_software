@@ -9,7 +9,7 @@ from enaml.widgets.api import ToolBar, DockItem, DockArea, Action, MainWindow, C
 from enaml.core.api import Looper, DynamicTemplate
 from enaml.layout.api import InsertItem,  InsertTab#,TabLayout
 
-from enaml_Boss import ReadSavePane, SavePane, LogPane, show_base2 as show_base, show_all_bases, BaseMain
+from enaml_Boss import ReadSavePane, SavePane, LogPane, show_general_item#, #show_base, show_all_bases#, BaseMain
 from TA_Fundamentals import cap_case
 
 #This code between the bars is just to demonstrate how to include a custom enaml template
@@ -116,22 +116,33 @@ enamldef InstrumentItem(DockItem):
 
 
 def show_instrument(area, instr):
-    show_base(area, instr, InstrumentItem)
-    
-def show_all_instruments(area, boss):
-    show_all_bases(area, boss, InstrumentItem)
+    if instr!=None:
+        show_general_item(area, instr, ItemType=InstrumentItem, target_items=instr.boss.bases, instr=instr)
 
-enamldef InstrMain(BaseMain): main:
+def show_all_instruments(area, boss):
+    for item in boss.bases:
+        show_instrument(area, item)
+
+enamldef InstrMain(MainWindow): main:
     attr instrin: None
     attr boss
     title="Instrument Control"
-    InstrumentToolBar: 
+    initial_size=(1200,800)
+    alias savepane
+    SavePane: savepane:
+        visible = instrin==None
+    alias logpane
+    LogPane: logpane:
+        pass
+
+    InstrumentToolBar:
         pass
     alias bossarea
     Container: mycont:
         constraints = [mycont.width==bossarea.width, mycont.height==bossarea.height]
         alias bossarea
         DockArea: bossarea:
-            activated :: 
+            activated ::
                 show_instrument(bossarea, instrin) #print "yoyoyoyoy"
-            
+
+

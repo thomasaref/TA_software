@@ -54,7 +54,7 @@ class Test_Instrument(Instrument):
     #plot_all=Bool(False)
     v2=Range(0,10,1)
     v3=FloatRange(0.1, 10.0, 3.0).tag(precision=1000)
-    booter=Callable(boot_func1) #overwriting booter to allow new boot function
+    booter=Callable(boot_func1).tag(private=True) #overwriting booter to allow new boot function
     voltage=Float().tag(unit="V", label="Voltage", sub=True) #demonstrates a Float sub parameter with label and unit
     inttry=Int().tag(set_cmd=set_inttry, get_cmd=get_inttry)
     strtry=Unicode().tag(set_cmd=set_strtry)
@@ -96,10 +96,10 @@ if __name__=="__main__":
     a.listtry=[1,2,3]
     a.calltry1(a, voltage=8)
 #    a.send_now=True
-    a.send_now=False
-    a.inttry=4
-    a.receive('enumtry')
-#    a.receive('voltage')
+#    a.send_now=False
+#    a.inttry=4
+#    a.receive('enumtry')
+##    a.receive('voltage')
     a.receive('listtry')
     #a.boss.saving=True
     a.show() #used to show the instrument in a GUI

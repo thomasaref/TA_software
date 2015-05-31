@@ -97,7 +97,7 @@ class Base(Atom):
         for name in self.reserved_names:
             setattr(tempbase, name, getattr(self, name))
         return tempbase
-        
+
     def data_save(self, name, value):
         """shortcut to data saving"""
         self.boss.data_save(self, name, value)
@@ -277,14 +277,16 @@ class Base(Atom):
     #    self.boss=master
 
     def _default_boss(self):
-        boss.BASE_DIR="/Users/thomasaref/Dropbox/Current stuff/TA_software"
-        boss.DIVIDER="/"
-        boss.LOG_NAME="record"
-        boss.FILE_NAME="meas"
-        boss.SETUP_GROUP_NAME="SetUp"
-        boss.SAVE_GROUP_NAME="Measurements"
-        make_log_file(log_path=boss.BASE_DIR+boss.DIVIDER+boss.LOG_NAME+".log")  #default log file
+        boss.make_boss()
         return boss
+#        boss.BASE_DIR="/Users/thomasaref/Dropbox/Current stuff/TA_software"
+#        boss.DIVIDER="/"
+#        boss.LOG_NAME="record"
+#        boss.FILE_NAME="meas"
+#        boss.SETUP_GROUP_NAME="SetUp"
+#        boss.SAVE_GROUP_NAME="Measurements"
+#        make_log_file(log_path=boss.BASE_DIR+boss.DIVIDER+boss.LOG_NAME+".log", display=boss.display)  #default log file
+#        return boss
 
     def __init__(self, **kwargs):
         """extends __init__ to set boss and add instrument to boss's instrument list.
@@ -351,6 +353,8 @@ class Base(Atom):
 
 
 if __name__=="__main__":
+    #class bt(Base):
+    #    df=Int()
     a=Base(name="blah")
     print a.reserved_names
     print a.all_params

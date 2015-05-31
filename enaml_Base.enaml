@@ -20,7 +20,7 @@ from atom.api import observe, Atom, Callable, Tuple, Typed, Dict, List, Float, I
 from Atom_Base import Base
 from Atom_Instrument import Instrument
 #from EBL_Item import EBLPolygon
-import EBL_Item
+#import EBL_Item
 from enaml_Filer import ReadWrap, SaveWrap
 from Atom_Read_File import Read_File
 from Atom_Save_File import Save_File
@@ -41,472 +41,6 @@ template ValView(name, model, modelType: Save_File):
     """Displays a save file interface"""
     SaveWrap:
         filer:=getattr(model, name)
-
-class subarrview(Atom):
-    instr=Typed(Atom)
-    polyindex = Int()
-    vertindex = Int()
-    length = Int()
-    show_value=ContainerList(default=[0.0,0.0])
-    changed=Bool(False)
-
-    def coercer(self):
-        try:
-            self.show_value=list(self.get_arr(self.index))
-        except IndexError:
-            self.show_value=[0.0, 0.0]
-
-    def conve(self):
-        return tuple(self.show_value)
-
-    def get_arr(self, polyindex=None, vertindex=None):
-       if vertindex==None:
-           if polyindex==None:
-               return getattr(self.instr, self.name)
-           return getattr(self.instr, self.name)[polyindex]
-       return getattr(self.instr, self.name)[polyindex][vertindex]
-
-    def __init__(self, **kwargs):
-        super(arrview, self).__init__(**kwargs)
-        self.instr.observe(self.name, self.value_changed)
-
-    def _default_length(self):
-        return len(self.get_arr())-1
-
-    def value_changed(self, change):
-        self.length=len(change['value'])-1
-        if self.index >= self.length:
-            self.index=self.length
-        self.index_changed({})
-        self.show_value  #call to update
-
-
-    @observe('index')
-    def index_changed(self, change):
-        self.changed=True
-        self.coercer()
-        self.changed=False
-
-    def _observe_show_value(self, change):
-        if self.changed==False:
-            try:
-                getattr(self.instr, self.name)[self.index]=self.conve() #tuple(self.show_value)
-            except IndexError:
-                getattr(self.instr, self.name).append(self.conve())
-
-    def insert(self):
-        self.get_arr().insert(self.index, self.conve())
-
-    def pop(self):
-        self.get_arr().pop(self.index)
-
-
-class arrview(Atom):
-    name=Unicode()
-    index = Int()
-    length=Int()
-    instr=Typed(Atom)
-    show_value=Float()
-    changed=Bool(False)
-    mytype=Enum(float, tuple, EBL_Item.EBLPolygon)
-
-    def get_arr(self, index=None):
-       if index==None:
-           return getattr(self.instr, self.name)
-       return getattr(self.instr, self.name)[index]
-
-    def __init__(self, **kwargs):
-        super(arrview, self).__init__(**kwargs)
-        log_debug(1)
-        self.instr.observe(self.name, self.value_changed)
-
-    def _default_length(self):
-        return len(self.get_arr())-1
-
-    def value_changed(self, change):
-        self.length=len(change['value'])-1
-        if self.index >= self.length:
-            self.index=self.length
-        self.index_changed({})
-        self.show_value  #call to update
-
-    def coercer(self):
-        try:
-            self.show_value=self.get_arr(self.index)
-        except IndexError:
-            self.show_value=0
-
-    def conve(self):
-        return self.show_value
-
-    @observe('index')
-    def index_changed(self, change):
-        self.changed=True
-        self.coercer()
-        self.changed=False
-
-    def _observe_show_value(self, change):
-        if self.changed==False:
-            try:
-                getattr(self.instr, self.name)[self.index]=self.conve() #tuple(self.show_value)
-            except IndexError:
-                getattr(self.instr, self.name).append(self.conve())
-
-    def insert(self):
-        self.get_arr().insert(self.index, self.conve())
-
-    def pop(self):
-        self.get_arr().pop(self.index)
-
-
-class tuplearrview(arrview):
-    show_value=ContainerList(default=[0.0,0.0])
-
-    def coercer(self):
-        try:
-            self.show_value=list(self.get_arr(self.index))
-        except IndexError:
-            self.show_value=[0.0, 0.0]
-
-    def conve(self):
-        return tuple(self.show_value)
-
-class EBL_Itemarrview(arrview):
-    show_value=Typed(EBL_Item.EBLPolygon)
-
-    def _default_show_value(self):
-        return EBL_Item.EBLPolygon()
-
-    def coercer(self):
-        try:
-            log_debug(type(self.show_value))
-            log_debug(type(self.get_arr(self.index)))
-            self.show_value=self.get_arr(self.index)
-        except IndexError:
-            self.show_value=EBL_Item.EBLPolygon()
-
-class PolygonWatch(Atom):
-    polygon=Typed(EBL_Item.EBLPolygon)
-    vertindex=Int()
-    vertx=Float()
-    verty=Float()
-    changed=Bool(False)
-
-    def print_poly(self):
-        """for debugging"""
-        print self.polygon.verts
-        for i,x in enumerate(self.polygon.verts):
-            self.vertindex=i
-            print self.vertindex, self.vertx, self.verty
-
-    def update_xy(self):
-        if not self.changed:
-            self.changed=True
-            self.vertx=self.polygon.verts[self.vertindex][0]
-            self.verty=self.polygon.verts[self.vertindex][1]
-            self.changed=False
-
-    @observe("polygon.verts")
-    def _observe_verts(self, change):
-        self._observe_vertindex({}) #update_xy()
-
-    def _observe_vertindex(self, change):
-        if self.vertindex>=len(self.polygon.verts)-1:
-            self.vertindex=len(self.polygon.verts)-1
-        if self.vertindex<0:
-            self.vertindex=0
-        self.update_xy()
-
-    def _observe_vertx(self, change):
-        if not self.changed:
-            self.changed=True
-            old_verty=self.polygon.verts[self.vertindex][1]
-            self.polygon.verts[self.vertindex]=(self.vertx, old_verty)
-            self.changed=False
-
-    def _observe_verty(self, change):
-        if not self.changed:
-            self.changed=True
-            old_vertx=self.polygon.verts[self.vertindex][0]
-            self.polygon.verts[self.vertindex]=(old_vertx, self.verty)
-            self.changed=False
-
-class EBL_ItemWatch(Atom):
-    polywatch=Typed(PolygonWatch)
-    ebl_item=Typed(EBL_Item.EBL_Item)
-    polyindex=Int()
-    mytype=Enum(float, tuple, EBL_Item.EBLPolygon)
-    name=Unicode()
-    instr=Typed(Atom)
-
-    def _default_ebl_item(self):
-        return getattr(self.instr, self.name)
-
-    def _default_polywatch(self):
-        return PolygonWatch(polygon=self.ebl_item.polylist[0])
-
-    def print_polylist(self):
-        """for debugging"""
-        oldpolyindex=self.polyindex
-        for i, poly in enumerate(self.ebl_item.polylist):
-            self.polyindex=i
-            self.polywatch.print_poly()
-        self.polyindex=oldpolyindex
-
-    @observe("ebl_item.polylist")
-    def _observe_polylist(self, change):
-        self._observe_polyindex({}) #self._observe_polylist[self.polyindex]._observe_vertindex({})
-
-
-    def _observe_polyindex(self, change):
-        if self.polyindex>=len(self.ebl_item.polylist)-1:
-            self.polyindex=len(self.ebl_item.polylist)-1
-        if self.polyindex<0:
-            self.polyindex=0
-        self.polywatch=PolygonWatch(polygon=self.ebl_item.polylist[self.polyindex])
-        self.polywatch._observe_vertindex({})
-
-#a=EBL_Item(name="blah", polylist=[EBLRectangle(), EBLRectangle()])
-#b=EBL_ItemWatch(ebl_item=a)
-
-
-template ArrView(name, instr, inside_type: EBL_Item.EBLPolygon):
-    arrcont:
-        mydata:=EBL_ItemWatch(instr=instr, name=name, mytype=EBL_Item.EBLPolygon)
-
-
-template ArrView(name, instr, inside_type: float):
-    arrcont:
-        mydata:=arrview(instr=instr, name=name, mytype=float)
-
-template ArrView(name, instr, inside_type: tuple):
-    arrcont:
-        mydata:= tuplearrview(instr=instr, name=name, mytype=tuple)
-
-template show_value_view(mydata, inside_type):
-    """ This default specialization displays read-only text for the value."""
-    Field:
-        read_only = True
-        text << unicode(mydata)
-
-template show_value_view(mydata, inside_type: EBL_Item.EBLPolygon):
-    Container:
-        padding=0
-        constraints=[hbox(shval1, shval2)]
-        FloatField: shval1:
-            value:=mydata.polywatch.vertx #:=tuplearrview(instr=mydata.show_value, name='verts', mytype=tuple) #value := mydata.show_value[0] #getattr(model, name)[0]#model.get_tag(name, 'index', 0)]
-        FloatField: shval2:
-            value := mydata.polywatch.verty #show_value[1] #getattr(model, name)[0]#model.get_tag(name, 'index', 0)]
-
-template show_value_view(mydata, inside_type: tuple):
-    Container:
-        padding=0
-        constraints=[hbox(shval1, shval2)]
-        FloatField: shval1:
-            value := mydata.show_value[0] #getattr(model, name)[0]#model.get_tag(name, 'index', 0)]
-        FloatField: shval2:
-            value := mydata.show_value[1] #getattr(model, name)[0]#model.get_tag(name, 'index', 0)]
-
-template show_value_view(mydata, inside_type: float):
-    FloatField: shval1:
-        value := mydata.show_value
-
-enamldef arrcont(Container):
-    attr mydata
-    constraints = [hbox(ind, val, insert_btn, pop_btn)]
-    SpinBox: ind:
-        value := mydata.index #model.get_tag(name, 'index', 0) #model.index
-        maximum << mydata.length
-        minimum = 0
-    Container: val:
-        padding = 0
-        DynamicTemplate: dyn:
-            base = show_value_view
-            args = (mydata, mydata.mytype)
-    PushButton: insert_btn:
-        text="Insert"
-        clicked::mydata.insert()
-        visible << mydata.instr.get_tag(mydata.name, "full_interface", False)
-    PushButton: pop_btn:
-        text="Remove"
-        clicked::mydata.pop()
-        visible << mydata.instr.get_tag(mydata.name, "full_interface", False)
-
-def inside_type(name, instr):
-    intype=float
-    try:
-         intype=instr.get_member(name).validate_mode[1].validate_mode[1]
-    except AttributeError:
-         pass
-    return instr.get_tag(name, "inside_type", intype)
-
-#template ValView(name, model, modelType: ContainerList):
-#    Container: val:
-#            padding = 0
-#            DynamicTemplate: dyn:
-#                base = ArrView
-#                args = (name, model, inside_type(name, model))
-
-
-#    ObjectCombo: val:
-#        items = list(model.get_member(name).items)
-#            selected := getattr(model, name)
-
-enamldef FloatFieldWrap(Container):
-    attr invalue
-    FloatField:
-        value:=float(invalue)
-
-def container_list_view(name, model, index, vtype):
-    #this generates a view of an element in a container list
-    if len(getattr(model, name))!=0:
-        if isinstance(getattr(model, name)[index], Base): #base template
-            return [#ObjectCombo(items=[ii.name for ii in getattr(model, name)], selected=getattr(model, name)[index].name),
-                    AutoFormWrap(instr=getattr(model, name)[index])]
-        elif type(getattr(model, name)[index]) in [float, int]: #number template
-            return [FloatFieldWrap(invalue=float(getattr(model, name)[index]))]
-        elif type(getattr(model, name)[index]) in [unicode, str]:
-            return [Field(text=unicode(getattr(model, name)[index]))]
-        else:
-            return [Field(read_only = True, text=unicode(getattr(model, name)[index]))]
-    return []
-
-template CLView(name, model, index, vtype: Base):
-    AutoFormWrap:
-        instr:=getattr(model, name)[index]
-
-template CLView(name, model, index, vtype):
-    Field:
-        read_only=True
-        text<<unicode(getattr(model, name)[index])
-
-template CLView(name, model, index, vtype: float):
-    FloatField:
-        value:=getattr(model, name)[index]
-
-template CLView(name, model, index, vtype: int):
-    IntField:
-        value:=getattr(model, name)[index]
-
-template CLView(name, model, index, vtype: str):
-    """ A template specialization for Unicode using a MultilineField"""
-    MultilineField: mlf:
-            text := getattr(model, name)[index]
-
-template CLView(name, model, index, vtype: list):
-        GroupBox:
-            padding = 0
-            #visible << getattr(model, name)!=[]
-            #title = instr.get_tag(name, 'label', name)+" variables:"
-            #Looper:
-            #        iterable << getattr(model, name) #model.return_vars
-           #         DynamicTemplate:
-           #             base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
-           #             args=(loop_item, model, type(model))
-
-template CLView(name, model, index, vtype: unicode):
-    """A template specialization for Unicode using a field"""
-    Field:
-        text := getattr(model, name)[index]
-
-template CLView(name, model, modelType: Callable):
-    """A template specialization for Unicode using a field"""
-    Container:
-        padding = 0
-        constraints = [hbox(pb1, gb1), align('top', pb1, gb1)]
-        PushButton: pb1:
-            text = 'Run'
-            clicked :: getattr(instr, name)(instr) #do_it_if_needed(var, "receive") #receive()
-            enabled << not instr.busy
-        GroupBox: gb1:
-            padding = 0
-            visible = getattr(model, name).run_params!=[]
-            title = instr.get_tag(name, 'label', name)+" parameters:"
-            Looper: get_loop:
-                    iterable << getattr(model, name).run_params
-                    DynamicTemplate:
-                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
-                        args=(loop_item, instr, type(instr))
-
-template CLView(name, model, modelType: Enum):
-    """ A form control template specialization for Enum members using ObjectCombo."""
-    Container:
-        padding = 0
-        constraints = [ hbox(val, enm_val)]
-        ObjectCombo: val:
-            items = list(model.get_member(name).items)
-            selected := getattr(model, name)
-        Label: enm_val:
-            text := unicode(model.get_tag(name, 'mapping', {getattr(model, name):getattr(model, name)})[getattr(model, name)])
-
-template ValView(name, model, index, vtype: bool):
-    """ A form control template specialization for Bool members using CheckBox"""
-    CheckBox:
-        checked := getattr(model, name)[index]
-#class NewSpinBox(SpinBox):
-#    updet=d_(Event())
-#    oldvalue=d_(Int())
-#    def _observe_value(self, change):
-#        print change
-#        if change['type']=='update':
-#            self.oldvalue=change['oldvalue']
-#            self.updet()
-
-
-template ValView(name, model, modelType: ContainerList):
-    Container:
-        constraints = [hbox(ind, val, insert_btn, pop_btn), ind.width==100]
-        SpinBox: ind:
-            minimum=0
-            maximum << max(0, len(getattr(model, name))-1)
-        #Field: val2:
-         #   text<<unicode(getattr(model, name)[ind.value].x_start)
-        Container: val:
-            padding = 0
-            #Include: #dyno: #the objects are replaced every time ind.value is updated which is not super effecient but allows different objects in the list
-            #    objects << container_list_view(name, model, ind.value, type(getattr(model, name))) #[AutoFormWrap(instr=getattr(model, name)[ind.value])]
-            #Looper:
-            #    iterable << getattr(model, name)[index].main_params #model.return_vars
-            #    DynamicTemplate:
-            #        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
-            #        args=(loop_item, getattr(model, name)[index], type(getattr(model, name)[index]))
-
-            DynamicTemplate: dyn:
-                base = CLView
-                args << (name, model, ind.value, type(getattr(model, name)[ind.value]))
-        PushButton: insert_btn:
-            text="Insert"
-            clicked::
-                if len(getattr(model, name))==0:
-                    intype=model.get_tag(name, 'inside_type')() #if inside_type is not specified for an empty array, this will generate an error
-                else:
-                    temptype=getattr(model, name)[ind.value]
-                    if isinstance(temptype, Base):
-                        intype=temptype.copy()
-                    else:
-                        intype=type(temptype)()
-                getattr(model, name).insert(ind.value, intype) #pass #mydata.insert()
-            #visible << model.get_tag(name, "full_interface", False)
-        PushButton: pop_btn:
-            text="Remove"
-            clicked:: getattr(model, name).pop(ind.value)
-            #visible << model.get_tag(name, "full_interface", False)
-            enabled << len(getattr(model, name))>0
-            #padding = 0
-            #DynamicTemplate: dyn:
-            #    base = ArrView
-            #    args = (name, model, inside_type(name, model))
-
-template ValView(name, model, modelType: List):
-        GroupBox:
-            padding = 0
-            visible << getattr(model, name)!=[]
-            title = instr.get_tag(name, 'label', name)+" variables:"
-            Looper:
-                    iterable << getattr(model, name) #model.return_vars
-                    DynamicTemplate:
-                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
-                        args=(loop_item, model, type(model))
 
 from enaml.stdlib.slider_transform import FloatTransform
 
@@ -551,7 +85,7 @@ template ValView(name, model, modelType: FloatRange):
                 value :=getattr(model, name)
                 precision=model.get_tag(name, 'precision', 100)
         Label: min_lbl:
-                text << str(ft.precision)
+                text << str(ft.minimum)
         Label: max_lbl:
             text << str(ft.maximum)
 
@@ -608,60 +142,98 @@ template ValView(name, model, modelType: Bool):
     CheckBox:
         checked := getattr(model, name)
 
-#def constraints_gen(name, model, lbl, content, unt):
-#    if type(model.get_tag(name, "width", 0))!=int:
-#        return [hbox(lbl, content, unt)]
-#    else:
-#        return [hbox(lbl, content, unt, spacer), content.width>=model.get_tag(name, 'width', 150)]
+template CLView(name, model, index, vtype: Base):
+    AutoFormWrap:
+        instr:=getattr(model, name)[index]
 
-#template LabelUnit(name, model, Content):
-#    """ Create a container with Ok | Cancel buttons."""
-#    Container:
-#        alias content
-#        constraints = constraints_gen(name, model, lbl, content, unt) #[
-##           hbox(lbl, content, unt, spacer), content.width>=model.get_tag(name, 'min_width', 150)
-# #       ]
-#        Content: content:
-#            pass
-#        Label: lbl:
-#            text = model.get_tag(name, 'label', name)
-#        Label: unt:
-#            text = model.get_tag(name, 'unit', "")
-#            visible = model.get_tag(name, 'unit')!=None
+template CLView(name, model, index, vtype):
+    Field:
+        read_only=True
+        text<<unicode(getattr(model, name))
 
+#template CLView(name, model, index, vtype: "EMPTY"):
+#    pass
 
-#def worker(var, func_str):
-#    p=-1
-#    while p < 100:
-#        if p==-1:
-#            deferred_call(getattr(var, func_str))
-#            p=0
-#        else:
-#            p=var.get_cmd.progress
-#    deferred_call(setattr, var.instr, 'busy', False)
-#
-#def do_it_if_needed(var, func_str="run"):
-#    if not var.instr.busy:
-#        var.instr.busy=True
-#        var.get_cmd.progress=0
-#        thread = Thread(target=worker, args=(var, func_str))
-#        thread.daemon = True
-#        thread.start()
-#
-#def sender(var, val):
-#    #print val.children[0].children[0].selected
-#    #print val.children[0].text
-#    #print val.children[0].field_text()
-#    if var.type==Float:
-#        var._value=float(val.children[0].text)
-#        do_it_if_needed(var, "send")
-#    elif var.type==Int:
-#        var._value=int(val.children[0].text)
-#    elif var.type==Unicode:
-#        var._value=val.children[0].text
-#    elif var.type==Enum:
-#        var._value=val.children[0].children[0].selected
-#    do_it_if_needed(var, "send")
+template CLView(name, model, index, vtype: float):
+    FloatField:
+        value:=getattr(model, name)[index]
+
+template CLView(name, model, index, vtype: int):
+    IntField:
+        value:=getattr(model, name)[index]
+
+template CLView(name, model, index, vtype: str):
+    """ A template specialization for Unicode using a MultilineField"""
+    MultilineField: mlf:
+            text := getattr(model, name)[index]
+
+#template CLView(name, model, index, vtype: list):
+#        GroupBox:
+#            padding = 0
+            #visible << getattr(model, name)!=[]
+            #title = instr.get_tag(name, 'label', name)+" variables:"
+            #Looper:
+            #        iterable << getattr(model, name) #model.return_vars
+           #         DynamicTemplate:
+           #             base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+           #             args=(loop_item, model, type(model))
+
+template CLView(name, model, index, vtype: unicode):
+    """A template specialization for Unicode using a field"""
+    Field:
+        text := getattr(model, name)[index]
+
+template ClView(name, model, index, vtype: bool):
+    """ A form control template specialization for Bool members using CheckBox"""
+    CheckBox:
+        checked := getattr(model, name)[index]
+
+def get_type(name, model, index):
+    if index<len(getattr(model, name)):
+        return model.get_tag(name, "inside_type", type(getattr(model, name)[index]))
+    return None
+
+template ValView(name, model, modelType: ContainerList):
+    Container:
+        padding=0
+        constraints = [hbox(ind, val, insert_btn, pop_btn), ind.width==100]
+        SpinBox: ind:
+            minimum=0
+            maximum << max(0, len(getattr(model, name))-1)
+        Container: val:
+            padding = 0
+            DynamicTemplate: dyn:
+                base = CLView
+                args << (name, model, ind.value, get_type(name, model, ind.value))
+        PushButton: insert_btn:
+            text="Insert"
+            clicked::
+                if len(getattr(model, name))==0:
+                    intype=model.get_tag(name, 'inside_type')() #if inside_type is not specified for an empty array, this will generate an error
+                else:
+                    temptype=getattr(model, name)[ind.value]
+                    if isinstance(temptype, Base):
+                        intype=temptype.copy()
+                    else:
+                        intype=type(temptype)()
+                getattr(model, name).insert(ind.value, intype) #pass #mydata.insert()
+            #visible << model.get_tag(name, "full_interface", False)
+        PushButton: pop_btn:
+            text="Remove"
+            clicked:: getattr(model, name).pop(ind.value)
+            #visible << model.get_tag(name, "full_interface", False)
+            enabled << len(getattr(model, name))>0
+
+template ValView(name, model, modelType: List):
+        GroupBox:
+            padding = 0
+            visible << getattr(model, name)!=[]
+            title = instr.get_tag(name, 'label', name)+" variables:"
+            Looper:
+                    iterable << getattr(model, name) #model.return_vars
+                    DynamicTemplate:
+                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+                        args=(loop_item, model, type(model))
 
 enamldef BootClose(Container):
     Container:
@@ -725,7 +297,8 @@ def constraints_gen(name, model, lbl, val, unt, contents_width, contents_top, co
                  #contents_top == val.top, contents_left == lbl.left,]
 
 template VarTemp(name, instr, InstrType: Base):
-    GroupBox: gbcontents:
+#enamldef BaseBox(GroupBox):
+    GroupBox:
         flat = True
         padding=0
         constraints = constraints_gen(name, instr, lbl, val, unt, contents_width, contents_top, contents_left) #[hbox( lbl, val, unt),#,
@@ -744,16 +317,20 @@ template VarTemp(name, instr, InstrType: Base):
             text = instr.get_tag(name, 'unit', "")
             visible = instr.get_tag(name, 'unit')!=None
 
+#template VarTemp(name, instr, InstrType: Base):
+#    BaseBox:
+#        pass
+
 template VarTemp(name, instr, InstrType: Instrument):
     GroupBox: contents:
         flat = True
         padding=0
         constraints = [
-                        hbox( lbl, spacer, val, unt, snd_now, snd, rec, set_params, get_params, spacer),#,
+                        hbox( lbl, val, unt, snd_now, snd, rec, set_params, get_params, spacer),#,
                        align('top', val, rec), align('top', val, unt), align('top', lbl, val),
                          align('top', val, set_params), align('top', set_params, get_params),
-                         align('left', contents, 280, rec) | 'medium', align('left', contents, 80, val) | 'medium',
-                        width == contents_width, height==contents_height]
+                         align('left', contents, 280, rec) | 'medium', align('left', contents, 80, val) | 'medium']
+        #                width == contents_width, height==contents_height]
                         #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
 #                         (lbl.bottom == contents_bottom) | 'medium']
         Label: lbl:

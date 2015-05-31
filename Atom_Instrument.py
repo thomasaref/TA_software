@@ -145,13 +145,7 @@ class Instrument(Base):
                     self.send(name)
 
     def _default_boss(self):
-        inboss.BASE_DIR="/Users/thomasaref/Dropbox/Current stuff/TA_software"
-        inboss.DIVIDER="/"
-        inboss.LOG_NAME="record"
-        inboss.FILE_NAME="meas"
-        inboss.SETUP_GROUP_NAME="SetUp"
-        inboss.SAVE_GROUP_NAME="Measurements"
-        make_log_file(log_path=inboss.BASE_DIR+inboss.DIVIDER+inboss.LOG_NAME+".log")  #default log file
+        inboss.make_boss()
         return inboss
 
     def __init__(self, **kwargs):

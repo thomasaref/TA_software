@@ -6,13 +6,13 @@ Created on Thu Feb 12 11:10:14 2015
 """
 
 from TestInstrument import Test_Instrument
-from Atom_Boss import boss
+from Atom_InstrumentBoss import instrumentboss as inboss
 
 
 # if you really want to turn off auto saving for instruments use these lines
-boss.saving=False
-from Atom_HDF5 import Save_HDF5
-boss.save_hdf5=Save_HDF5(buffer_save=True)  
+inboss.saving=False
+#from Atom_HDF5 import Save_HDF5
+#boss.save_hdf5=Save_HDF5(buffer_save=True)
 
 a=Test_Instrument(name="blah")
 b=Test_Instrument(name="bob", view="Field")
@@ -22,11 +22,11 @@ b=Test_Instrument(name="bob", view="Field")
 def measfunc():
     a.voltage=3
 
-boss.run=measfunc
-print a.plot_keys
-print boss.plottables
+inboss.run=measfunc
+#print a.plot_keys
+print inboss.plottables
 print a.get_tag('v3', 'low')
 #boss.save_hdf5.buffer_save=True  #you can enable buffered saving using this line. Data will not save until you hit the save button or close the window
 
-boss.boot_all()  # this line boots all instruments
-boss.show()
+inboss.boot_all()  # this line boots all instruments
+inboss.show()

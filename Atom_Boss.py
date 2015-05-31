@@ -4,13 +4,32 @@ Created on Thu Feb 26 13:56:33 2015
 
 @author: thomasaref
 """
-from LOG_functions import log_info, log_warning#, SAVE_GROUP_NAME, SETUP_GROUP_NAME, log_debug
-from atom.api import Atom, Bool, Typed, ContainerList, Callable, Dict, Float, Int, FloatRange, Range, Unicode, Str, List, Enum, Event
+from LOG_functions import log_info, log_warning, make_log_file#, SAVE_GROUP_NAME, SETUP_GROUP_NAME, log_debug
+from atom.api import Atom, Bool, Typed, ContainerList, Callable, Dict, Float, Int, FloatRange, Range, Unicode, Str, List, Enum, Event, Instance
 from Atom_Read_File import Read_File
 from Atom_Save_File import Save_File, Save_HDF5
 from Atom_Plotter import Plotter
 import enaml
 from enaml.qt.qt_application import QtApplication
+
+import sys
+
+class StreamCatch(Atom):
+    log_str=Unicode()
+
+    def write(self,str):
+        self.log_str=str+self.log_str
+
+    def flush(self):
+        pass
+
+    def redirect_stdout(self, visible):
+        if visible:
+            sys.stdout=self
+            sys.stderr=self
+        else:
+            sys.stdout=sys.__stdout__ #old_stdout
+            sys.stderr=sys.__stderr__
 
 class Boss(Atom):
     """Overall control class that runs main code and handles files, saving and plotting"""
@@ -30,6 +49,7 @@ class Boss(Atom):
     FILE_NAME=Unicode("meas")
     SETUP_GROUP_NAME=Unicode("SetUp")
     SAVE_GROUP_NAME=Unicode("Measurements")
+    display=Typed(StreamCatch, ())
 
     def run_measurement(self):
         log_info("Master started")
@@ -41,7 +61,7 @@ class Boss(Atom):
         for instr in self.bases:
             tempdict[instr.name]=instr.get_all_tags('plot', True, instr.plot_all, instr.all_params)
             if tempdict[instr.name]==[]:
-                tempdict[instr.name]=instr.members().keys()
+                tempdict[instr.name]=instr.main_params #members().keys()
         return tempdict
 
     def _observe_saving(self, change):
@@ -57,7 +77,7 @@ class Boss(Atom):
     def full_read(self):
         self.read_file.read()
         self.read_data_distribute()
-        
+
     def _default_save_file(self):
         if self.saving==True:
             savefile=self.save_factory(buffer_save=False, base_dir=self.BASE_DIR, divider=self.DIVIDER,
@@ -73,7 +93,7 @@ class Boss(Atom):
 
     def old_log_path(self):
         return self.BASE_DIR+self.DIVIDER+self.LOG_NAME
-        
+
     def full_save(self):
         self.save_file.full_save(obj=self.run, old_log_path=self.BASE_DIR+self.DIVIDER+self.LOG_NAME)
 
@@ -117,6 +137,17 @@ class Boss(Atom):
                         log_warning("target base does not have target param!")
             else:
                 log_warning("target base not found!")
+
+    def make_boss(self, base_dir="/Users/thomasaref/Dropbox/Current stuff/TA_software", divider="/",
+                  log_name="record", file_name="meas", setup_g_name="SetUp", save_g_name="Measurements"):
+        self.BASE_DIR=base_dir #"/Users/thomasaref/Dropbox/Current stuff/TA_software"
+        self.DIVIDER=divider #"/"
+        self.LOG_NAME=log_name #"record"
+        self.FILE_NAME=file_name #"meas"
+        self.SETUP_GROUP_NAME=setup_g_name #"SetUp"
+        self.SAVE_GROUP_NAME=save_g_name #"Measurements"
+        make_log_file(log_path=self.BASE_DIR+self.DIVIDER+self.LOG_NAME+".log", display=self.display)  #default log file
+
 boss=Boss()
 #master.save_file=Save_File()
 #master.save_file.test_logger()

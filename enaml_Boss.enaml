@@ -60,7 +60,7 @@ enamldef BossToolBar(ToolBar):
 
     Action:
         text = "Bases"
-        triggered:: 
+        triggered::
              show_all_bases(bossarea, boss)
         tool_tip = "Show all bases"
     Action:
@@ -110,38 +110,39 @@ enamldef PlotBox(GroupBox):
 #class LOG(Atom):
 #    logstr=Str()
 #    old_sys_stdout=Instance(type(sys.stdout))
-    
+
 #    def write(self, str):
 #        logstr+=str
 
-import sys    
-class WriteDockPane(DockPane):
-    #def _observe_visible(self, change):
-    #    print change
-    
-    def write(self,str):
-        self.logstr+=str
+#import sys
+#class WriteDockPane(DockPane):
+#    #def _observe_visible(self, change):
+#    #    print change
+#    def write(self,str):
+#        self.logstr+=str
+#
+#    def redirect_stdout(self):
+#        if self.visible:
+#            sys.stdout=self
+#            sys.stderr=self
+#        else:
+#            sys.stdout=self.old_stdout
+#            sys.stderr=self.old_stderr
 
-    def redirect_stdout(logpane):
-        if logpane.visible:
-            sys.stdout=logpane
-        else:
-            sys.stdout=logpane.old_stdout
-                
-enamldef LogPane(WatchedDockPane): lp:
-    attr old_stdout=sys.stdout
-    attr logstr=""
+enamldef LogPane(DockPane): lp:
+    #attr old_stdout=sys.stdout
+    #attr old_stderr=sys.stderr
+    #attr logstr=""
     dock_area='bottom'
     title = "Log"
-    visible:: 
-        redirect_stdout(lp)
-        print "now it's vis"
-    activated :: print "log pane activated"
-    closed:: print "log pane closed"  
+    #visible::
+    #    boss.display.redirect_stdout(lp.visible)
+    #activated :: boss.display.redirect_stdout(lp.visible)
+    #closed:: print "log pane closed"
     Container:
         padding = 0
         MultilineField: mlf:
-            text << lp.logstr
+            text << boss.display.log_str
 
 enamldef SavePane(DockPane):
     dock_area='top'
@@ -259,8 +260,8 @@ def show_item(name, area, target=None, ItemType=DockItem, position='left', OP=In
             op = OP(item=name, target=target, position=position)
         else:
             op = OP(item=name, target=target)
-    area.update_layout(op)  
-    
+    area.update_layout(op)
+
 def show_general_item(area, item, ItemType=DockItem, position='left', target_items=[tempclass()], **kwargs):
     if item!=None:
         targets = find_targets(dock_items=area.dock_items(), target_items=target_items)
@@ -268,13 +269,14 @@ def show_general_item(area, item, ItemType=DockItem, position='left', target_ite
             show_item(item.name, area, ItemType=ItemType, OP=InsertItem, position=position, **kwargs)
         elif item.name not in targets:
             show_item(item.name, area, target=targets[0], ItemType=ItemType, OP=InsertTab, **kwargs)
-            
+
 def show_base(area, base):
-    show_general_item(area, base, ItemType=BaseItem, target_items=base.boss.bases, instr=base)
-    
+    if base!=None:
+        show_general_item(area, base, ItemType=BaseItem, target_items=base.boss.bases, instr=base)
+
 def show_plot(area, plot):
-    shoe_general_item(area, plot, ItemType=PlotItem, position='right', target_items=base.boss.plot_list, plotr=plot)     
-    
+    shoe_general_item(area, plot, ItemType=PlotItem, position='right', target_items=base.boss.plot_list, plotr=plot)
+
     #dock_items=area.dock_items()
     #dock_names=(o.name for o in dock_items)
     #if name not in dock_names:
@@ -295,7 +297,7 @@ def show_plot(area, plot):
 #    alias logpane
 #    LogPane: logpane:
 #        pass
-    
+
 enamldef BossMain(MainWindow): main:
     attr boss
     attr base: None
@@ -309,7 +311,7 @@ enamldef BossMain(MainWindow): main:
         visible = False
     alias logpane
     LogPane: logpane:
-        pass  
+        pass
 
     #title="Boss"
 #    attr path : unicode=u''
@@ -331,7 +333,7 @@ enamldef BossMain(MainWindow): main:
         constraints = [mycont.width==bossarea.width, mycont.height==bossarea.height]
         alias bossarea
         DockArea: bossarea:
-            activated :: show_base(bossarea, base)    
+            activated :: show_base(bossarea, base)
 
 
 enamldef PlotMain(MainWindow): main:

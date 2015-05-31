@@ -1,0 +1,636 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat May 30 10:29:05 2015
+
+@author: thomasaref
+"""
+
+class subarrview(Atom):
+    instr=Typed(Atom)
+    polyindex = Int()
+    vertindex = Int()
+    length = Int()
+    show_value=ContainerList(default=[0.0,0.0])
+    changed=Bool(False)
+
+    def coercer(self):
+        try:
+            self.show_value=list(self.get_arr(self.index))
+        except IndexError:
+            self.show_value=[0.0, 0.0]
+
+    def conve(self):
+        return tuple(self.show_value)
+
+    def get_arr(self, polyindex=None, vertindex=None):
+       if vertindex==None:
+           if polyindex==None:
+               return getattr(self.instr, self.name)
+           return getattr(self.instr, self.name)[polyindex]
+       return getattr(self.instr, self.name)[polyindex][vertindex]
+
+    def __init__(self, **kwargs):
+        super(arrview, self).__init__(**kwargs)
+        self.instr.observe(self.name, self.value_changed)
+
+    def _default_length(self):
+        return len(self.get_arr())-1
+
+    def value_changed(self, change):
+        self.length=len(change['value'])-1
+        if self.index >= self.length:
+            self.index=self.length
+        self.index_changed({})
+        self.show_value  #call to update
+
+
+    @observe('index')
+    def index_changed(self, change):
+        self.changed=True
+        self.coercer()
+        self.changed=False
+
+    def _observe_show_value(self, change):
+        if self.changed==False:
+            try:
+                getattr(self.instr, self.name)[self.index]=self.conve() #tuple(self.show_value)
+            except IndexError:
+                getattr(self.instr, self.name).append(self.conve())
+
+    def insert(self):
+        self.get_arr().insert(self.index, self.conve())
+
+    def pop(self):
+        self.get_arr().pop(self.index)
+
+
+class arrview(Atom):
+    name=Unicode()
+    index = Int()
+    length=Int()
+    instr=Typed(Atom)
+    show_value=Float()
+    changed=Bool(False)
+    mytype=Enum(float, tuple, EBL_Item.EBLPolygon)
+
+    def get_arr(self, index=None):
+       if index==None:
+           return getattr(self.instr, self.name)
+       return getattr(self.instr, self.name)[index]
+
+    def __init__(self, **kwargs):
+        super(arrview, self).__init__(**kwargs)
+        log_debug(1)
+        self.instr.observe(self.name, self.value_changed)
+
+    def _default_length(self):
+        return len(self.get_arr())-1
+
+    def value_changed(self, change):
+        self.length=len(change['value'])-1
+        if self.index >= self.length:
+            self.index=self.length
+        self.index_changed({})
+        self.show_value  #call to update
+
+    def coercer(self):
+        try:
+            self.show_value=self.get_arr(self.index)
+        except IndexError:
+            self.show_value=0
+
+    def conve(self):
+        return self.show_value
+
+    @observe('index')
+    def index_changed(self, change):
+        self.changed=True
+        self.coercer()
+        self.changed=False
+
+    def _observe_show_value(self, change):
+        if self.changed==False:
+            try:
+                getattr(self.instr, self.name)[self.index]=self.conve() #tuple(self.show_value)
+            except IndexError:
+                getattr(self.instr, self.name).append(self.conve())
+
+    def insert(self):
+        self.get_arr().insert(self.index, self.conve())
+
+    def pop(self):
+        self.get_arr().pop(self.index)
+
+
+class tuplearrview(arrview):
+    show_value=ContainerList(default=[0.0,0.0])
+
+    def coercer(self):
+        try:
+            self.show_value=list(self.get_arr(self.index))
+        except IndexError:
+            self.show_value=[0.0, 0.0]
+
+    def conve(self):
+        return tuple(self.show_value)
+
+class EBL_Itemarrview(arrview):
+    show_value=Typed(EBL_Item.EBLPolygon)
+
+    def _default_show_value(self):
+        return EBL_Item.EBLPolygon()
+
+    def coercer(self):
+        try:
+            log_debug(type(self.show_value))
+            log_debug(type(self.get_arr(self.index)))
+            self.show_value=self.get_arr(self.index)
+        except IndexError:
+            self.show_value=EBL_Item.EBLPolygon()
+
+class PolygonWatch(Atom):
+    polygon=Typed(EBL_Item.EBLPolygon)
+    vertindex=Int()
+    vertx=Float()
+    verty=Float()
+    changed=Bool(False)
+
+    def print_poly(self):
+        """for debugging"""
+        print self.polygon.verts
+        for i,x in enumerate(self.polygon.verts):
+            self.vertindex=i
+            print self.vertindex, self.vertx, self.verty
+
+    def update_xy(self):
+        if not self.changed:
+            self.changed=True
+            self.vertx=self.polygon.verts[self.vertindex][0]
+            self.verty=self.polygon.verts[self.vertindex][1]
+            self.changed=False
+
+    @observe("polygon.verts")
+    def _observe_verts(self, change):
+        self._observe_vertindex({}) #update_xy()
+
+    def _observe_vertindex(self, change):
+        if self.vertindex>=len(self.polygon.verts)-1:
+            self.vertindex=len(self.polygon.verts)-1
+        if self.vertindex<0:
+            self.vertindex=0
+        self.update_xy()
+
+    def _observe_vertx(self, change):
+        if not self.changed:
+            self.changed=True
+            old_verty=self.polygon.verts[self.vertindex][1]
+            self.polygon.verts[self.vertindex]=(self.vertx, old_verty)
+            self.changed=False
+
+    def _observe_verty(self, change):
+        if not self.changed:
+            self.changed=True
+            old_vertx=self.polygon.verts[self.vertindex][0]
+            self.polygon.verts[self.vertindex]=(old_vertx, self.verty)
+            self.changed=False
+
+class EBL_ItemWatch(Atom):
+    polywatch=Typed(PolygonWatch)
+    ebl_item=Typed(EBL_Item.EBL_Item)
+    polyindex=Int()
+    mytype=Enum(float, tuple, EBL_Item.EBLPolygon)
+    name=Unicode()
+    instr=Typed(Atom)
+
+    def _default_ebl_item(self):
+        return getattr(self.instr, self.name)
+
+    def _default_polywatch(self):
+        return PolygonWatch(polygon=self.ebl_item.polylist[0])
+
+    def print_polylist(self):
+        """for debugging"""
+        oldpolyindex=self.polyindex
+        for i, poly in enumerate(self.ebl_item.polylist):
+            self.polyindex=i
+            self.polywatch.print_poly()
+        self.polyindex=oldpolyindex
+
+    @observe("ebl_item.polylist")
+    def _observe_polylist(self, change):
+        self._observe_polyindex({}) #self._observe_polylist[self.polyindex]._observe_vertindex({})
+
+
+    def _observe_polyindex(self, change):
+        if self.polyindex>=len(self.ebl_item.polylist)-1:
+            self.polyindex=len(self.ebl_item.polylist)-1
+        if self.polyindex<0:
+            self.polyindex=0
+        self.polywatch=PolygonWatch(polygon=self.ebl_item.polylist[self.polyindex])
+        self.polywatch._observe_vertindex({})
+
+#a=EBL_Item(name="blah", polylist=[EBLRectangle(), EBLRectangle()])
+#b=EBL_ItemWatch(ebl_item=a)
+
+
+template ArrView(name, instr, inside_type: EBL_Item.EBLPolygon):
+    arrcont:
+        mydata:=EBL_ItemWatch(instr=instr, name=name, mytype=EBL_Item.EBLPolygon)
+
+
+template ArrView(name, instr, inside_type: float):
+    arrcont:
+        mydata:=arrview(instr=instr, name=name, mytype=float)
+
+template ArrView(name, instr, inside_type: tuple):
+    arrcont:
+        mydata:= tuplearrview(instr=instr, name=name, mytype=tuple)
+
+template show_value_view(mydata, inside_type):
+    """ This default specialization displays read-only text for the value."""
+    Field:
+        read_only = True
+        text << unicode(mydata)
+
+template show_value_view(mydata, inside_type: EBL_Item.EBLPolygon):
+    Container:
+        padding=0
+        constraints=[hbox(shval1, shval2)]
+        FloatField: shval1:
+            value:=mydata.polywatch.vertx #:=tuplearrview(instr=mydata.show_value, name='verts', mytype=tuple) #value := mydata.show_value[0] #getattr(model, name)[0]#model.get_tag(name, 'index', 0)]
+        FloatField: shval2:
+            value := mydata.polywatch.verty #show_value[1] #getattr(model, name)[0]#model.get_tag(name, 'index', 0)]
+
+template show_value_view(mydata, inside_type: tuple):
+    Container:
+        padding=0
+        constraints=[hbox(shval1, shval2)]
+        FloatField: shval1:
+            value := mydata.show_value[0] #getattr(model, name)[0]#model.get_tag(name, 'index', 0)]
+        FloatField: shval2:
+            value := mydata.show_value[1] #getattr(model, name)[0]#model.get_tag(name, 'index', 0)]
+
+template show_value_view(mydata, inside_type: float):
+    FloatField: shval1:
+        value := mydata.show_value
+
+enamldef arrcont(Container):
+    attr mydata
+    constraints = [hbox(ind, val, insert_btn, pop_btn)]
+    SpinBox: ind:
+        value := mydata.index #model.get_tag(name, 'index', 0) #model.index
+        maximum << mydata.length
+        minimum = 0
+    Container: val:
+        padding = 0
+        DynamicTemplate: dyn:
+            base = show_value_view
+            args = (mydata, mydata.mytype)
+    PushButton: insert_btn:
+        text="Insert"
+        clicked::mydata.insert()
+        visible << mydata.instr.get_tag(mydata.name, "full_interface", False)
+    PushButton: pop_btn:
+        text="Remove"
+        clicked::mydata.pop()
+        visible << mydata.instr.get_tag(mydata.name, "full_interface", False)
+
+#template ValView(name, model, modelType: ContainerList):
+#    Container: val:
+#            padding = 0
+#            DynamicTemplate: dyn:
+#                base = ArrView
+#                args = (name, model, inside_type(name, model))
+
+
+#    ObjectCombo: val:
+#        items = list(model.get_member(name).items)
+#            selected := getattr(model, name)
+
+enamldef FloatFieldWrap(Container):
+    attr invalue
+    FloatField:
+        value:=float(invalue)
+
+def container_list_view(name, model, index, vtype):
+    #this generates a view of an element in a container list
+    if len(getattr(model, name))!=0:
+        if isinstance(getattr(model, name)[index], Base): #base template
+            return [#ObjectCombo(items=[ii.name for ii in getattr(model, name)], selected=getattr(model, name)[index].name),
+                    AutoFormWrap(instr=getattr(model, name)[index])]
+        elif type(getattr(model, name)[index]) in [float, int]: #number template
+            return [FloatFieldWrap(invalue=float(getattr(model, name)[index]))]
+        elif type(getattr(model, name)[index]) in [unicode, str]:
+            return [Field(text=unicode(getattr(model, name)[index]))]
+        else:
+            return [Field(read_only = True, text=unicode(getattr(model, name)[index]))]
+    return []
+
+def inside_type(name, instr):
+    intype=float
+    try:
+         intype=instr.get_member(name).validate_mode[1].validate_mode[1]
+    except AttributeError:
+         pass
+    return instr.get_tag(name, "inside_type", intype)
+
+template CLView(value, vtype: Base):
+    AutoFormWrap:
+        instr:=value #getattr(model, name)[index]
+
+template CLView(value, vtype):
+    Field:
+        read_only=True
+        text<<unicode(value)
+
+def get_tag(tag_name, none_value=None, **kwargs): #name=None, model=None, tag_name=None, none_value=None):
+    keys=kwargs.keys()
+    if "name" in keys and "model" in keys:
+        return kwargs["model"].get_tag(kwargs["name"], tag_name, none_value)
+    return none_value
+
+template CLView(value, vtype: float):
+    FloatField:
+        value:=value
+    #Label:
+    #    text<<str(args)
+    #Field:
+    #    text<<str(name)
+#        minimum=get_tag('low', **kwargs)
+#        maximum=get_tag('high', **kwargs)
+
+template CLView(value, vtype: int):
+    IntField:
+        value:= value #getattr(model, name)[index]
+#        minimum=get_tag('low', **kwargs)
+#        maximum=get_tag('high', **kwargs)
+
+template CLView(value, vtype: str):
+    """ A template specialization for Unicode using a MultilineField"""
+    MultilineField: mlf:
+            text := value #getattr(model, name)[index]
+
+template CLView(value, vtype: list):
+        GroupBox:
+            padding = 0
+            #visible << getattr(model, name)!=[]
+            #title = instr.get_tag(name, 'label', name)+" variables:"
+            #Looper:
+            #        iterable << getattr(model, name) #model.return_vars
+           #         DynamicTemplate:
+           #             base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+           #             args=(loop_item, model, type(model))
+
+template CLView(value, vtype: unicode):
+    """A template specialization for Unicode using a field"""
+    Field:
+        text := value #getattr(model, name)[index]
+
+template CLView(value, modelType: Callable):
+    """A template specialization for Unicode using a field"""
+    Container:
+        padding = 0
+        constraints = [hbox(pb1, gb1), align('top', pb1, gb1)]
+        PushButton: pb1:
+            text = 'Run'
+            clicked :: getattr(instr, name)(instr) #do_it_if_needed(var, "receive") #receive()
+            enabled << not instr.busy
+        GroupBox: gb1:
+            padding = 0
+            visible = getattr(model, name).run_params!=[]
+            title = instr.get_tag(name, 'label', name)+" parameters:"
+            Looper: get_loop:
+                    iterable << getattr(model, name).run_params
+                    DynamicTemplate:
+                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+                        args=(loop_item, instr, type(instr))
+
+
+template CLView(name, model, modelType: Callable):
+    """A template specialization for Unicode using a field"""
+    Container:
+        padding = 0
+        constraints = [hbox(pb1, gb1), align('top', pb1, gb1)]
+        PushButton: pb1:
+            text = 'Run'
+            clicked :: getattr(instr, name)(instr) #do_it_if_needed(var, "receive") #receive()
+            enabled << not instr.busy
+        GroupBox: gb1:
+            padding = 0
+            visible = getattr(model, name).run_params!=[]
+            title = instr.get_tag(name, 'label', name)+" parameters:"
+            Looper: get_loop:
+                    iterable << getattr(model, name).run_params
+                    DynamicTemplate:
+                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+                        args=(loop_item, instr, type(instr))
+
+template CLView(name, model, modelType: Enum):
+    """ A form control template specialization for Enum members using ObjectCombo."""
+    Container:
+        padding = 0
+        constraints = [ hbox(val, enm_val)]
+        ObjectCombo: val:
+            items = list(model.get_member(name).items)
+            selected := getattr(model, name)
+        Label: enm_val:
+            text := unicode(model.get_tag(name, 'mapping', {getattr(model, name):getattr(model, name)})[getattr(model, name)])
+
+class HContainer(Container):
+    """ A simple expanding horizontal container.
+
+    This container will always layout its children using a hbox with a
+    spacer as the last element. User-defined constraints are ignored."""
+    def layout_constraints(self):
+        """ Generate the list of constraints for the container."""
+        items = self.widgets()
+        items.append(spacer(0))
+        return [hbox(*items)]
+
+template CLView(name, model, index, vtype: tuple):
+    """ A form control template specialization for Enum members using ObjectCombo."""
+    HContainer:
+        padding = 0
+        Looper:
+            iterable << getattr(model, name)[index]
+            Container:
+                constraints=[vbox( tlbl, tval)]
+                Label: tlbl:
+                    text = unicode(model.get_tag(name, "inside_labels", range(len(getattr(model, name))))[loop_index])
+                IntField: tval:
+                    value:=loop_item
+                    #value ::
+                    #    templist=list(getattr(model, name)[index])
+                    #    templist[loop_index]=value #loop_item
+                    #    getattr(model, name)[index]=tuple(templist)
+                    #    print templist
+                #Container: tval:
+                #padding = 0
+                #DynamicTemplate: dyn:
+                #    base = CLView
+                #    args << (getattr(model, name)[ind.value],)#, (name, model, ind.value, type(getattr(model, name)[ind.value]))
+
+#                Field: tfld:
+#                    text<< unicode(loop_item)
+
+template CLView(value, vtype: tuple):
+    """ A form control template specialization for Enum members using ObjectCombo."""
+    HContainer:
+        padding = 0
+        Looper:
+            iterable := value #getattr(model, name)[index]
+            Container:
+                #constraints=[vbox( tlbl, tval)]
+                #Label: tlbl:
+                #    text = unicode(model.get_tag(name, "inside_labels", range(len(getattr(model, name))))[loop_index])
+                IntField:
+                    value:=loop_item
+#                Container: tval:
+#                    padding = 0
+#                    DynamicTemplate: dyn:
+#                        base = CLView
+#                        args << (loop_item, type(loop_item)) #getattr(model, name)[ind.value], type(getattr(model, name)[ind.value]))#, (name, model, ind.value, type(getattr(model, name)[ind.value]))
+
+#class NewSpinBox(SpinBox):
+#    updet=d_(Event())
+#    oldvalue=d_(Int())
+#    def _observe_value(self, change):
+#        print change
+#        if change['type']=='update':
+#            self.oldvalue=change['oldvalue']
+#            self.updet()
+
+#def constraints_gen(name, model, lbl, content, unt):
+#    if type(model.get_tag(name, "width", 0))!=int:
+#        return [hbox(lbl, content, unt)]
+#    else:
+#        return [hbox(lbl, content, unt, spacer), content.width>=model.get_tag(name, 'width', 150)]
+
+#template LabelUnit(name, model, Content):
+#    """ Create a container with Ok | Cancel buttons."""
+#    Container:
+#        alias content
+#        constraints = constraints_gen(name, model, lbl, content, unt) #[
+##           hbox(lbl, content, unt, spacer), content.width>=model.get_tag(name, 'min_width', 150)
+# #       ]
+#        Content: content:
+#            pass
+#        Label: lbl:
+#            text = model.get_tag(name, 'label', name)
+#        Label: unt:
+#            text = model.get_tag(name, 'unit', "")
+#            visible = model.get_tag(name, 'unit')!=None
+
+
+#def worker(var, func_str):
+#    p=-1
+#    while p < 100:
+#        if p==-1:
+#            deferred_call(getattr(var, func_str))
+#            p=0
+#        else:
+#            p=var.get_cmd.progress
+#    deferred_call(setattr, var.instr, 'busy', False)
+#
+#def do_it_if_needed(var, func_str="run"):
+#    if not var.instr.busy:
+#        var.instr.busy=True
+#        var.get_cmd.progress=0
+#        thread = Thread(target=worker, args=(var, func_str))
+#        thread.daemon = True
+#        thread.start()
+#
+#def sender(var, val):
+#    #print val.children[0].children[0].selected
+#    #print val.children[0].text
+#    #print val.children[0].field_text()
+#    if var.type==Float:
+#        var._value=float(val.children[0].text)
+#        do_it_if_needed(var, "send")
+#    elif var.type==Int:
+#        var._value=int(val.children[0].text)
+#    elif var.type==Unicode:
+#        var._value=val.children[0].text
+#    elif var.type==Enum:
+#        var._value=val.children[0].children[0].selected
+#    do_it_if_needed(var, "send")
+
+class JDF_Editor(Text_Editor):
+    #jdf_list=ContainerList().tag(private=True)
+    #jdf=Typed(jdf_base, ())
+
+    def jdf_list(self):
+        return self.data.split("\n")
+    #    self.jdf.jdf_parse(jdf_list)
+    #    print self.data
+#        inside_path=False
+#        inside_layer=False
+#        patterns=[]
+#        array_num=0
+#        assign_array=[]
+#        for n, line in enumerate(jdf_list):
+#            #if  n==4:
+#            templist=line.split(";")
+#            tempstr=templist[0].strip() #remove comments
+#            if ';' in line:
+#                comment=templist[1].strip()
+#            if tempstr.startswith('GLMPOS'):
+#                self.jdf.Px, self.jdf.Py, self.jdf.Qx, self.jdf.Qy=xy_string_split(tempstr) #get P and Q mark positions
+#                #Px, Py, Qx, Qy
+#            elif 'JOB' in tempstr:
+#                mgn_name, wafer_diameter, write_diameter=tempstr.split(",") #magazine name and wafer size
+#                mgn_name=mgn_name.split("'")[1].strip()
+#            elif 'PATH' in tempstr:
+#                inside_path=True
+#            elif "LAYER" in tempstr:
+#                inside_layer=True
+#            if inside_path:
+#                if 'ARRAY' in tempstr:
+#                    if ":" in tempstr:
+#                        array_num=tempstr.split(":")[0] #for subarrays
+#                        x_start, x_num, x_step, y_start, y_num, y_step=xy_string_split(tempstr)
+#                    else:
+#                        x_start, x_num, x_step, y_start, y_num, y_step=xy_string_split(tempstr) #for main array
+#                    self.jdf.add_array(x_start=x_start, x_num=x_num, x_step=x_step, y_start=y_start, y_num=y_num, y_step=y_step)
+#                elif 'ASSIGN' in tempstr:
+#                    assign_type=tempstr.split("ASSIGN")[1].split("->")[0].strip().split("+")
+#                    #assign_num=[s.split(')') for s in tempstr.split("->")[1].split("(")]
+#                    pos_assign=[]
+#
+#                    for item in tempstr.split("->")[1].partition("(")[2].rpartition(")")[0].split(")"):
+#                        if "(" in item:
+#                            xcor, ycor=item.split("(")[1].split(",")
+#                            pos_assign.append((xcor, ycor))
+#                        elif "," in item:
+#                            pos_assign.append(item.split(",")[1].strip())
+#                    #print array_num, assign_type, pos_assign
+#                    if array_num==0:
+#                        assign_array.append(("+".join(assign_type), comment))
+#                elif 'CHMPOS' in tempstr:
+#                    M1x, M1y=tuple_split(tempstr)
+#                    self.jdf.arrays[-1].M1x=M1x
+#                    self.jdf.arrays[-1].M1y=M1y
+#                elif "PEND" in tempstr:
+#                    inside_path=False
+#            elif inside_layer:
+#                if 'END' in tempstr:
+#                    inside_layer=False
+#                elif 'STDCUR' in tempstr:
+#                    stdcur=tempstr.split("STDCUR")[1]
+#                    self.jdf.stdcur=stdcur
+#                elif 'SHOT' in tempstr:
+#                    shot=tempstr.split(',')[1]
+#                    self.shot=shot
+#                elif 'RESIST' in tempstr:
+#                    resist=tempstr.split('RESIST')[1]
+#                    self.resist=resist
+#                elif 'P(' in tempstr:
+#                    pattern_name=tempstr.split("'")[1].split(".")[0]
+#                    patterns.append(pattern_name)
+#                    pattern_num=tempstr.split("(")[1].split(")")[0]
+#                    pattern_x=tempstr.split("(")[2].split(")")[0].split(",")[0]
+#                    pattern_y=tempstr.split("(")[2].split(")")[0].split(",")[0]
+##                    print pattern_num, pattern_x, pattern_y, pattern_name
+
+#        print patterns
+#        print assign_array
