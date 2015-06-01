@@ -351,6 +351,9 @@ class Base(Atom):
         else:
             self.boss.plot_list[0].ylabel=self.get_tag(yname, "plot_label", yname)
 
+class NoShowBase(Base):
+    def _default_show_base(self):
+        return False
 
 if __name__=="__main__":
     #class bt(Base):
