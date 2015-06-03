@@ -251,12 +251,12 @@ class jdf_base(Base):
 
 
 if __name__=="__main__":
-    a=Text_Editor(name="Text_Editor")#dir_path="/Volumes/aref/jbx9300/job/TA150515B/IDTs", main_file="idt.jdf")
-    b=jdf_base(name="JDF")#_base()
+    a=Text_Editor(name="Text_Editor", dir_path="/Volumes/aref/jbx9300/job/TA150515B/IDTs", main_file="idt.jdf")
+    #b=jdf_base(name="JDF")#_base()
     #b.arrays.extend((jdf_array(), jdf_array(x_start=5)))
-    a.read_file.read()
+    #a.read_file.read()
     #print a.data
-    b.jdf_parse(a.data)
+    #b.jdf_parse(a.data)
     #c=Base()
     #a.jdf.arrays.append(4.5)
     #a.jdf.arrays.append(4)
@@ -266,8 +266,8 @@ if __name__=="__main__":
     #print a.jdf_list
     #print b.get_member('arrays').item.validate_mode[1]
 
-    #b.show()
-    print a.data
-    print b.jdf_produce()
+    a.show()
+    #print a.data
+    #print b.jdf_produce()
     #print a.jdf_save_file.file_path
 #/Volumes/aref/jbx9300/job/TA150515B/IDTs
