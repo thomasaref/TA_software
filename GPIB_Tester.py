@@ -14,5 +14,5 @@ class GPIB_tester(GPIB_Instrument):
     response=Str().tag(get_cmd=GPIB_read)
 
 if __name__=="__main__":
-    a=GPIB_tester(name='GPIB tester', address="GPIB0::22::INSTR")
+    a=GPIB_tester(name='GPIB tester', address="GPIB0::20::INSTR")
     a.show()

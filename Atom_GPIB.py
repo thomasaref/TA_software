@@ -4,7 +4,8 @@ Created on Sun Apr 20 22:35:45 2014
 
 @author: thomasaref
 """
-from Atom_Base import Instrument, InstrumentError, log
+from Atom_Instrument import Instrument, InstrumentError
+from Atom_Base import log
 from atom.api import Typed, Callable, Unicode, Bool, Float
 import visa
 
@@ -51,7 +52,7 @@ def GPIB_write_it(GPIB_string, name):
 
 def start_GPIB(instr, address="", delay=0, timeout = 5, do_reset = False,
                do_selftest = False, lock = False, send_end = True,
-               do_identify = True, do_clear=True):
+               do_identify = True, do_clear=False):
     if address=="":
         raise InstrumentError("{0}: GPIB instruments need addresses.".format(object.name))
     instr.address=address

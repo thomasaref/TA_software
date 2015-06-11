@@ -41,7 +41,7 @@ template ValView(name, model, modelType: Save_File):
     SaveWrap:
         filer:=getattr(model, name)
 
-from enaml.stdlib.slider_transform import FloatTransform
+#from enaml.stdlib.slider_transform import FloatTransform
 
 template ValView(name, model, modelType: Float):
     """ A form control template specialization for Float members"""
@@ -68,32 +68,32 @@ template ValView(name, model, modelType: Range):
         Label: max_lbl:
             text << str(sel_slider.maximum)
 
-template ValView(name, model, modelType: FloatRange):
-    """ A form control template specialization for Float members"""
-    Container:
-        constraints=[hbox(sel, min_lbl, sel_slider, max_lbl)]
-        FloatField: sel:
-            value:=getattr(model, name)
-            minimum = ft.minimum
-            maximum = ft.maximum
-        Slider: sel_slider:
-            tracking = False
-            FloatTransform: ft:
-                minimum=model.get_tag(name, 'low')
-                maximum=model.get_tag(name, 'high')
-                value :=getattr(model, name)
-                precision=model.get_tag(name, 'precision', 100)
-        Label: min_lbl:
-                text << str(ft.minimum)
-        Label: max_lbl:
-            text << str(ft.maximum)
+#template ValView(name, model, modelType: FloatRange):
+#    """ A form control template specialization for Float members"""
+#    Container:
+#        constraints=[hbox(sel, min_lbl, sel_slider, max_lbl)]
+#        FloatField: sel:
+#            value:=getattr(model, name)
+#            minimum = ft.minimum
+#            maximum = ft.maximum
+#        Slider: sel_slider:
+#            tracking = False
+#            FloatTransform: ft:
+#                minimum=model.get_tag(name, 'low')
+#                maximum=model.get_tag(name, 'high')
+#                value :=getattr(model, name)
+#                precision=model.get_tag(name, 'precision', 100)
+#        Label: min_lbl:
+#                text << str(ft.minimum)
+#        Label: max_lbl:
+#            text << str(ft.maximum)
 
 template ValView(name, model, modelType: Int):
     """ A form control template specialization for Int members using a spin box"""
     SpinBox:
         value := getattr(model, name)
-        minimum=model.get_tag(name, 'low', -2147483648)
-        maximum=model.get_tag(name, 'high', 2147483647)
+        minimum=int(model.get_tag(name, 'low', -2147483648))
+        maximum=int(model.get_tag(name, 'high', 2147483647))
 
 
 template ValView(name, model, modelType: Str):
