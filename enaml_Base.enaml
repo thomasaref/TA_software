@@ -146,7 +146,7 @@ template CLView(name, model, index, vtype: Base):
         instr:=getattr(model, name)[index]
 
 template CLView(name, model, index, vtype):
-    Field:
+    MultilineField:
         read_only=True
         text<<unicode(getattr(model, name))
 
@@ -189,6 +189,7 @@ template ClView(name, model, index, vtype: bool):
 
 def get_type(name, model, index):
     if index<len(getattr(model, name)):
+        print type(getattr(model, name)[index]), model.get_tag(name, "inside_type")
         return model.get_tag(name, "inside_type", type(getattr(model, name)[index]))
     return None
 

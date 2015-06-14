@@ -247,6 +247,7 @@ enamldef XYformat(Form):
 #        op = InsertTab(item=item.name, target=targets[0])
 #        area.update_layout(op)
 
+
 def show_item(name, area, target=None, ItemType=DockItem, position='left', OP=InsertItem, **kwargs):
     if target==None:
         target=name
@@ -265,7 +266,7 @@ enamldef PlotToolBar(ToolBar):
     Action:
         text = "Format"
         triggered ::
-            show_item(name='xyformat', area=plot_area, target="plot", ItemType=XYfItem, position='left', OP=InsertItem)
+            show_item(name=plotr.name+'xyformat', area=plot_area, target="plot", ItemType=XYfItem, position='left', OP=InsertItem)
             #item=XYfItem(plot_area)
             #op = InsertBorderItem(item="xyformat", target="xyformat", position='left')
             #plot_area.update_layout(op) #plot_area.xyf_item.hide()
@@ -278,7 +279,7 @@ enamldef PlotToolBar(ToolBar):
     #    separator=True
     Action:
         text = "Plot Format"
-        triggered :: show_item(name="plot_format", area=plot_area, target="plot", ItemType=PlotFormatItem, position="right", OP=InsertItem) #plot_item.show()
+        triggered :: show_item(name=plotr.name+"plot_format", area=plot_area, target="plot", ItemType=PlotFormatItem, position="right", OP=InsertItem) #plot_item.show()
 
 
 enamldef PlotContainer(Container):
@@ -311,14 +312,14 @@ enamldef MatPlotWrap(MatPlotContainer):
 
 
 enamldef XYfItem(DockItem):
-    name="xyformat"
+    name=plotr.name+"xyformat"
     title = "XY Format"
     XYformat:
         pass
 
 enamldef PlotItem(DockItem):
     closable=False
-    name="plot"
+    name=plotr.name+"plot"
     title = "Plot"
     PlotContainer:
         pass
@@ -326,7 +327,7 @@ enamldef PlotItem(DockItem):
 enamldef PlotFormatItem(DockItem):
     #position='left' #'bottom'
     #floating = True
-    name="plot_format"
+    name=plotr.name+"plot_format"
     title = "Plot Format"
     PlotFormat:
         pass
@@ -343,6 +344,7 @@ enamldef PlotAreaContainer(Container):
     alias plot_area
     PlotArea: plot_area:
         pass
+    
 enamldef PlotMain(MainWindow): plotmain:
     attr plotr
     PlotAreaContainer:

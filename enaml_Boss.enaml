@@ -43,7 +43,7 @@ enamldef BossToolBar(ToolBar):
 #        tool_tip = "Show read pane"
     Action:
         text = "Plot"
-        triggered:: print dir(bossarea) #show_plot(bossarea, boss.plot) #show_pane(dyn_pages, 'Plot')
+        triggered:: plotpane.show() #print dir(bossarea) #show_plot(bossarea, boss.plot) #show_pane(dyn_pages, 'Plot')
         tool_tip = "Show plot"
     Action:
         separator=True
@@ -129,6 +129,12 @@ enamldef PlotBox(GroupBox):
 #            sys.stdout=self.old_stdout
 #            sys.stderr=self.old_stderr
 
+enamldef PlotPane(DockPane): 
+    dock_area='right'
+    title = 'Plot Pane'
+    PlotBox:
+        pass
+    
 enamldef LogPane(DockPane): lp:
     #attr old_stdout=sys.stdout
     #attr old_stderr=sys.stderr
@@ -311,6 +317,9 @@ enamldef BossMain(MainWindow): main:
         visible = False
     alias logpane
     LogPane: logpane:
+        pass
+    alias plotpane
+    PlotPane: plotpane:
         pass
 
     #title="Boss"

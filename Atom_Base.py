@@ -314,22 +314,24 @@ class Base(Atom):
         if change['type'] not in ('create', 'update'):
             self.set_log(change['name'], list(change['value']))
 
-    def add_plot(self):
-        self.boss.plot_list.append(Plotter())
-
+    def add_plot(self, name=''):
+        if name=="" or name in (p.name for p in self.boss.plots):
+            name="plot{}".format(len(self.boss.plots))
+            self.boss.plots.append(Plotter(name=name))
+            
     def add_line_plot(self, name):
         xname=self.get_tag(name, 'xdata')
         if xname==None:
             xdata=None
         else:
             xdata=getattr(self, xname)
-        self.boss.plot_list[0].add_plot(name, yname=name, ydata=getattr(self, name), xname=xname, xdata=xdata)
-        self.boss.plot_list[0].title=self.name
+        self.boss.plots[0].add_plot(name, yname=name, ydata=getattr(self, name), xname=xname, xdata=xdata)
+        self.boss.plots[0].title=self.name
         if xname==None:
-            self.boss.plot_list[0].xlabel="# index"
+            self.boss.plots[0].xlabel="# index"
         else:
-            self.boss.plot_list[0].xlabel=self.get_tag(xname, "plot_label", xname)
-        self.boss.plot_list[0].ylabel=self.get_tag(name, "plot_label", name)
+            self.boss.plots[0].xlabel=self.get_tag(xname, "plot_label", xname)
+        self.boss.plots[0].ylabel=self.get_tag(name, "plot_label", name)
 
     def add_img_plot(self, name):
         xname=self.get_tag(name, 'xdata')

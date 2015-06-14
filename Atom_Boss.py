@@ -31,6 +31,19 @@ class StreamCatch(Atom):
             sys.stdout=sys.__stdout__ #old_stdout
             sys.stderr=sys.__stderr__
 
+#class BossPlotter(Plotter):
+#    
+#    def _default_boss(self):
+#        boss.make_boss()
+#        return boss
+#        
+#    def __init__(self, **kwargs):
+#        """extends __init__ to set plot names automatically"""
+#        super(BossPlotter, self).__init__(**kwargs)
+#        #self.set_boss()
+#        if self.name=="":
+#            self.name="base{}".format(len(self.boss.plots))
+            
 class Boss(Atom):
     """Overall control class that runs main code and handles files, saving and plotting"""
     run=Callable()
@@ -41,7 +54,7 @@ class Boss(Atom):
     save_factory=Callable(Save_HDF5)
     bases=ContainerList()
     plot=Typed(Plotter, ())
-    plot_list=ContainerList()
+    plots=ContainerList()
     plottables=Dict()
     BASE_DIR=Unicode("/Users/thomasaref/Dropbox/Current stuff/TA_software")
     DIVIDER=Unicode("/")

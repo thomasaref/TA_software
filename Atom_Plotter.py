@@ -9,7 +9,7 @@ from LOG_functions import log_debug
 #from chaco.plot import Plot
 from chaco.array_plot_data import ArrayPlotData
 from chaco.default_colormaps import jet
-from numpy import angle, absolute, dtype, log10, meshgrid, arange, linspace
+from numpy import angle, absolute, dtype, log10, meshgrid, arange, linspace, sin
 from numpy import split, squeeze, array, transpose, concatenate, atleast_2d, ndim
 #from chaco.tools.api import PanTool, ZoomTool,  LegendTool #, LineInspector
 import traits_enaml
@@ -217,7 +217,7 @@ class XYFormat(Atom):
            index_scale=self.plotter.index_scale
            )[0]
         xdata=self.plotter.get_data(self.xname)   
-        if self.xdata!=None:
+        if xdata!=None:
                 renderer.index.set_data(xdata)
         renderer.request_redraw()
         self.rend_list[0]=renderer
@@ -235,7 +235,7 @@ class XYFormat(Atom):
            index_scale=self.plotter.index_scale
            )[0]
         xdata=self.plotter.get_data(self.xname)   
-        if self.xdata!=None:
+        if xdata!=None:
                 renderer.index.set_data(xdata)
         renderer.request_redraw()
         self.rend_list[1]=renderer
@@ -333,9 +333,10 @@ class Plotter(Atom):
          plot_gc.save("image_test.png")
 
      def set_data(self, zname, zdata):
-        if zname not in self.pd.list_data():
-            self.plottables['plotted'].append(zname)
-        self.pd.set_data(zname, zdata)
+         if zdata!=None:
+            if zname not in self.pd.list_data():
+                self.plottables['plotted'].append(zname)
+            self.pd.set_data(zname, zdata)
 
      def get_data(self, zname, index=None, axis=0):
         data=self.pd.get_data(zname)
@@ -376,8 +377,10 @@ class Plotter(Atom):
          self.xyfs.update(**{xyf.name: xyf})
          self.overall_plot_type="img plot"
 
-     def add_line_plot(self, name, zname, zdata, xname=None, xdata=None):
-        self.add_data(zname=zname, zdata=zdata, xname=xname, xdata=xdata, overwrite=True)
+     def add_line_plot(self, name, zname, zdata, xname='', xdata=None):
+        #self.add_data(zname=zname, zdata=zdata, xname=xname, xdata=xdata, overwrite=True)
+        self.set_data(zname, zdata)
+        self.set_data(xname, xdata)
         xyf=XYFormat(plotter=self)
         zdata=self.get_data(zname)
         #if 1: #zdata.ndim>1:
@@ -432,7 +435,6 @@ class Plotter(Atom):
                  appen=False             
          orig=self.get_data(name)
          if orig!=None and not overwrite:
-             
              arrs=(orig,)+arrs
          if appen:
              axis=1
@@ -465,33 +467,34 @@ class Plotter(Atom):
 if __name__=="__main__":
     a=Plotter()
     from numpy import exp, shape
-    xs = linspace(0, 3, 3)
+    xs = linspace(0, 8, 100)
     ys = linspace(0, 4, 3)
     x, y = meshgrid(xs,ys)
     z = exp(-(x**2+y**2)/100)
+    zs=sin(xs)
     print z
     #zz= a.splitMultiD(z)
     #print zz
 #    zz.append(array([[1],[2],[3]]))
 #    print zz
 #    print a.gatherMultiD(zz)
-    args=([1,2,3], [4,5,6])
-    a.add_data('x', args) #z=concatenate(atleast_2d(*args), axis=0)
-    a.add_data('x', args) #z=concatenate(atleast_2d(*args), axis=0)
+    #args=([1,2,3], [4,5,6])
+    #a.add_data('x', args) #z=concatenate(atleast_2d(*args), axis=0)
+    #a.add_data('x', args) #z=concatenate(atleast_2d(*args), axis=0)
 
     #print a.get_data('z')
 #    print concatenate((z, atleast_2d([7,8,9])))
-    a.add_data('z', 7)#, axis=1)
-    a.add_data('z', 7)#, axis=1)
+    #a.add_data('z', 7)#, axis=1)
+    #a.add_data('z', 7)#, axis=1)
 
-    print a.get_data('z', 0)
-    a.add_data('z', [11, 12], appen=True) #, axis=1)
+    #print a.get_data('z', 0)
+    #a.add_data('z', [11, 12], appen=True) #, axis=1)
     #a.gatherMultiD('z', 12, axis=1)
 #    
-    print a.get_data('z', 0)
-    print a.get_data('z', 0, 1)
-    a.add_data('z', [3,4,5,6], appen=False) #, axis=1)
-    print a.get_data('z')    
+    #print a.get_data('z', 0)
+    #print a.get_data('z', 0, 1)
+    #a.add_data('z', [3,4,5,6], appen=False) #, axis=1)
+    #print a.get_data('z')    
 #    a.gatherMultiD('z', (z, [7,8,9]))
 #    print a.pd.get_data('z')
 #    print a.get_data('z', 0)
@@ -513,7 +516,8 @@ if __name__=="__main__":
 #    print atleast_2d([1,2,3])
 #    print transpose(atleast_2d([1,2,3]))
 #    #print split(xs, shape(xs)[0])
-    a.add_img_plot(zname="z", zdata=z)#, xname="x", xdata=xs, yname="y", ydata=ys)
+    #a.add_img_plot(zname="z", zdata=z)#, xname="x", xdata=xs, yname="y", ydata=ys)
+    a.add_line_plot("blah", zname="z", zdata=zs, xname='x', xdata=xs)
     a.show()
 
         #cs=column_stack(arrs)

@@ -7,7 +7,7 @@ Created on Tue Mar 24 16:09:54 2015
 
 #import logging
 from logging import debug as log_debug, warning as log_warning, info as log_info
-from logging import getLogger, StreamHandler, FileHandler, basicConfig, DEBUG, Formatter
+from logging import getLogger, StreamHandler, FileHandler, basicConfig, DEBUG, Formatter, INFO
 import shutil
 #configure logging
 LOGFORMATTER='%(asctime)s - %(filename)s (line %(lineno)d) <%(funcName)s> %(levelname)s:  %(message)s'
