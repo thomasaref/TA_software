@@ -5,10 +5,10 @@ Created on Fri Apr  3 22:26:23 2015
 @author: thomasaref
 """
 from LOG_functions import log_debug
-log_debug(1)
+#log_debug(1)
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
-from Atom_Base import Base
+from Atom_Base import Base, NoShowBase
 from EBL_Boss import ebl_boss
 from atom.api import Enum, Float, ContainerList, Typed, List, Unicode, Int, Atom, Range, Bool, observe
 
@@ -22,10 +22,13 @@ class EBL_Base(Base):
     def _default_boss(self):
         return ebl_boss
 
-
-class EBLPolygon(Atom):
+class EBLvert(NoShowBase):
+    x=Float().tag(log=False)
+    y=Float().tag(log=False)
+    
+class EBLPolygon(NoShowBase):
     """Implements polygons for use in drawing EBL patterns and includes conversion of polygon to DXF or GDS format (text based)"""
-    verts=ContainerList(tuple).tag(desc='list of vertices of polygon')
+    verts=ContainerList().tag(inside_type=EBLvert, desc='list of vertices of polygon', log=False)
     #color=Enum("green").tag(desc="color or datatype of item, could be used for dosing possibly")
 
     def poly2dxf(self):
@@ -76,7 +79,7 @@ def EBLRectangle(xr=0.0, yr=0.0, wr=1.0, hr=1.0, **kwargs):
     return EBLPolygon(verts=[(xr,yr), (xr+wr,yr), (xr+wr, yr+hr), (xr, yr+hr)], **kwargs)
 
 class EBL_Item(EBL_Base):
-    polylist=ContainerList(EBLPolygon)
+    polylist=ContainerList(EBLPolygon).tag(inside_type=EBLPolygon)
 
     def plot(self):
         for n,p in enumerate(self.polylist):
@@ -103,19 +106,23 @@ class EBL_Item(EBL_Base):
         poly1=EBLPolygon(verts=verts, layer=self.layer, cn=self.cn)
         self.polylist.append(poly1)
 
-    def show(self):
-        """stand alone for showing instrument. Shows a modified boss view that has the instrument as a dockpane"""
-        with imports():
-            from enaml_Boss import EBLItemMain
-        try:
-            app = QtApplication()
-            view = EBLItemMain(eblitemin=self, boss=self.boss)
-            view.show()
-            app.start()
-        finally:
-            pass #self.boss.close_all()
+#    def show(self):
+#        """stand alone for showing instrument. Shows a modified boss view that has the instrument as a dockpane"""
+#        with imports():
+#            from enaml_Boss import EBLItemMain
+#        try:
+#            app = QtApplication()
+#            view = EBLItemMain(eblitemin=self, boss=self.boss)
+#            view.show()
+#            app.start()
+#        finally:
+#            pass #self.boss.close_all()
 
+    
+a=EBL_Item()
+a.polylist=[EBLRectangle(), EBLRectangle()]
 
+a.show()
 if __name__=="__main__2":
     #a=EBLRectangle(name="blah")
     b=EBL_Item(name="blah")
@@ -233,7 +240,7 @@ if __name__=="__main__2":
         #print ebl_boss.instruments[0].name
     log_debug(2)
 
-if __name__=="__main__":
+if __name__=="__main__3":
     class PolygonWatch(Atom):
         #verts=ContainerList(default=[(0.0, 0.0)])
         polygon=Typed(EBLPolygon)

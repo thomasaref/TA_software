@@ -339,16 +339,29 @@ enamldef PlotArea(DockArea):
 
 enamldef PlotAreaContainer(Container):
     padding = 0
-    PlotToolBar:
-        pass
+    constraints = [contents_width==plot_area.width, contents_height==plot_area.height]
+    #PlotToolBar:
+    #    pass
     alias plot_area
-    PlotArea: plot_area:
-        pass
+    DockArea: plot_area:
+        #constraints = [contents_width==500, contents_height==800]
+        activated :: 
+            show_item(name=plotr.name+"plot", area=plot_area,  ItemType=PlotItem)
+            print dir(plot_area.dock_items()[0]) #plot_item.show()
+
     
 enamldef PlotMain(MainWindow): plotmain:
     attr plotr
-    PlotAreaContainer:
-        pass #plotr = plot
+    alias plot_area
+    Container: mycont:
+        constraints = [mycont.width==plot_area.width, mycont.height==plot_area.height]
+        alias plot_area
+        DockArea: plot_area:
+            activated :: 
+                show_item(name=plotr.name+"plot", area=plot_area,  ItemType=PlotItem)
+                print dir(plot_area.dock_items()[0]) #plot_item.show()
+#            PlotAreaContainer: pac:
+#        pass #plotr = plot
 #    initial_size=(800,600)
 #    alias xy
 #    XYfPane: xy:

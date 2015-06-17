@@ -25,6 +25,9 @@ from enaml_Filer import ReadWrap, SaveWrap
 from Atom_Read_File import Read_File
 from Atom_Save_File import Save_File
 
+def get_tag(name, model, tag, none_value=None):
+    return model.get_tag(name, tag, none_value)
+    
 template ValView(name, model, modelType):
     """ This default specialization displays read-only text for the value."""
     Field:
