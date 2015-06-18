@@ -20,16 +20,24 @@ class EBL_Boss(Boss):
         self.run()
         log_info("EBL Master finished")
 
-    def show(self):
+    def show(self, base=None): #needs some work
+        """stand alone for showing instrument. Shows a modified boss view that has the instrument as a dockpane"""
         with imports():
-            from enaml_Boss import MasterMain
-        try:
-            app = QtApplication()
-            view = MasterMain(boss=self)
-            view.show()
-            app.start()
-        finally:
-            if self.saving:
-                self.save_file.flush_buffers()
+            from EBL_enaml import EBMain
+        app = QtApplication()
+        view = EBMain(base=base, boss=self)
+        view.show()
+        app.start()
+#    def show(self):
+#        with imports():
+#            from enaml_Boss import MasterMain
+#        try:
+#            app = QtApplication()
+#            view = MasterMain(boss=self)
+#            view.show()
+#            app.start()
+#        finally:
+#            if self.saving:
+#                self.save_file.flush_buffers()
 
 ebl_boss=EBL_Boss()

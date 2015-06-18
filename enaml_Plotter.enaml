@@ -318,7 +318,7 @@ enamldef XYfItem(DockItem):
         pass
 
 enamldef PlotItem(DockItem):
-    closable=False
+    #closable=False
     name=plotr.name+"plot"
     title = "Plot"
     PlotContainer:

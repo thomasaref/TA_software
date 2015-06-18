@@ -10,7 +10,7 @@ from enaml import imports
 from enaml.qt.qt_application import QtApplication
 from Atom_Base import Base, NoShowBase
 from EBL_Boss import ebl_boss
-from atom.api import Enum, Float, ContainerList, Typed, List, Unicode, Int, Atom, Range, Bool, observe
+from atom.api import Enum, Float, ContainerList, Typed, List, Unicode, Int, Atom, Range, Bool, observe, Str
 
 class EBL_Base(Base):
     color=Enum("green").tag(desc="color or datatype of item, could be used for dosing possibly")
@@ -20,17 +20,38 @@ class EBL_Base(Base):
     y_center=Float(0.0).tag(desc="y coordinate of center of pattern. this should almost always be 0.0, which is centered (default).", unit="um")
 
     def _default_boss(self):
+        ebl_boss.make_boss()
         return ebl_boss
 
+class NoShow_EBL_Base(EBL_Base):
+    def _default_show_base(self):
+        return False
+        
 class EBLvert(NoShowBase):
+    def _default_base_name(self):
+        return "EBLvert"
+
     x=Float().tag(log=False)
     y=Float().tag(log=False)
+
+    def _default_boss(self):
+        ebl_boss.make_boss()
+        return ebl_boss
+        
+def getxy(vert):
+    return (vert.x, vert.y)
     
-class EBLPolygon(NoShowBase):
+class EBLPolygon(NoShow_EBL_Base):
     """Implements polygons for use in drawing EBL patterns and includes conversion of polygon to DXF or GDS format (text based)"""
     verts=ContainerList().tag(inside_type=EBLvert, desc='list of vertices of polygon', log=False)
     #color=Enum("green").tag(desc="color or datatype of item, could be used for dosing possibly")
 
+    def _default_base_name(self):
+        return "EBLPolygon"
+    
+    def get_verts(self):
+        return map(getxy, self.verts)
+        
     def poly2dxf(self):
         """converts polygon to dxf format and returns list of commands (text based)"""
         tlist=['0\r\nLWPOLYLINE\r\n',  #place line
@@ -39,7 +60,7 @@ class EBLPolygon(NoShowBase):
                '90\r\n{0}\r\n'.format(len(self.verts)), #number of vertices=4
                '70\r\n1\r\n'] #is closed
         for v in self.verts:
-            tlist.append('10\r\n{0}\r\n20\r\n{1}\r\n'.format(v[0],v[1])) #vertex coordinate X and Y
+            tlist.append('10\r\n{0}\r\n20\r\n{1}\r\n'.format(v.x,v.y)) #vertex coordinate X and Y
         return tlist
 
     #def show(self):
@@ -74,16 +95,25 @@ class EBLPolygon(NoShowBase):
 #        tlist.append('ENDEL\n')
 #        return tlist
 
-def EBLRectangle(xr=0.0, yr=0.0, wr=1.0, hr=1.0, **kwargs):
+def V(vtuple):
+    """creates vertice from tuple"""
+    return EBLvert(x=vtuple[0], y=vtuple[1])
+    
+def P(verts, **kwargs):
+    """creates EBLPolygon from tuple of vertices and keyword arguments"""
+    return EBLPolygon(verts=map(V,verts), **kwargs)
+
+def R(xr=0.0, yr=0.0, wr=1.0, hr=1.0, **kwargs):
     """creates rectangle EBLpolygon with (x,y) coordinates=(xr,yr), width=wr, height=hr"""
-    return EBLPolygon(verts=[(xr,yr), (xr+wr,yr), (xr+wr, yr+hr), (xr, yr+hr)], **kwargs)
+    return P(verts=[(xr,yr), (xr+wr,yr), (xr+wr, yr+hr), (xr, yr+hr)], **kwargs)
 
 class EBL_Item(EBL_Base):
     polylist=ContainerList(EBLPolygon).tag(inside_type=EBLPolygon)
-
+    view=Enum("EBL").tag(private=True)
+        
     def plot(self):
         for n,p in enumerate(self.polylist):
-            self.boss.plot.add_poly_plot(n=n, verts=p.verts, cn=p.color, polyname=self.name)
+            self.boss.plot.add_poly_plot(n=n, verts=p.get_verts(), cn=p.color, polyname=self.name)
         self.boss.plot.plot.request_redraw()
 
     def writecenterrect(self):
@@ -94,18 +124,26 @@ class EBL_Item(EBL_Base):
 
     def writerect(self):
         """Adds a rectangle with bottom left corner coordinates to polylist"""
-        poly1=EBLRectangle(xr=self.xr, yr=self.yr, wr=self.wr, hr=self.hr, layer=self.layer, cn=self.cn)
+        poly1=R(xr=self.xr, yr=self.yr, wr=self.wr, hr=self.hr, layer=self.layer, cn=self.cn)
         self.polylist.append(poly1)
 
     def rect(self, xr, yr, wr, hr):
         """Adds a rectangle with bottom left corner coordinates to polylist"""
-        poly1=EBLRectangle(xr=xr, yr=yr, wr=wr, hr=hr, layer=self.layer, cn=self.cn)
+        poly1=R(xr=xr, yr=yr, wr=wr, hr=hr, layer=self.layer, cn=self.cn)
         self.polylist.append(poly1)
 
     def poly(self, verts):
-        poly1=EBLPolygon(verts=verts, layer=self.layer, cn=self.cn)
+        poly1=P(verts=verts, layer=self.layer, cn=self.cn)
         self.polylist.append(poly1)
 
+#needs some work
+        """stand alone for showing instrument. Shows a modified boss view that has the instrument as a dockpane"""
+#        with imports():
+#            from EBL_enaml import EBMain
+#        app = QtApplication()
+#        view = EBMain(base=self, boss=self.boss)
+#        view.show()
+#        app.start()
 #    def show(self):
 #        """stand alone for showing instrument. Shows a modified boss view that has the instrument as a dockpane"""
 #        with imports():
@@ -118,16 +156,19 @@ class EBL_Item(EBL_Base):
 #        finally:
 #            pass #self.boss.close_all()
 
-    
-a=EBL_Item()
-a.polylist=[EBLRectangle(), EBLRectangle()]
-
+#b=R()    
+a=EBL_Item(name="EBL_item_test")
+a.polylist=[R(), R(5)]#, P([(0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1)])]
+#print a.testlist[0]
+#a.polylist.append(R())
+#print [n.name for n in a.polylist]
 a.show()
 if __name__=="__main__2":
     #a=EBLRectangle(name="blah")
     b=EBL_Item(name="blah")
 #    print dir(b.get_member("polylist"))
-    b.polylist=[EBLRectangle(), EBLRectangle()]
+    b.polylist=[R(), R()]
+
 #    print b.polylist[0].verts
 #    print dir(b.get_member("polylist"))
 #    print b.get_member("polylist")
@@ -220,7 +261,7 @@ if __name__=="__main__2":
     print c.index
     print c.length
     c.index=1
-    b.polylist.append(EBLRectangle())
+    b.polylist.append(R())
     print c.length        #print a.view
     print c.show_value.verts    #print a.verts
     d=subarr2(instr=c.show_value, name="verts")
@@ -314,7 +355,7 @@ if __name__=="__main__3":
             self.polywatch=PolygonWatch(polygon=self.ebl_item.polylist[self.polyindex])
             self.polywatch._observe_vertindex({})
 
-    a=EBL_Item(name="blah", polylist=[EBLRectangle(), EBLRectangle()])
+    a=EBL_Item(name="blah", polylist=[R(), R()])
     b=EBL_ItemWatch(ebl_item=a)
     b.print_polylist()
     a.polylist[0].verts=[(0, 0), (1,2), (3,4)]

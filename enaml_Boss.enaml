@@ -303,8 +303,11 @@ def show_plot(area, plot):
 #    alias logpane
 #    LogPane: logpane:
 #        pass
-
-enamldef BossMain(MainWindow): main:
+class BossMainWindow(MainWindow):
+    def show_base(self, area, base):
+        show_base(area, base)
+    
+enamldef BossMain(BossMainWindow): main:
     attr boss
     attr base: None
     title="Base"
@@ -342,7 +345,7 @@ enamldef BossMain(MainWindow): main:
         constraints = [mycont.width==bossarea.width, mycont.height==bossarea.height]
         alias bossarea
         DockArea: bossarea:
-            activated :: show_base(bossarea, base)
+            activated :: main.show_base(bossarea, base)
 
 
 enamldef PlotMain(MainWindow): main:

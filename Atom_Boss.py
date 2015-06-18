@@ -63,7 +63,21 @@ class Boss(Atom):
     SETUP_GROUP_NAME=Unicode("SetUp")
     SAVE_GROUP_NAME=Unicode("Measurements")
     display=Typed(StreamCatch, ())
+    base_nums=Dict()
+    base_count=Int()
+    
+    def get_base_num(self, key):
+        """used in initialization of bases"""
+        if key in self.base_nums.keys():
+            return self.base_nums[key]
+        return len(self.bases)
 
+    def set_base_num(self, key):
+        if key in self.base_nums.keys():
+            self.base_nums[key]+=1
+        else:
+            self.base_nums[key]=0
+            
     def run_measurement(self):
         log_info("Master started")
         self.run()
@@ -126,12 +140,12 @@ class Boss(Atom):
             else:
                 log_warning("No save format!")
 
-    def show(self):
+    def show(self, base=None):
         with enaml.imports():
             from enaml_Boss import BossMain
         try:
             app = QtApplication()
-            view = BossMain(boss=self)
+            view = BossMain(base=base, boss=self)
             view.show()
             app.start()
         finally:

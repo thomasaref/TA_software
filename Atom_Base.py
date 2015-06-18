@@ -65,9 +65,13 @@ class Base(Atom):
     plot_all=Bool(False).tag(private=True)
     show_base=Bool(True).tag(private=True) #boolean that controls if base appears in boss toolbar
     view=Enum("Auto").tag(private=True)
-
+    base_name=Unicode().tag(private=True) #default name of base if no name is given 
+    #base_num=Int().tag(private=True)
     #plot_keys=List() #remove?
 
+    def _default_base_name(self):
+        return "base"
+        
     def _default_reserved_names(self):
         """reserved names not to perform standard logging and display operations on. can be overwritten in child classes"""
         #return Slave.members().keys()
@@ -106,14 +110,9 @@ class Base(Atom):
         """shortcut to plotting"""
         self.boss.draw_plot(self)
 
-    def show(self): #needs some work
-        """stand alone for showing instrument. Shows a modified boss view that has the instrument as a dockpane"""
-        with imports():
-            from enaml_Boss import BossMain
-        app = QtApplication()
-        view = BossMain(base=self, boss=self.boss)
-        view.show()
-        app.start()
+    def show(self):
+        self.boss.show(base=self)
+        
 
     def get_all_tags(self, key, key_value=None, none_value=None, search_list=None):
         """returns a list of names of parameters with a certain key_value"""
@@ -288,20 +287,45 @@ class Base(Atom):
 #        make_log_file(log_path=boss.BASE_DIR+boss.DIVIDER+boss.LOG_NAME+".log", display=boss.display)  #default log file
 #        return boss
 
+#    def _default_base_num(self):
+#        return self.boss.base_count
+    #    return self.boss.get_base_num(self.base_name)
+
+#    def set_name(self, name=""):
+    #    if name=="":
+    #        name="{basename}{basenum}".format(basename=self.base_name, basenum=self.boss.get_base_num(self.base_name))
+    #        self.boss.set_base_num(self.base_name)
+    #    return name
+#        if name=="":
+#            name="{basename}{basenum}".format(basename=self.base_name, basenum=self.base_num)    
+#        return name
+
+    def _default_name(self):
+        name= "_{basename}__{basenum}".format(basename=self.base_name, basenum=self.boss.base_count)#get_base_num(self.base_name))  #self.set_name()
+        #self.boss.set_base_num(self.base_name)
+        return name
+        
     def __init__(self, **kwargs):
         """extends __init__ to set boss and add instrument to boss's instrument list.
         Also adds observers for ContainerList parameters so if item in list is changed via some list function other than setattr, notification is still given.
         Finally, sets all Callables to be log decorated if they weren't already."""
         super(Base, self).__init__(**kwargs)
+        #print self.boss.base_nums #self.base_name, self.base_num
         #self.set_boss()
-        if self.name=="":
-            self.name="base{}".format(len(self.boss.bases))
+        #self.name=self.set_name(self.name)
+        #if self.name=="":
+        #    self.name="{basename}{basenum}".format(basename=self.base_name, basenum=self.boss.get_base_num(self.base_name))
+        #self.boss.set_base_num(self.base_name)
         if self.show_base:
             self.boss.bases.append(self)
+        self.boss.base_count+=1
        # plot_keys=[]
         for key in self.all_params:
             if self.get_type(key)==ContainerList:
                 self.observe(key, self.value_changed)
+                #for item in getattr(self, key):
+                #    if isinstance(item, Base):
+                #        item.name
             if self.get_type(key)==Callable:
                 func=getattr(self, key)
                 if isinstance(func, FunctionType):
