@@ -36,21 +36,21 @@ from atom.api import Atom, Str, Instance, Event
 
 
 from enaml.widgets.api import Container, Field
-        
+
 enamldef EBCont(Container):
-    
+
     padding=0
     constraints = [hbox( ind, val, insert_btn, pop_btn, plot_btn, spacer), align("top", ind, val, insert_btn, pop_btn)]
     SpinBox: ind:
         minimum=0
-        maximum << max(0, len(instr.polylist)-1)
+        maximum << max(0, len(polylist)-1)
     Container: val:
         padding = 0
         ScrollArea: sa:
             Container:
                 padding=0
-                Looper: 
-                    iterable << instr.polylist[ind.value].verts
+                Looper:
+                    iterable << polylist[ind.value].verts
                     Container:
                         padding=0
                         constraints = [hbox(ff1, ff2)]
@@ -61,19 +61,19 @@ enamldef EBCont(Container):
     PushButton: insert_btn:
         text="Insert"
         clicked::
-            if len(instr.polylist)==0:
-                intype=instr.get_tag("polylist", "inside_type")() #if inside_type is not specified for an empty array, this will generate an error
+            if len(polylist)==0:
+                intype=inside_type() #if inside_type is not specified for an empty array, this will generate an error
             else:
-                instr.polylist.insert(ind.value, instr.get_tag("polylist", "inside_type")()) #pass #mydata.insert()
+                instr.polylist.insert(ind.value, inside_type()) #pass #mydata.insert()
         #visible << model.get_tag(name, "full_interface", False)
     PushButton: pop_btn:
         text="Remove"
-        clicked:: instr.polylist.pop(ind.value)
+        clicked:: polylist.pop(ind.value)
         #visible << model.get_tag(name, "full_interface", False)
-        enabled << len(instr.polylist)>0
+        enabled << len(polylist)>0
     PushButton: plot_btn:
         text="Plot"
-        clicked :: 
+        clicked ::
             instr.plot()
             #print bossarea.dock_items()[0].name
             show_plot(plotr.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right")
@@ -83,7 +83,7 @@ enamldef EBCont(Container):
 #template EBTemp(InstrView: "EBL"): #Dummy template demonstrating custom Instrument layouts using the view variable
 #    EBCont:
 #        pass
-    
+
 #enamldef EBLToolBar(ToolBar):
 #    dock_area='left'
 #    Action:
@@ -162,7 +162,15 @@ enamldef EBCont(Container):
 #            PlotItem:
 #                plotr=boss.plot
 
+enamldef EBContWrap(EBCont):
+    attr polylist
+    attr inside_type=float
+
 from enaml_Boss import BossMain, show_general_item#, SavePane, LogPane, PlotPane, BossToolBar
+
+enamldef EBMain(MainWindow):
+    EBContWrap:
+        pass
 
 enamldef EBItem(DockItem):
     attr instr
@@ -173,7 +181,7 @@ enamldef EBItem(DockItem):
     #DynamicTemplate:  #use of dynamic template allows custom instrument layouts if defined in enaml
     #    base = EBTemp
     #    args = (instr.view,)
-        
+
 class EBLMain(BossMain):
     def show_base(self, area, base):
         if base!=None:

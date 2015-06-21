@@ -4,21 +4,15 @@ Created on Fri Apr  3 22:26:23 2015
 
 @author: thomasaref
 """
-from LOG_functions import log_debug
+from LOG_functions import log_warning#, log_debug
 #log_debug(1)
+from Atom_Base import Base#, NoShowBase
+from EBL_Boss import ebl_boss
+from atom.api import Atom, Enum, Float, ContainerList, Int, observe, Property#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
-from Atom_Base import Base, NoShowBase
-from EBL_Boss import ebl_boss
-from atom.api import Enum, Float, ContainerList, Typed, List, Unicode, Int, Atom, Range, Bool, observe, Str
 
 class EBL_Base(Base):
-    color=Enum("green").tag(desc="color or datatype of item, could be used for dosing possibly")
-    layer=Enum("Al").tag(desc='layer of item')
-
-    x_center=Float(0.0).tag(desc="x coordinate of center of pattern. this should almost always be 0.0, which is centered (default).", unit="um")
-    y_center=Float(0.0).tag(desc="y coordinate of center of pattern. this should almost always be 0.0, which is centered (default).", unit="um")
-
     def _default_boss(self):
         ebl_boss.make_boss()
         return ebl_boss
@@ -26,32 +20,38 @@ class EBL_Base(Base):
 class NoShow_EBL_Base(EBL_Base):
     def _default_show_base(self):
         return False
-        
-class EBLvert(NoShowBase):
-    def _default_base_name(self):
-        return "EBLvert"
 
-    x=Float().tag(log=False)
-    y=Float().tag(log=False)
+class EBL_PolyBase(Atom):
+    color=Enum("green").tag(desc="color or datatype of item, could be used for dosing possibly")
+    layer=Enum("Al").tag(desc='layer of item')
 
-    def _default_boss(self):
-        ebl_boss.make_boss()
-        return ebl_boss
-        
+    x_center=Float(0.0).tag(desc="x coordinate of center of pattern. this should almost always be 0.0, which is centered (default).", unit="um")
+    y_center=Float(0.0).tag(desc="y coordinate of center of pattern. this should almost always be 0.0, which is centered (default).", unit="um")
+
+class NoShow_EBL_PolyBase(EBL_PolyBase):
+    def _default_show_base(self):
+        return False
+
+class EBLvert(Atom):
+    #def _default_base_name(self):
+    #    return "EBLvert"
+
+    x=Float()#.tag(log=False)
+    y=Float()#.tag(log=False)
+
 def getxy(vert):
     return (vert.x, vert.y)
-    
-class EBLPolygon(NoShow_EBL_Base):
+
+class EBLPolygon(EBL_PolyBase):
     """Implements polygons for use in drawing EBL patterns and includes conversion of polygon to DXF or GDS format (text based)"""
     verts=ContainerList().tag(inside_type=EBLvert, desc='list of vertices of polygon', log=False)
-    #color=Enum("green").tag(desc="color or datatype of item, could be used for dosing possibly")
 
-    def _default_base_name(self):
-        return "EBLPolygon"
-    
+    #def _default_base_name(self):
+    #    return "EBLPolygon"
+
     def get_verts(self):
         return map(getxy, self.verts)
-        
+
     def poly2dxf(self):
         """converts polygon to dxf format and returns list of commands (text based)"""
         tlist=['0\r\nLWPOLYLINE\r\n',  #place line
@@ -63,42 +63,10 @@ class EBLPolygon(NoShow_EBL_Base):
             tlist.append('10\r\n{0}\r\n20\r\n{1}\r\n'.format(v.x,v.y)) #vertex coordinate X and Y
         return tlist
 
-    #def show(self):
-    #    """stand alone for showing instrument. Shows a modified boss view that has the instrument as a dockpane"""
-    #    with imports():
-    #        from enaml_Boss import EBLItemMain
-    #    try:
-    #        app = QtApplication()
-    #        view = EBLItemMain(eblitemin=self, boss=self.boss)
-    #        view.show()
-    #        app.start()
-    #    finally:
-    #        pass #self.boss.close_all()
-
-    #def plot(self):
-    #    self.boss.plot.add_poly_plot(n=self.n, verts=self.verts, cn=self.color, polyname=self.name)
-    #    self.boss.plot.plot.request_redraw()
-#    def poly2gds(self):
-#        """converts polygon to gds format and returns list of commands (text based)"""
-#        tlist=[] #temporary list of string commands
-#        #xr, yr, wr, hr = 10000.0*xr, 10000.0*yr, 10000.0*wr, 10000.0*hr #scale up useful for debugging
-#        tlist.append('BOUNDARY\n')
-#        tlist.append('LAYER: {0}\n'.format(self.layer))
-#        tlist.append('DATATYPE: {0}\n'.format(self.cn))
-#        vlist=[]
-#        vlist.append('XY: ')
-#        for v in self.verts:
-#            vlist.append('{0}, {1}, '.format(int(v[0]*10000), int(v[1]*10000)))
-#        vlist[-1]=vlist[-1][:-2]
-#        vlist.append('\n')
-#        tlist.append(''.join(vlist))
-#        tlist.append('ENDEL\n')
-#        return tlist
-
 def V(vtuple):
     """creates vertice from tuple"""
     return EBLvert(x=vtuple[0], y=vtuple[1])
-    
+
 def P(verts, **kwargs):
     """creates EBLPolygon from tuple of vertices and keyword arguments"""
     return EBLPolygon(verts=map(V,verts), **kwargs)
@@ -107,260 +75,123 @@ def R(xr=0.0, yr=0.0, wr=1.0, hr=1.0, **kwargs):
     """creates rectangle EBLpolygon with (x,y) coordinates=(xr,yr), width=wr, height=hr"""
     return P(verts=[(xr,yr), (xr+wr,yr), (xr+wr, yr+hr), (xr, yr+hr)], **kwargs)
 
-class EBL_Item(EBL_Base):
+class PolyList(EBL_PolyBase):
     polylist=ContainerList(EBLPolygon).tag(inside_type=EBLPolygon)
-    view=Enum("EBL").tag(private=True)
-        
-    def plot(self):
-        for n,p in enumerate(self.polylist):
-            self.boss.plot.add_poly_plot(n=n, verts=p.get_verts(), cn=p.color, polyname=self.name)
-        self.boss.plot.plot.request_redraw()
+    #view=Enum("EBL").tag(private=True)
 
-    def writecenterrect(self):
+    #def plot(self):
+    #    for n,p in enumerate(self.polylist):
+    #        self.boss.plot.add_poly_plot(n=n, verts=p.get_verts(), cn=p.color, polyname=self.name)
+    #    self.boss.plot.plot.request_redraw()
+
+    def P(self, verts):
+        """adds a polygon to the polylist with vertices given as a list of tuples"""
+        self.polylist.append(P(verts, layer=self.layer, color=self.color))
+
+    def R(self, xr, yr, wr, hr):
+        """Adds a rectangle with bottom left corner coordinates to polylist"""
+        self.polylist.append(R(xr, yr, wr, hr, layer=self.layer, color=self.color))
+
+    def C(self, xr, yr, wr, hr):
         """Adds a centered rectangle to the polylist"""
-        self.xr=self.xr-self.wr/2.0
-        self.yr=self.yr-self.hr/2.0
-        self.writerect()
+        self.R(xr-wr/2.0, yr-hr/2.0, wr, hr)
 
-    def writerect(self):
-        """Adds a rectangle with bottom left corner coordinates to polylist"""
-        poly1=R(xr=self.xr, yr=self.yr, wr=self.wr, hr=self.hr, layer=self.layer, cn=self.cn)
-        self.polylist.append(poly1)
+    def show(self, inside_type=EBLPolygon):
+        """stand alone for showing polylist"""
+        with imports():
+            from EBL_enaml import EBLMain
+        app = QtApplication()
+        view = EBLMain(polylist=self.polylist, inside_type=inside_type)
+        view.show()
+        app.start()
 
-    def rect(self, xr, yr, wr, hr):
-        """Adds a rectangle with bottom left corner coordinates to polylist"""
-        poly1=R(xr=xr, yr=yr, wr=wr, hr=hr, layer=self.layer, cn=self.cn)
-        self.polylist.append(poly1)
+from scipy.constants import epsilon_0 as eps0
+from numpy import sqrt
 
-    def poly(self, verts):
-        poly1=P(verts=verts, layer=self.layer, cn=self.cn)
-        self.polylist.append(poly1)
+class IDT(EBL_Base):
+    df=Enum("single", "double").tag(desc="'double' for double fingered, 'single' for single fingered. defaults to double fingered")
+    Np=Int(36).tag(desc="number of finger pairs. this should be at least 1 and defaults to 36.")
+    ef=Int(0).tag(desc="number of extra fingers to compensate for edge effect. Defaults to 0")
+    a=Float(0.096).tag(unit="um", desc="width of fingers (um). same as gap generally. Adjusting relative to gap is equivalent to adjusting the bias in Beamer")
+    gap=Float(0.096).tag(unit="um", desc="gap between fingers (um). about 0.096 for double fingers at 4.5 GHz")
+    offset=Float(0.5).tag(unit="um", desc="gap between electrode and end of finger. The vertical offset of the fingers. Setting this to zero produces a shorted reflector")
+    W=Float(25.5).tag(unit="um", desc="height of finger")
+    hbox=Float(20.0).tag(desc="height of electrode box")
+    wbox=Float(30.0).tag(desc="width of electrode box. Setting to 0.0 (default) makes it autoscaling so it matches the width of the IDT")
 
-#needs some work
-        """stand alone for showing instrument. Shows a modified boss view that has the instrument as a dockpane"""
-#        with imports():
-#            from EBL_enaml import EBMain
-#        app = QtApplication()
-#        view = EBMain(base=self, boss=self.boss)
-#        view.show()
-#        app.start()
-#    def show(self):
-#        """stand alone for showing instrument. Shows a modified boss view that has the instrument as a dockpane"""
-#        with imports():
-#            from enaml_Boss import EBLItemMain
-#        try:
-#            app = QtApplication()
-#            view = EBLItemMain(eblitemin=self, boss=self.boss)
-#            view.show()
-#            app.start()
-#        finally:
-#            pass #self.boss.close_all()
+    epsinf=Float()
+    Dvv=Float()
+    v=Float()
+    material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz')
 
-#b=R()    
+    def _observe_material(self, change):
+        if self.material=="STquartz":
+            self.epsinf=5.6*eps0
+            self.Dvv=0.06e-2
+            self.v=3159.0
+        elif self.material=='GaAs':
+            self.epsinf=1.2e-10
+            self.Dvv=0.035e-2
+            self.v=2900.0
+        elif self.material=='LiNbYZ':
+            self.epsinf=46*eps0
+            self.Dvv=2.4e-2
+            self.v=3488.0
+        elif self.material=='LiNb128':
+            self.epsinf=56*eps0
+            self.Dvv=2.7e-2
+            self.v=3979.0
+        elif self.material=='LiNbYZX':
+            self.epsinf=46*eps0
+            self.Dvv=0.8e-2
+            self.v=3770.0
+        else:
+            log_warning("Material not listed")
+
+    f0=Float().tag(label="f0",
+                unit="GHz",
+                desc="Center frequency",
+                reference="")
+
+    @observe('w', 'v', 'gap', 'df')
+    def _get_f0(self, change):
+        v,a, g=self.v, self.a*1e-6, self.gap*1e-6
+        p=g+a
+        if self.df:
+            lbda0=4*p
+        else:
+            lbda0=2*p
+        self.f0=v/lbda0/1.0e9
+
+
+    Ct=Property().tag(label="Ct",
+                   unit="F",
+                   desc="Total capacitance of IDT",
+                   reference="Morgan page 16/145")
+    #@observe('epsinf', 'h', 'Np', 'df')
+    def _get_Ct(self):
+        W, epsinf, Np=self.h*1e-6, self.epsinf, self.Np
+        if self.df=="double":
+            return sqrt(2.0)*W*epsinf*Np
+        return W*epsinf*Np
+
+    def _default_material(self):
+        return 'LiNbYZ' #'GaAs'
+
+class EBLIDT(IDT):
+    """handles everything related to drawing a IDT. Units are microns (um)"""
+    trconnect_x=Float(9.0).tag(desc="connection length of transmon")
+    trconnect_y=Float(2.5).tag(desc="connection length of transmon")
+    trconnect_w=Float(0.5).tag(desc="connection length of transmon")
+    trc_wbox=Float(14.0)
+    trc_hbox=Float(12.5)
+
+    idt_tooth=Float(0.3).tag(desc="tooth size on CPW connection to aid contact")
+    idt_numteeth=Int(5) #52 um, 12.5 um
+
 a=EBL_Item(name="EBL_item_test")
-a.polylist=[R(), R(5)]#, P([(0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1)])]
-#print a.testlist[0]
-#a.polylist.append(R())
-#print [n.name for n in a.polylist]
+#a.polylist=[R(), R(5)]#, P([(0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1)])]
+a.P([(0,0), (0,25), (0.1,25), (0.1, 0), (5, -5), (10, -5), (10, -10), (5, -10), (5, -5.1)])
+a.P([(-0.3, -5), (-0.30,25), (-0.2,25), (-0.2, -5), (5, -10), (10, -10), (10, -15), (5, -15), (5, -10.1)])
+b=IDT()
 a.show()
-if __name__=="__main__2":
-    #a=EBLRectangle(name="blah")
-    b=EBL_Item(name="blah")
-#    print dir(b.get_member("polylist"))
-    b.polylist=[R(), R()]
-
-#    print b.polylist[0].verts
-#    print dir(b.get_member("polylist"))
-#    print b.get_member("polylist")
-    class subarr(Atom):
-        name=Unicode()
-        polyindex = Int()
-        polylength=Int()
-        instr=Typed(Atom)
-        show_value=Typed(EBLPolygon)
-        #show_poly=ContainerList()
-        show_verts=ContainerList()
-        vertindex = Int()
-        vertlength=Int()
-
-        changed=Bool(False)
-        #mytype=Enum(float, tuple, EBL_Item.EBLPolygon)
-
-        def get_polyarr(self, polyindex=None):
-            if polyindex==None:
-                return getattr(self.instr, self.name)
-            return getattr(self.instr, self.name)[polyindex]
-
-        def get_vertarr(self, polyindex=None, vertindex=None):
-            polyarr=self.get_polyarr(polyindex)
-            if polyindex==None or vertindex==None:
-                return polyarr
-            return polyarr[vertindex]
-
-        def __init__(self, **kwargs):
-            super(subarr, self).__init__(**kwargs)
-            self.instr.observe(self.name, self.value_changed)
-            if self.polylength>=0:
-                self.instr.polylist[self.polyindex].observe('verts', self.verts_changed)
-
-        def _default_polylength(self):
-            return len(self.get_polyarr())-1
-
-        def _default_vertlength(self):
-           if self.polylength>=0:
-               return len(self.get_vertarr())-1
-
-        def value_changed(self, change):
-            self.polylength=len(change['value'])-1
-            if self.polyindex >= self.polylength:
-                self.polyindex=self.polylength
-            self.polyindex_changed({})
-            self.show_value  #call to update
-
-        def coercer(self):
-            try:
-                self.show_value=self.get_polyarr(self.polyindex)
-            except IndexError:
-                self.show_value=EBLPolygon()
-
-        def conve(self):
-            return self.show_value
-
-        @observe('polyindex')
-        def polyindex_changed(self, change):
-            self.changed=True
-            self.coercer()
-            self.changed=False
-
-        def _observe_show_value(self, change):
-            if self.changed==False:
-                try:
-                    getattr(self.instr, self.name)[self.polyindex]=self.conve() #tuple(self.show_value)
-                except IndexError:
-                    getattr(self.instr, self.name).append(self.conve())
-
-        def polyinsert(self):
-            self.get_arr().insert(self.polyindex, self.conve())
-
-        def polypop(self):
-            self.get_arr().pop(self.polyindex)
-
-    class subarr2(subarr):
-        show_value=ContainerList(default=[0.0,0.0])
-
-        def coercer(self):
-            try:
-                self.show_value=list(self.get_arr(self.index))
-            except IndexError:
-                self.show_value=[0.0, 0.0]
-
-        def conve(self):
-            return tuple(self.show_value)
-
-    c=subarr(instr=b, name="polylist")
-    print c.index
-    print c.length
-    c.index=1
-    b.polylist.append(R())
-    print c.length        #print a.view
-    print c.show_value.verts    #print a.verts
-    d=subarr2(instr=c.show_value, name="verts")
-    print d.length
-    print d.show_value
-    d.index=1
-    print d.show_value
-        #b=EBL_Item()
-        #print dir(b.get_member("polylist"))
-        #print b.get_member("polylist").validate_mode[1].validate_mode[1]
-        #b.show()
-        #print a.verts
-        #a.verts.append((6,5))
-        #print a.verts
-        #print a.get_type("poly3")
-        #a.polylist=["a.poly3"]
-        #print ebl_boss.instruments[0].name
-    log_debug(2)
-
-if __name__=="__main__3":
-    class PolygonWatch(Atom):
-        #verts=ContainerList(default=[(0.0, 0.0)])
-        polygon=Typed(EBLPolygon)
-        vertindex=Int()
-        vertx=Float()
-        verty=Float()
-        changed=Bool(False)
-
-        def print_poly(self):
-            print self.polygon.verts
-            for i,x in enumerate(self.polygon.verts):
-                self.vertindex=i
-                print self.vertindex, self.vertx, self.verty
-
-        def update_xy(self):
-            if not self.changed:
-                self.changed=True
-                self.vertx=self.polygon.verts[self.vertindex][0]
-                self.verty=self.polygon.verts[self.vertindex][1]
-                self.changed=False
-        @observe("polygon.verts")
-        def _observe_verts(self, change):
-            self._observe_vertindex({}) #update_xy()
-
-        def _observe_vertindex(self, change):
-            if self.vertindex>=len(self.polygon.verts)-1:
-                self.vertindex=len(self.polygon.verts)-1
-            if self.vertindex<0:
-                self.vertindex=0
-            self.update_xy()
-
-        def _observe_vertx(self, change):
-            if not self.changed:
-                self.changed=True
-                old_verty=self.polygon.verts[self.vertindex][1]
-                self.polygon.verts[self.vertindex]=(self.vertx, old_verty)
-                self.changed=False
-
-        def _observe_verty(self, change):
-            if not self.changed:
-                self.changed=True
-                old_vertx=self.polygon.verts[self.vertindex][0]
-                self.polygon.verts[self.vertindex]=(old_vertx, self.verty)
-                self.changed=False
-
-    class EBL_ItemWatch(Atom):
-        polywatch=Typed(PolygonWatch)
-        ebl_item=Typed(EBL_Item)
-        polyindex=Int()
-
-        def _default_polywatch(self):
-            return PolygonWatch(polygon=self.ebl_item.polylist[0])
-
-        def print_polylist(self):
-            oldpolyindex=self.polyindex
-            for i, poly in enumerate(self.ebl_item.polylist):
-                self.polyindex=i
-                self.polywatch.print_poly()
-            self.polyindex=oldpolyindex
-
-        @observe("ebl_item.polylist")
-        def _observe_polylist(self, change):
-            self._observe_polyindex({}) #self._observe_polylist[self.polyindex]._observe_vertindex({})
-
-
-        def _observe_polyindex(self, change):
-            if self.polyindex>=len(self.ebl_item.polylist)-1:
-                self.polyindex=len(self.ebl_item.polylist)-1
-            if self.polyindex<0:
-                self.polyindex=0
-            self.polywatch=PolygonWatch(polygon=self.ebl_item.polylist[self.polyindex])
-            self.polywatch._observe_vertindex({})
-
-    a=EBL_Item(name="blah", polylist=[R(), R()])
-    b=EBL_ItemWatch(ebl_item=a)
-    b.print_polylist()
-    a.polylist[0].verts=[(0, 0), (1,2), (3,4)]
-    print b.polywatch.vertindex
-    print b.polywatch.vertx
-    b.polywatch.vertx=5
-    b.print_polylist()
-    a.show()
