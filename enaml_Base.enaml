@@ -24,6 +24,8 @@ from Atom_Instrument import Instrument
 from enaml_Filer import ReadWrap, SaveWrap
 from Atom_Read_File import Read_File
 from Atom_Save_File import Save_File
+from EBL_enaml import EBContWrap
+from EBL_Polyer import Polyer
 
 def get_tag(name, model, tag, none_value=None):
     return model.get_tag(name, tag, none_value)
@@ -43,6 +45,10 @@ template ValView(name, model, modelType: Save_File):
     """Displays a save file interface"""
     SaveWrap:
         filer:=getattr(model, name)
+        
+template ValView(name, model, modelType: Polyer):
+    EBContWrap:
+        polyer:=getattr(model, name)
 
 #from enaml.stdlib.slider_transform import FloatTransform
 

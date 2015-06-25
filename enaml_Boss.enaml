@@ -16,7 +16,7 @@ template BaseTemp(BaseView):
     AutoBaseCont:
         pass
 
-from enaml_Plotter import PlotAreaContainer as PlotContainer
+from enaml_Plotter import  PlotItem, show_item as show_plot#, PlotArea 
 from enaml_Filer import SaveWrap, ReadWrap, ReadSaveWrap
 from TA_Fundamentals import cap_case
 from atom.api import Atom, Str, Instance, Event
@@ -42,9 +42,18 @@ enamldef BossToolBar(ToolBar):
             #print dir(savepane) #boss.run #readpane.show()
 #        tool_tip = "Show read pane"
     Action:
-        text = "Plot"
+        text = "PlotPane"
         triggered:: plotpane.show() #print dir(bossarea) #show_plot(bossarea, boss.plot) #show_pane(dyn_pages, 'Plot')
         tool_tip = "Show plot"
+    Action:
+        text = "Plot"
+        triggered:: 
+            tbase=[b for b in boss.bases if b.name=="EBL_Item_test"][0]
+            tbase.plot()
+                #print bossarea.dock_items()[0].name
+                #show_plot(boss.plot.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=boss.plot)
+        tool_tip = "Show plot"
+
     Action:
         separator=True
     Action:
@@ -83,9 +92,10 @@ enamldef PlotBox(GroupBox):
 #    attr ykey=boss.plottables.keys()[0]
 #    attr xkey=boss.plottables.keys()[0]
 #    attr ykey=boss.plottables.keys()[0]
-
-    Container:
-        constraints = [vbox(hbox(xinstr_lbl, xinstr, xvar_lbl, xvar), hbox(yinstr_lbl, yinstr, yvar_lbl, yvar))]
+    attr plotr=boss.plot
+    alias yinstr
+    Container: myc:
+        constraints = [vbox(hbox(xinstr_lbl, xinstr, xvar_lbl, xvar), hbox(yinstr_lbl, yinstr, yvar_lbl, yvar), plot_btn)]
         Label: xinstr_lbl:
             text="X instr"
         ObjectCombo: xinstr:
@@ -93,6 +103,7 @@ enamldef PlotBox(GroupBox):
 
         Label: yinstr_lbl:
             text="Y instr"
+        alias yinstr
         ObjectCombo: yinstr:
             items = list(boss.plottables.keys())
 #            selected := ykey
@@ -106,6 +117,14 @@ enamldef PlotBox(GroupBox):
             text="X var"
         ObjectCombo: xvar:
             items = boss.plottables[xinstr.selected]
+        PushButton: plot_btn:
+            text="Plot"
+            clicked ::
+                tbase=[b for b in boss.bases if b.name==yinstr.selected][0]
+                tbase.plot()
+                #print bossarea.dock_items()[0].name
+                show_plot(plotr.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=plotr)
+                 
 
 #class LOG(Atom):
 #    logstr=Str()
@@ -172,12 +191,12 @@ enamldef ReadSavePane(DockPane):
         save_file = boss.save_file
         runcode = boss.run
 
-enamldef PlotItem(DockItem):
-    attr plotr
-    name="plot1"
-    title="Plot 1"
-    PlotContainer:
-        pass
+#enamldef PlotItem(DockItem):
+#    attr plotr
+#    name="plot1"
+#    title="Plot 1"
+#    PlotContainer:
+#        pass
 
 enamldef BaseItem(DockItem):
     attr instr
@@ -280,8 +299,8 @@ def show_base(area, base):
     if base!=None:
         show_general_item(area, base, ItemType=BaseItem, target_items=base.boss.bases, instr=base)
 
-def show_plot(area, plot):
-    shoe_general_item(area, plot, ItemType=PlotItem, position='right', target_items=base.boss.plot_list, plotr=plot)
+def show_plot2(area, plot):
+    show_general_item(area, plot, ItemType=PlotItem, position='right', target_items=base.boss.plot_list, plotr=plot)
 
     #dock_items=area.dock_items()
     #dock_names=(o.name for o in dock_items)
@@ -306,12 +325,20 @@ def show_plot(area, plot):
 class BossMainWindow(MainWindow):
     def show_base(self, area, base):
         show_base(area, base)
+        
+    def show_plot(self, bossarea, boss):
+        plotr=boss.plot 
+        if "EBL_Item_test" in (b.name for b in boss.bases):
+            tbase=[b for b in boss.bases if b.name=="EBL_Item_test"][0]
+            tbase.plot()
+        show_plot(plotr.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=plotr)
+                
     
 enamldef BossMain(BossMainWindow): main:
     attr boss
     attr base: None
     title="Base"
-    initial_size=(1200,800)
+    initial_size=(1800,1200)
     #alias readpane
     #ReadSavePane: readpane:
     #    visible = True #False
@@ -323,6 +350,7 @@ enamldef BossMain(BossMainWindow): main:
         pass
     alias plotpane
     PlotPane: plotpane:
+        visible = False
         pass
 
     #title="Boss"
@@ -345,26 +373,28 @@ enamldef BossMain(BossMainWindow): main:
         constraints = [mycont.width==bossarea.width, mycont.height==bossarea.height]
         alias bossarea
         DockArea: bossarea:
-            activated :: main.show_base(bossarea, base)
+            activated ::
+                main.show_base(bossarea, base)
+                main.show_plot(bossarea, boss)
 
-
-enamldef PlotMain(MainWindow): main:
-    attr plotin
-    attr boss
-    attr path : unicode=u''
-    BossToolBar:
-        pass
-    #alias bosspane
-    #BossPane: bosspane:
-        #window:=main
-    #    visible = False
-    alias logpane
-    LogPane: logpane:
-        pass
-    alias bossarea
-    Container:
-        alias bossarea
-        DockArea: bossarea:
-            layout = TabLayout(plotin.name)
-            PlotItem:
-                plotr=plotin
+#
+#enamldef PlotMain(MainWindow): main:
+#    attr plotin
+#    attr boss
+#    attr path : unicode=u''
+#    BossToolBar:
+#        pass
+#    #alias bosspane
+#    #BossPane: bosspane:
+#        #window:=main
+#    #    visible = False
+#    alias logpane
+#    LogPane: logpane:
+#        pass
+#    alias bossarea
+#    Container:
+#        alias bossarea
+#        DockArea: bossarea:
+#            layout = TabLayout(plotin.name)
+#            PlotItem:
+#                plotr=plotin

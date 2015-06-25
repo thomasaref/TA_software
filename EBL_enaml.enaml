@@ -24,10 +24,10 @@ from enaml.widgets.api import (
     StatusBar, StatusItem, Label, DockPane, MultilineField, Window, ToolBar, Action, ActionGroup, FileDialogEx, GroupBox
 )
 
-from enaml_Base import AutoBaseCont
-template BaseTemp(BaseView):
-    AutoBaseCont:
-        pass
+#from enaml_Base import AutoBaseCont
+#template BaseTemp(BaseView):
+#    AutoBaseCont:
+#        pass
 
 from enaml_Plotter import PlotWrap, PlotItem, show_item as show_plot, PlotArea #PlotAreaContainer as PlotContainer
 from enaml_Filer import SaveWrap, ReadWrap, ReadSaveWrap
@@ -37,46 +37,102 @@ from atom.api import Atom, Str, Instance, Event
 
 from enaml.widgets.api import Container, Field
 
-enamldef EBCont(Container):
+enamldef ECont(Container):
+    padding = 0
+    alias lp
+    ScrollArea: sa:
+        alias lp
+        Container:
+            padding=0
+            Looper: lp:
+                iterable << polygon.verts
+                Container: lpc:
+                    #attr nlen=len(polylist[index].verts)-1
+                    padding=0
+                    constraints = [hbox(ff1, ff2, insert_vert, pop_vert)]
+                    FloatField: ff1:
+                        value:=loop_item.x #instr.polylist[ind.value].verts[0].x
+                    FloatField: ff2:
+                        value:=loop_item.y #instr.polylist[ind.value].verts[0].y
+                    PushButton: insert_vert:
+                        text="Insert"
+                        clicked::
+                            polygon.verts.insert(loop_index, inner_type()) #pass #mydata.insert()
+                            lp.refresh_items()#ebc.length+=1
+                        #visible << model.get_tag(name, "full_interface", False)
+                    PushButton: pop_vert:
+                        text="Remove"
+                        clicked:: 
+                            #print loop_index
+                            polygon.verts.pop(loop_index)
+                            lp.refresh_items() #ind.value#+=1
+                            #ind.value-=1#ebc.request_relayout()
+                
+                        #visible << model.get_tag(name, "full_interface", False)
+                        #enabled << lpc.nlen>0
 
+enamldef EContWrap(ECont):
+    attr polygon
+#    attr index
+
+
+def getinc(inclist, index): 
+    if inclist==[]:
+        return inclist
+    else:
+        return [EContWrap(polygon=inclist[index])]
+
+enamldef EBCont(Container): ebc:
+    attr polylist=polyer.polylist
+    attr length=max(0, len(polylist)-1)
+    #attr inclist=[]
+    #attr inlen=0
+    #event rdr
+    #rdr :: ebc.request_relayout()
     padding=0
-    constraints = [hbox( ind, val, insert_btn, pop_btn, plot_btn, spacer), align("top", ind, val, insert_btn, pop_btn)]
+    constraints = [hbox( ind, val, insert_btn, pop_btn, spacer), align("top", ind, val, insert_btn, pop_btn)]
     SpinBox: ind:
         minimum=0
-        maximum << max(0, len(polylist)-1)
+        maximum << ebc.length #max(0, len(polylist)-1)
     Container: val:
-        padding = 0
-        ScrollArea: sa:
-            Container:
-                padding=0
-                Looper:
-                    iterable << polylist[ind.value].verts
-                    Container:
-                        padding=0
-                        constraints = [hbox(ff1, ff2)]
-                        FloatField: ff1:
-                            value:=loop_item.x #instr.polylist[ind.value].verts[0].x
-                        FloatField: ff2:
-                            value:=loop_item.y #instr.polylist[ind.value].verts[0].y
+        #ScrollArea:
+            #Container:
+            Include: inc:
+                objects << getinc(polylist, ind.value)
+                #Looper:
+                    #iterable << polylist
+                    #EContWrap:
+                    #    polygon << loop_item
+                    
     PushButton: insert_btn:
         text="Insert"
         clicked::
-            if len(polylist)==0:
-                intype=inside_type() #if inside_type is not specified for an empty array, this will generate an error
-            else:
-                instr.polylist.insert(ind.value, inside_type()) #pass #mydata.insert()
+            #if len(polylist)==0:
+            #    intype=inside_type() #if inside_type is not specified for an empty array, this will generate an error
+            #else:
+            polylist.insert(ind.value, inside_type()) #pass #mydata.insert()
+            ebc.length+=1
+#            inc.objects=getinc(polylist, ind.value)
+
         #visible << model.get_tag(name, "full_interface", False)
     PushButton: pop_btn:
         text="Remove"
-        clicked:: polylist.pop(ind.value)
+        clicked:: 
+            polylist.pop(ind.value)
+            ebc.length-=1
+ #           inc.objects=getinc(polylist, ind.value)
+            #ind.value+=1
+            #ind.value-=1
+            #ebc.request_relayout()
+            #lp.refresh_items() 
         #visible << model.get_tag(name, "full_interface", False)
-        enabled << len(polylist)>0
-    PushButton: plot_btn:
-        text="Plot"
-        clicked ::
-            instr.plot()
+        enabled << ebc.length>0
+    #PushButton: plot_btn:
+    #    text="Plot"
+    #    clicked ::
+            #instr.plot()
             #print bossarea.dock_items()[0].name
-            show_plot(plotr.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right")
+   #         show_plot(plotr.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right")
             # target=None, ItemType=DockItem, position='left', OP=InsertItem, **kwargs):
     #PlotWrap: pw:
     #    plotr=instr.boss.plot
@@ -163,13 +219,17 @@ enamldef EBCont(Container):
 #                plotr=boss.plot
 
 enamldef EBContWrap(EBCont):
-    attr polylist
+    attr polyer
     attr inside_type=float
+    attr inner_type=float
 
-from enaml_Boss import BossMain, show_general_item#, SavePane, LogPane, PlotPane, BossToolBar
+#from enaml_Boss import BossMain, show_general_item#, SavePane, LogPane, PlotPane, BossToolBar
 
 enamldef EBMain(MainWindow):
-    EBContWrap:
+    attr polyer
+    attr inside_type
+    attr inner_type    
+    EBCont:
         pass
 
 enamldef EBItem(DockItem):
@@ -182,13 +242,13 @@ enamldef EBItem(DockItem):
     #    base = EBTemp
     #    args = (instr.view,)
 
-class EBLMain(BossMain):
-    def show_base(self, area, base):
-        if base!=None:
-            show_general_item(area, base, ItemType=EBItem, target_items=base.boss.bases, instr=base)
+#class EBLMain(BossMain):
+#    def show_base(self, area, base):
+#        if base!=None:
+#            show_general_item(area, base, ItemType=EBItem, target_items=base.boss.bases, instr=base)
 
-enamldef EBMain(EBLMain):#MainWindow): main:
-    attr plotr=boss.plot
+#enamldef EBMain(EBLMain):#MainWindow): main:
+#    attr plotr=boss.plot
     #PlotArea:
     #    pass
 #    pass
