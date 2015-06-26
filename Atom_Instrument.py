@@ -119,11 +119,7 @@ class Instrument(Base):
         For List, this calls the get_value_check for the respective parameter in the List"""
         value=self.coercer(name, value)
         if self.get_type(name)==Enum:
-            inv_map=self.get_tag(name, 'inv_map')
-            if inv_map==None:
-                mapping=self.get_tag(name, 'mapping')
-                self.set_tag(name, inv_map={v:k for k, v in mapping.iteritems()})
-                inv_map=self.get_tag(name, 'inv_map')
+            self.gen_inv_map(self, name)
             return self.get_tag(name, 'inv_map')[value]
         elif self.get_type(name)==List:
             for key, item in value.iteritems():

@@ -5,12 +5,12 @@ Created on Thu Feb 26 11:08:19 2015
 @author: thomasaref
 """
 from Atom_Base import Base
-from atom.api import Enum, Int, Float, observe#, Property 
+from atom.api import Enum, Int, Float, observe, Bool#, Property 
 from scipy.constants import epsilon_0 as eps0
 from numpy import sqrt
 
 class IDT(Base):
-    df=Enum("double", "single").tag(desc="'double' for double fingered, 'single' for single fingered. defaults to double fingered")
+    finger_type=Enum("double", "single").tag(desc="'double' for double fingered, 'single' for single fingered. defaults to double fingered")
     Np=Int(36) #1, 1000, 7).tag(desc="number of finger pairs. this should be at least 1 and defaults to 36.")
     ef=Int()#0, 100, 0).tag(desc="number of extra fingers to compensate for edge effect. Defaults to 0")
     a=Float(0.05).tag(desc="width of fingers (um). same as gap generally.")
@@ -23,6 +23,8 @@ class IDT(Base):
 
     material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz')
 
+    _update=Bool(False).tag(private=True)
+    
     def _observe_material(self, change):
         if self.material=="STquartz":
             self.epsinf=5.6*eps0
@@ -56,7 +58,7 @@ class IDT(Base):
     def _get_f0(self, change):
         v,p=self.v, self.p*1e-6
         #p=g+w
-        if self.df=="double":
+        if self.finger_type=="double":
             lbda0=4*p
         else:
             lbda0=2*p
@@ -71,7 +73,7 @@ class IDT(Base):
     @observe('epsinf', 'W', 'Np', 'df')
     def _get_Ct(self, change):
         W, epsinf, Np=self.W*1e-6, self.epsinf, self.Np
-        if self.df=="double":
+        if self.finger_type=="double":
             self.Ct=sqrt(2.0)*W*epsinf*Np
         else:
             self.Ct=W*epsinf*Np

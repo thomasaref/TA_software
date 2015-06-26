@@ -210,11 +210,27 @@ class Base(Atom):
             typer=type(getattr(self, name))
         return self.get_tag(name, "type", typer)
 
+    def get_map(self, name, value=None):
+        """returns the mapped value (meant for an Enum)"""
+        if value==None:
+            value=getattr(self, name)
+        return self.get_tag(name, 'mapping', {value : value})[value]
+
+    def get_inv(self, name, value):
+        """returns the inverse mapped value (meant for an Enum)"""
+        return self.get_tag(name, 'inv_map', {value : value})[value]
+        
+    def gen_inv_map(self, name):
+        """generates the inverse map for a mapping if it doesn't exist (meant for an Enum)"""
+        if self.get_tag(name, 'inv_map')==None:
+            mapping=self.get_tag(name, 'mapping', {getattr(self, name) : getattr(self, name)})
+            self.set_tag(name, inv_map={v:k for k, v in mapping.iteritems()})
+
     def set_value_check(self, name, value):
         """coerces and checks value when setting. This has to be different from getting to allow Enum to map properly. Not working for List?"""
         value=self.coercer(name, value)
         if self.get_type(name)==Enum:
-            return self.get_tag(name, 'mapping', {value : value})[value]
+            return self.get_map(self, name, value) #self.get_tag(name, 'mapping', {value : value})[value]
         return value
 
     def coercer(self, name, value):
