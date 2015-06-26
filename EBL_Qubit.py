@@ -22,20 +22,16 @@ class EBL_Qubit(EBL_Item):
     contact_width=Float(125.0)
     contact_height=Float(170.0)
     bridge_gap_x=Float(20.0)
-    bridge_gap_y=Float(15.0)
-    
-   def makeQubit(self):
-        """Draws qubit depending on object parameters"""
-        self.polylist=[] #list of polygons that make up IDT pattern
-        #self.xbox=self.chip_width/2.0-self.blade_width/2.0 #set width of from center of pattern
-        #self.ybox=self.chip_height/2.0-self.blade_width/2.0 #set height from center of pattern
-        #self.y_center=self.h_idt/2.0+self.w/2.0
-        #self.gap=self.h_idt
+    bridge_gap_y=Float(15.0) #50
+    testpad_width=Float(400.0)
+    testpad_height=Float(450.0)
 
-        #self.cpw_stop_x_r=self.idtR_x #self.x_center+self.w/2+self.gap
-        #self.cpw_stop_x_l=self.idtL_x#self.x_center-self.w/2-self.gap
-        #self.cpw_stop_y_t=self.y_center+self.w/2+self.gap
-        #self.cpw_stop_y_b=self.y_center-self.w/2-self.gap
+    orientation=Enum("Vertical", "Horizontal")
+
+    def makeQubit(self):
+        """Draws IDT depending on object parameters"""
+        self.polys.polylist=[] #list of polygons that make up IDT pattern
+        self.sdQubit()
 
         if self.qubit_type=='transmon':
             self.new_transmon()
@@ -45,107 +41,24 @@ class EBL_Qubit(EBL_Item):
             self.testpads(self)
         else:
             print "not correct qubit type"
-#            pass #self.singleIDT()
-    def makeQubitBridge(self):
-        self.qubit_type='bridge'
-        self.makeQubit()
 
-    def makeTestPads(self):
-        self.qubit_type='TestPads'
-        self.makeQubit()
 
     def testpads(self):
-        self.contact_width=125.0
-        self.contact_height=170.0
-        self.bridge_gap_x=20.0
-        self.bridge_gap_y=50.0
-        self.testpad_width=400.0
-        self.testpad_height=450.0
-        self.poly([(self.xcenter-self.testpad_width, self.ycenter+self.testpad_height/2.0),
+        self.P([(self.xcenter-self.testpad_width, self.ycenter+self.testpad_height/2.0),
                    (self.x_center-self.contact_width/2.0, self.y_center+self.testpad_height/2.0),
                    (self.x_center-self.bridge_gap_x/2.0, self.y_center+self.contact_height/2.0)
                    (self.x_center-self.contact_width/2.0, self.y_center+self.contact_height/2.0)
                    ])
 
     def bridge(self):
-        #self.contact_width=125.0
-        #self.contact_height=170.0
-        #self.bridge_gap_x=20.0
-        #self.bridge_gap_y=50.0
         self.bridge_TL()
         self.bridge_TR()
         self.bridge_BL()
         self.bridge_BR()
         self.drawdfqubitbottom()
 
-    def drawdfqubitbottom(self):
-
-
-
-        #extend center fingers
-        w=0.1
-        h=2.0
-        hbox=8.0
-        connx=1.0
-        wbox=15.0
-        wboxh=10.0
-        #Top connection rect
-#        self.xr=self.x_center
-#        self.yr=self.y_center+hbox/2.0+wboxh/2.0
-#        self.hr=wboxh
-#        self.wr=wbox
-#        self.writecenterrect()
-        self.rect(self.x_center-wbox/2.0, self.y_center+hbox/2.0, wbox, wboxh )
-
-        #Bottom connection rect
-        #self.xr=self.x_center
-        #self.yr=self.y_center-hbox/2.0-wboxh/2.0
-        #self.hr=wboxh
-        #self.wr=wbox
-        self.rect(self.x_center-wbox/2.0, self.y_center-hbox/2.0, wbox, -wboxh)
-
-        #self.xr=self.x_center-w
-        #self.yr=self.y_center+hbox/2.0-h/2.0
-        #self.hr=h
-        #self.wr=w
-        self.rect(self.x_center-w-w/2.0, self.y_center+hbox/2.0, w, -h)
-        #self.writecenterrect()
-        #self.xr=self.x_center+w
-        #self.yr=self.y_center-h/2.0
-        #self.writecenterrect()
-        self.rect(self.x_center+w-w/2.0, self.y_center+hbox/2.0, w, -h)
-
-        #extend bottom fingers
-        #self.xr=self.x_center-w
-        #self.yr=self.y_center-hbox/2.0+h/2.0
-        #self.hr=h
-        #self.wr=w
-        #self.writecenterrect()
-        self.rect(self.x_center-w-w/2.0, self.y_center-hbox/2.0, w, h)
-
-        #self.xr=self.x_center+w
-        #self.yr=self.y_center+h/2.0
-        #self.writecenterrect()
-        self.rect(self.x_center+w-w/2.0, self.y_center-hbox/2.0, w, h)
-
-        #write top squid touch
-        #self.xr=self.x_center
-        #self.yr=self.y_center+hbox/2.0-h-w/2
-        #self.hr=w
-        #self.wr=connx
-        #self.writecenterrect()
-        self.rect(self.x_center-connx/2.0, self.y_center+hbox/2.0-h, connx, -w)
-
-        #write bottom squid touch
-        #self.xr=self.x_center
-        #self.yr=self.y_center-hbox/2.0+h+w/2.0
-        #self.hr=w
-        #self.wr=connx
-        #self.writecenterrect()
-        self.rect(self.x_center-connx/2.0, self.y_center-hbox/2.0+h, connx, w)
-
     def bridge_TL(self):
-        self.poly([(self.x_center-self.contact_width/2.0, self.y_center+self.contact_height/2.0),
+        self.P([(self.x_center-self.contact_width/2.0, self.y_center+self.contact_height/2.0),
                    (self.x_center-self.bridge_gap_x/2.0, self.y_center+self.contact_height/2.0),
                    (self.x_center-self.box_width/2.0+self.edge_dist, self.y_center+self.box_height/2.0-self.edge_dist),
                    (self.x_center-self.box_width/2.0, self.y_center+self.box_height/2.0-self.edge_dist)
@@ -247,5 +160,7 @@ class EBL_Qubit(EBL_Item):
   
     
 if __name__=="__main__":
-    a=EBL_Qubit()
+    a=EBL_Qubit(name="EBL_Item_test")
     print a.get_all_tags('good_value')
+    a.bridge_TL()
+    a.show()

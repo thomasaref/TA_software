@@ -8,8 +8,9 @@ from LOG_functions import log_warning#, log_debug
 #log_debug(1)
 from Atom_Base import Base#, boss#, NoShowBase
 from EBL_Boss import ebl_boss
-from atom.api import Enum, Float, Int, observe, Property, Typed#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
-from EBL_Polyer import Polyer, P, R
+from atom.api import Enum, Float, Int, observe, Property, Typed, Callable#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
+from EBL_Polyer import Polyer, P, R, V
+from numpy import sin, cos, pi
 #from Atom_Save_File import Save_DXF
 
 #boss.save_factory=Save_DXF
@@ -32,6 +33,9 @@ class EBL_Item(EBL_Base):
 
     all_color=Enum("green").tag(desc="set all colors")
     all_layer=Enum("Al").tag(desc='set all layers')   
+    
+    theta=Float(0.0).tag(desc="angle to rotate in degrees")
+    
 
 #    def set_color(self, color="green"):
         
@@ -55,6 +59,13 @@ class EBL_Item(EBL_Base):
         """Adds a centered rectangle to the polylist"""
         self.polys.R(xr-wr/2.0, yr-hr/2.0, wr, hr, **kwargs)
 
+    def rotate(self, theta=0.0):
+        theta=theta/180.0*pi
+        self.polys.rotate(theta)
+
+    do_rotate=Callable(rotate)
+                
+                
 if __name__=="__main__":    
     a=EBL_Item(name="EBL_Item_test")
     a.polys.polylist=[R(), R(5), P([(0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1)])]

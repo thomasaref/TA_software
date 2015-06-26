@@ -7,6 +7,7 @@ Created on Thu Jun 25 09:52:31 2015
 from atom.api import Atom, Enum, Float, ContainerList
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
+from numpy import sin, cos
 
 class EBL_PolyBase(Atom):
     color=Enum("green").tag(desc="color or datatype of item, could be used for dosing possibly")
@@ -23,6 +24,12 @@ class EBLvert(Atom):
         self.x+=x
         self.y+=y
         return self
+        
+    def rotate(self, cos_theta, sin_theta):
+            xp=self.x*cos_theta-self.y*sin_theta
+            yp=self.x*sin_theta+self.y*cos_theta
+            self.x=xp
+            self.y=yp 
 
 class EBLPolygon(EBL_PolyBase):
     """Implements polygons for use in drawing EBL patterns and includes conversion of polygon to DXF or GDS format (text based)"""
@@ -31,11 +38,9 @@ class EBLPolygon(EBL_PolyBase):
     def _default_verts(self):
         return [EBLvert()]
 
-    #def _default_x_center(self):
-    #    return self.verts[0].x
-
-    #def _default_y_center(self):
-    #    return self.verts[0].y
+    def rotate(self, cos_theta, sin_theta):
+        for v in self.verts:
+            v.rotate(cos_theta, sin_theta)
         
     def get_verts(self):
         return [(v.x,v.y) for v in self.verts]
@@ -80,6 +85,10 @@ class Polyer(EBL_PolyBase):
             p.offset_verts(x,y)
         #self.x_center+=x
         #self.y_center+=y
+
+    def rotate(self, theta):
+        for p in self.polylist:
+            p.rotate(cos_theta=cos(theta), sin_theta=sin(theta))
 
     def CP(self,index=-1, x=0.0, y=0.0, **kwargs):
         """copies a polygon to an offset position and adds it"""

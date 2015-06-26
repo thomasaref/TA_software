@@ -25,13 +25,11 @@ class EBL_IDT(EBL_Item, IDT):
 
     idt_tooth=Float(0.3).tag(desc="tooth size on CPW connection to aid contact")
     
-    idt_type=Enum("basic", "stepped", "angle")
+    idt_type=Enum("basic", "stepped", "angle").tag(desc="basic is a regular IDT, stepped uses stepped fingers for harmonic suppression and angle shows how a double angle evaporation would look",
+                                                    mapping={"basic":0, "angle": 0,"stepped": 1})
     qdt_type=Enum("IDT", "QDT")
     finger_type=Enum("double", "single").tag(desc="'double' for double fingered, 'single' for single fingered. defaults to double fingered",
                                             mapping={"double" : 2, "single" : 1})
-    
-
-    make_idt_dict=Dict().tag(private=True)
     
     conn_h=Float(65.0)
     add_gate=Bool(True)
@@ -82,19 +80,15 @@ class EBL_IDT(EBL_Item, IDT):
             self.polys.polylist.extend(tpolylist)
         else:            
             self.makeIDT()
+        self.rotate(self)
         for n,p in enumerate(self.polys.polylist):
             self.boss.plot.add_poly_plot(n=n, verts=p.get_verts(), cn=p.color, polyname=self.name)
         self.boss.plot.plot.request_redraw()  
-    
-    def _default_make_idt_dict(self):
-        return dict(basic=self.sdIDT,
-                             stepped=self.sdIDT,
-                             angle=self.sdIDT)
                              
     def makeIDT(self):
         """Draws IDT depending on object parameters"""
         self.polys.polylist=[] #list of polygons that make up IDT pattern
-        self.make_idt_dict[self.idt_type]()
+        self.sdIDT()
         
     def sdIDT(self):
         """Add polygons representing single or double fingered IDT to polylist. If it is for a qubit, it adjusts the bottom box to contain SQUID connections (central fingers connect bottom to top)"""
@@ -122,10 +116,10 @@ class EBL_IDT(EBL_Item, IDT):
             self._subfingrect(xt+self.a/self.step_num, yt+ht, wt, ht, m-1)
         return
 
-    def _fingrect(self, xt, yt, wt, ht, m=1):
+    def _fingrect(self, xt, yt, wt, ht, m=0):
         """writes IDT finger width a and length W and two for a double finger"""
-        if m!=1:
-            if sign(yt)<0:
+        if m!=0:
+            if m<0:
                 self._fingrect(xt, yt-self.W/2.0, wt, self.o)
             else:
                 self._fingrect(xt+self.a*(1.0-1.0/self.step_num), yt+self.W/2.0, wt, self.o)
@@ -139,13 +133,11 @@ class EBL_IDT(EBL_Item, IDT):
             
     def _IDTfingers(self):
         """writes IDT fingers for single finger IDT with extensions for connections if it is qubit type IDT"""
-        m=1        
-        if self.idt_type=="stepped":
-            m=self.step_num
+        m=self.get_map("idt_type")    
         mult=self.get_map("finger_type")
         for n in range(-(self.Np-1), self.Np, 2):
             self._fingrect(mult*n*(self.a+self.g), self.o/2.0, self.a, self.W+self.o, m)
-            self._fingrect(mult*(n-1)*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, m)
+            self._fingrect(mult*(n-1)*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, -m)
             if n in [-1,0] and self.qdt_type=="QDT":
                 self._fingrect(mult*n*(self.a+self.g), self.o/2.0-self.W/2.0-(self.o+self.trconnect_y+self.trconnect_w)/2.0, self.a, -(self.o+self.trconnect_y+self.trconnect_w))
                 self._fingrect(mult*n*(self.a+self.g), -self.W/2.0-self.o/2.0-self.trc_hbox+self.trconnect_y/2.0, self.a, self.trconnect_y)
@@ -154,18 +146,14 @@ class EBL_IDT(EBL_Item, IDT):
     def _IDTextrafingers(self):
         """write extra fingers for a single IDT"""
         mult=self.get_map("finger_type")
-        m=1        
-        if self.idt_type=="stepped":
-            m=self.step_num
+        m=self.get_map("idt_type")
         for n in range(0, self.ef):
-            self._fingrect(-mult*n*(self.a+self.g)-mult*(self.Np+1)*(self.a+self.g), -self.o/2.0, self.a, self.W, m)
-            self._fingrect(mult*n*(self.a+self.g)+mult*(self.Np+1)*(self.a+self.g), -self.o/2.0, self.a, self.W, m)
+            self._fingrect(-mult*n*(self.a+self.g)-mult*(self.Np+1)*(self.a+self.g), -self.o/2.0, self.a, self.W, -m)
+            self._fingrect(mult*n*(self.a+self.g)+mult*(self.Np+1)*(self.a+self.g), -self.o/2.0, self.a, self.W, -m)
 
     def _IDTtopbottombox(self):
         """writes connecting box at top and also bottom for regular IDT"""
-        xo=0
-        if self.idt_type=="stepped":
-            xo=self.a*(1.0-1.0/self.step_num)
+        xo=self.a*(1.0-1.0/self.step_num)*self.get_map("idt_type")
         mult=self.get_map("finger_type")
         if self.wbox==0.0:
             wr=mult*2*self.Np*(self.a+self.g) +mult*self.a+mult*2*self.ef*(self.a+self.g)+(mult-1)*self.g
@@ -265,15 +253,7 @@ if __name__=="__main__":
         self.yr=self.yidt
         self.writecenterrect()
 
-    def rotateIDT(self, theta=0.0):
-        theta=theta/180.0*pi
-        for n, p in enumerate(self.polylist):
-            for m, v in enumerate(p.verts): #=[(s.xr,s.yr), (s.xr+s.wr,s.yr), (s.xr+s.wr, s.yr+s.hr), (s.xr, s.yr+s.hr)]
-                x=v[0]
-                y=v[1]
-                xp=x*cos(theta)-y*sin(theta)
-                yp=x*sin(theta)+y*cos(theta)
-                p.verts[m]=(xp, yp)
+
 
     def makeBeam(self):
         self.polylist=[]
