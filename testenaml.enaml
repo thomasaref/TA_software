@@ -1,0 +1,43 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Jun 27 15:44:00 2015
+
+@author: thomasaref
+"""
+from enaml.layout.api import vbox, hbox, spacer
+from enaml.widgets.api import Window, Container, MPLCanvas, CheckBox, ComboBox
+
+from matplotlib.figure import Figure
+
+
+fig1 = Figure()
+ax1 = fig1.add_subplot(111)
+ax1.plot([1, 2, 3])
+
+fig2 = Figure()
+ax2 = fig2.add_subplot(111)
+ax2.plot([5, 2, 8, 1])
+
+figures = {
+    'one': fig1,
+    'two': fig2,
+}
+
+
+enamldef Main(Window):
+    Container:
+        constraints = [
+            vbox(
+                hbox(cbox, check, spacer),
+                canvas,
+            ),
+            cbox.v_center == check.v_center,
+        ]
+        ComboBox: cbox:
+            items = ['one', 'two']
+            index = 0
+        CheckBox: check:
+            text = 'Toolbar Visible'
+            checked := canvas.toolbar_visible
+        MPLCanvas: canvas:
+            figure << figures[cbox.selected_item]

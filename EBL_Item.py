@@ -17,7 +17,7 @@ from numpy import sin, cos, pi
 
 class EBL_Base(Base):
     def _default_boss(self):
-        ebl_boss.make_boss()
+        ebl_boss.make_boss(save_log=False)
         return ebl_boss
 
 class NoShow_EBL_Base(EBL_Base):
@@ -44,8 +44,26 @@ class EBL_Item(EBL_Base):
             self.boss.plot.add_poly_plot(n=n, verts=p.get_verts(), cn=p.color, polyname=self.name)
         self.boss.plot.plot.request_redraw()    
 
-    def CP(self, index=-1, x=0.0, y=0.0, **kwargs):
-        self.polys.CP(index, x, y, **kwargs)
+    def copyP(self, index=-1, x=0.0, y=0.0, **kwargs):
+        self.polys.copyP(index, x, y, **kwargs)
+
+    def sP(self, verts, polyer=None, **kwargs):
+        if polyer==None:
+            polyer=Polyer()
+        polyer.P(verts, **kwargs)
+        return polyer
+        
+    def sR(self, xr, yr, wr, hr, polyer=None, **kwargs):
+        if polyer==None:
+            polyer=Polyer()
+        polyer.R(xr, yr, wr, hr, polyer=None, **kwargs)
+        return polyer
+        
+    def sC(self, xr, yr, wr, hr, polyer=None, **kwargs):
+        if polyer==None:
+            polyer=Polyer()
+        polyer.C(xr, yr, wr, hr, polyer=Polyer(), **kwargs)
+        return polyer
 
     def P(self, verts, **kwargs):
         """adds a polygon to the polylist with vertices given as a list of tuples"""
@@ -63,13 +81,21 @@ class EBL_Item(EBL_Base):
         theta=theta/180.0*pi
         self.polys.rotate(theta)
 
+    def horiz_refl(self):
+        self.polys.horiz_refl()
+    
+    def vert_refl(self):
+        self.polys.vert_refl()
+
     do_rotate=Callable(rotate)
+    do_horiz_refl=Callable(horiz_refl)
+    do_vert_refl=Callable(vert_refl)
                 
                 
-if __name__=="__main__":    
+if __name__=="__main__":  
     a=EBL_Item(name="EBL_Item_test")
     a.polys.polylist=[R(), R(5), P([(0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1)])]
     a.P([(0,0), (0,25), (0.1,25), (0.1, 0), (5, -5), (10, -5), (10, -10), (5, -10), (5, -5.1)])
     a.P([(-0.3, -5), (-0.30,25), (-0.2,25), (-0.2, -5), (5, -10), (10, -10), (10, -15), (5, -15), (5, -10.1)])
-    a.CP(x=2.0, y=2.0)
+    #a.CP(x=2.0, y=2.0)
     a.show()

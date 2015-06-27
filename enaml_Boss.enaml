@@ -16,7 +16,7 @@ template BaseTemp(BaseView):
     AutoBaseCont:
         pass
 
-from enaml_Plotter import  PlotItem, show_item as show_plot#, PlotArea 
+from e_Plotter import  PlotItem, show_item as show_plot#, PlotArea 
 from enaml_Filer import SaveWrap, ReadWrap, ReadSaveWrap
 from TA_Fundamentals import cap_case
 from atom.api import Atom, Str, Instance, Event

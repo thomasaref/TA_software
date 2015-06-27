@@ -7,13 +7,14 @@ Created on Thu Sep 11 09:53:23 2014
 
 from LOG_functions import log_debug
 #from chaco.plot import Plot
-from chaco.array_plot_data import ArrayPlotData
-from chaco.default_colormaps import jet
+#from chaco.array_plot_data import ArrayPlotData
+#from chaco.default_colormaps import jet
 from numpy import angle, absolute, dtype, log10, meshgrid, arange, linspace, sin
 from numpy import split, squeeze, array, transpose, concatenate, atleast_2d, ndim
 #from chaco.tools.api import PanTool, ZoomTool,  LegendTool #, LineInspector
-import traits_enaml
+#import traits_enaml
 #import enaml
+from enaml import imports
 from enaml.qt.qt_application import QtApplication
 from atom.api import Atom, Int, Enum, Float, List, Dict, Typed, Unicode, ForwardTyped
 
@@ -24,53 +25,91 @@ ZoomTool=None
 LegendTool=None
 PlotGraphicsContext=None
 
+#import matplotlib
+#matplotlib.use('GTKAgg') 
+
+from matplotlib import rcParams
+print rcParams
+rcParams['axes.labelsize'] = 14
+rcParams['xtick.labelsize'] = 9
+rcParams['ytick.labelsize'] = 9
+rcParams['legend.fontsize'] = 9
+
+rcParams['figure.figsize'] = 7.3, 4.2
+rcParams['figure.dpi']=150
+rcParams['xtick.major.width']=2
+rcParams['lines.linewidth']=2
+rcParams['xtick.major.size']=4
+rcParams['axes.linewidth']=2
+rcParams['ytick.major.width']=2
+rcParams['ytick.major.size']=4
+#rcParams['lines.antialiased']=False
+#rcParams['patch.antialiased']=False
+#rcParams['path.simplify']=False
+
+#rcParams['lines.solid_joinstyle']='round'
+#rcParams['lines.solid_capstyle']='round'
+
+# Example data
+#import numpy as np
+#t = np.arange(0.0, 1.0 + 0.01, 0.01)
+#s = np.cos(4 * np.pi * t) + 2
+
+# plot some awesome science
+#fig.tight_layout(pad=0.1)  # Make the figure use all available whitespace
+#fig.savefig('awesome_science.pdf')
+from matplotlib.colors import colorConverter
+colors = [colorConverter.to_rgba(c) for c in ('r','g','b','c','y','m','k')]
+#from matplotlib.ticker import MaxNLocator
+#my_locator = MaxNLocator(6)
+# Set up axes and plot some awesome science
+#ax.yaxis.set_major_locator(my_locator)
+import  matplotlib.pyplot as plt # import plot
+from matplotlib.axes import Axes
+line2D= plt.plot([0,12])
+print line2D[0].get_data()
+fig, ax2 = plt.subplots(1,1)
+#print isinstance(ax2, Axes)
+#print dir(fig), dir(ax2)
+# The same data as above, but fill the curves.
+from matplotlib import collections, transforms
+from matplotlib.collections import PolyCollection, LineCollection
+
+col = collections.PolyCollection([((0,0), (0,1), (1,1), (1,0)), ((0,0), (0,1), (1,1), (1,0))])#,
+                                #transOffset=ax2.transData)
+#print dir(col)#.properties()#get_xy()      
+#print [c.to_polygons() for c in col.get_paths()]
+#print help(col.update)
+
+col.set_verts([((1,1), (1,2), (3,1))])
+print [c.to_polygons() for c in col.get_paths()]
+
+#trans = transforms.Affine2D().scale(fig.dpi/72.0)
+#col.set_transform(trans)  # the points to pixels transform
+ax2.add_collection(col, autolim=True)
+#col.set_color(colors)
 
 
-#from matplotlib import rcParams
-#rcParams['axes.labelsize'] = 14
-#rcParams['xtick.labelsize'] = 9
-#rcParams['ytick.labelsize'] = 9
-#rcParams['legend.fontsize'] = 9
-#
-#rcParams['figure.figsize'] = 7.3, 4.2
-#rcParams['figure.dpi']=150
-#rcParams['xtick.major.width']=2
-#rcParams['lines.linewidth']=2
-#rcParams['xtick.major.size']=4
-#rcParams['axes.linewidth']=2
-#rcParams['ytick.major.width']=2
-#rcParams['ytick.major.size']=4
-##rcParams['lines.solid_joinstyle']='round'
-##rcParams['lines.solid_capstyle']='round'
-#
-## Example data
-##import numpy as np
-##t = np.arange(0.0, 1.0 + 0.01, 0.01)
-##s = np.cos(4 * np.pi * t) + 2
-#
-## plot some awesome science
-##fig.tight_layout(pad=0.1)  # Make the figure use all available whitespace
-##fig.savefig('awesome_science.pdf')
-#
-##from matplotlib.ticker import MaxNLocator
-##my_locator = MaxNLocator(6)
-## Set up axes and plot some awesome science
-##ax.yaxis.set_major_locator(my_locator)
-#
-#from matplotlib.figure import Figure
-#fig1 = Figure()
-#ax1 = fig1.add_subplot(111)
-#ax1.plot([1, 2, 3])
-##ax1.axhline(linewidth=4, color="g")
-#
-#fig2 = Figure()
-#ax2 = fig2.add_subplot(111)
-#ax2.plot([5, 2, 8, 1])
-#
-#figures = {
-#    'one': fig1,
-#    'two': fig2,
-#}
+ax2.autoscale_view()
+ax2.set_title('PolyCollection using offsets')
+
+#plt.show()
+
+from matplotlib.figure import Figure
+fig1 = Figure()
+ax1 = fig1.add_subplot(111)
+print type(ax1)
+ax1.plot([1, 2, 3])
+#ax1.axhline(linewidth=4, color="g")
+
+fig2 = Figure()
+ax2 = fig2.add_subplot(111)
+ax2.plot([5, 2, 8, 1])
+
+figures = {
+    'one': fig1,
+    'two': fig2,
+}
 
 def dB(x):
     return 20*log10(absolute(x))
@@ -92,7 +131,7 @@ class XYFormat(Atom):
     xname=Unicode()
     yname=Unicode()
     zname=Unicode()
-    colormap=Enum(jet)
+    colormap=Enum("jet")
 
     line_color=Enum(*mycolors) #'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan', 'magenta', 'orange')
     plot_type=Enum('line', 'scatter', 'line+scatter')
@@ -262,21 +301,47 @@ class AllXYFormat(XYFormat):
 
 class Plotter(Atom):
      name=Unicode()
-     title=Unicode()
+     title=Unicode("yoyoyoyoyo")
      xlabel=Unicode()
      ylabel=Unicode()
 
      xyfs=Dict()
-     pd=Typed(ArrayPlotData, ())
+     #pd=Typed(ArrayPlotData, ())
      plot= ForwardTyped(lambda: Plot)
      color_index=Int()
-     #figures=Dict(default=figures)
+     figures=Dict(default=figures)
+     fig=Typed(Figure)
+     axe=Typed(Axes)
+     clt=Typed(PolyCollection)
      plottables=Dict()
 
      overall_plot_type=Enum("XY plot", "img plot")
      value_scale=Enum('linear', 'log')
      index_scale=Enum('linear', 'log')
 
+     def _default_clt(self):
+         return PolyCollection([((0,0), (0,0))], alpha=0.6)#, rasterized=False, antialiased=False)
+     #def _default_axe(self):
+     #    return self.fig.add_subplot(111)
+
+         
+     def _default_fig(self):
+         fig=Figure()
+         self.axe=fig.add_subplot(111)
+         #, antialiased=False, transOffset=self.axe.transData)
+         print self.axe.transData
+         self.clt.set_color(colorConverter.to_rgba('g'))
+         #self.clt.set_antialiased(True)
+         #print dir(self.clt)
+         #self.clt.set_transOffset(self.axe.transData)
+         #trans = transforms.Affine2D().scale(fig.dpi/72.0)
+         #self.clt.set_transform(trans)  # the points to pixels transform
+         self.axe.add_collection(self.clt, autolim=True)
+         self.axe.autoscale_view()
+         return fig
+
+     
+      
      def _observe_value_scale(self, change):
          if self.overall_plot_type=="XY plot":
              self.plot.value_scale=self.value_scale
@@ -289,22 +354,10 @@ class Plotter(Atom):
 
      def _default_plottables(self):
          return dict(plotted=[None])
-        #tempdict=dict()
-        #for instr in self.instruments:
-            #tempdict[instr.name]=[]
-        #    tempdict[instr.name]=instr.get_all_tags('plot', True, instr.plot_all, instr.all_params)
-            #for key in instr.members().keys():
-            #    if instr.get_tag(key, 'plot', instr.plot_all):
-            #        tempdict[instr.name].append(key)
-        #    if tempdict[instr.name]==[]:
-        #        tempdict[instr.name]=instr.members().keys()
-        #return tempdict
-
-
 
      def _observe_title(self, change):
-         self.plot.title=self.title
-         self.plot.request_redraw()
+         self.axe.set_title(self.title)
+         #self.plot.request_redraw()
 
      def _observe_xlabel(self, change):
          self.plot.x_axis.title=self.xlabel
@@ -334,12 +387,21 @@ class Plotter(Atom):
 
      def set_data(self, zname, zdata):
          if zdata!=None:
-            if zname not in self.pd.list_data():
+            if zname not in self.plottables['plotted']:#self.pd.list_data():
                 self.plottables['plotted'].append(zname)
-            self.pd.set_data(zname, zdata)
+         self.clt.set_verts(zdata)
 
+     def draw(self):
+         if self.fig.canvas!=None:
+             #trans = transforms.Affine2D().scale(self.fig.dpi/72.0)
+             #self.clt.set_transform(trans)  # the points to pixels transform
+             self.clt.set_color(colors)
+         
+             self.axe.autoscale_view()
+             self.fig.canvas.draw()
+         
      def get_data(self, zname, index=None, axis=0):
-        data=self.pd.get_data(zname)
+        data=[c.to_polygons() for c in self.clt.get_paths()]
         if index==None:
             return data
         if axis==0:
@@ -408,19 +470,19 @@ class Plotter(Atom):
 #         xdata=append(xdata, xpoint)
 #         self.pd.set_data(xyf.xname, xdata)
 
-     def _default_plot(self):
-        global Plot, PanTool, ZoomTool, LegendTool
-        if Plot==None:
-            from chaco.plot import Plot
-        if PanTool==None or ZoomTool==None or LegendTool==None:
-            from chaco.tools.api import PanTool, ZoomTool,  LegendTool #, LineInspector
-
-        plot=Plot(self.pd, padding=50, fill_padding=True,
-                        bgcolor="white", use_backbuffer=True,  unified_draw=True)#, use_downsampling=True)
-        plot.tools.append(PanTool(plot, constrain_key="shift"))
-        plot.overlays.append(ZoomTool(component=plot, tool_mode="box", always_on=False))
-        plot.legend.tools.append(LegendTool(plot.legend, drag_button="right"))
-        return plot
+#     def _default_plot(self):
+#        global Plot, PanTool, ZoomTool, LegendTool
+#        if Plot==None:
+#            from chaco.plot import Plot
+#        if PanTool==None or ZoomTool==None or LegendTool==None:
+#            from chaco.tools.api import PanTool, ZoomTool,  LegendTool #, LineInspector
+#
+#        plot=Plot(self.pd, padding=50, fill_padding=True,
+#                        bgcolor="white", use_backbuffer=True,  unified_draw=True)#, use_downsampling=True)
+#        plot.tools.append(PanTool(plot, constrain_key="shift"))
+#        plot.overlays.append(ZoomTool(component=plot, tool_mode="box", always_on=False))
+#        plot.legend.tools.append(LegendTool(plot.legend, drag_button="right"))
+#        return plot
 
      def splitMultiD(self, arr, axis=0):
         if arr.ndim<2:
@@ -459,9 +521,8 @@ class Plotter(Atom):
          self.gatherMultiD(zname, zdata, appen=appen, overwrite=overwrite, concat=concat)
          
      def show(self):
-        with traits_enaml.imports():
-            from enaml_Plotter import PlotMain
-
+        with imports():
+            from e_Plotter import PlotMain
         app = QtApplication()
         view = PlotMain(plotr=self)
         view.show()
@@ -469,13 +530,19 @@ class Plotter(Atom):
 
 if __name__=="__main__":
     a=Plotter()
+
     from numpy import exp, shape
     xs = linspace(0, 8, 100)
     ys = linspace(0, 4, 3)
     x, y = meshgrid(xs,ys)
     z = exp(-(x**2+y**2)/100)
     zs=sin(xs)
-    print z
+    
+    print a.fig.axes #as_list()    
+    #a.fig.set_alpha(0.1)
+    a.set_data("mypoly", [((0,0), (0,-1), (3,1))])
+    a.show()
+    #print z
     #zz= a.splitMultiD(z)
     #print zz
 #    zz.append(array([[1],[2],[3]]))
@@ -520,8 +587,8 @@ if __name__=="__main__":
 #    print transpose(atleast_2d([1,2,3]))
 #    #print split(xs, shape(xs)[0])
     #a.add_img_plot(zname="z", zdata=z)#, xname="x", xdata=xs, yname="y", ydata=ys)
-    a.add_line_plot("blah", zname="z", zdata=zs, xname='x', xdata=xs)
-    a.show()
+    #a.add_line_plot("blah", zname="z", zdata=zs, xname='x', xdata=xs)
+   # a.show()
 
         #cs=column_stack(arrs)
         #if axis==0:

@@ -166,14 +166,15 @@ class Boss(Atom):
                 log_warning("target base not found!")
 
     def make_boss(self, base_dir="/Users/thomasaref/Dropbox/Current stuff/TA_software", divider="/",
-                  log_name="record", file_name="meas", setup_g_name="SetUp", save_g_name="Measurements"):
+                  log_name="record", file_name="meas", setup_g_name="SetUp", save_g_name="Measurements", save_log=True):
         self.BASE_DIR=base_dir #"/Users/thomasaref/Dropbox/Current stuff/TA_software"
         self.DIVIDER=divider #"/"
         self.LOG_NAME=log_name #"record"
         self.FILE_NAME=file_name #"meas"
         self.SETUP_GROUP_NAME=setup_g_name #"SetUp"
         self.SAVE_GROUP_NAME=save_g_name #"Measurements"
-        make_log_file(log_path=self.BASE_DIR+self.DIVIDER+self.LOG_NAME+".log", display=self.display)  #default log file
+        if save_log==True:
+            make_log_file(log_path=self.BASE_DIR+self.DIVIDER+self.LOG_NAME+".log", display=self.display)  #default log file
 
 boss=Boss()
 #master.save_file=Save_File()

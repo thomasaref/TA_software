@@ -10,7 +10,7 @@ from atom.api import Float, Bool, Enum, Dict, observe, Int
 from EBL_Item import EBL_Item
 #from Atom_Plotter import Plotter
 from numpy import pi, cos, sin, mod, sign
-
+from LOG_functions import log_debug
 class EBL_IDT(EBL_Item, IDT):
     """handles everything related to drawing a IDT. Units are microns (um)"""
     trconnect_x=Float(9.0).tag(desc="connection length of transmon")
@@ -71,7 +71,8 @@ class EBL_IDT(EBL_Item, IDT):
         self.do_update("g", self.a*(1.0/self.eta-1.0))
         
     def plot(self):
-        self.boss.plot.delete_all_plots() #needs fix
+        log_debug("yo1")
+        #self.boss.plot.delete_all_plots() #needs fix
         if self.idt_type=="angle":
             self.makeIDT()
             self.polys.offset_polygons(x=self.angle_x, y=self.angle_y)
@@ -80,10 +81,16 @@ class EBL_IDT(EBL_Item, IDT):
             self.polys.polylist.extend(tpolylist)
         else:            
             self.makeIDT()
-        self.rotate(self)
-        for n,p in enumerate(self.polys.polylist):
-            self.boss.plot.add_poly_plot(n=n, verts=p.get_verts(), cn=p.color, polyname=self.name)
-        self.boss.plot.plot.request_redraw()  
+        self.rotate(self.theta)
+        log_debug("yo1")
+        #self.boss.plot.fig
+        self.boss.plot.set_data("IDT", self.polys.get_verts())
+        #for n,p in enumerate(self.polys.polylist):
+        #    self.boss.plot.add_poly_plot(n=n, verts=p.get_verts(), cn=p.color, polyname=self.name)
+        #self.boss.plot.fig.set_alpha(0.9)        
+        log_debug("yo1")
+        self.boss.plot.draw()# .plot.request_redraw()  
+        log_debug("yo1")
                              
     def makeIDT(self):
         """Draws IDT depending on object parameters"""
@@ -141,7 +148,7 @@ class EBL_IDT(EBL_Item, IDT):
             if n in [-1,0] and self.qdt_type=="QDT":
                 self._fingrect(mult*n*(self.a+self.g), self.o/2.0-self.W/2.0-(self.o+self.trconnect_y+self.trconnect_w)/2.0, self.a, -(self.o+self.trconnect_y+self.trconnect_w))
                 self._fingrect(mult*n*(self.a+self.g), -self.W/2.0-self.o/2.0-self.trc_hbox+self.trconnect_y/2.0, self.a, self.trconnect_y)
-        self._fingrect(mult*self.Np*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, m)
+        self._fingrect(mult*self.Np*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, -m)
 
     def _IDTextrafingers(self):
         """write extra fingers for a single IDT"""
@@ -236,6 +243,7 @@ if __name__=="__main__":
     a.idt_type="stepped"
     a.Np=3
     a.makeIDT()
+    #print a.polys.get_verts()
     a.show()
     
 

@@ -1,0 +1,306 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Dec 26 19:13:08 2014
+
+@author: thomasaref
+"""
+from enaml.widgets.api import (
+        Container, Field, ObjectCombo, MainWindow, Form, Label, PushButton, DockPane, ToolBar, Action, MPLCanvas, DockArea, DockItem
+        )
+from enaml.widgets.color_dialog import ColorDialog
+from enaml.stdlib.fields import FloatField
+#from traits_enaml.widgets.enable_canvas import EnableCanvas
+
+from enaml.core.api import Include, Looper, DynamicTemplate
+from enaml.layout.api import vbox, hbox, align, spacer, HSplitLayout, InsertItem
+
+enamldef PlotBox(Container):
+    attr plottables<<plotr.plottables
+    Container:
+        constraints = [vbox(hbox(xinstr_lbl, xinstr, xvar_lbl, xvar),
+                            hbox(yinstr_lbl, yinstr, yvar_lbl, yvar),
+                            hbox(zinstr_lbl, zinstr, zvar_lbl, zvar),
+                            hbox(xyplot_btn),
+                            hbox(xyzplot_lbl, xyzplot_btn))]
+        Label: xinstr_lbl:
+            text="X instr"
+        ObjectCombo: xinstr:
+            items << plottables.keys()
+
+        Label: yinstr_lbl:
+            text="Y instr"
+        ObjectCombo: yinstr:
+            items << list(plottables.keys())
+
+        Label: zinstr_lbl:
+            text="z instr"
+        ObjectCombo: zinstr:
+            items = list(plottables.keys())
+
+        Label: yvar_lbl:
+            text="Y var"
+        ObjectCombo: yvar:
+            items = plottables[yinstr.selected]
+
+        Label: xvar_lbl:
+            text="X var"
+        ObjectCombo: xvar:
+            items =plottables[xinstr.selected]
+
+
+        Label: zvar_lbl:
+            text="Z var"
+        ObjectCombo: zvar:
+            items = plottables[zinstr.selected]
+
+        #Label: xyplot_lbl:
+        #    text = "add XY plot"
+        PushButton: xyplot_btn:
+            text= "add XY plot"
+            clicked ::
+                plotr.add_line_plot(name=zvar.selected, zname=zvar.selected, zdata=plotr.pd.get_data(zvar.selected), xname=xvar.selected, xdata=plotr.pd.get_data(xvar.selected))
+        Label: xyzplot_lbl:
+            text = "add img plot"
+        PushButton: xyzplot_btn:
+            clicked :: plotr.add_img_plot(zname=zvar.selected, zdata=plotr.pd.get_data(zvar.selected),
+                                          xname=xvar.selected,
+                                          yname=yvar.selected, xdata=plotr.pd.get_data(xvar.selected),
+                                          ydata=plotr.pd.get_data(yvar.selected))
+
+enamldef PlotFormat(Form):
+    Label:
+        text = "Title"
+    Field:
+        text := plotr.title
+    Label:
+        text = "X label"
+    Field:
+        text := plotr.xlabel
+    Label:
+        text = "Y label"
+    Field:
+        text := plotr.ylabel
+    Label:
+        text = "X axis"
+    ObjectCombo:
+        items=list(plotr.get_member('index_scale').items)
+        selected:=plotr.index_scale
+    Label:
+        text = "Y axis"
+    ObjectCombo:
+        items=list(plotr.get_member('value_scale').items)
+        selected:=plotr.value_scale
+
+    Label:
+        text = "add plot test"
+    PushButton:
+        text = "Hello"
+        clicked::
+            print plotr.pd
+            #plotr.add_line_plot(name="yo", yname="blah", ydata=[1,2,3])
+            #plotr.add_line_plot(name="yo2", yname="bob", ydata=[9,5,7,3])
+    Label:
+        text = "append data test"
+    PushButton:
+        clicked ::
+            zdata=plotr.pd.get_data('z')
+            print zdata
+            from numpy import concatenate, array, linspace, meshgrid, exp, transpose, atleast_2d
+            #zdata=concatenate(zdata, array([[1,2,3]]))
+            xs = linspace(0, 10, 6)
+            ys = linspace(0, 5, 6)
+            x, y = meshgrid(xs,ys)
+            z = exp(-(x**2+y**2)/100)
+
+            #zz= plotr.splitMultiD(zdata)
+            #print zz
+            #zz.append(array([[1.0],[2.0],[3.0]]))
+            #print zz
+            #z=plotr.gatherMultiD(zz)
+            z=concatenate((zdata, transpose(atleast_2d([1,2,3]))), axis=1)
+            print plotr.pd.get_data('y')
+            print atleast_2d(plotr.pd.get_data('x'))
+            plotr.pd.set_data('z', z)
+            plotr.xyfs['z'].rend_list[2].index.set_data(xs,ys)
+
+            #plotr.append_data("z", [1,2,3])
+    Label:
+        text = "Save plot"
+    PushButton:
+        clicked :: plotr._save()
+    #Label:
+    #    text = "add img plot"
+    #PushButton:
+    #    clicked :: plotr.add_img_plot()
+    PlotBox:
+        pass
+
+enamldef XYformat(Form):
+    attr xyf<<plotr.xyfs[it.selected]
+    padding = 0
+#    Label:
+#        text = "Color:"
+#    PushButton:
+#        text = "Color"
+#        clicked :: ColorDialog.get_color()
+    Label:
+        text = 'Redraw plot'
+    PushButton:
+        text = "Redraw"
+        clicked ::
+            xyf.redraw_plot() #print_stuff(xyf.rend_list)
+    Label:
+        text = "Item"
+    ObjectCombo: it:
+        items<<plotr.xyfs.keys()
+        selected="All"
+    Label:
+        text = "Plot type:"
+    ObjectCombo:
+        items=list(xyf.get_member('plot_type').items)
+        selected:=xyf.plot_type
+
+    Label:
+        text = "Line color:"
+        enabled << xyf.plot_type!="scatter"
+    ObjectCombo:
+        items=list(xyf.get_member('line_color').items)
+        selected:=xyf.line_color
+        enabled << xyf.plot_type!="scatter"
+    Label:
+        text = "Line Width:"
+    FloatField:
+        value := xyf.line_width
+    Label:
+        text = "Marker_size:"
+    FloatField:
+        value := xyf.marker_size
+    Label:
+        text = "Line Style:"
+    ObjectCombo:
+        items=list(xyf.get_member('line_style').items)
+        selected:=xyf.line_style
+    Label:
+        text = "Render style:"
+    ObjectCombo:
+        items=list(xyf.get_member('render_style').items)
+        selected:=xyf.render_style
+    Label:
+        text = "Marker:"
+    ObjectCombo:
+        items=list(xyf.get_member('marker').items)
+        selected:=xyf.marker
+    Label:
+        text = "OutLine Width:"
+    FloatField:
+        value := xyf.outline_width
+
+    Label:
+        text = "Outline color:"
+    ObjectCombo:
+        items=list(xyf.get_member('outline_color').items)
+        selected:=xyf.outline_color
+    Label:
+        text = "Inside color:"
+    ObjectCombo:
+        items=list(xyf.get_member('inside_color').items)
+        selected:=xyf.inside_color
+
+
+    #outline_color=ColorTrait('none')
+    #render_style=Enum('connectedpoints', 'hold', 'connectedhold')
+    #mycolors=List([ 'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan', 'magenta', 'orange'])
+
+def show_item(name, area, target=None, ItemType=DockItem, position='left', OP=InsertItem, **kwargs):
+    if target==None:
+        target=name
+    dock_items=area.dock_items()
+    dock_names=(o.name for o in dock_items)
+    if name not in dock_names:
+        item=ItemType(area, **kwargs)
+        op = OP(item=name, target=target, position=position)
+        area.update_layout(op)
+
+
+enamldef PlotToolBar(ToolBar):
+    dock_area='left'
+    Action:
+        separator=True
+    Action:
+        text = "Format"
+        triggered ::
+            show_item(name=plotr.name+'xyformat', area=plot_area, target="plot", ItemType=XYfItem, position='left', OP=InsertItem)
+            #item=XYfItem(plot_area)
+            #op = InsertBorderItem(item="xyformat", target="xyformat", position='left')
+            #plot_area.update_layout(op) #plot_area.xyf_item.hide()
+    Action:
+        separator=True
+    Action:
+        text = "Plot"
+        triggered :: print plot_area.width.value()#show_item(name="plot", area=plot_area, target="xyformat", ItemType=PlotItem, position="right", OP=InsertBorderItem) #plot_item.show()
+    #Action:
+    #    separator=True
+    Action:
+        text = "Plot Format"
+        triggered :: show_item(name=plotr.name+"plot_format", area=plot_area, target="plot", ItemType=PlotFormatItem, position="right", OP=InsertItem) #plot_item.show()
+
+
+#enamldef PlotContainer(Container):
+#    padding = 0
+#    constraints = [width == contents_width, height==contents_height]
+#    EnableCanvas: ecanvas:
+#        minimum_size=(500,500)
+#        constraints = [width == contents_width, height==contents_height]
+#        component << plotr.plot
+#
+#enamldef PlotWrap(PlotContainer):
+#    attr plotr
+
+enamldef MatPlotContainer(Container):
+        constraints = [ vbox( ptb, cbox, canvas)]
+        PlotToolBar: ptb:
+            pass
+        ObjectCombo: cbox:
+            items = ['one', 'two']
+        padding = 0
+        MPLCanvas: canvas:
+            figure << plotr.fig#s[cbox.selected]
+            toolbar_visible=True
+
+enamldef MatPlotWrap(MatPlotContainer):
+    attr plotr
+
+
+enamldef XYfItem(DockItem):
+    name=plotr.name+"xyformat"
+    title = "XY Format"
+    XYformat:
+        pass
+
+enamldef PlotItem(DockItem):
+    attr plotr
+    #closable=False
+    name=plotr.name+"plot"
+    title = "Plot"
+    #activated::plotmain.set_size(plot_area.width.value(), plot_area.height.value())
+    MatPlotContainer:
+        pass
+
+enamldef PlotFormatItem(DockItem):
+    name=plotr.name+"plot_format"
+    title = "Plot Format"
+    PlotFormat:
+        pass
+    
+enamldef PlotMain(MainWindow): 
+    attr plotr
+    initial_position=(0,0)
+    Container: 
+        alias plot_area
+        DockArea: plot_area:
+            layout = HSplitLayout('plot')
+            PlotItem: ppi:
+                pass
+            #activated :: 
+            #    show_item(name=plotr.name+"plot", area=plot_area,  ItemType=PlotItem)
+

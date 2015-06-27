@@ -8,10 +8,14 @@ Created on Fri Apr  3 18:23:12 2015
 from Atom_Boss import Boss
 from Atom_Save_File import Save_DXF
 from LOG_functions import log_info
+from Plotter import Plotter
+from atom.api import Typed
 #from enaml import imports
 #from enaml.qt.qt_application import QtApplication#
 
 class EBL_Boss(Boss):
+    plot=Typed(Plotter, ())
+
     def _default_save_factory(self):
         return Save_DXF
 

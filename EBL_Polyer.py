@@ -30,6 +30,12 @@ class EBLvert(Atom):
             yp=self.x*sin_theta+self.y*cos_theta
             self.x=xp
             self.y=yp 
+            
+    def horiz_refl(self):
+        self.x=-self.x
+    
+    def vert_refl(self):
+        self.y=-self.y
 
 class EBLPolygon(EBL_PolyBase):
     """Implements polygons for use in drawing EBL patterns and includes conversion of polygon to DXF or GDS format (text based)"""
@@ -41,9 +47,17 @@ class EBLPolygon(EBL_PolyBase):
     def rotate(self, cos_theta, sin_theta):
         for v in self.verts:
             v.rotate(cos_theta, sin_theta)
+
+    def horiz_refl(self):
+        for v in self.verts:
+            v.horiz_refl()
+    
+    def vert_refl(self):
+        for v in self.verts:
+            v.vert_refl()
         
     def get_verts(self):
-        return [(v.x,v.y) for v in self.verts]
+        return tuple((v.x,v.y) for v in self.verts)
 
     def offset_verts(self, x=0.0, y=0.0):
         for v in self.verts:
@@ -77,6 +91,9 @@ def R(xr=0.0, yr=0.0, wr=1.0, hr=1.0, **kwargs):
 class Polyer(EBL_PolyBase):
     polylist=ContainerList(EBLPolygon).tag(inside_type=EBLPolygon)
 
+    def get_verts(self):
+        return [p.get_verts() for p in self.polylist]
+
     def _default_polylist(self):
         return [EBLPolygon()]
 
@@ -90,7 +107,18 @@ class Polyer(EBL_PolyBase):
         for p in self.polylist:
             p.rotate(cos_theta=cos(theta), sin_theta=sin(theta))
 
-    def CP(self,index=-1, x=0.0, y=0.0, **kwargs):
+    def horiz_refl(self):
+        for p in self.polylist:
+            p.horiz_refl()
+    
+    def vert_refl(self):
+        for p in self.polylist:
+            p.vert_refl()
+
+    def extend(self, polyer):
+        self.polylist.extend(polyer.polylist)
+
+    def copyP(self,index=-1, x=0.0, y=0.0, **kwargs):
         """copies a polygon to an offset position and adds it"""
         poly=P(self.polylist[index].get_verts(), **kwargs)        
         poly.offset_verts(x,y)
