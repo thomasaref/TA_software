@@ -330,7 +330,7 @@ class BossMainWindow(MainWindow):
         plotr=boss.plot 
         if "EBL_Item_test" in (b.name for b in boss.bases):
             tbase=[b for b in boss.bases if b.name=="EBL_Item_test"][0]
-            tbase.plot()
+            tbase.plot(tbase)
         show_plot(plotr.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=plotr)
                 
     
@@ -398,3 +398,52 @@ enamldef BossMain(BossMainWindow): main:
 #            layout = TabLayout(plotin.name)
 #            PlotItem:
 #                plotr=plotin
+
+enamldef AtomMain(BossMainWindow): main:
+    attr instr #: None
+    title="Base"
+    initial_size=(1800,1200)
+    #alias readpane
+    #ReadSavePane: readpane:
+    #    visible = True #False
+    #alias savepane
+    #SavePane: savepane:
+    #    visible = False
+    #alias logpane
+    #LogPane: logpane:
+    #    pass
+    #alias plotpane
+    #PlotPane: plotpane:
+    #    visible = False
+    #    pass
+
+    #title="Boss"
+#    attr path : unicode=u''
+#    attr counter = 0
+#    initial_size=(500, 500)
+#    constraints = [ height == 500]
+#    StatusBar: statbar:
+#        StatusItem:
+#            Label:
+#                text = 'Status:'
+#        StatusItem:
+#            Label:
+#                text = 'other stuff really happened:'
+#
+    #BossToolBar:
+    #    pass
+    alias bossarea
+    Container: mycont:
+        constraints = [mycont.width==bossarea.width, mycont.height==bossarea.height]
+        alias bossarea
+        DockArea: bossarea:
+            layout=HSplitLayout('myitem')
+            DockItem:
+                name = "myitem"
+                title = cap_case("myitem")
+                DynamicTemplate:  #use of dynamic template allows custom instrument layouts if defined in enaml
+                    base = BaseTemp
+                    args = ("Auto",)
+            #activated ::
+            #    main.show_base(bossarea, base)
+            #    main.show_plot(bossarea, boss)

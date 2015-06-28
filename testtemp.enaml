@@ -1,0 +1,296 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jun 28 22:14:19 2015
+
+@author: thomasaref
+
+Collection of user custom member templates for Typed, Instance, members
+"""
+
+from enaml.widgets.api import  Field
+from atom.api import observe, Coerced, Atom, Callable, Tuple, Typed, Dict, List, Float, Int, Unicode, Enum, Bool, Str, ContainerList, Range, FloatRange, Instance, Event
+from enaml.widgets.api import (RawWidget, Container, Field, Form, SpinBox, GroupBox, Label, Window,
+                               ProgressBar, PushButton, CheckBox, MultilineField, ScrollArea, ObjectCombo, Slider)
+
+from enaml.layout.api import hbox, vbox, spacer, align
+from enaml.core.api import DynamicTemplate, Looper, d_, Include
+from enaml.stdlib.fields import FloatField, IntField
+from enaml.application import deferred_call
+                               
+from Atom_Read_File import Read_File
+from Atom_Save_File import Save_File
+from enaml_Filer import ReadWrap, SaveWrap
+
+from EBL_enaml import EBContWrap
+from EBL_Polyer import Polyer
+
+def get_tag(name, base, tag, none_value=None):
+    try:    
+        return base.get_tag(name, tag, none_value)
+    except AttributeError:
+        return none_value
+
+template TypedView(name, base, baseType):
+    """ This default specialization displays read-only text for the value."""
+    Field:
+        read_only = True
+        text << unicode(getattr(base, name))
+
+template TypedView(name, base, baseType: Read_File):
+    """ Displays a read file interface"""
+    ReadWrap:
+        filer:=getattr(base, name)
+
+template TypedView(name, base, baseType: Save_File):
+    """Displays a save file interface"""
+    SaveWrap:
+        filer:=getattr(base, name)
+        
+template TypedView(name, base, baseType: Polyer):
+    """Displays a polyer polygon list interface. very ineffecient. too many notifications"""
+    EBContWrap:
+        polyer:=getattr(base, name)
+
+        
+template TypedView(name, model, modelType: Typed):
+    TypedView(name, model, type(getattr(model, name))):
+        pass
+
+template TypedView(name, model, modelType: Instance):
+    TypedView(name, model, type(getattr(model, name))):
+        pass
+
+template TypedView(name, model, modelType: Coerced):
+    TypedView(name, model, type(getattr(model, name))):
+        pass
+
+template TypedView(name, base, baseType: Float):
+    """ A template for Float members"""
+    FloatField:
+        value :=  getattr(base, name)
+        minimum=get_tag(name, base, 'low')
+        maximum=get_tag(name, base, 'high')
+
+template TypedView(name, base, baseType: float):
+    """ A template for floats"""
+    FloatField:
+        value :=  getattr(base, name)
+        minimum=get_tag(name, base, 'low')
+        maximum=get_tag(name, base, 'high')
+
+template TypedView(name, base, baseType: Range):
+    """ A template for Range members"""
+    Container:
+        constraints=[hbox(sel, min_lbl, sel_slider, max_lbl)]
+        SpinBox: sel:
+            value:=getattr(base, name)
+            minimum = sel_slider.minimum
+            maximum = sel_slider.maximum
+        Slider: sel_slider:
+            minimum = base.get_member(name).validate_mode[1][0]
+            maximum = base.get_member(name).validate_mode[1][1]
+            value :=getattr(base, name)
+            tracking = False
+        Label: min_lbl:
+                text << str(sel_slider.minimum)
+        Label: max_lbl:
+            text << str(sel_slider.maximum)
+
+#template ValView(name, base, baseType: FloatRange):
+#    """ A form control template specialization for Float members"""
+#    Container:
+#        constraints=[hbox(sel, min_lbl, sel_slider, max_lbl)]
+#        FloatField: sel:
+#            value:=getattr(base, name)
+#            minimum = ft.minimum
+#            maximum = ft.maximum
+#        Slider: sel_slider:
+#            tracking = False
+#            FloatTransform: ft:
+#                minimum=base.get_tag(name, 'low')
+#                maximum=base.get_tag(name, 'high')
+#                value :=getattr(base, name)
+#                precision=base.get_tag(name, 'precision', 100)
+#        Label: min_lbl:
+#                text << str(ft.minimum)
+#        Label: max_lbl:
+#            text << str(ft.maximum)
+
+template TypedView(name, base, baseType: Int):
+    """ A template for Int members using a spin box"""
+    SpinBox:
+        value := getattr(base, name)
+        minimum=int(get_tag(name, base, 'low', -2147483648))
+        maximum=int(get_tag(name, base, 'high', 2147483647))
+
+template TypedView(name, base, baseType: int):
+    """ A template for ints using a spin box"""
+    SpinBox:
+        value := getattr(base, name)
+        minimum=int(get_tag(name, base, 'low', -2147483648))
+        maximum=int(get_tag(name, base, 'high', 2147483647))
+
+template TypedView(name, base, baseType: Str):
+    """ A template for Str using a MultilineField"""
+    MultilineField: mlf:
+            text := getattr(base, name)
+
+template TypedView(name, base, baseType: str):
+    """ A template for str using a MultilineField"""
+    MultilineField: mlf:
+            text := getattr(base, name)
+
+template TypedView(name, base, baseType: Unicode):
+    """A template for Unicode using a field"""
+    Field:
+        text := getattr(base, name)
+
+template TypedView(name, base, baseType: unicode):
+    """A template for unicode using a field"""
+    Field:
+        text := getattr(base, name)
+
+def run_params(name, base):
+    return getattr(base, name).run_params
+
+template TypedView(name, base, baseType: Callable):
+    """A template specialization for a Callable using a PushButton"""
+    Container:
+        padding = 0
+        constraints = [hbox(pb1, gb1), align('top', pb1, gb1)]
+        PushButton: pb1:
+            text = 'Run'
+            clicked :: getattr(instr, name)(instr) #do_it_if_needed(var, "receive") #receive()
+            #enabled << not instr.busy
+        GroupBox: gb1:
+            padding = 0
+            visible = run_params(base, name)!=[]
+            title = get_tag(name, base, 'label', name)+" parameters:"
+            Looper: get_loop:
+                    iterable << run_params(base, name)
+                    DynamicTemplate:
+                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+                        args=(loop_item, base, type(base))
+
+def get_map(name, base):
+    #try:    
+        return base.get_map(name)
+    #except:
+    #    return getattr(base, name)        
+
+template TypedView(name, base, baseType: Enum):
+    """ A form control template specialization for Enum members using ObjectCombo."""
+    Container:
+        padding = 0
+        constraints = [ hbox(val, enm_val)]
+        ObjectCombo: val:
+            items = list(base.get_member(name).items)
+            selected := getattr(base, name)
+            selected :: enm_val.text=unicode(get_map(name, base))
+        Label: enm_val:
+            text =  unicode(get_map(name, base))
+
+template TypedView(name, base, baseType: Bool):
+    """ A template specialization for Bool members using CheckBox"""
+    CheckBox:
+        checked := getattr(base, name)
+
+template TypedView(name, base, baseType: bool):
+    """ A template specialization for bools members using CheckBox"""
+    CheckBox:
+        checked := getattr(base, name)
+
+#template CLView(name, base, index, vtype: Base):
+#    AutoFormWrap:
+#        instr:=getattr(base, name)[index]
+#
+#template CLView(name, base, index, vtype):
+#    MultilineField:
+#        read_only=True
+#        text<<unicode(getattr(base, name))
+#
+##template CLView(name, base, index, vtype: "EMPTY"):
+##    pass
+#
+#template CLView(name, base, index, vtype: float):
+#    FloatField:
+#        value:=getattr(base, name)[index]
+#
+#template CLView(name, base, index, vtype: int):
+#    IntField:
+#        value:=getattr(base, name)[index]
+#
+#template CLView(name, base, index, vtype: str):
+#    """ A template specialization for Unicode using a MultilineField"""
+#    MultilineField: mlf:
+#            text := getattr(base, name)[index]
+#
+##template CLView(name, base, index, vtype: list):
+##        GroupBox:
+##            padding = 0
+#            #visible << getattr(base, name)!=[]
+#            #title = instr.get_tag(name, 'label', name)+" variables:"
+#            #Looper:
+#            #        iterable << getattr(base, name) #base.return_vars
+#           #         DynamicTemplate:
+#           #             base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+#           #             args=(loop_item, base, type(base))
+#
+#template CLView(name, base, index, vtype: unicode):
+#    """A template specialization for Unicode using a field"""
+#    Field:
+#        text := getattr(base, name)[index]
+#
+#template ClView(name, base, index, vtype: bool):
+#    """ A form control template specialization for Bool members using CheckBox"""
+#    CheckBox:
+#        checked := getattr(base, name)[index]
+#
+#def get_type(name, base, index):
+#    if index<len(getattr(base, name)):
+#        print type(getattr(base, name)[index]), base.get_tag(name, "inside_type")
+#        return base.get_tag(name, "inside_type", type(getattr(base, name)[index]))
+#    return None
+#
+#template ValView(name, base, baseType: ContainerList):
+#    Container:
+#        padding=0
+#        constraints = [hbox(ind, val, insert_btn, pop_btn), ind.width==100]
+#        SpinBox: ind:
+#            minimum=0
+#            maximum << max(0, len(getattr(base, name))-1)
+#        Container: val:
+#            padding = 0
+#            DynamicTemplate: dyn:
+#                base = CLView
+#                args << (name, base, ind.value, get_type(name, base, ind.value))
+#        PushButton: insert_btn:
+#            text="Insert"
+#            clicked::
+#                if len(getattr(base, name))==0:
+#                    intype=base.get_tag(name, 'inside_type')() #if inside_type is not specified for an empty array, this will generate an error
+#                else:
+#                    temptype=getattr(base, name)[ind.value]
+#                    if isinstance(temptype, Base):
+#                        intype=temptype.copy()
+#                    else:
+#                        intype=type(temptype)()
+#                getattr(base, name).insert(ind.value, intype) #pass #mydata.insert()
+#            #visible << base.get_tag(name, "full_interface", False)
+#        PushButton: pop_btn:
+#            text="Remove"
+#            clicked:: getattr(base, name).pop(ind.value)
+#            #visible << base.get_tag(name, "full_interface", False)
+#            enabled << len(getattr(base, name))>0
+#
+#template ValView(name, base, baseType: List):
+#        GroupBox:
+#            padding = 0
+#            visible << getattr(base, name)!=[]
+#            title = instr.get_tag(name, 'label', name)+" variables:"
+#            Looper:
+#                    iterable << getattr(base, name) #base.return_vars
+#                    DynamicTemplate:
+#                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+#                        args=(loop_item, base, type(base))
+#        

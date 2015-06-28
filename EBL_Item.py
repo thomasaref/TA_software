@@ -11,12 +11,13 @@ from EBL_Boss import ebl_boss
 from atom.api import Enum, Float, Int, observe, Property, Typed, Callable#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
 from EBL_Polyer import Polyer, P, R, V
 from numpy import sin, cos, pi
-#from Atom_Save_File import Save_DXF
+from Atom_Save_File import Save_TXT
 
 #boss.save_factory=Save_DXF
 
 class EBL_Base(Base):
-    def _default_boss(self):
+    @property    
+    def boss(self):
         ebl_boss.make_boss(save_log=False)
         return ebl_boss
 
@@ -26,8 +27,8 @@ class NoShow_EBL_Base(EBL_Base):
 
 
 class EBL_Item(EBL_Base):
-
-    polys=Typed(Polyer, ())
+    testsavefile=Typed(Save_TXT, ())
+    polys=Typed(Polyer, ()).tag(private=True)
     x_center=Float(0.0).tag(desc="x coordinate of center of pattern. this should almost always be 0.0, which is centered (default).", unit="um")
     y_center=Float(0.0).tag(desc="y coordinate of center of pattern. this should almost always be 0.0, which is centered (default).", unit="um")
 
@@ -35,14 +36,68 @@ class EBL_Item(EBL_Base):
     all_layer=Enum("Al").tag(desc='set all layers')   
     
     theta=Float(0.0).tag(desc="angle to rotate in degrees")
-    
 
-#    def set_color(self, color="green"):
-        
+    angle_x=Float(0.3).tag(desc="shift in x direction when doing angle evaporation")
+    angle_y=Float().tag(desc="shift in y direction when doing angle evaporation")
+    view_type=Enum("pattern", "angle")
+    
+    add_type=Enum("overwrite", "add")
+    
+    xmin=Float()#.tag(private=True)
+    xmax=Float()#.tag(private=True)
+    ymin=Float()#.tag(private=True)
+    ymax=Float()#.tag(private=True)
+    
+    
+    #def auto_lim(self):
+    #    self.set_xlim(self.polys.xlim)
+    #    self.set_ylim(self.polys.ylim)
+
+    def set_xlim(self, xmin, xmax):
+        self.boss.plot.set_xlim(xmin, xmax)
+
+    def set_ylim(self, ymin, ymax):
+        self.boss.plot.set_ylim(ymin, ymax)
+
+    def make_polylist(self):
+        pass #self.polys.polylist=[]
+
+    @Callable
     def plot(self):
-        for n,p in enumerate(self.polys.polylist):
-            self.boss.plot.add_poly_plot(n=n, verts=p.get_verts(), cn=p.color, polyname=self.name)
-        self.boss.plot.plot.request_redraw()    
+        if self.add_type=="overwrite":
+            self.polys.polylist=[]
+        if self.view_type=="angle":
+            self.make_polylist()
+            self.polys.offset_verts(x=self.angle_x, y=self.angle_y)
+            tpolylist=self.polys.polylist
+            self.make_polylist()
+            self.polys.polylist.extend(tpolylist)
+        else:            
+            self.make_polylist()
+        self.rotate(self.theta)
+        self.polys.offset_verts(self.x_center, self.y_center)
+        self.set_data()
+
+        self.xmin=self.polys.xmin
+        self.xmax=self.polys.xmax
+        self.ymin=self.polys.ymin
+        self.ymax=self.polys.ymax
+        
+        xmin=min(b.xmin for b in self.boss.bases)
+        xmax=max(b.xmax for b in self.boss.bases)
+        ymin=min(b.ymin for b in self.boss.bases)
+        ymax=max(b.ymax for b in self.boss.bases)
+        
+        self.set_xlim(xmin, xmax)
+        self.set_ylim(ymin, ymax)
+        self.draw()
+        
+    def set_data(self):
+        self.boss.plot.set_data(self.name, self.polys.get_verts())
+
+    def draw(self):
+        self.boss.plot.draw()
+
 
     def copyP(self, index=-1, x=0.0, y=0.0, **kwargs):
         self.polys.copyP(index, x, y, **kwargs)

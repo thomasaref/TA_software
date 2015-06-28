@@ -8,7 +8,7 @@ from LOG_functions import log_info, log_warning, make_log_file#, SAVE_GROUP_NAME
 from atom.api import Atom, Bool, Typed, ContainerList, Callable, Dict, Float, Int, FloatRange, Range, Unicode, Str, List, Enum, Event, Instance
 from Atom_Read_File import Read_File
 from Atom_Save_File import Save_File, Save_HDF5
-from Atom_Plotter import Plotter
+from Plotter import Plotter
 import enaml
 from enaml.qt.qt_application import QtApplication
 
@@ -55,7 +55,7 @@ class Boss(Atom):
     bases=ContainerList()
     plot=Typed(Plotter, ())
     plots=ContainerList()
-    plottables=Dict()
+    #plottables=Dict()
     BASE_DIR=Unicode("/Users/thomasaref/Dropbox/Current stuff/TA_software")
     DIVIDER=Unicode("/")
     LOG_NAME=Unicode("record")
@@ -63,27 +63,28 @@ class Boss(Atom):
     SETUP_GROUP_NAME=Unicode("SetUp")
     SAVE_GROUP_NAME=Unicode("Measurements")
     display=Typed(StreamCatch, ())
-    base_nums=Dict()
-    base_count=Int()
+    #base_nums=Dict()
+    #base_count=Int()
     
-    def get_base_num(self, key):
-        """used in initialization of bases"""
-        if key in self.base_nums.keys():
-            return self.base_nums[key]
-        return len(self.bases)
-
-    def set_base_num(self, key):
-        if key in self.base_nums.keys():
-            self.base_nums[key]+=1
-        else:
-            self.base_nums[key]=0
+#    def get_base_num(self, key):
+#        """used in initialization of bases"""
+#        if key in self.base_nums.keys():
+#            return self.base_nums[key]
+#        return len(self.bases)
+#
+#    def set_base_num(self, key):
+#        if key in self.base_nums.keys():
+#            self.base_nums[key]+=1
+#        else:
+#            self.base_nums[key]=0
             
     def run_measurement(self):
         log_info("Master started")
         self.run()
         log_info("Master finished")
-
-    def _default_plottables(self):
+    
+    @property
+    def plottables(self):
         tempdict=dict()
         for instr in self.bases:
             tempdict[instr.name]=instr.get_all_tags('plot', True, instr.plot_all, instr.all_params)
@@ -118,11 +119,12 @@ class Boss(Atom):
     def draw_plot(self):
        pass
 
+    @property
     def old_log_path(self):
         return self.BASE_DIR+self.DIVIDER+self.LOG_NAME
 
     def full_save(self):
-        self.save_file.full_save(obj=self.run, old_log_path=self.BASE_DIR+self.DIVIDER+self.LOG_NAME)
+        self.save_file.full_save(obj=self.run, old_log_path=self.old_log_path)
 
     def data_save(self, instr, name, value):
         if not instr.get_tag(name, 'discard', False) and self.saving!="No buffer":

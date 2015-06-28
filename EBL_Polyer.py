@@ -37,6 +37,7 @@ class EBLvert(Atom):
     def vert_refl(self):
         self.y=-self.y
 
+
 class EBLPolygon(EBL_PolyBase):
     """Implements polygons for use in drawing EBL patterns and includes conversion of polygon to DXF or GDS format (text based)"""
     verts=ContainerList().tag(inside_type=EBLvert, desc='list of vertices of polygon', log=False)
@@ -44,6 +45,22 @@ class EBLPolygon(EBL_PolyBase):
     def _default_verts(self):
         return [EBLvert()]
 
+    @property
+    def xmin(self):
+        return min(v.x for v in self.verts)
+
+    @property
+    def ymin(self):        
+        return min(v.y for v in self.verts)
+
+    @property
+    def xmax(self):        
+        return max(v.x for v in self.verts)
+
+    @property
+    def ymax(self):        
+        return max(v.y for v in self.verts)
+        
     def rotate(self, cos_theta, sin_theta):
         for v in self.verts:
             v.rotate(cos_theta, sin_theta)
@@ -94,10 +111,26 @@ class Polyer(EBL_PolyBase):
     def get_verts(self):
         return [p.get_verts() for p in self.polylist]
 
-    def _default_polylist(self):
-        return [EBLPolygon()]
+    @property
+    def xmin(self):
+        return min(p.xmin for p in self.polylist)
+        
+    @property
+    def xmax(self):
+        return max(p.xmax for p in self.polylist)
+    
+    @property             
+    def ymin(self):                
+        return min(p.ymin for p in self.polylist)
+    
+    @property
+    def ymax(self):
+        return max(p.ymax for p in self.polylist)
 
-    def offset_polygons(self, x=0.0, y=0.0):
+    def _default_polylist(self):
+        return [EBLPolygon(), P([(0,0), (0,25), (0.1,25), (0.1, 0), (5, -5), (10, -5), (10, -10), (5, -10), (5, -5.1)])]
+
+    def offset_verts(self, x=0.0, y=0.0):
         for p in self.polylist:
             p.offset_verts(x,y)
         #self.x_center+=x
@@ -147,15 +180,15 @@ class Polyer(EBL_PolyBase):
 
 if __name__=="__main__":
     a=Polyer()
-    a.polylist=[R(), R(5), P([(0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1)])]
+    #a.polylist=[R(), R(5), P([(0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1)])]
     a.P([(0,0), (0,25), (0.1,25), (0.1, 0), (5, -5), (10, -5), (10, -10), (5, -10), (5, -5.1)])
     a.P([(-0.3, -5), (-0.30,25), (-0.2,25), (-0.2, -5), (5, -10), (10, -10), (10, -15), (5, -15), (5, -10.1)])
     print a.polylist[-1].get_verts()    
-    a.CP(x=2.0, y=3.0)
+    #a.CP(x=2.0, y=3.0)
     print a.polylist[-1].get_verts()    
     print a.polylist[-2].get_verts()    
 
     a.polylist[1].offset_verts(3,4)
     print a.polylist[1].get_verts()    
 
-    #a.show()
+    a.show()

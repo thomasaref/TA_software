@@ -19,36 +19,30 @@ from numpy import ndarray
 from atom.api import observe, Atom, Callable, Tuple, Typed, Dict, List, Float, Int, Unicode, Enum, Bool, Str, ContainerList, Range, FloatRange, Instance, Event
 from Atom_Base import Base
 from Atom_Instrument import Instrument
-#from EBL_Item import EBLPolygon
-#import EBL_Item
-from enaml_Filer import ReadWrap, SaveWrap
-from Atom_Read_File import Read_File
-from Atom_Save_File import Save_File
-from EBL_enaml import EBContWrap
-from EBL_Polyer import Polyer
+#from enaml_Filer import ReadWrap, SaveWrap
+#from Atom_Read_File import Read_File
+#from Atom_Save_File import Save_File
+#from EBL_enaml import EBContWrap
+#from EBL_Polyer import Polyer
 
-def get_tag(name, model, tag, none_value=None):
-    return model.get_tag(name, tag, none_value)
+from testtemp import TypedView, get_tag
+
+#def get_tag(name, model, tag, none_value=None):
+#    return model.get_tag(name, tag, none_value)
     
 template ValView(name, model, modelType):
     """ This default specialization displays read-only text for the value."""
     Field:
         read_only = True
         text << unicode(getattr(model, name))
-
-template ValView(name, model, modelType: Read_File):
-    """ Displays a read file interface"""
-    ReadWrap:
-        filer:=getattr(model, name)
-
-template ValView(name, model, modelType: Save_File):
-    """Displays a save file interface"""
-    SaveWrap:
-        filer:=getattr(model, name)
         
-template ValView(name, model, modelType: Polyer):
-    EBContWrap:
-        polyer:=getattr(model, name)
+template ValView(name, model, modelType: Typed):
+    TypedView(name, model, type(getattr(model, name))):
+        pass
+
+template ValView(name, model, modelType: Instance):
+    TypedView(name, model, type(getattr(model, name))):
+        pass
 
 #from enaml.stdlib.slider_transform import FloatTransform
 
@@ -134,6 +128,9 @@ template ValView(name, model, modelType: Callable):
                         base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
                         args=(loop_item, instr, type(instr))
 
+#def get_mapped_value(model, name):
+#    mp=model.get_map(name)
+
 template ValView(name, model, modelType: Enum):
     """ A form control template specialization for Enum members using ObjectCombo."""
     Container:
@@ -142,8 +139,9 @@ template ValView(name, model, modelType: Enum):
         ObjectCombo: val:
             items = list(model.get_member(name).items)
             selected := getattr(model, name)
+            selected :: enm_val.text=unicode(model.get_map(name))
         Label: enm_val:
-            text := unicode(model.get_tag(name, 'mapping', {getattr(model, name):getattr(model, name)})[getattr(model, name)])
+            text =  unicode(model.get_map(name))# tag(name, 'mapping', {getattr(model, name):getattr(model, name)})[getattr(model, name)])
 
 template ValView(name, model, modelType: Bool):
     """ A form control template specialization for Bool members using CheckBox"""
@@ -298,12 +296,39 @@ enamldef BootClose(Container):
                     selected := instr.plot_x
 
 def constraints_gen(name, model, lbl, val, unt, contents_width, contents_top, contents_left):
-    if type(model.get_tag(name, "width", 0))!=int:
+    if type(get_tag(name, model, "width", 0))!=int:
         return [hbox(lbl, val, unt)]
     else:
-        return [hbox(lbl, val, unt, spacer), val.width>=model.get_tag(name, 'width', contents_width/5),
+        return [hbox(lbl, val, unt, spacer), val.width>=get_tag(name, model, 'width', contents_width/5),
                 align('bottom', val, unt), align('bottom', lbl, val)]
                  #contents_top == val.top, contents_left == lbl.left,]
+
+def get_type(base, name):
+    """returns type of parameter with given name"""
+    typer=type(base.get_member(name))
+    #if typer in (Coerced, Instance):
+    #        typer=type(getattr(self, name))
+    return get_tag(name, base, "type", typer)
+
+template VarTemp(name, instr, InstrType: Atom):
+    GroupBox:
+        flat = True
+        padding=0
+        constraints = constraints_gen(name, instr, lbl, val, unt, contents_width, contents_top, contents_left) #[hbox( lbl, val, unt),#,
+        #               align('top', val, unt), align('top', lbl, val),
+        #                  align('left', gbcontents, 80, val) | 'medium']#, width == contents_width, height==contents_height]
+                        #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
+#                         (lbl.bottom == contents_bottom) | 'medium']
+        Label: lbl:
+            text = get_tag(name, instr, 'label', name)
+        Container: val:
+            padding = 0
+            DynamicTemplate: dyn:
+                base = TypedView
+                args = (name, instr, get_type(instr,name))
+        Label: unt:
+            text = get_tag(name, instr, 'unit', "")
+            visible = get_tag(name, instr, 'unit')!=None
 
 template VarTemp(name, instr, InstrType: Base):
 #enamldef BaseBox(GroupBox):
@@ -393,11 +418,13 @@ template VarTemp(name, instr, InstrType: Instrument):
 
 def form_spec(instr):
     """ Generate a form specification for an instrument type."""
-    items = []
-    for name in instr.main_params:
-        items.append((name, instr, type(instr)))
-    return tuple(items)
-
+    try:
+        items = []
+        for name in instr.main_params:
+            items.append((name, instr, type(instr)))
+        return tuple(items)
+    except AttributeError:
+        return tuple([(name, instr, type(instr)) for name in instr.members()])
 
 template ForEach(Spec, Item):
     """ A templated loop which maps a template over a sequence."""

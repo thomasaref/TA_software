@@ -6,7 +6,6 @@ Created on Mon Jan 19 17:25:53 2015
 """
 
 from atom.api import Unicode, Bool, Value, Callable, List, Enum
-from Atom_InstrumentBoss import instrumentboss as inboss #boss is imported to make it a singleton (all instruments have the same boss)
 from Atom_Base import Base, log
 
 import enaml
@@ -139,8 +138,9 @@ class Instrument(Base):
             if self.get_tag(name, 'send_now', self.send_now)==True:
                 if self.get_tag(name, 'set_cmd')!=None and self.status=='Active':
                     self.send(name)
-
-    def _default_boss(self):
+    @property                    
+    def boss(self):
+        from Atom_InstrumentBoss import instrumentboss as inboss #boss is imported to make it a singleton (all instruments have the same boss)
         inboss.make_boss()
         return inboss
 

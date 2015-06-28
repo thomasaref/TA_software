@@ -29,7 +29,7 @@ PlotGraphicsContext=None
 #matplotlib.use('GTKAgg') 
 
 from matplotlib import rcParams
-print rcParams
+#print rcParams
 rcParams['axes.labelsize'] = 14
 rcParams['xtick.labelsize'] = 9
 rcParams['ytick.labelsize'] = 9
@@ -67,7 +67,7 @@ colors = [colorConverter.to_rgba(c) for c in ('r','g','b','c','y','m','k')]
 import  matplotlib.pyplot as plt # import plot
 from matplotlib.axes import Axes
 line2D= plt.plot([0,12])
-print line2D[0].get_data()
+#print line2D[0].get_data()
 fig, ax2 = plt.subplots(1,1)
 #print isinstance(ax2, Axes)
 #print dir(fig), dir(ax2)
@@ -82,7 +82,7 @@ col = collections.PolyCollection([((0,0), (0,1), (1,1), (1,0)), ((0,0), (0,1), (
 #print help(col.update)
 
 col.set_verts([((1,1), (1,2), (3,1))])
-print [c.to_polygons() for c in col.get_paths()]
+#print [c.to_polygons() for c in col.get_paths()]
 
 #trans = transforms.Affine2D().scale(fig.dpi/72.0)
 #col.set_transform(trans)  # the points to pixels transform
@@ -98,7 +98,7 @@ ax2.set_title('PolyCollection using offsets')
 from matplotlib.figure import Figure
 fig1 = Figure()
 ax1 = fig1.add_subplot(111)
-print type(ax1)
+#print type(ax1)
 ax1.plot([1, 2, 3])
 #ax1.axhline(linewidth=4, color="g")
 
@@ -309,39 +309,27 @@ class Plotter(Atom):
      #pd=Typed(ArrayPlotData, ())
      plot= ForwardTyped(lambda: Plot)
      color_index=Int()
-     figures=Dict(default=figures)
+     clts=Dict()
      fig=Typed(Figure)
      axe=Typed(Axes)
-     clt=Typed(PolyCollection)
+     #clt=Typed(PolyCollection)
      plottables=Dict()
 
      overall_plot_type=Enum("XY plot", "img plot")
      value_scale=Enum('linear', 'log')
      index_scale=Enum('linear', 'log')
 
-     def _default_clt(self):
-         return PolyCollection([((0,0), (0,0))], alpha=0.6)#, rasterized=False, antialiased=False)
-     #def _default_axe(self):
-     #    return self.fig.add_subplot(111)
-
+     #def _default_clt(self):
+     #    return PolyCollection([((0,0), (0,0))], alpha=0.6, antialiased=True)#, rasterized=False, antialiased=False)
+     
+     def _default_axe(self):
+         axe=self.fig.add_subplot(111)
+         axe.autoscale_view(True)
+         return axe
          
      def _default_fig(self):
-         fig=Figure()
-         self.axe=fig.add_subplot(111)
-         #, antialiased=False, transOffset=self.axe.transData)
-         print self.axe.transData
-         self.clt.set_color(colorConverter.to_rgba('g'))
-         #self.clt.set_antialiased(True)
-         #print dir(self.clt)
-         #self.clt.set_transOffset(self.axe.transData)
-         #trans = transforms.Affine2D().scale(fig.dpi/72.0)
-         #self.clt.set_transform(trans)  # the points to pixels transform
-         self.axe.add_collection(self.clt, autolim=True)
-         self.axe.autoscale_view()
-         return fig
+         return Figure()
 
-     
-      
      def _observe_value_scale(self, change):
          if self.overall_plot_type=="XY plot":
              self.plot.value_scale=self.value_scale
@@ -387,18 +375,28 @@ class Plotter(Atom):
 
      def set_data(self, zname, zdata):
          if zdata!=None:
-            if zname not in self.plottables['plotted']:#self.pd.list_data():
-                self.plottables['plotted'].append(zname)
-         self.clt.set_verts(zdata)
-
+            if zname not in self.clts: #plottables['plotted']:#self.pd.list_data():
+                clt=PolyCollection(zdata, alpha=0.5, antialiased=True)#, rasterized=False, antialiased=False)
+                clt.set_color(colorConverter.to_rgba('g'))                
+                self.clts[zname]=clt
+                self.axe.add_collection(self.clts[zname], autolim=True)
+            else:                
+                self.clts[zname].set_verts(zdata)
+         
      def draw(self):
          if self.fig.canvas!=None:
              #trans = transforms.Affine2D().scale(self.fig.dpi/72.0)
              #self.clt.set_transform(trans)  # the points to pixels transform
-             self.clt.set_color(colors)
+             #self.clt.set_color(colors)
          
-             self.axe.autoscale_view()
+             #self.axe.autoscale_view(True)
              self.fig.canvas.draw()
+
+     def set_xlim(self, xmin, xmax):
+         self.axe.set_xlim(xmin, xmax)
+
+     def set_ylim(self, ymin, ymax):
+         self.axe.set_ylim(ymin, ymax)
          
      def get_data(self, zname, index=None, axis=0):
         data=[c.to_polygons() for c in self.clt.get_paths()]
@@ -530,7 +528,8 @@ class Plotter(Atom):
 
 if __name__=="__main__":
     a=Plotter()
-
+    if not a.fig:
+        print "no fig!"
     from numpy import exp, shape
     xs = linspace(0, 8, 100)
     ys = linspace(0, 4, 3)
@@ -538,8 +537,11 @@ if __name__=="__main__":
     z = exp(-(x**2+y**2)/100)
     zs=sin(xs)
     
-    print a.fig.axes #as_list()    
+    #print a.fig.axes #as_list()    
     #a.fig.set_alpha(0.1)
+    from numpy import amin, amax
+    data=[((0,0), (0,-1), (3,1)), ((5,10), (6,11))]
+    print amin(data[0], 0), amax(data[0], 0)
     a.set_data("mypoly", [((0,0), (0,-1), (3,1))])
     a.show()
     #print z

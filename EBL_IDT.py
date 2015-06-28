@@ -25,7 +25,7 @@ class EBL_IDT(EBL_Item, IDT):
 
     idt_tooth=Float(0.3).tag(desc="tooth size on CPW connection to aid contact")
     
-    idt_type=Enum("basic", "stepped", "angle").tag(desc="basic is a regular IDT, stepped uses stepped fingers for harmonic suppression and angle shows how a double angle evaporation would look",
+    idt_type=Enum("basic", "stepped").tag(desc="basic is a regular IDT, stepped uses stepped fingers for harmonic suppression and angle shows how a double angle evaporation would look",
                                                     mapping={"basic":0, "angle": 0,"stepped": 1})
     qdt_type=Enum("IDT", "QDT")
     finger_type=Enum("double", "single").tag(desc="'double' for double fingered, 'single' for single fingered. defaults to double fingered",
@@ -36,8 +36,7 @@ class EBL_IDT(EBL_Item, IDT):
     add_gnd=Bool(True)
     add_teeth=Bool(True)
     
-    angle_x=Float(0.3)
-    angle_y=Float()
+
     step_num=Int(3)
     eta=Float(0.5).tag(desc="metalization ratio")
     
@@ -51,11 +50,17 @@ class EBL_IDT(EBL_Item, IDT):
             if item not in mp:
                 mp.append(item)
         return mp
-        
-    #mult=Property().tag(private=True)
-    #def _get_mult(self):
-    #    return self.get_map("finger_type")
     
+    @property    
+    def mult(self):
+        return self.get_map("finger_type")
+    @property        
+    def m(self):
+        return self.get_map("idt_type") 
+    @property
+    def xo(self):        
+        return self.a*(1.0-1.0/self.step_num)*self.get_map("idt_type")
+        
     def do_update(self, name, new_val):
         if not self._update:
             self._update=True
@@ -69,32 +74,9 @@ class EBL_IDT(EBL_Item, IDT):
     @observe('a', 'eta')
     def update_p(self, change):
         self.do_update("g", self.a*(1.0/self.eta-1.0))
-        
-    def plot(self):
-        log_debug("yo1")
-        #self.boss.plot.delete_all_plots() #needs fix
-        if self.idt_type=="angle":
-            self.makeIDT()
-            self.polys.offset_polygons(x=self.angle_x, y=self.angle_y)
-            tpolylist=self.polys.polylist
-            self.makeIDT()
-            self.polys.polylist.extend(tpolylist)
-        else:            
-            self.makeIDT()
-        self.rotate(self.theta)
-        log_debug("yo1")
-        #self.boss.plot.fig
-        self.boss.plot.set_data("IDT", self.polys.get_verts())
-        #for n,p in enumerate(self.polys.polylist):
-        #    self.boss.plot.add_poly_plot(n=n, verts=p.get_verts(), cn=p.color, polyname=self.name)
-        #self.boss.plot.fig.set_alpha(0.9)        
-        log_debug("yo1")
-        self.boss.plot.draw()# .plot.request_redraw()  
-        log_debug("yo1")
                              
-    def makeIDT(self):
+    def make_polylist(self):
         """Draws IDT depending on object parameters"""
-        self.polys.polylist=[] #list of polygons that make up IDT pattern
         self.sdIDT()
         
     def sdIDT(self):
@@ -140,33 +122,27 @@ class EBL_IDT(EBL_Item, IDT):
             
     def _IDTfingers(self):
         """writes IDT fingers for single finger IDT with extensions for connections if it is qubit type IDT"""
-        m=self.get_map("idt_type")    
-        mult=self.get_map("finger_type")
         for n in range(-(self.Np-1), self.Np, 2):
-            self._fingrect(mult*n*(self.a+self.g), self.o/2.0, self.a, self.W+self.o, m)
-            self._fingrect(mult*(n-1)*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, -m)
+            self._fingrect(self.mult*n*(self.a+self.g), self.o/2.0, self.a, self.W+self.o, self.m)
+            self._fingrect(self.mult*(n-1)*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, -self.m)
             if n in [-1,0] and self.qdt_type=="QDT":
-                self._fingrect(mult*n*(self.a+self.g), self.o/2.0-self.W/2.0-(self.o+self.trconnect_y+self.trconnect_w)/2.0, self.a, -(self.o+self.trconnect_y+self.trconnect_w))
-                self._fingrect(mult*n*(self.a+self.g), -self.W/2.0-self.o/2.0-self.trc_hbox+self.trconnect_y/2.0, self.a, self.trconnect_y)
-        self._fingrect(mult*self.Np*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, -m)
+                self._fingrect(self.mult*n*(self.a+self.g), self.o/2.0-self.W/2.0-(self.o+self.trconnect_y+self.trconnect_w)/2.0, self.a, -(self.o+self.trconnect_y+self.trconnect_w))
+                self._fingrect(self.mult*n*(self.a+self.g), -self.W/2.0-self.o/2.0-self.trc_hbox+self.trconnect_y/2.0, self.a, self.trconnect_y)
+        self._fingrect(self.mult*self.Np*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, -self.m)
 
     def _IDTextrafingers(self):
         """write extra fingers for a single IDT"""
-        mult=self.get_map("finger_type")
-        m=self.get_map("idt_type")
         for n in range(0, self.ef):
-            self._fingrect(-mult*n*(self.a+self.g)-mult*(self.Np+1)*(self.a+self.g), -self.o/2.0, self.a, self.W, -m)
-            self._fingrect(mult*n*(self.a+self.g)+mult*(self.Np+1)*(self.a+self.g), -self.o/2.0, self.a, self.W, -m)
+            self._fingrect(-self.mult*n*(self.a+self.g)-self.mult*(self.Np+1)*(self.a+self.g), -self.o/2.0, self.a, self.W, -self.m)
+            self._fingrect(self.mult*n*(self.a+self.g)+self.mult*(self.Np+1)*(self.a+self.g), -self.o/2.0, self.a, self.W, -self.m)
 
     def _IDTtopbottombox(self):
         """writes connecting box at top and also bottom for regular IDT"""
-        xo=self.a*(1.0-1.0/self.step_num)*self.get_map("idt_type")
-        mult=self.get_map("finger_type")
         if self.wbox==0.0:
-            wr=mult*2*self.Np*(self.a+self.g) +mult*self.a+mult*2*self.ef*(self.a+self.g)+(mult-1)*self.g
+            wr=self.mult*2*self.Np*(self.a+self.g) +self.mult*self.a+self.mult*2*self.ef*(self.a+self.g)+(self.mult-1)*self.g
         else:
             wr=self.wbox
-        self.C(xo, self.o/2.0+self.W/2.0+self.hbox/2.0, wr, self.hbox)
+        self.C(self.xo, self.o/2.0+self.W/2.0+self.hbox/2.0, wr, self.hbox)
         if self.qdt_type=="QDT":
             self.R(-self.trc_wbox/2.0, -self.o/2.0-self.W/2.0-self.trc_hbox-self.trconnect_w, self.trc_wbox, self.trconnect_w)
         else:
@@ -193,26 +169,24 @@ class EBL_IDT(EBL_Item, IDT):
 
     def _left_transmon_connect(self):
         """write left part of transmon connect"""
-        mult=self.get_map("finger_type")
-        if mod(self.Np, 2)==0: #needs fiving for evens
-            wr=-(mult*self.ef*(self.a+self.g)+mult*(self.Np-1)*(self.a+self.g)-self.g)
-            xr=-mult*self.a/2.0-2.0*self.g-self.a
+        if mod(self.Np, 2)==0: #needs fixing for evens
+            wr=-(self.mult*self.ef*(self.a+self.g)+self.mult*(self.Np-1)*(self.a+self.g)-self.g)
+            xr=-self.mult*self.a/2.0-2.0*self.g-self.a
         else:
-            wr=-(mult*self.ef*(self.a+self.g)+mult*self.Np*(self.a+self.g)-self.g)
-            xr=-mult*self.a/2.0-self.g-(mult-1)*self.g/2.0
+            wr=-(self.mult*self.ef*(self.a+self.g)+self.mult*self.Np*(self.a+self.g)-self.g)
+            xr=-self.mult*self.a/2.0-self.g-(self.mult-1)*self.g/2.0
         self.R(xr, -self.o/2.0-self.W/2.0, wr, -self.trconnect_w)
         self.R(xr, -self.o/2.0-self.W/2.0, -(self.trc_wbox/2.0-self.a/2.0-self.g), -self.trconnect_w)
         self.R(-self.trc_wbox/2.0, -self.o/2.0-self.W/2.0, -self.trconnect_w, -self.trc_hbox-self.trconnect_w)
 
     def _right_transmon_connect(self):
         """write right part of transmon connect"""
-        mult=self.get_map("finger_type")
         if mod(self.Np, 2)==0:
             wr=self.ef*(self.a+self.g)+(self.Np+1)*(self.a+self.g)-self.g
             xr=-self.a/2.0
         else:
-            wr=mult*self.ef*(self.a+self.g)+mult*self.Np*(self.a+self.g)-self.g
-            xr=mult*self.a/2.0+self.g+(mult-1)*self.g/2.0
+            wr=self.mult*self.ef*(self.a+self.g)+self.mult*self.Np*(self.a+self.g)-self.g
+            xr=self.mult*self.a/2.0+self.g+(self.mult-1)*self.g/2.0
         self.R(xr, -self.o/2.0-self.W/2.0, wr, -self.trconnect_w)
         self.R(xr, -self.o/2.0-self.W/2.0, self.trc_wbox/2.0-self.a/2.0-self.g, -self.trconnect_w)
         self.R(self.trc_wbox/2.0, -self.o/2.0-self.W/2.0, self.trconnect_w, -self.trc_hbox-self.trconnect_w)
@@ -242,7 +216,7 @@ if __name__=="__main__":
     a.add_teeth=False
     a.idt_type="stepped"
     a.Np=3
-    a.makeIDT()
+    #a.makeIDT()
     #print a.polys.get_verts()
     a.show()
     

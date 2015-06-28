@@ -83,8 +83,8 @@ def getinc(inclist, index):
         return [EContWrap(polygon=inclist[index])]
 
 enamldef EBCont(Container): ebc:
-    attr polylist=polyer.polylist
-    attr length=max(0, len(polylist)-1)
+    #attr polylist=polyer.polylist
+    #attr length max(0, len(polyer.polylist)-1)
     #attr inclist=[]
     #attr inlen=0
     #event rdr
@@ -93,12 +93,12 @@ enamldef EBCont(Container): ebc:
     constraints = [hbox( ind, val, insert_btn, pop_btn, spacer), align("top", ind, val, insert_btn, pop_btn)]
     SpinBox: ind:
         minimum=0
-        maximum << ebc.length #max(0, len(polylist)-1)
+        maximum << max(0, len(polyer.polylist)-1)#ebc.length #max(0, len(polylist)-1)
     Container: val:
         #ScrollArea:
             #Container:
             Include: inc:
-                objects << getinc(polylist, ind.value)
+                objects << getinc(polyer.polylist, ind.value)
                 #Looper:
                     #iterable << polylist
                     #EContWrap:
@@ -110,23 +110,23 @@ enamldef EBCont(Container): ebc:
             #if len(polylist)==0:
             #    intype=inside_type() #if inside_type is not specified for an empty array, this will generate an error
             #else:
-            polylist.insert(ind.value, inside_type()) #pass #mydata.insert()
-            ebc.length+=1
+            polyer.polylist.insert(ind.value, inside_type()) #pass #mydata.insert()
+            #ebc.length+=1
 #            inc.objects=getinc(polylist, ind.value)
 
         #visible << model.get_tag(name, "full_interface", False)
     PushButton: pop_btn:
         text="Remove"
         clicked:: 
-            polylist.pop(ind.value)
-            ebc.length-=1
+            polyer.polylist.pop(ind.value)
+            #ebc.length-=1
  #           inc.objects=getinc(polylist, ind.value)
             #ind.value+=1
             #ind.value-=1
             #ebc.request_relayout()
             #lp.refresh_items() 
         #visible << model.get_tag(name, "full_interface", False)
-        enabled << ebc.length>0
+        enabled << max(0, len(polyer.polylist)-1)>0
     #PushButton: plot_btn:
     #    text="Plot"
     #    clicked ::

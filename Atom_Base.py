@@ -4,13 +4,9 @@ Created on Sun Dec 14 17:47:13 2014
 
 @author: thomasaref
 """
-
-from LOG_functions import log_info, log_debug, make_log_file
-from atom.api import Atom, Instance, ContainerList, Unicode, Bool, Str, Float, Callable, List, Int, Typed, Enum, Dict, Coerced, Range, FloatRange
-from Atom_Boss import Boss, boss #master is imported to make it a singleton (all slaves (aka instruments) have the same master)
+from LOG_functions import log_info, log_debug
+from atom.api import Atom, Instance, ContainerList, Unicode, Bool, Str, Float, Callable, Int, Typed, Enum, Dict, Coerced, Range, FloatRange
 from types import FunctionType
-from enaml import imports #import enaml
-from enaml.qt.qt_application import QtApplication
 from numpy import shape, ndarray
 from Atom_Plotter import Plotter
 from TA_Fundamentals import _func_log
@@ -45,7 +41,7 @@ class Base(Atom):
        private: boolean, if attribute should be logged and watched, i.e. private=True items go into reserved_names
        sub: boolean, if attribute should be in main_params or not
        plot: boolean if attribute should be included inthe plot list
-       full_interface: boolean, controls how fully attriabute is displayed
+       full_interface: boolean, controls how fully attribute is displayed
        mapping: a dictionary for Enums do the value can be mapped. A default Enum mapping would be {value: value}
        type: an override so a particular type can be declared for the attribute which affects display. defaults to actual type via get_type
        low and high: limits numerical values so they stay within these limits. Auto declared for Ranges
@@ -53,47 +49,54 @@ class Base(Atom):
        unit: the units the attribute is in
        inside_type: type inside containerlist"""
 
-    boss=Typed(Boss).tag(private=True)
+    #boss=Typed(Boss).tag(private=True)
     name=Unicode().tag(private=True)
     desc=Unicode().tag(private=True)
-    all_params=List().tag(private=True)
-    main_params=List().tag(private=True)
-    #sub_params=List() #remove?
-    reserved_names=List().tag(private=True)
+    #all_params=List().tag(private=True)
+    #main_params=List().tag(private=True)
+    #reserved_names=List().tag(private=True)
     #showing=Bool(False) #remove?
     full_interface=Bool(False).tag(private=True) #checked by GUI but applies more to instrument
     plot_all=Bool(False).tag(private=True)
     show_base=Bool(True).tag(private=True) #boolean that controls if base appears in boss toolbar
     view=Enum("Auto").tag(private=True)
-    base_name=Unicode().tag(private=True) #default name of base if no name is given 
-    #base_num=Int().tag(private=True)
-    #plot_keys=List() #remove?
 
-    def _default_base_name(self):
-        return "base"
+    @property
+    def boss(self):
+        """returns boss singleton instance. can be overwritten in subclasses to change boss"""
+        from Atom_Boss import boss #boss is imported to make it a singleton
+        boss.make_boss()
+        return boss
         
-    def _default_reserved_names(self):
-        """reserved names not to perform standard logging and display operations on. can be overwritten in child classes"""
-        #return Slave.members().keys()
+    @property
+    def base_name(self):
+        """default base name of base if no name is given"""
+        return "base"
+
+    @property        
+    def reserved_names(self):
+        """reserved names not to perform standard logging and display operations on,
+           i.e. members that are tagged as private and will behave as usual Atom members"""
         return self.get_all_tags("private", True)
-
-    def _default_all_params(self):
-        """defaults to all parameters added to child class which are not in reserved names"""
+    @property
+    def all_params(self):
+        """all members that are not tagged as private, i.e. not in reserved_names and will behave as Bases"""
         return self.get_all_tags("private", False, False)
-        #all_params=self.members().keys()[:]
-        #for item in self.reserved_names:
-        #    all_params.remove(item)
-        #return all_params
 
-    def _default_main_params(self):
-        """defaults to all parameters that are not tagged as sub. Can be overwritten to allow custom layout"""
+    @property
+    def all_main_params(self):
+        """all members in all_params that are not tagged as sub.
+        Convenience property for more easily custom defining main_params in child classes"""
         return self.get_all_tags('sub', False, False, self.all_params)
-        #main_params=[]
-        #for item in self.all_params:
-        #    if not self.get_tag(item, 'sub', False):
-        #        main_params.append(item)
-        #return main_params
 
+    @property
+    def main_params(self):
+        """defaults to all members in all_params that are not tagged as sub.
+        Can be overwritten to allow some minimal custom layout control,
+        e.g. order of presentation and which members are shown. Use self.all_main_params to get a list of 
+        all members that could be in main_params"""
+        return self.all_main_params
+        
     def copy(self):
         tempbase=type(self)()
         for name in self.all_params:
@@ -111,36 +114,23 @@ class Base(Atom):
         self.boss.draw_plot(self)
 
     def show(self):
+        """uses boss GUI control by passing itself"""
         self.boss.show(base=self)
-        
 
     def get_all_tags(self, key, key_value=None, none_value=None, search_list=None):
         """returns a list of names of parameters with a certain key_value"""
-        if search_list==None:
+        if search_list is None:
             search_list=self.members().keys()
-        #tag_params=[]#self.members().keys()[:]
         if key_value==None:
-            return filter(lambda x: none_value!=self.get_tag(x, key, none_value), search_list)
-        return filter(lambda x: key_value==self.get_tag(x, key, none_value), search_list)
-        ##print self.members().keys()[key_value==self.get_tag(item, key, none_value)]
-        #for item in self.members().keys():#all_params:
-        #    if key_value==self.get_tag(item, key, none_value):
-        #        tag_params.append(item)
-        #return tag_params
-
-#    def get_tag2(self, name, key, none_value=None):
-#        """gets tag key of parameter name and returns none_value if tag does not exist. very useful function"""
-#        try:
-#            return self.get_member(name).metadata[key]
-#        except:
-#            return none_value
+            return [x for x in search_list if none_value!=self.get_tag(x, key, none_value)]
+        return [x for x in search_list if key_value==self.get_tag(x, key, none_value)]
 
     def set_tag(self, name, **kwargs):
         """sets tag of parameter name using keywords arguments"""
         self.get_member(name).tag(**kwargs)
 
     def set_all_tags(self, **kwargs):
-        """set all parameters tags using set tag"""
+        """set all parameters tags using keyword arguments"""
         for param in self.all_params:
             self.set_tag(param, **kwargs)
 
@@ -148,7 +138,7 @@ class Base(Atom):
         """returns cmd associated with cmdstr in tag and converts it to a log if it isn't already.
           returns None if cmdstr is not in metadata"""
         cmd=self.get_tag(name, cmdstr)
-        if not isinstance(cmd, log) and cmd!=None:
+        if not isinstance(cmd, log) and cmd is not None:
             cmd=log(cmd)
             self.set_tag(name, **{cmdstr:cmd})
         return cmd
@@ -156,11 +146,11 @@ class Base(Atom):
     def get_run_params(self, name, key, notself=False, none_value=[]):
         """returns the run parameters of get_cmd and set_cmd. Used in GUI"""
         cmd=self.func2log(name, key)
-        if cmd==None:
+        if cmd is None:
             return none_value
         else:
             run_params=cmd.run_params[:]
-            if notself==True:
+            if notself:
                 if name in run_params:
                     run_params.remove(name)
             return run_params
@@ -178,18 +168,13 @@ class Base(Atom):
     def get_tag(self, name, key, none_value=None):
         """retrieves metadata associated with name if key is None. If key specified, returns metadata[key] or None if key is not in metadata"""
         metadata=self.metadata(name) #getattr(type(self), name).metadata
-        #if key==None:
-        #    return metadata
         if metadata==None:
             return none_value
         return metadata.get(key, none_value)
 
     def metadata(self, name):
+        """retrieves metadata dictionary of member with given name"""
         return self.get_member(str(name)).metadata
-            #try:
-            #    return metadata[key]
-            #except KeyError:
-            #    return None
 
     def lowhigh_check(self, name, value):
         """can specify low and high tags to keep float or int within a range."""
@@ -206,24 +191,48 @@ class Base(Atom):
     def get_type(self, name):
         """returns type of parameter with given name"""
         typer=type(self.get_member(name))
-        if typer in (Coerced, Typed, Instance):
+        if typer in (Coerced, Instance):
             typer=type(getattr(self, name))
         return self.get_tag(name, "type", typer)
 
+    def base_func_map(self, name):
+        """creates mapping for an enum if it doesn't exist by trying to construct a mapping from items
+        in the object and returning a one to one mapping if that fails""" 
+        items=self.get_member(name).items
+        try: 
+            return dict(zip(items, [getattr(self, item) for item in items]))
+        except AttributeError:
+            return  dict(zip(items, items))
+
+    def get_mapping(self, name):
+        """returns the mapping dictionary of an Enum, generating it if it doesn't exist, 
+        calling an internal function if it is a string and raising an error otherwise if it is not a dictionary"""
+        mapping=self.get_tag(name, 'mapping')
+        if mapping is None:
+            mapping=self.base_func_map(name)
+        elif isinstance(mapping, basestring):
+            mapping=getattr(self, mapping)
+        elif not isinstance(mapping, dict):
+            raise TypeError("mapping must be dict or str")
+        return mapping
+        
     def get_map(self, name, value=None):
-        """returns the mapped value (meant for an Enum)"""
-        if value==None:
+        """returns the mapped value (meant for an Enum). mapping is either a dictionary
+        or a string giving the name of a property in the class"""
+        if value is None:
             value=getattr(self, name)
-        return self.get_tag(name, 'mapping', {value : value})[value]
+        mapping=self.get_mapping(name)
+        return mapping[value]
 
     def get_inv(self, name, value):
         """returns the inverse mapped value (meant for an Enum)"""
-        return self.get_tag(name, 'inv_map', {value : value})[value]
+        self.gen_inv_map(name)
+        return self.get_tag(name, 'inv_map')[value]
         
     def gen_inv_map(self, name):
         """generates the inverse map for a mapping if it doesn't exist (meant for an Enum)"""
-        if self.get_tag(name, 'inv_map')==None:
-            mapping=self.get_tag(name, 'mapping', {getattr(self, name) : getattr(self, name)})
+        if self.get_tag(name, 'inv_map') is None:
+            mapping=self.get_mapping(name) #self.get_tag(name, 'mapping', {getattr(self, name) : getattr(self, name)})
             self.set_tag(name, inv_map={v:k for k, v in mapping.iteritems()})
 
     def set_value_check(self, name, value):
@@ -269,7 +278,7 @@ class Base(Atom):
            elif self.get_type(name)==Enum:
                log_info("Set {instr} {label} to {value} ({map_val}) {unit}".format(
                      instr=self.name, label=label, value=value,
-                     map_val=self.get_tag(name, 'mapping', {value:value})[value], unit=unit))
+                     map_val=self.get_map(name, value), unit=unit))
            elif self.get_type(name)==Dict:
                log_info("Set {instr} {label}".format(instr=self.name, label=label))
            elif self.get_type(name)==Str:
@@ -288,37 +297,9 @@ class Base(Atom):
         if name in self.all_params:
             self.set_log( name, value)
 
-    #def set_boss(self):
-    #    self.boss=master
-
-    def _default_boss(self):
-        boss.make_boss()
-        return boss
-#        boss.BASE_DIR="/Users/thomasaref/Dropbox/Current stuff/TA_software"
-#        boss.DIVIDER="/"
-#        boss.LOG_NAME="record"
-#        boss.FILE_NAME="meas"
-#        boss.SETUP_GROUP_NAME="SetUp"
-#        boss.SAVE_GROUP_NAME="Measurements"
-#        make_log_file(log_path=boss.BASE_DIR+boss.DIVIDER+boss.LOG_NAME+".log", display=boss.display)  #default log file
-#        return boss
-
-#    def _default_base_num(self):
-#        return self.boss.base_count
-    #    return self.boss.get_base_num(self.base_name)
-
-#    def set_name(self, name=""):
-    #    if name=="":
-    #        name="{basename}{basenum}".format(basename=self.base_name, basenum=self.boss.get_base_num(self.base_name))
-    #        self.boss.set_base_num(self.base_name)
-    #    return name
-#        if name=="":
-#            name="{basename}{basenum}".format(basename=self.base_name, basenum=self.base_num)    
-#        return name
-
     def _default_name(self):
-        name= "_{basename}__{basenum}".format(basename=self.base_name, basenum=self.boss.base_count)#get_base_num(self.base_name))  #self.set_name()
-        #self.boss.set_base_num(self.base_name)
+        """default naming. not working so well?"""
+        name= "_{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.boss.bases)-1)
         return name
         
     def __init__(self, **kwargs):
@@ -326,22 +307,11 @@ class Base(Atom):
         Also adds observers for ContainerList parameters so if item in list is changed via some list function other than setattr, notification is still given.
         Finally, sets all Callables to be log decorated if they weren't already."""
         super(Base, self).__init__(**kwargs)
-        #print self.boss.base_nums #self.base_name, self.base_num
-        #self.set_boss()
-        #self.name=self.set_name(self.name)
-        #if self.name=="":
-        #    self.name="{basename}{basenum}".format(basename=self.base_name, basenum=self.boss.get_base_num(self.base_name))
-        #self.boss.set_base_num(self.base_name)
-        if self.show_base:
-            self.boss.bases.append(self)
-        self.boss.base_count+=1
-       # plot_keys=[]
+        self.boss.bases.append(self)
+        #self.boss.base_count+=1
         for key in self.all_params:
             if self.get_type(key)==ContainerList:
                 self.observe(key, self.value_changed)
-                #for item in getattr(self, key):
-                #    if isinstance(item, Base):
-                #        item.name
             if self.get_type(key)==Callable:
                 func=getattr(self, key)
                 if isinstance(func, FunctionType):
