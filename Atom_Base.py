@@ -11,6 +11,20 @@ from numpy import shape, ndarray
 from Atom_Plotter import Plotter
 from TA_Fundamentals import _func_log
 
+def get_tag(instr, name, key, none_value=None):
+    """retrieves metadata associated with name if key is None.
+    If key specified, returns metadata[key] or None if key is not in metadata"""
+    metadata=instr.get_member(str(name)).metadata
+    if metadata==None:
+        return none_value
+    return metadata.get(key, none_value)
+
+def get_type(instr, name):
+        """returns type of parameter with given name"""
+        typer=type(instr.get_member(name))
+        return get_tag(instr, name, "type", typer)
+
+
 class log(_func_log):
     """decorator class to allow function logging"""
     def update_log(self, instr, kwargs):
@@ -67,13 +81,13 @@ class Base(Atom):
         from Atom_Boss import boss #boss is imported to make it a singleton
         boss.make_boss()
         return boss
-        
+
     @property
     def base_name(self):
         """default base name of base if no name is given"""
         return "base"
 
-    @property        
+    @property
     def reserved_names(self):
         """reserved names not to perform standard logging and display operations on,
            i.e. members that are tagged as private and will behave as usual Atom members"""
@@ -93,10 +107,10 @@ class Base(Atom):
     def main_params(self):
         """defaults to all members in all_params that are not tagged as sub.
         Can be overwritten to allow some minimal custom layout control,
-        e.g. order of presentation and which members are shown. Use self.all_main_params to get a list of 
+        e.g. order of presentation and which members are shown. Use self.all_main_params to get a list of
         all members that could be in main_params"""
         return self.all_main_params
-        
+
     def copy(self):
         tempbase=type(self)()
         for name in self.all_params:
@@ -166,8 +180,9 @@ class Base(Atom):
             self.set_all_tags(full_interface=self.full_interface)
 
     def get_tag(self, name, key, none_value=None):
-        """retrieves metadata associated with name if key is None. If key specified, returns metadata[key] or None if key is not in metadata"""
-        metadata=self.metadata(name) #getattr(type(self), name).metadata
+        """retrieves metadata associated with name if key is None.
+        If key specified, returns metadata[key] or None if key is not in metadata"""
+        metadata=self.metadata(name)
         if metadata==None:
             return none_value
         return metadata.get(key, none_value)
@@ -197,15 +212,15 @@ class Base(Atom):
 
     def base_func_map(self, name):
         """creates mapping for an enum if it doesn't exist by trying to construct a mapping from items
-        in the object and returning a one to one mapping if that fails""" 
+        in the object and returning a one to one mapping if that fails"""
         items=self.get_member(name).items
-        try: 
+        try:
             return dict(zip(items, [getattr(self, item) for item in items]))
         except AttributeError:
             return  dict(zip(items, items))
 
     def get_mapping(self, name):
-        """returns the mapping dictionary of an Enum, generating it if it doesn't exist, 
+        """returns the mapping dictionary of an Enum, generating it if it doesn't exist,
         calling an internal function if it is a string and raising an error otherwise if it is not a dictionary"""
         mapping=self.get_tag(name, 'mapping')
         if mapping is None:
@@ -215,7 +230,7 @@ class Base(Atom):
         elif not isinstance(mapping, dict):
             raise TypeError("mapping must be dict or str")
         return mapping
-        
+
     def get_map(self, name, value=None):
         """returns the mapped value (meant for an Enum). mapping is either a dictionary
         or a string giving the name of a property in the class"""
@@ -228,7 +243,7 @@ class Base(Atom):
         """returns the inverse mapped value (meant for an Enum)"""
         self.gen_inv_map(name)
         return self.get_tag(name, 'inv_map')[value]
-        
+
     def gen_inv_map(self, name):
         """generates the inverse map for a mapping if it doesn't exist (meant for an Enum)"""
         if self.get_tag(name, 'inv_map') is None:
@@ -301,7 +316,7 @@ class Base(Atom):
         """default naming. not working so well?"""
         name= "_{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.boss.bases)-1)
         return name
-        
+
     def __init__(self, **kwargs):
         """extends __init__ to set boss and add instrument to boss's instrument list.
         Also adds observers for ContainerList parameters so if item in list is changed via some list function other than setattr, notification is still given.
@@ -328,7 +343,7 @@ class Base(Atom):
         if name=="" or name in (p.name for p in self.boss.plots):
             name="plot{}".format(len(self.boss.plots))
             self.boss.plots.append(Plotter(name=name))
-            
+
     def add_line_plot(self, name):
         xname=self.get_tag(name, 'xdata')
         if xname==None:
@@ -374,8 +389,6 @@ if __name__=="__main__":
     print a.reserved_names
     print a.all_params
     print a.main_params
-    print a.boss==boss
-    print boss.bases
     print a.get_tag("desc", "bob")
     print a.get_all_tags("private", True, False)
     print a.get_all_tags("private", True, True)
