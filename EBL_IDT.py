@@ -9,8 +9,9 @@ from Atom_IDT import IDT
 from atom.api import Float, Bool, Enum, Dict, observe, Int
 from EBL_Item import EBL_Item
 #from Atom_Plotter import Plotter
-from numpy import pi, cos, sin, mod, sign
+from numpy import  mod
 from LOG_functions import log_debug
+
 class EBL_IDT(EBL_Item, IDT):
     """handles everything related to drawing a IDT. Units are microns (um)"""
     trconnect_x=Float(9.0).tag(desc="connection length of transmon")

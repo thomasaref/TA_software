@@ -4,233 +4,32 @@ Created on Sat Dec  6 11:05:58 2014
 
 @author: thomasaref
 """
-from LOG_functions import log_debug
+from enaml.widgets.api import Container, Field, ScrollArea
+from enaml.core.api import DynamicTemplate
 
-from enaml.widgets.api import (RawWidget, Container, Field, Form, SpinBox, GroupBox, Label, Window,
-                               ProgressBar, PushButton, CheckBox, MultilineField, ScrollArea, ObjectCombo, Slider)
-
-from enaml.layout.api import hbox, vbox, spacer, align
-from enaml.core.api import DynamicTemplate, Looper, d_, Include
-from enaml.stdlib.fields import FloatField, IntField
-from enaml.application import deferred_call
-from threading import Thread
-from time import sleep
-from numpy import ndarray
-from atom.api import observe, Atom, Callable, Tuple, Typed, Dict, List, Float, Int, Unicode, Enum, Bool, Str, ContainerList, Range, FloatRange, Instance, Event
-from Atom_Base import Base, get_tag, get_type
-from Atom_Instrument import Instrument
-
-from e_Temps import TypedView
-
-
-enamldef BootClose(Container):
-    Container:
-        padding = 0
-        GroupBox:
-            #constraints=[hbox(boot, close, active, boot_params, close_params, spacer, pt)]
-            Container:
-                padding = 0
-                constraints = [hbox(lbs, fds, spacer)]
-                Label: lbs:
-                    text = "Instrument {instr} status:".format(instr=instr.name)
-                Field: fds:
-                    read_only=True
-                    text << instr.status
-            Container: boot:
-                padding = 0
-                constraints = [hbox(pbb, gbb, spacer), align('top', pbb, gbb)]
-                PushButton: pbb:
-                    clicked :: instr.boot()
-                    text = "Boot"
-                GroupBox: gbb:
-                    padding = 0
-                    visible = instr.booter.run_params!=[]
-                    title = "Boot parameters:"
-                    Looper: boot_loop:
-                        iterable << instr.booter.run_params
-                        DynamicTemplate:
-                            base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
-                            args=(loop_item, instr, type(instr))
-            Container: close:
-                padding = 0
-                constraints = [hbox(pbc, gbc, spacer), align('top', pbc, gbc)]
-                PushButton: pbc:
-                    clicked :: instr.close()
-                    text = "Close"
-                GroupBox: gbc:
-                    padding = 0
-                    visible = instr.closer.run_params!=[]
-                    title = "Close parameters:"
-                    Looper: close_loop:
-                        iterable << instr.closer.run_params
-                        DynamicTemplate:
-                            base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
-                            args=(loop_item, instr, type(instr))
-
-            Container: pt:
-                padding = 0
-                constraints=[hbox(plt, pltx, spacer)]
-                Label:plt:
-                    text = "Plot x-axis: "
-                ObjectCombo: pltx:
-                    items = instr.all_params
-                    selected := instr.plot_x
-
-def constraints_gen(base, name, lbl, val, unt, contents_width, contents_top, contents_left):
-    if type(get_tag(base, name, "width", 0))!=int:
-        return [hbox(lbl, val, unt)]
-    else:
-        return [hbox(lbl, val, unt, spacer), val.width>=get_tag(base, name, 'width', contents_width/5),
-                align('bottom', val, unt), align('bottom', lbl, val)]
-                 #contents_top == val.top, contents_left == lbl.left,]
-
-template VarTemp(base, name, baseType: Base):
-    GroupBox:
-        flat = True
-        padding=0
-        constraints = constraints_gen(base, name, lbl, val, unt, contents_width, contents_top, contents_left) #[hbox( lbl, val, unt),#,
-        #               align('top', val, unt), align('top', lbl, val),
-        #                  align('left', gbcontents, 80, val) | 'medium']#, width == contents_width, height==contents_height]
-                        #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
-#                         (lbl.bottom == contents_bottom) | 'medium']
-        Label: lbl:
-            text = get_tag(base, name, 'label', name)
-        Container: val:
-            padding = 0
-            DynamicTemplate: dyn:
-                base = TypedView
-                args = (base, name, get_type(base, name))
-        Label: unt:
-            text = get_tag(base, name, 'unit', "no unit")
-            visible = get_tag(base, name, 'unit') is not None
-
-template VarTemp(base, name, InstrType: Atom):
-    VarTemp(base, name, Base):
-        pass
-#    GroupBox:
-#        flat = True
-#        padding=0
-#        constraints = constraints_gen(name, instr, lbl, val, unt, contents_width, contents_top, contents_left) #[hbox( lbl, val, unt),#,
-#        #               align('top', val, unt), align('top', lbl, val),
-#        #                  align('left', gbcontents, 80, val) | 'medium']#, width == contents_width, height==contents_height]
-#                        #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
-##                         (lbl.bottom == contents_bottom) | 'medium']
-#        Label: lbl:
-#            text = instr.get_tag(name, 'label', name)
-#        Container: val:
-#            padding = 0
-#            DynamicTemplate: dyn:
-#                base = ValView
-#                args = (name, instr, instr.get_type(name))
-#        Label: unt:
-#            text = instr.get_tag(name, 'unit', "")
-#            visible = instr.get_tag(name, 'unit')!=None
-
-#template VarTemp(name, instr, InstrType: Base):
-#    BaseBox:
-#        pass
-
-template VarTemp(base, name, InstrType: Instrument):
-    GroupBox: contents:
-        flat = True
-        padding=0
-        constraints = [
-                        hbox( lbl, val, unt, snd_now, snd, rec, set_params, get_params, spacer),#,
-                       align('top', val, rec), align('top', val, unt), align('top', lbl, val),
-                         align('top', val, set_params), align('top', set_params, get_params),
-                         align('left', contents, 280, rec) | 'medium', align('left', contents, 80, val) | 'medium']
-        #                width == contents_width, height==contents_height]
-                        #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
-#                         (lbl.bottom == contents_bottom) | 'medium']
-        Label: lbl:
-            text = instr.get_tag(name, 'label', name)
-        Container: val:
-            padding = 0
-            DynamicTemplate: dyn:
-                base = ValView
-                args = (name, instr, instr.get_type(name))
-        Label: unt:
-            text = instr.get_tag(name, 'unit', "")
-            visible = instr.get_tag(name, 'unit')!=None
-        GroupBox: get_params:
-            padding = 0
-            visible = instr.get_run_params(name, 'get_cmd')!=[]
-            title = instr.get_tag(name, 'label', name)+" get parameters:"
-            Looper: get_loop:
-                    iterable << instr.get_run_params(name, 'get_cmd', notself=True)
-                    DynamicTemplate:
-                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
-                        args=(loop_item, instr, type(instr))
-
-        GroupBox: set_params:
-            #hug_height='strong'
-            padding = 0
-            visible = instr.get_run_params(name, 'set_cmd')!=[]
-            title = instr.get_tag(name, 'label', name)+" set parameters:"
-            Looper: set_loop:
-                    iterable << instr.get_run_params(name, 'set_cmd', notself=True)
-                    DynamicTemplate:
-                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
-                        args=(loop_item, instr, type(instr))
-
-        CheckBox: snd_now:
-            text = 'Send on change'
-            checked = instr.get_tag(name, 'send_now', instr.send_now)
-            toggled :: instr.set_tag(name, send_now=snd_now.checked)
-            visible << (instr.get_tag(name, 'get_cmd')!=None or instr.get_tag(name, 'set_cmd')!=None) and instr.get_tag(name, 'full_interface', instr.full_interface)
-        PushButton: snd:
-            text = 'Send'
-            clicked :: instr.send(name) #sender(var, val)
-            enabled << instr.get_tag(name, 'set_cmd')!=None and not instr.busy
-            visible << (instr.get_tag(name, 'get_cmd')!=None or instr.get_tag(name, 'set_cmd')!=None) and instr.get_tag(name, 'full_interface', instr.full_interface)
-        PushButton: rec:
-            text = 'Receive'
-            clicked :: instr.receive(name) #do_it_if_needed(var, "receive") #receive()
-            enabled << instr.get_tag(name, 'get_cmd')!=None and not instr.busy
-            visible = instr.get_tag(name,'get_cmd')!=None or instr.get_tag(name, 'set_cmd')!=None
-
-
-
-def form_spec(instr):
-    """ Generate a form specification for an instrument type."""
-    try:
-        main_params=instr.main_params
-    except AttributeError:
-        main_params=instr.members()
-    return tuple([(instr, name, type(instr)) for name in main_params])
-
-template ForEach(Spec, Item):
-    """ A templated loop which maps a template over a sequence."""
-    ForEach(Spec[:-1], Item):
-        pass
-    Item(*Spec[-1]):
-        pass
-
-template ForEach(Spec: (), Item):
-    """ The terminating condition for the templated loop."""
-    pass
-
-template AutoBody(Instr):
-    """ A template which builds the body for an AutoBody."""
-    const Spec = form_spec(Instr)
-    ForEach(Spec, TypedView):
-            pass
-
-template AutoBody(Instr: type(None)):
-    """ A template specialization for null models (terminating condition)."""
-    pass
-
-#enamldef AutoBaseCont(Container):
-#    Field:
-#        text<< unicode(base)
+from e_Temps import BaseView
 
 enamldef AutoCont(Container):
         padding = 0
-        constraints = [width == contents_width, height==contents_height]
         ScrollArea:
-            constraints = [width == contents_width, height==contents_height]
             Container:
                 padding = 0
                 DynamicTemplate:
-                    base = AutoBody
-                    args = (instr,)
+                    base = BaseView
+                    args = (instr, type(instr))
+                    data = dict(visible=True)
+                    
+
+template BaseTemp(bview):
+    AutoCont:
+        pass
+
+
+#How to implement custom layouts. OtherCont could be imported from another file, i.e. from yourfile.enaml import OtherCont
+enamldef OtherCont(Container):
+    Field:
+        text<<str(instr.c)
+
+template BaseTemp(bview: "field"):
+    OtherCont:
+        pass                    

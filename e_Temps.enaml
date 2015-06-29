@@ -4,10 +4,9 @@ Created on Sun Jun 28 22:14:19 2015
 
 @author: thomasaref
 
-Collection of user custom member templates for Typed, Instance, members
+Collection of all member templates. When trying to separate them into other files, it seems to create problems
 """
 
-from enaml.widgets.api import  Field
 from atom.api import observe, Coerced, Atom, Callable, Tuple, Typed, Dict, List, Float, Int, Unicode, Enum, Bool, Str, ContainerList, Range, FloatRange, Instance, Event
 from enaml.widgets.api import (RawWidget, Container, Field, Form, SpinBox, GroupBox, Label, Window,
                                ProgressBar, PushButton, CheckBox, MultilineField, ScrollArea, ObjectCombo, Slider)
@@ -23,8 +22,10 @@ from enaml_Filer import ReadWrap, SaveWrap
 
 from EBL_enaml import EBContWrap
 from EBL_Polyer import Polyer
-
-from Atom_Base import get_tag, get_type, Base
+from LOG_functions import log_debug
+#from e_Instrument import BootClose
+from Atom_Instrument import Instrument
+from Atom_Base import get_tag, get_type, Base, get_main_params
 
 template TypedView(base, name, baseType):
     """ This default specialization displays read-only text for the value."""
@@ -40,28 +41,13 @@ def constraints_gen(base, name, lbl, val, unt, contents_width, contents_top, con
                 align('bottom', val, unt), align('bottom', lbl, val)]
                  #contents_top == val.top, contents_left == lbl.left,]
 
-template TypedView(base, name, baseType: object):
-    IntField:
-        value:=getattr(base,name)
-template TypedView(base, name, baseType: Base):
-    GroupBox:
-        flat = True
-        padding=0
-        constraints = constraints_gen(base, name, lbl, val, unt, contents_width, contents_top, contents_left) #[hbox( lbl, val, unt),#,
-        #               align('top', val, unt), align('top', lbl, val),
-        #                  align('left', gbcontents, 80, val) | 'medium']#, width == contents_width, height==contents_height]
-                        #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
-#                         (lbl.bottom == contents_bottom) | 'medium']
-        Label: lbl:
-            text = get_tag(base, name, 'label', name)
-        Container: val:
-            padding = 0
-            DynamicTemplate: dyn:
-                base = TypedView
-                args = (base, name, get_type(base, name))
-        Label: unt:
-            text = get_tag(base, name, 'unit', "no unit")
-            visible = get_tag(base, name, 'unit') is not None
+def form_spec(instr):
+    main_params=get_main_params(instr)
+    return tuple([(instr, name, get_type(instr, name)) for name in main_params])
+ 
+template TypedView(instrin, name, baseType: Base):
+    BaseView(getattr(instrin, name), baseType):
+        pass
 
 template TypedView(base, name, InstrType: Atom):
     TypedView(base, name, Base):
@@ -82,18 +68,106 @@ template TypedView(base, name, baseType: Polyer):
     EBContWrap:
         polyer:=getattr(base, name)
 
-
 template TypedView(base, name, baseType: Typed):
+    """interface for a Typed member. passes internal type"""
     TypedView(base, name, type(getattr(base, name))):
         pass
 
 template TypedView(base, name, baseType: Instance):
-    TypedView(base, name, type(getattr(base, name))):
-        pass
+    TypedView(base, name, Typed): pass
 
 template TypedView(base, name, baseType: Coerced):
-    TypedView(base, name, type(getattr(base, name))):
-        pass
+    TypedView(base, name, Typed): pass
+
+template VarView(instrin, name, baseType):
+    GroupBox:
+        flat = True
+        padding=0
+        constraints = constraints_gen(instrin, name, lbl, val, unt, contents_width, contents_top, contents_left) #[hbox( lbl, val, unt),#,
+        #               align('top', val, unt), align('top', lbl, val),
+        #                  align('left', gbcontents, 80, val) | 'medium']#, width == contents_width, height==contents_height]
+                        #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
+#                         (lbl.bottom == contents_bottom) | 'medium']
+        Label: lbl:
+            text = get_tag(instrin, name, 'label', name)
+        Container: val:
+            padding = 0
+            DynamicTemplate:
+                base = TypedView
+                args = (instrin, name, baseType) #loop_item
+                data = dict(visible=True)
+        Label: unt:
+            text = get_tag(instrin, name, 'unit', "no unit")
+            visible = get_tag(instrin, name, 'unit') is not None
+       
+template BaseView(instrin, baseType):
+    Container: 
+        padding = 0
+        Looper: 
+            iterable<<form_spec(instrin)
+            DynamicTemplate:
+                base = VarView
+                args = loop_item
+                data = dict(visible=True)
+
+template VarView(base, name, InstrType: Instrument):
+    GroupBox: contents:
+        flat = True
+        padding=0
+        constraints = [
+                        hbox( lbl, val, unt, snd_now, snd, rec, set_params, get_params, spacer),#,
+                       align('top', val, rec), align('top', val, unt), align('top', lbl, val),
+                         align('top', val, set_params), align('top', set_params, get_params),
+                         align('left', contents, 280, rec) | 'medium', align('left', contents, 80, val) | 'medium']
+        #                width == contents_width, height==contents_height]
+                        #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
+#                         (lbl.bottom == contents_bottom) | 'medium']
+        Label: lbl:
+            text = instr.get_tag(name, 'label', name)
+        Container: val:
+            padding = 0
+            DynamicTemplate: dyn:
+                base = TypedView
+                args = (name, instr, instr.get_type(name))
+        Label: unt:
+            text = instr.get_tag(name, 'unit', "")
+            visible = instr.get_tag(name, 'unit')!=None
+        GroupBox: get_params:
+            padding = 0
+            visible = instr.get_run_params(name, 'get_cmd')!=[]
+            title = instr.get_tag(name, 'label', name)+" get parameters:"
+            Looper: get_loop:
+                    iterable << instr.get_run_params(name, 'get_cmd', notself=True)
+                    DynamicTemplate:
+                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+                        args=(loop_item, instr, type(instr))
+
+        GroupBox: set_params:
+            #hug_height='strong'
+            padding = 0
+            visible = instr.get_run_params(name, 'set_cmd')!=[]
+            title = instr.get_tag(name, 'label', name)+" set parameters:"
+            Looper: set_loop:
+                    iterable << instr.get_run_params(name, 'set_cmd', notself=True)
+                    DynamicTemplate:
+                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+                        args=(loop_item, instr, type(instr))
+
+        CheckBox: snd_now:
+            text = 'Send on change'
+            checked = instr.get_tag(name, 'send_now', instr.send_now)
+            toggled :: instr.set_tag(name, send_now=snd_now.checked)
+            visible << (instr.get_tag(name, 'get_cmd')!=None or instr.get_tag(name, 'set_cmd')!=None) and instr.get_tag(name, 'full_interface', instr.full_interface)
+        PushButton: snd:
+            text = 'Send'
+            clicked :: instr.send(name) #sender(var, val)
+            enabled << instr.get_tag(name, 'set_cmd')!=None and not instr.busy
+            visible << (instr.get_tag(name, 'get_cmd')!=None or instr.get_tag(name, 'set_cmd')!=None) and instr.get_tag(name, 'full_interface', instr.full_interface)
+        PushButton: rec:
+            text = 'Receive'
+            clicked :: instr.receive(name) #do_it_if_needed(var, "receive") #receive()
+            enabled << instr.get_tag(name, 'get_cmd')!=None and not instr.busy
+            visible = instr.get_tag(name,'get_cmd')!=None or instr.get_tag(name, 'set_cmd')!=None
 
 template TypedView(base, name, baseType: Float):
     """ A template for Float members"""
@@ -103,11 +177,22 @@ template TypedView(base, name, baseType: Float):
         maximum=get_tag(base, name, 'high')
 
 template TypedView(base, name, baseType: float):
-    """ A template for floats"""
-    FloatField:
-        value :=  getattr(base, name)
-        minimum=get_tag(base, name, 'low')
-        maximum=get_tag(base, name, 'high')
+    TypedView(base, name, Float): pass
+
+template TypedView(instrin, name, baseType: list):
+    PushButton:
+        text="list" #TypedView(instrin, name, Base):
+
+template TypedView(instrin, name, baseType: tuple):
+    PushButton:
+        text="tuple" #TypedView(instrin, name, Base):
+        
+class fake(object):
+    def fff():
+        pass
+
+template TypedView(base, name, baseType: type(fake.fff)):
+    TypedView(base, name, Callable): pass
 
 template TypedView(base, name, baseType: Range):
     """ A template for Range members"""
@@ -155,11 +240,7 @@ template TypedView(base, name, baseType: Int):
         maximum=int(get_tag(base, name, 'high', 2147483647))
 
 template TypedView(base, name, baseType: int):
-    """ A template for ints using a spin box"""
-    SpinBox:
-        value := getattr(base, name)
-        minimum=int(get_tag(base, name, 'low', -2147483648))
-        maximum=int(get_tag(base, name, 'high', 2147483647))
+    TypedView(base, name, Int): pass
 
 template TypedView(base, name, baseType: Str):
     """ A template for Str using a MultilineField"""
@@ -167,9 +248,7 @@ template TypedView(base, name, baseType: Str):
             text := getattr(base, name)
 
 template TypedView(base, name, baseType: str):
-    """ A template for str using a MultilineField"""
-    MultilineField: mlf:
-            text := getattr(base, name)
+    TypedView(base, name, Str): pass
 
 template TypedView(base, name, baseType: Unicode):
     """A template for Unicode using a field"""
@@ -177,37 +256,48 @@ template TypedView(base, name, baseType: Unicode):
         text := getattr(base, name)
 
 template TypedView(base, name, baseType: unicode):
-    """A template for unicode using a field"""
-    Field:
-        text := getattr(base, name)
+    TypedView(base, name, Unicode): pass
 
 def run_params(base, name):
-    return getattr(base, name).run_params
+    try:
+        return getattr(base, name).run_params
+    except AttributeError, e:
+        log_debug("AttributeError: {}".format(e))
+        return []
 
-template TypedView(base, name, baseType: Callable):
+template TypedView(instr, name, baseType: Callable):
     """A template specialization for a Callable using a PushButton"""
     Container:
         padding = 0
-        constraints = [hbox(pb1, gb1), align('top', pb1, gb1)]
+        constraints = [hbox(pb1, gb1 ,pb2), align('top', pb1, gb1, pb2)]
         PushButton: pb1:
             text = 'Run'
-            clicked :: getattr(instr, name)(instr) #do_it_if_needed(var, "receive") #receive()
-            #enabled << not instr.busy
+            clicked :: 
+                try:
+                    getattr(instr, name)(instr) #do_it_if_needed(var, "receive") #receive()
+                except TypeError:
+                    getattr(instr, name)()
+            enabled << not instr.boss.busy
         GroupBox: gb1:
             padding = 0
-            visible = run_params(base, name)!=[]
-            title = get_tag(base, name, 'label', name)+" parameters:"
+            visible = run_params(instr, name)!=[]
+            title = get_tag(instr, name, 'label', name)+" parameters:"
             Looper: get_loop:
-                    iterable << run_params(base, name)
+                    iterable << run_params(instr, name)
                     DynamicTemplate:
-                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
-                        args=(loop_item, base, type(base))
+                        base=VarView
+                        args=(instr, loop_item, get_type(instr, loop_item))
+        PushButton: pb2:
+            text = 'Abort'
+            clicked :: 
+                instr.boss.abort=True 
+            enabled <<  instr.boss.busy
 
 def get_map(base, name):
-    #try:
+    try:
         return base.get_map(name)
-    #except:
-    #    return getattr(base, name)
+    except AttributeError:
+        return getattr(base, name)
 
 template TypedView(base, name, baseType: Enum):
     """ A form control template specialization for Enum members using ObjectCombo."""
@@ -227,9 +317,7 @@ template TypedView(base, name, baseType: Bool):
         checked := getattr(base, name)
 
 template TypedView(base, name, baseType: bool):
-    """ A template specialization for bools members using CheckBox"""
-    CheckBox:
-        checked := getattr(base, name)
+    TypedView(base, name, Bool): pass
 
 #template CLView(base, name, index, vtype: Base):
 #    AutoFormWrap:

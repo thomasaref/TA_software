@@ -7,7 +7,7 @@ Created on Thu May 14 18:38:47 2015
 A simple text editor driver allowing one to load, edit and save text files
 """
 
-from Atom_Base import Base
+from a_Base import Base
 from atom.api import Str, observe, Unicode, Typed, ContainerList, Int, Float, Bool, List, Atom, Coerced, Instance
 from Atom_Read_File import Read_TXT
 from Atom_Save_File import Save_TXT

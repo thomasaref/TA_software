@@ -6,7 +6,7 @@ Created on Fri Apr  3 22:26:23 2015
 """
 from LOG_functions import log_warning#, log_debug
 #log_debug(1)
-from Atom_Base import Base#, boss#, NoShowBase
+from a_Base import Base#, boss#, NoShowBase
 from EBL_Boss import ebl_boss
 from atom.api import Enum, Float, Int, observe, Property, Typed, Callable#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
 from EBL_Polyer import Polyer, P, R, V

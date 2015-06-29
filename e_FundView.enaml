@@ -1,0 +1,26 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun 29 16:12:32 2015
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import  Field, PushButton
+from enaml.stdlib.fields import FloatField, IntField
+from Atom_Base import get_tag
+
+
+template FundView(base, name, baseType):
+    """ This default specialization displays read-only text for the value."""
+    Field:
+        read_only = True
+        text << unicode(getattr(base, name))
+
+template FundView(base, name, baseType: float):
+    """ A template for floats"""
+    FloatField:
+        value :=  getattr(base, name)
+        minimum=get_tag(base, name, 'low')
+        maximum=get_tag(base, name, 'high')
+
+

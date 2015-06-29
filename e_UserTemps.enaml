@@ -1,0 +1,58 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun 29 14:41:36 2015
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import  Field, PushButton
+from enaml.stdlib.fields import FloatField, IntField
+from e_FundView import FundView
+#from Atom_Base import myobject
+
+template UserTypedView(base, name, baseType):
+    """ This default specialization displays read-only text for the value."""
+    Field:
+        read_only = True
+        text << unicode(getattr(base, name))
+
+
+template UserTypedView(instrin, name, baseType: list):
+    PushButton:
+        text="list" #TypedView(instrin, name, Base):
+        #pass
+
+template UserTypedView(instrin, name, baseType: tuple):
+    PushButton:
+        text="tuple" #TypedView(instrin, name, Base):
+        
+class fake(object):
+    def fff():
+        pass
+#a=fake()
+
+#template UserTypedView(instrin, name, baseType: type(a)):
+#    TypedView(instrin, name, Base):
+#        pass
+
+template FundView(base, name, baseType: type(fake.fff)):
+    """A template specialization for a Callable using a PushButton"""
+    Container:
+        padding = 0
+        #constraints = [hbox(pb1, gb1), align('top', pb1, gb1)]
+        PushButton: pb1:
+            text = 'Run'
+            clicked :: getattr(base, name)() #do_it_if_needed(var, "receive") #receive()
+            #enabled << not instr.busy
+        #GroupBox: gb1:
+        #    padding = 0
+        #    visible = run_params(base, name)!=[]
+        #    title = get_tag(base, name, 'label', name)+" parameters:"
+        #    Looper: get_loop:
+        #            iterable << run_params(base, name)
+        #            DynamicTemplate:
+        #                base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+        #                args=(loop_item, base, type(base))
+                        
+# isinstance(func, FunctionType):
+        

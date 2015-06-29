@@ -5,7 +5,7 @@ Created on Mon Jun  1 10:46:56 2015
 @author: thomasaref
 """
 
-from Atom_Base import Base, NoShowBase
+from a_Base import Base, NoShowBase
 from Atom_Text_Editor import Text_Editor
 from EBL_quarter_coords import distr_coords
 from atom.api import Unicode, ContainerList, Int, Float

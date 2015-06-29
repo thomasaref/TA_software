@@ -5,59 +5,76 @@ Created on Sun Jun 28 23:15:33 2015
 @author: thomasaref
 """
 
-from atom.api import Atom, Float, Coerced
+from atom.api import Atom, Float, Coerced, Enum, Typed
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
-from Atom_Base import get_type
+from a_Base import get_type, get_main_params,  Base
+from a_Boss import show
+from threading import Thread
+from time import sleep
+ 
+from atom.api import Atom, Bool, Int, Callable
+ 
+from enaml.application import deferred_call
+from enaml.widgets.api import Window, Container, ProgressBar, PushButton, Field
 
-def show(self):
-        with imports():
-            from e_Boss import AtomMain
-        app = QtApplication()
-        view = AtomMain(instr=self)
-        view.show()
-        app.start()
+def myfunc(model, b=2):
+    #model.busy=True
+    for n in range(10):
+        model.boss.progress=n*10
+        if model.abort:
+            break
+        model.ov=n
+        print model.ov, model.b
+        sleep(0.2)
 
-class Test2(object):
-    d=4
-    def _show(self):
-        show(self)
+ 
+#class To(object):
+#    d=4
+#    b=4.3
+#    c=u"blah"
+#    f=True
+#    g=[3,2]
+#    h=(5,6)
+#    
+#    def blah(self):
+#        print "ran blah"
+#    
+#    def __setattr__(self, name, value):
+#        super(To, self).__setattr__(name, value)
+#        print "set {name} to {value}".format(name=name, value=value)
+#        
+#    #main_params=['d', 'a', 'b']
+#
+class S(Atom):
+     aa=Float() #Enum("a","b","c")
+     bb=Int()
+class T(Base):
+    a=Typed(S, ())
+    ov=Int()
+    b=Float().tag(unit="bbb", label="blahhafd", low=0.0, sub=True)
 
-    def __setattr__(self, name, value):
-        """extends __setattr__ to allow logging and data saving and automatic sending if tag send_now is true.
-        This is preferable to observing since it is called everytime the parameter value is set, not just when it changes."""
-        #if name in self.all_params:
-        #    value=self.coercer(name, value)
-        super(Test2, self).__setattr__(name, value)
-        print "set {name} to {value}".format(name=name, value=value)
-        #if name in self.all_params:
-        #    self.set_log( name, value)
+    c=Callable(myfunc)#    c=Coerced(int)#.tag()
+    
+    @Callable
+    def cc(self, b=2):
+        for n in range(10):
+            self.boss.progress=n*10
+            if self.abort:
+                break
+            self.ov=n
+            print self.ov, self.b
+            sleep(0.2)
+        
+    d=Enum('b', 'c', 'ov')
 
-    main_params=['d']
-class Test(Atom):
-    b=Float().tag(unit="bbb", label="blahhafd", low=0.0)
-    c=Coerced(int)#.tag()
-    d=4
+a=T()
+#print [bb.name for bb in a.boss.bases]
 
-    def _observe_c(self, change):
-        print change
-    #@property
-    #def main_params(self):
-    #    return ['c']
-
-    def show(self, abase=None):
-        with imports():
-            from e_Boss import AtomMain
-        #try:
-        app = QtApplication()
-        view = AtomMain(instr=self)
-        view.show()
-        app.start()
-        #finally:
-            #if self.saving:
-             #   self.save_file.flush_buffers()
-
-a=Test2()
-a.d=9
-a._show()
-print a.d
+b=T()
+print [bb.name for bb in b.boss.bases]
+#b.cc()
+#b.boss.show_bases=True
+a.show()##print b.d
+##a._show()
+##print a.d

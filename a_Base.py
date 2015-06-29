@@ -10,20 +10,23 @@ from types import FunctionType
 from numpy import shape, ndarray
 from Atom_Plotter import Plotter
 from TA_Fundamentals import _func_log
-
-class myobject(object):
-    pass
+from enaml.application import deferred_call
+from threading import Thread
+from a_Boss import boss #boss is imported to make it a singleton
+        
 
 def get_member(instr, name):
     try:
         return instr.get_member(str(name))
-    except AttributeError:
+    except AttributeError,e:
+        log_debug(e)
         return getattr(instr, name)
 
 def get_metadata(instr, name):
     try:
         return instr.get_member(str(name)).metadata
-    except AttributeError:
+    except AttributeError,e:
+        log_debug(e)
         return None
         
 def get_tag(instr, name, key, none_value=None):
@@ -43,14 +46,36 @@ def get_main_params(instr):
     """ Generate a form specification for an instrument type."""
     try:
         main_params=instr.main_params
-    except AttributeError:
+    except AttributeError,e:
+        log_debug(e)
         try:
             main_params=instr.members()
-        except AttributeError:
+        except AttributeError,e:
+            log_debug(e)
             main_params=[name for name in dir(instr) if name[0]!='_'] 
     return main_params
+       
+def code_caller(model, code, **kwargs):
+    result=code(model)
+    try:
+        deferred_call(setattr, model.boss, 'busy', False)
+        deferred_call(setattr, model.boss, 'progress', 0)
+        deferred_call(setattr, model.boss, 'abort', False)
+    except RuntimeError:
+        model.boss.busy=False
+        model.boss.progress=0
+        model.boss.abort=False
+    return result
+ 
+ 
+def do_it_if_needed(instr, code, **kwargs):
+    if not instr.boss.busy:
+        instr.boss.busy = True
+        thread = Thread(target=code_caller, args=(instr, code), kwargs=kwargs)
+        thread.start()
 
-class log(_func_log):
+
+class func_log(_func_log):
     """decorator class to allow function logging"""
     def update_log(self, instr, kwargs):
         """update log function called by __call__. can be overwritten in subclasses to customize message"""
@@ -60,7 +85,13 @@ class log(_func_log):
     def set_run_params(self, arg_count):
         self.run_params=list(self.f.func_code.co_varnames[1:arg_count])
 
-    def __call__(self, instr,  **kwargs):
+    def __init__(self, f, instr=None):
+        super(func_log, self).__init__(f)
+        self.instr=instr
+
+    def __call__(self, instr=None,  **kwargs):
+        if instr is None:
+            instr=self.instr
         for item in self.run_params:
             if item in kwargs.keys():
                 setattr(instr, item, kwargs[item])
@@ -69,7 +100,7 @@ class log(_func_log):
                 value=instr.set_value_check(item, value)
                 kwargs[item]=value#getattr(instr, item)
         self.update_log(instr, kwargs)
-        return self.f(instr, **kwargs)
+        return do_it_if_needed(instr, self.f, **kwargs)
 
 class BaseError(Exception):
     pass
@@ -88,22 +119,19 @@ class Base(Atom):
        unit: the units the attribute is in
        inside_type: type inside containerlist"""
 
-    #boss=Typed(Boss).tag(private=True)
     name=Unicode().tag(private=True)
     desc=Unicode().tag(private=True)
-    #all_params=List().tag(private=True)
-    #main_params=List().tag(private=True)
-    #reserved_names=List().tag(private=True)
-    #showing=Bool(False) #remove?
     full_interface=Bool(False).tag(private=True) #checked by GUI but applies more to instrument
     plot_all=Bool(False).tag(private=True)
-    show_base=Bool(True).tag(private=True) #boolean that controls if base appears in boss toolbar
     view=Enum("Auto").tag(private=True)
+    
+    @property
+    def abort(self):
+        return self.boss.abort
 
     @property
     def boss(self):
         """returns boss singleton instance. can be overwritten in subclasses to change boss"""
-        from Atom_Boss import boss #boss is imported to make it a singleton
         boss.make_boss()
         return boss
 
@@ -177,8 +205,8 @@ class Base(Atom):
         """returns cmd associated with cmdstr in tag and converts it to a log if it isn't already.
           returns None if cmdstr is not in metadata"""
         cmd=self.get_tag(name, cmdstr)
-        if not isinstance(cmd, log) and cmd is not None:
-            cmd=log(cmd)
+        if not isinstance(cmd, func_log) and cmd is not None:
+            cmd=func_log(cmd)
             self.set_tag(name, **{cmdstr:cmd})
         return cmd
 
@@ -236,12 +264,12 @@ class Base(Atom):
         return self.get_tag(name, "type", typer)
 
     def base_func_map(self, name):
-        """creates mapping for an enum if it doesn't exist by trying to construct a mapping from items
+        """creates mapping for an enum if it doesn't exist by constructing a mapping to items
         in the object and returning a one to one mapping if that fails"""
         items=self.get_member(name).items
         try:
             return dict(zip(items, [getattr(self, item) for item in items]))
-        except AttributeError:
+        except (AttributeError, TypeError):
             return  dict(zip(items, items))
 
     def get_mapping(self, name):
@@ -347,7 +375,10 @@ class Base(Atom):
         Also adds observers for ContainerList parameters so if item in list is changed via some list function other than setattr, notification is still given.
         Finally, sets all Callables to be log decorated if they weren't already."""
         super(Base, self).__init__(**kwargs)
+        if "name" not in kwargs:
+            self.name= "{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.boss.bases))
         self.boss.bases.append(self)
+        
         #self.boss.base_count+=1
         for key in self.all_params:
             if self.get_type(key)==ContainerList:
@@ -355,7 +386,7 @@ class Base(Atom):
             if self.get_type(key)==Callable:
                 func=getattr(self, key)
                 if isinstance(func, FunctionType):
-                    setattr(self, key, log(func))
+                    setattr(self, key, func_log(func, self))
             if self.get_type(key) in [Range, FloatRange]:
                 self.set_tag(key, low=self.get_member(key).validate_mode[1][0], high=self.get_member(key).validate_mode[1][1])
 
@@ -404,8 +435,10 @@ class Base(Atom):
             self.boss.plot_list[0].ylabel=self.get_tag(yname, "plot_label", yname)
 
 class NoShowBase(Base):
-    def _default_show_base(self):
-        return False
+    @property
+    def base_name(self):
+        """default base name of base if no name is given"""
+        return "_base"
 
 if __name__=="__main__":
     #class bt(Base):

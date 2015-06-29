@@ -4,29 +4,30 @@ Created on Thu Feb 26 13:56:33 2015
 
 @author: thomasaref
 """
-from LOG_functions import log_info, log_warning, make_log_file#, SAVE_GROUP_NAME, SETUP_GROUP_NAME, log_debug
+from LOG_functions import log_info, log_warning, make_log_file, log_debug#, SAVE_GROUP_NAME, SETUP_GROUP_NAME, log_debug
 from atom.api import Atom, Bool, Typed, ContainerList, Callable, Dict, Float, Int, FloatRange, Range, Unicode, Str, List, Enum, Event, Instance
 from Atom_Read_File import Read_File
 from Atom_Save_File import Save_File, Save_HDF5
 from Plotter import Plotter
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
-
+from enaml.application import deferred_call
+from threading import Thread
 import sys
 
 def show(self):
-        with imports():
+    with imports():
             from e_Boss import AtomMain
-        app = QtApplication()
-        view = AtomMain(instr=self)
-        view.show()
-        app.start()
+    app = QtApplication()
+    view = AtomMain(instr=self)
+    view.show()
+    app.start()
 
 def show_boss(self, instr=None):
     with imports():
         from e_Boss import BossMain
     app = QtApplication()
-    view = BossMain(instr=instr, boss=self)
+    view = BossMain(myinstr=instr, boss=self)
     view.show()
     app.start()
 
@@ -47,21 +48,28 @@ class StreamCatch(Atom):
             sys.stdout=sys.__stdout__ #old_stdout
             sys.stderr=sys.__stderr__
 
-#class BossPlotter(Plotter):
-#    
-#    def _default_boss(self):
-#        boss.make_boss()
-#        return boss
-#        
-#    def __init__(self, **kwargs):
-#        """extends __init__ to set plot names automatically"""
-#        super(BossPlotter, self).__init__(**kwargs)
-#        #self.set_boss()
-#        if self.name=="":
-#            self.name="base{}".format(len(self.boss.plots))
+def code_caller(self, code, **kwargs):
+    result=code(self)
+    try:
+        deferred_call(setattr, self, 'busy', False)
+        deferred_call(setattr, self, 'progress', 0)
+        deferred_call(setattr, self, 'abort', False)
+    except RuntimeError:
+        self.busy=False
+        self.progress=0
+        self.abort=False
+    return result
+ 
+ 
+def do_it_if_needed(self, code, **kwargs):
+    if not self.busy:
+        self.busy = True
+        thread = Thread(target=code_caller, args=(self, code), kwargs=kwargs)
+        thread.start()
             
 class Boss(Atom):
     """Overall control class that runs main code and handles files, saving and plotting"""
+    name=Unicode("Base Control")
     run=Callable()
     read_file=Typed(Read_File)
     read_event=Event()
@@ -71,7 +79,6 @@ class Boss(Atom):
     bases=ContainerList()
     plot=Typed(Plotter, ())
     plots=ContainerList()
-    #plottables=Dict()
     BASE_DIR=Unicode("/Users/thomasaref/Dropbox/Current stuff/TA_software")
     DIVIDER=Unicode("/")
     LOG_NAME=Unicode("record")
@@ -79,24 +86,20 @@ class Boss(Atom):
     SETUP_GROUP_NAME=Unicode("SetUp")
     SAVE_GROUP_NAME=Unicode("Measurements")
     display=Typed(StreamCatch, ())
-    #base_nums=Dict()
-    #base_count=Int()
+
+    busy = Bool(False)
+    abort = Bool(False)
+    progress = Int(0)
     
-#    def get_base_num(self, key):
-#        """used in initialization of bases"""
-#        if key in self.base_nums.keys():
-#            return self.base_nums[key]
-#        return len(self.bases)
-#
-#    def set_base_num(self, key):
-#        if key in self.base_nums.keys():
-#            self.base_nums[key]+=1
-#        else:
-#            self.base_nums[key]=0
+    show_bases=Bool(False)
+ 
+    def _observe_abort(self, change):
+        if self.abort==True:
+            log_info("abort fired")
             
     def run_measurement(self):
         log_info("Master started")
-        self.run()
+        do_it_if_needed(self, self.run)
         log_info("Master finished")
     
     @property
@@ -179,7 +182,7 @@ class Boss(Atom):
                 log_warning("target base not found!")
 
     def make_boss(self, base_dir="/Users/thomasaref/Dropbox/Current stuff/TA_software", divider="/",
-                  log_name="record", file_name="meas", setup_g_name="SetUp", save_g_name="Measurements", save_log=True):
+                  log_name="record", file_name="meas", setup_g_name="SetUp", save_g_name="Measurements", save_log=False):
         self.BASE_DIR=base_dir #"/Users/thomasaref/Dropbox/Current stuff/TA_software"
         self.DIVIDER=divider #"/"
         self.LOG_NAME=log_name #"record"

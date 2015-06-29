@@ -117,7 +117,7 @@ _fundamental_functions=dict(cos=dict(desc="cosine",
                             log10=dict(desc="logarithm base 10",
                                       latex='\log'))
 
-class _func_log:
+class _func_log(object):
     """decorator class to allow function logging"""
     def update_log(self, log_str):
         log_info(log_str)

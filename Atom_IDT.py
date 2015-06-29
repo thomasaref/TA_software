@@ -4,7 +4,7 @@ Created on Thu Feb 26 11:08:19 2015
 
 @author: thomasaref
 """
-from Atom_Base import Base
+from a_Base import Base
 from atom.api import Enum, Int, Float, observe, Bool#, Property 
 from scipy.constants import epsilon_0 as eps0
 from numpy import sqrt

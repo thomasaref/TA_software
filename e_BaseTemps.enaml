@@ -1,0 +1,14 @@
+from enaml.widgets.api import Container, Field
+from e_Base import AutoCont
+
+template BaseTemp(BaseView):
+    AutoCont:
+        pass
+
+enamldef OtherCont(Container):
+    Field:
+        text<<str(instr.c)
+
+template BaseTemp(BaseView: "field"):
+    OtherCont:
+        pass

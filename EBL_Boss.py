@@ -5,7 +5,7 @@ Created on Fri Apr  3 18:23:12 2015
 @author: thomasaref
 """
 
-from Atom_Boss import Boss
+from a_Boss import Boss
 from Atom_Save_File import Save_DXF
 from LOG_functions import log_info
 from Plotter import Plotter
@@ -15,6 +15,9 @@ from atom.api import Typed
 
 class EBL_Boss(Boss):
     plot=Typed(Plotter, ())
+    
+    def _default_show_bases(self):
+        return True
 
     def _default_save_factory(self):
         return Save_DXF
