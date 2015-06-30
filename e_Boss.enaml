@@ -18,6 +18,9 @@ from enaml_Filer import SaveWrap, ReadWrap, ReadSaveWrap
 from TA_Fundamentals import cap_case
 from atom.api import Atom, Str, Instance, Event
 
+enamldef OtherWindow(Window):
+    pass
+
 enamldef BossToolBar(ToolBar):
     dock_area='left'
     Action:
@@ -37,8 +40,8 @@ enamldef BossToolBar(ToolBar):
     Action:
         text = "Plot"
         triggered::
-            tbase=[b for b in boss.bases if b.name=="EBL_Item_test"][0]
-            tbase.plot(tbase)
+             tbase=[b for b in boss.bases if b.name=="EBL_Item_test"][0]
+             tbase.plot(tbase)
                 #print bossarea.dock_items()[0].name
                 #show_plot(boss.plot.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=boss.plot)
         tool_tip = "Show plot"
@@ -115,29 +118,6 @@ enamldef PlotBox(GroupBox):
                 #print bossarea.dock_items()[0].name
                 show_plot(plotr.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=plotr)
 
-
-#class LOG(Atom):
-#    logstr=Str()
-#    old_sys_stdout=Instance(type(sys.stdout))
-
-#    def write(self, str):
-#        logstr+=str
-
-#import sys
-#class WriteDockPane(DockPane):
-#    #def _observe_visible(self, change):
-#    #    print change
-#    def write(self,str):
-#        self.logstr+=str
-#
-#    def redirect_stdout(self):
-#        if self.visible:
-#            sys.stdout=self
-#            sys.stderr=self
-#        else:
-#            sys.stdout=self.old_stdout
-#            sys.stderr=self.old_stderr
-
 enamldef PlotPane(DockPane):
     dock_area='right'
     title = 'Plot Pane'
@@ -145,19 +125,20 @@ enamldef PlotPane(DockPane):
         pass
 
 enamldef LogPane(DockPane): lp:
-    #attr old_stdout=sys.stdout
-    #attr old_stderr=sys.stderr
-    #attr logstr=""
     dock_area='bottom'
     title = "Log"
-    #visible::
-    #    boss.display.redirect_stdout(lp.visible)
-    #activated :: boss.display.redirect_stdout(lp.visible)
-    #closed:: print "log pane closed"
     Container:
         padding = 0
         MultilineField: mlf:
             text << boss.display.log_str
+
+enamldef StreamLogPane(LogPane): lp:
+    attr old_stdout=sys.stdout
+    attr old_stderr=sys.stderr
+    attr logstr=""
+    visible::
+        boss.display.redirect_stdout(lp.visible)
+    activated :: boss.display.redirect_stdout(lp.visible)
 
 enamldef SavePane(DockPane):
     dock_area='top'
@@ -245,8 +226,9 @@ enamldef BaseDockItem(DockItem):
     attr instr
     name = instr.name
     title = cap_case(instr.name)
-    BaseTemp("Auto"):
-        pass
+    DynamicTemplate:
+        base=BaseTemp
+        args=(instr.view,)
 
 def bshow_plot(bossarea, boss):
         plotr=boss.plot 
@@ -259,9 +241,10 @@ def bshow_plot(bossarea, boss):
 enamldef BossMain(MainWindow): main:
     attr boss    
     attr myinstr : None
+    attr other: Window
     title=boss.name
-    BossToolBar:
-        pass
+    BossToolBar: 
+        pass #alias main:
     initial_position=(0,0)
     #alias readpane
     #ReadSavePane: readpane:
@@ -282,7 +265,13 @@ enamldef BossMain(MainWindow): main:
     #            text << unicode(boss.busy)
  
     alias bossarea
-    Container: mycont:
+    Form: mycont:
+        
+        PushButton:
+            clicked ::
+                if not main.other:
+                    main.other = OtherWindow()
+                main.other.show()
         alias bossarea
         DockArea: bossarea:
             activated ::
@@ -291,15 +280,12 @@ enamldef BossMain(MainWindow): main:
                         show_base(bossarea, item)
                 bshow_plot(bossarea, boss)
                 
-            #layout=TabLayout(*(b.name for b in boss.bases))
-            #Looper:
-            #    iterable << boss.bases
-            #    BaseDockItem:
-            #        attr instr=loop_item
+
                     
 enamldef AtomMain(MainWindow): main:
     attr instr 
     title="Base"
+    activated :: main.send_to_front()
     alias bossarea
     Container: mycont:
         alias bossarea

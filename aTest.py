@@ -13,10 +13,12 @@ from a_Boss import show
 from threading import Thread
 from time import sleep
 
-from atom.api import Atom, Bool, Int, Callable
+from atom.api import Atom, Bool, Int, Callable, ContainerList
 
 from enaml.application import deferred_call
 from enaml.widgets.api import Window, Container, ProgressBar, PushButton, Field
+
+#print BaseView#(instr, type(instr))
 
 def myfunc(model, b=2):
     #model.busy=True
@@ -46,14 +48,18 @@ def myfunc(model, b=2):
 #
 #    #main_params=['d', 'a', 'b']
 #
+
 class S(Base):
      aa=Float() #Enum("a","b","c")
      bb=Int()
 class T(Base):
     a=Typed(S, ())
     ov=Int()
-    b=Float().tag(unit="bbb", label="blahhafd", low=0.0, sub=True)
-    g=List(default=["b"])
+    b=Float(2.3).tag(unit="bbb", label="blahhafd", low=0.0)
+    g=ContainerList().tag(low=1)
+    
+    def _default_g(self):
+        return range(100)
     c=Callable(myfunc)#    c=Coerced(int)#.tag()
 
     @Callable
@@ -69,12 +75,13 @@ class T(Base):
     d=Enum('b', 'c', 'ov')
 
 a=T()
-print dir(a.get_member("g"))#[bb.name for bb in a.boss.bases]
-
+print a.get_map("g", 0)#print a.get_member('g').item
+a.show()
+print a.g
 b=T()
 print [bb.name for bb in b.boss.bases]
 #b.cc()
 #b.boss.show_bases=True
-a.show()##print b.d
+#a.show()##print b.d
 ##a._show()
 ##print a.d

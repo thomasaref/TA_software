@@ -77,6 +77,7 @@ class Boss(Atom):
     saving=Enum(False, True, "No buffer")
     save_factory=Callable(Save_HDF5)
     bases=ContainerList()
+    visible_bases=ContainerList()
     plot=Typed(Plotter, ())
     plots=ContainerList()
     BASE_DIR=Unicode("/Users/thomasaref/Dropbox/Current stuff/TA_software")

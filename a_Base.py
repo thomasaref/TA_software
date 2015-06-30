@@ -5,7 +5,7 @@ Created on Sun Dec 14 17:47:13 2014
 @author: thomasaref
 """
 from LOG_functions import log_info, log_debug
-from atom.api import Atom, Instance, ContainerList, Unicode, Bool, Str, Float, Callable, Int, Typed, Enum, Dict, Coerced, Range, FloatRange
+from atom.api import Atom, Instance, ContainerList, Unicode, Bool, Str, Float, Callable, Int, Typed, Enum, Dict, Coerced, Range, FloatRange, List
 from types import FunctionType
 from numpy import shape, ndarray
 from Atom_Plotter import Plotter
@@ -266,7 +266,13 @@ class Base(Atom):
     def base_func_map(self, name):
         """creates mapping for an enum if it doesn't exist by constructing a mapping to items
         in the object and returning a one to one mapping if that fails"""
-        items=self.get_member(name).items
+        typer=get_type(self, name)
+        if typer==Enum:
+            items=self.get_member(name).items
+        elif typer in (List, ContainerList, list):
+            items=getattr(self, name)
+        #else:
+        #    raise TypeError("base_func_map applies only to Enum, List, ContainerList, list")
         try:
             return dict(zip(items, [getattr(self, item) for item in items]))
         except (AttributeError, TypeError):
@@ -278,19 +284,21 @@ class Base(Atom):
         mapping=self.get_tag(name, 'mapping')
         if mapping is None:
             mapping=self.base_func_map(name)
-        elif isinstance(mapping, basestring):
+        elif isinstance(mapping, basestring): #define a mapping as a property
             mapping=getattr(self, mapping)
         elif not isinstance(mapping, dict):
             raise TypeError("mapping must be dict or str")
         return mapping
 
-    def get_map(self, name, value=None):
+    def get_map(self, name, key=None):
         """returns the mapped value (meant for an Enum). mapping is either a dictionary
         or a string giving the name of a property in the class"""
-        if value is None:
-            value=getattr(self, name)
+        if get_type(self, name) in (List, ContainerList, list):
+            key=getattr(self, name)[key]
+        if key is None:
+            key=getattr(self, name)
         mapping=self.get_mapping(name)
-        return mapping[value]
+        return mapping[key]
 
     def get_inv(self, name, value):
         """returns the inverse mapped value (meant for an Enum)"""

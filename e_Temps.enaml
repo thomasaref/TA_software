@@ -12,7 +12,7 @@ from enaml.widgets.api import (RawWidget, Container, Field, Form, SpinBox, Group
                                ProgressBar, PushButton, CheckBox, MultilineField, ScrollArea, ObjectCombo, Slider)
 
 from enaml.layout.api import hbox, vbox, spacer, align
-from enaml.core.api import DynamicTemplate, Looper, d_, Include
+from enaml.core.api import DynamicTemplate, Looper, d_, Include, Conditional
 from enaml.stdlib.fields import FloatField, IntField
 from enaml.application import deferred_call
 
@@ -44,7 +44,13 @@ def constraints_gen(base, name, lbl, val, unt, contents_width, contents_top, con
 def form_spec(instr):
     main_params=get_main_params(instr)
     return tuple([(instr, name, get_type(instr, name)) for name in main_params])
- 
+
+
+template ListView(instrin, name, baseType: Base, Ind):
+    BaseView(getattr(instrin, name)[Ind.value], baseType):
+        pass
+
+
 template TypedView(instrin, name, baseType: Base):
     BaseView(getattr(instrin, name), baseType):
         pass
@@ -95,7 +101,7 @@ template VarView(instrin, name, baseType):
             DynamicTemplate:
                 base = TypedView
                 args = (instrin, name, baseType) #loop_item
-                data = dict(visible=True)
+                #data = dict(visible=True)
         Label: unt:
             text = get_tag(instrin, name, 'unit', "no unit")
             visible = get_tag(instrin, name, 'unit') is not None
@@ -108,7 +114,7 @@ template BaseView(instrin, baseType):
             DynamicTemplate:
                 base = VarView
                 args = loop_item
-                data = dict(visible=True)
+#                data = dict(visible=True)
 
 template VarView(base, name, InstrType: Instrument):
     GroupBox: contents:
@@ -179,6 +185,16 @@ template TypedView(base, name, baseType: Float):
 template TypedView(base, name, baseType: float):
     TypedView(base, name, Float): pass
 
+template ListView(base, name, baseType: Float, Index):
+    """ A template for Float members"""
+    FloatField:
+        value :=  getattr(base, name)[Index.value]
+        minimum=get_tag(base, name, 'low')
+        maximum=get_tag(base, name, 'high')
+
+template ListView(base, name, baseType: float, Index):
+    ListView(base, name, Float, Index): pass
+
 template TypedView(instrin, name, baseType: list):
     PushButton:
         text="list" #TypedView(instrin, name, Base):
@@ -232,15 +248,25 @@ template TypedView(base, name, baseType: Range):
 #        Label: max_lbl:
 #            text << str(ft.maximum)
 
-template TypedView(base, name, baseType: Int):
+template ListView(Instr, Name, AttrType: Int, Index):
+    """ A template for indexed Int members using a spin box"""
+    SpinBox:
+        value := getattr(Instr, Name)[Index]
+        minimum=int(get_tag(Instr, Name, 'low', -2147483648))
+        maximum=int(get_tag(Instr, Name, 'high', 2147483647)) 
+
+template ListView(Instr, Name, AttrType: int, Index):
+    ListView(Instr, Name, Int, Index): pass
+
+template TypedView(Instr, Name, AttrType: Int):
     """ A template for Int members using a spin box"""
     SpinBox:
-        value := getattr(base, name)
-        minimum=int(get_tag(base, name, 'low', -2147483648))
-        maximum=int(get_tag(base, name, 'high', 2147483647))
+        value := getattr(Instr, Name)
+        minimum=int(get_tag(Instr, Name, 'low', -2147483648))
+        maximum=int(get_tag(Instr, Name, 'high', 2147483647)) 
 
-template TypedView(base, name, baseType: int):
-    TypedView(base, name, Int): pass
+template TypedView(Instr, Name, AttrType: int):
+    TypedView(Instr, Name, Int): pass
 
 template TypedView(base, name, baseType: Str):
     """ A template for Str using a MultilineField"""
@@ -371,21 +397,70 @@ template TypedView(base, name, baseType: bool):
 #        return base.get_tag(name, "inside_type", type(getattr(base, name)[index]))
 #    return None
 #
-#template ValView(base, name, baseType: ContainerList):
-#    Container:
-#        padding=0
-#        constraints = [hbox(ind, val, insert_btn, pop_btn), ind.width==100]
-#        SpinBox: ind:
-#            minimum=0
-#            maximum << max(0, len(getattr(base, name))-1)
-#        Container: val:
-#            padding = 0
-#            DynamicTemplate: dyn:
-#                base = CLView
-#                args << (base, name, ind.value, get_type(base, name, ind.value))
-#        PushButton: insert_btn:
-#            text="Insert"
-#            clicked::
+
+
+enamldef iCo(Container): 
+    attr muv
+    attr mv = 0
+    attr rp = "value"
+    mv<< dyn.tagged[rp].value
+    mv::
+        if muv!=mv:
+            muv=mv
+    alias dyn
+    DynamicTemplate: dyn:
+                base = ListView
+                args << (type(muv),) #, get_type(base, name, ind.value))
+                data << dict(value=muv,)
+                tags = ('value',)
+ 
+
+template ListView(AttrType: int):
+    """ A template for indexed Int members using a spin box"""
+    
+    SpinBox: pass 
+        #attr mv
+        #value:=mv
+#        event mye
+#        value :: mye()
+        #value := getattr(Instr, Name)[Index]
+        #minimum=int(get_tag(Instr, Name, 'low', -2147483648))
+        #maximum=int(get_tag(Instr, Name, 'high', 2147483647))  
+   
+template TypedView(instrin, name, baseType: ContainerList):
+    Container: cc:
+        #attr muv = getattr(instrin, name)[ind.value]
+        #muv<<val.dyn.tagged["value"].value
+        #muv::
+        #    if getattr(instrin, name)[ind.value]!=cc.muv:
+        #        getattr(instrin, name)[ind.value]=cc.muv
+        padding=0
+        constraints = [hbox(ind, val, insert_btn, pop_btn), ind.width==100]
+        SpinBox: ind:
+            minimum=0
+            maximum << max(0, len(getattr(instrin, name))-1)
+        iCo: val:#Container: val:
+            padding = 0
+            muv=getattr(instrin, name)[ind.value]
+            muv::
+                if getattr(instrin, name)[ind.value]!=val.muv:
+                    getattr(instrin, name)[ind.value]=val.muv
+            
+            #dyn.tagged["value"].value :: print"value changed"
+            #alias dyn
+            #DynamicTemplate: dyn:
+            #    base = ListView
+            #    args << (type(getattr(instrin, name)[ind.value]),) #, get_type(base, name, ind.value))
+            #    data << dict(value=getattr(instrin, name)[ind.value],)
+            #    startag="pluto"
+            #    tags = ('value',)
+                #tagged:: print "cahnge" #>>getattr(instrin, name)[ind.value]
+
+        PushButton: insert_btn:
+            text<< unicode(val. muv)
+            text:: print val.muv #dyn.tags, val.dyn.startag, val.dyn.tagged
+            clicked::
+                print val.dyn.tags, val.dyn.startag, val.dyn.tagged
 #                if len(getattr(base, name))==0:
 #                    intype=base.get_tag(name, 'inside_type')() #if inside_type is not specified for an empty array, this will generate an error
 #                else:
@@ -396,20 +471,35 @@ template TypedView(base, name, baseType: bool):
 #                        intype=type(temptype)()
 #                getattr(base, name).insert(ind.value, intype) #pass #mydata.insert()
 #            #visible << base.get_tag(name, "full_interface", False)
-#        PushButton: pop_btn:
-#            text="Remove"
-#            clicked:: getattr(base, name).pop(ind.value)
+        PushButton: pop_btn:
+            text="Remove"
+            clicked:: getattr(instrin, name).pop(ind.value)
 #            #visible << base.get_tag(name, "full_interface", False)
-#            enabled << len(getattr(base, name))>0
+            enabled << len(getattr(instrin, name))>0
 #
-#template ValView(base, name, baseType: List):
-#        GroupBox:
-#            padding = 0
-#            visible << getattr(base, name)!=[]
-#            title = instr.get_tag(name, 'label', name)+" variables:"
-#            Looper:
-#                    iterable << getattr(base, name) #base.return_vars
-#                    DynamicTemplate:
-#                        base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
-#                        args=(loop_item, base, type(base))
+#template TypedView(base, name, baseType: Int, Index = None):
 #
+#    """ A template for Int members using a spin box"""
+#
+#    #Conditional:
+#    #    condition = Index is None
+#    IndexContent(SpinBox): sp:
+#            alias content
+#            sp.content.value := sp.content.myval
+#            sp.content.minimum=int(get_tag(base, name, 'low', -2147483648))
+#            sp.content.maximum=int(get_tag(base, name, 'high', 2147483647))
+
+
+
+template TypedView(Instr, Name, baseType: List):
+        GroupBox:
+            padding = 0
+            visible << getattr(Instr, Name)!=[]
+            title = Instr.get_tag(Name, 'label', Name)+" variables:"
+            Form:
+                SpinBox: ind:
+                    minimum = 0
+                    maximum << len(getattr(Instr, Name))-1
+                DynamicTemplate:
+                    base=ListView
+                    args=(Instr, Name, type(getattr(Instr, Name)[ind.value]), ind)
