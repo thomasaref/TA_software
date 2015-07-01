@@ -5,7 +5,7 @@ Created on Thu Jun 25 11:43:01 2015
 @author: thomasaref
 """
 
-from Atom_IDT import IDT
+from a_IDT import IDT
 from atom.api import Float, Bool, Enum, Dict, observe, Int
 from EBL_Item import EBL_Item
 #from Atom_Plotter import Plotter
@@ -19,7 +19,6 @@ class EBL_IDT(EBL_Item, IDT):
     trconnect_w=Float(0.5).tag(desc="connection length of transmon")
     trc_wbox=Float(14.0)
     trc_hbox=Float(12.5)
-    g=Float(0.05).tag(desc="gap between fingers (um). about 0.096 for double fingers at 4.5 GHz")
     o=Float(0.5).tag(desc="gap between electrode and end of finger. The vertical offset of the fingers. Setting this to zero produces a shorted reflector")
     hbox=Float(20.0).tag(desc="height of electrode box")
     wbox=Float(0.0).tag(desc="width of electrode box. Setting to 0.0 (default) makes it autoscaling so it matches the width of the IDT")
@@ -29,8 +28,7 @@ class EBL_IDT(EBL_Item, IDT):
     idt_type=Enum("basic", "stepped").tag(desc="basic is a regular IDT, stepped uses stepped fingers for harmonic suppression and angle shows how a double angle evaporation would look",
                                                     mapping={"basic":0, "angle": 0,"stepped": 1})
     qdt_type=Enum("IDT", "QDT")
-    finger_type=Enum("double", "single").tag(desc="'double' for double fingered, 'single' for single fingered. defaults to double fingered",
-                                            mapping={"double" : 2, "single" : 1})
+    
     
     conn_h=Float(65.0)
     add_gate=Bool(True)
@@ -39,17 +37,14 @@ class EBL_IDT(EBL_Item, IDT):
     
 
     step_num=Int(3)
-    eta=Float(0.5).tag(desc="metalization ratio")
+
     
     def _default_main_params(self):
         mp=["idt_type", "qdt_type", "finger_type",
             "add_gate", "add_gnd", "add_teeth", "angle_x", "angle_y", "step_num",
             "Np", "a", "g", "W", "o","f0", "eta", "ef", "wbox", "hbox", "material",
             "trconnect_x", "trconnect_y", "trconnect_w", "trc_wbox", "trc_hbox",
-            "conn_h",  "idt_tooth", "v", "Dvv", "epsinf", "Ct", "p", "all_color", "all_layer", "x_center", "y_center", "polys"]
-        for item in self.get_all_tags('sub', False, False, self.all_params):
-            if item not in mp:
-                mp.append(item)
+            "conn_h",  "idt_tooth", "v", "Dvv", "epsinf", "Ct", "p", "x_center", "y_center"]
         return mp
     
     @property    
@@ -61,20 +56,6 @@ class EBL_IDT(EBL_Item, IDT):
     @property
     def xo(self):        
         return self.a*(1.0-1.0/self.step_num)*self.get_map("idt_type")
-        
-    def do_update(self, name, new_val):
-        if not self._update:
-            self._update=True
-            setattr(self, name, new_val)
-            self._update=False
-        
-    @observe('a', 'g')
-    def update_eta(self, change):
-        self.do_update("eta", self.a/(self.a+self.g))
-        
-    @observe('a', 'eta')
-    def update_p(self, change):
-        self.do_update("g", self.a*(1.0/self.eta-1.0))
                              
     def make_polylist(self):
         """Draws IDT depending on object parameters"""

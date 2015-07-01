@@ -43,10 +43,10 @@ class EBL_Item(EBL_Base):
     
     add_type=Enum("overwrite", "add")
     
-    xmin=Float()#.tag(private=True)
-    xmax=Float()#.tag(private=True)
-    ymin=Float()#.tag(private=True)
-    ymax=Float()#.tag(private=True)
+    xmin=Float().tag(private=True)
+    xmax=Float().tag(private=True)
+    ymin=Float().tag(private=True)
+    ymax=Float().tag(private=True)
     
     
     #def auto_lim(self):
@@ -63,7 +63,16 @@ class EBL_Item(EBL_Base):
         pass #self.polys.polylist=[]
 
     @Callable
-    def plot(self):
+    def offset_verts(self, x_center=0, y_center=0):
+        self.polys.offset_verts(x_center, y_center)
+        self.draw()
+
+    @Callable
+    def clear_polylist(self):
+        self.polys.clear_polylist() #=[]
+        self.draw()
+        
+    def predraw(self):
         if self.add_type=="overwrite":
             self.polys.polylist=[]
         if self.view_type=="angle":
@@ -74,9 +83,16 @@ class EBL_Item(EBL_Base):
             self.polys.polylist.extend(tpolylist)
         else:            
             self.make_polylist()
-        self.rotate(self.theta)
+        self.polys.rotate(self.theta)
         self.polys.offset_verts(self.x_center, self.y_center)
-        self.set_data()
+        
+    @Callable
+    def plot(self):
+        self.predraw()
+        self.draw()
+        
+    def draw(self):
+        self.boss.plot.set_data(self.name, self.polys.get_verts())
 
         self.xmin=self.polys.xmin
         self.xmax=self.polys.xmax
@@ -90,12 +106,7 @@ class EBL_Item(EBL_Base):
         
         self.set_xlim(xmin, xmax)
         self.set_ylim(ymin, ymax)
-        self.draw()
-        
-    def set_data(self):
-        self.boss.plot.set_data(self.name, self.polys.get_verts())
 
-    def draw(self):
         self.boss.plot.draw()
 
 
@@ -132,19 +143,20 @@ class EBL_Item(EBL_Base):
         """Adds a centered rectangle to the polylist"""
         self.polys.R(xr-wr/2.0, yr-hr/2.0, wr, hr, **kwargs)
 
+    @Callable
     def rotate(self, theta=0.0):
-        theta=theta/180.0*pi
         self.polys.rotate(theta)
-
+        self.draw()
+        
+    @Callable
     def horiz_refl(self):
         self.polys.horiz_refl()
-    
+        self.draw()
+
+    @Callable
     def vert_refl(self):
         self.polys.vert_refl()
-
-    do_rotate=Callable(rotate)
-    do_horiz_refl=Callable(horiz_refl)
-    do_vert_refl=Callable(vert_refl)
+        self.draw()
                 
                 
 if __name__=="__main__":  

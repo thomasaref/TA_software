@@ -7,7 +7,7 @@ Created on Thu Jun 25 09:52:31 2015
 from atom.api import Atom, Enum, Float, ContainerList
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
-from numpy import sin, cos
+from numpy import sin, cos, pi
 
 class EBL_PolyBase(Atom):
     color=Enum("green").tag(desc="color or datatype of item, could be used for dosing possibly")
@@ -128,8 +128,11 @@ class Polyer(EBL_PolyBase):
         return max(p.ymax for p in self.polylist)
 
     def _default_polylist(self):
-        return [EBLPolygon(), P([(0,0), (0,25), (0.1,25), (0.1, 0), (5, -5), (10, -5), (10, -10), (5, -10), (5, -5.1)])]
+        return [EBLPolygon()]
 
+    def clear_polylist(self):
+        self.polylist=[EBLPolygon()]
+        
     def offset_verts(self, x=0.0, y=0.0):
         for p in self.polylist:
             p.offset_verts(x,y)
@@ -137,6 +140,7 @@ class Polyer(EBL_PolyBase):
         #self.y_center+=y
 
     def rotate(self, theta):
+        theta=theta/180.0*pi
         for p in self.polylist:
             p.rotate(cos_theta=cos(theta), sin_theta=sin(theta))
 
@@ -189,6 +193,7 @@ if __name__=="__main__":
     print a.polylist[-2].get_verts()    
 
     a.polylist[1].offset_verts(3,4)
-    print a.polylist[1].get_verts()    
-
-    a.show()
+    print a.polylist[1].get_verts()  
+    from a_Boss import show
+    show(a)
+    #a.show()

@@ -18,9 +18,6 @@ from enaml_Filer import SaveWrap, ReadWrap, ReadSaveWrap
 from TA_Fundamentals import cap_case
 from atom.api import Atom, Str, Instance, Event
 
-enamldef OtherWindow(Window):
-    pass
-
 enamldef BossToolBar(ToolBar):
     dock_area='left'
     Action:
@@ -81,10 +78,6 @@ def get_plot_items(inlist):
 
 
 enamldef PlotBox(GroupBox):
-#    attr xkey=boss.plottables.keys()[0]
-#    attr ykey=boss.plottables.keys()[0]
-#    attr xkey=boss.plottables.keys()[0]
-#    attr ykey=boss.plottables.keys()[0]
     attr plotr=boss.plot
     alias yinstr
     Container: myc:
@@ -93,14 +86,11 @@ enamldef PlotBox(GroupBox):
             text="X instr"
         ObjectCombo: xinstr:
             items = list(boss.plottables.keys())
-
         Label: yinstr_lbl:
             text="Y instr"
         alias yinstr
         ObjectCombo: yinstr:
             items = list(boss.plottables.keys())
-#            selected := ykey
-
         Label: yvar_lbl:
             text="Y var"
         ObjectCombo: yvar:
@@ -115,7 +105,6 @@ enamldef PlotBox(GroupBox):
             clicked ::
                 tbase=[b for b in boss.bases if b.name==yinstr.selected][0]
                 tbase.plot()
-                #print bossarea.dock_items()[0].name
                 show_plot(plotr.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=plotr)
 
 enamldef PlotPane(DockPane):
@@ -161,13 +150,6 @@ enamldef ReadSavePane(DockPane):
         read_file = boss.read_file
         save_file = boss.save_file
         runcode = boss.run
-
-#enamldef PlotItem(DockItem):
-#    attr plotr
-#    name="plot1"
-#    title="Plot 1"
-#    PlotContainer:
-#        pass
 
 enamldef BaseItem(DockItem):
     attr instr
@@ -265,13 +247,13 @@ enamldef BossMain(MainWindow): main:
     #            text << unicode(boss.busy)
  
     alias bossarea
-    Form: mycont:
+    Container: mycont:
         
-        PushButton:
-            clicked ::
-                if not main.other:
-                    main.other = OtherWindow()
-                main.other.show()
+        #PushButton:
+        #    clicked ::
+        #        if not main.other:
+        #            main.other = OtherWindow()
+        #        main.other.show()
         alias bossarea
         DockArea: bossarea:
             activated ::

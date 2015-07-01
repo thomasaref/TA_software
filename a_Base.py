@@ -54,18 +54,29 @@ def get_main_params(instr):
             log_debug(e)
             main_params=[name for name in dir(instr) if name[0]!='_'] 
     return main_params
+
+def get_map(instr, name, key=None):
+    """returns the mapped value (meant for an Enum). mapping is either a dictionary
+        or a string giving the name of a property in the class"""
+    if key is None:
+        key=getattr(instr, name)
+    return get_tag(instr, name, "mapping", {key:key})[key]
        
 def code_caller(model, code, **kwargs):
-    result=code(model)
-    try:
-        deferred_call(setattr, model.boss, 'busy', False)
-        deferred_call(setattr, model.boss, 'progress', 0)
-        deferred_call(setattr, model.boss, 'abort', False)
-    except RuntimeError:
-        model.boss.busy=False
-        model.boss.progress=0
-        model.boss.abort=False
-    return result
+    #try:
+        result=code(model, **kwargs)
+    #except RuntimeError, e:
+    #    raise RuntimeError(e)
+    #finally:
+        try:
+            deferred_call(setattr, model.boss, 'busy', False)
+            deferred_call(setattr, model.boss, 'progress', 0)
+            deferred_call(setattr, model.boss, 'abort', False)
+        except RuntimeError:
+            model.boss.busy=False
+            model.boss.progress=0
+            model.boss.abort=False
+        return result
  
  
 def do_it_if_needed(instr, code, **kwargs):
@@ -124,6 +135,7 @@ class Base(Atom):
     full_interface=Bool(False).tag(private=True) #checked by GUI but applies more to instrument
     plot_all=Bool(False).tag(private=True)
     view=Enum("Auto").tag(private=True)
+    main_params=List().tag(private=True)
     
     @property
     def abort(self):
@@ -156,8 +168,7 @@ class Base(Atom):
         Convenience property for more easily custom defining main_params in child classes"""
         return self.get_all_tags('sub', False, False, self.all_params)
 
-    @property
-    def main_params(self):
+    def _default_main_params(self):
         """defaults to all members in all_params that are not tagged as sub.
         Can be overwritten to allow some minimal custom layout control,
         e.g. order of presentation and which members are shown. Use self.all_main_params to get a list of
@@ -193,7 +204,7 @@ class Base(Atom):
         return [x for x in search_list if key_value==self.get_tag(x, key, none_value)]
 
     def set_tag(self, name, **kwargs):
-        """sets tag of parameter name using keywords arguments"""
+        """sets tag of parameter name using keywords arguments. Note that tags are shared between different instances of this class"""
         self.get_member(name).tag(**kwargs)
 
     def set_all_tags(self, **kwargs):
@@ -263,43 +274,15 @@ class Base(Atom):
             typer=type(getattr(self, name))
         return self.get_tag(name, "type", typer)
 
-    def base_func_map(self, name):
-        """creates mapping for an enum if it doesn't exist by constructing a mapping to items
-        in the object and returning a one to one mapping if that fails"""
-        typer=get_type(self, name)
-        if typer==Enum:
-            items=self.get_member(name).items
-        elif typer in (List, ContainerList, list):
-            items=getattr(self, name)
-        #else:
-        #    raise TypeError("base_func_map applies only to Enum, List, ContainerList, list")
-        try:
-            return dict(zip(items, [getattr(self, item) for item in items]))
-        except (AttributeError, TypeError):
-            return  dict(zip(items, items))
-
-    def get_mapping(self, name):
-        """returns the mapping dictionary of an Enum, generating it if it doesn't exist,
-        calling an internal function if it is a string and raising an error otherwise if it is not a dictionary"""
-        mapping=self.get_tag(name, 'mapping')
-        if mapping is None:
-            mapping=self.base_func_map(name)
-        elif isinstance(mapping, basestring): #define a mapping as a property
-            mapping=getattr(self, mapping)
-        elif not isinstance(mapping, dict):
-            raise TypeError("mapping must be dict or str")
-        return mapping
-
     def get_map(self, name, key=None):
         """returns the mapped value (meant for an Enum). mapping is either a dictionary
         or a string giving the name of a property in the class"""
-        if get_type(self, name) in (List, ContainerList, list):
-            key=getattr(self, name)[key]
+        #if get_type(self, name) in (List, ContainerList, list):
+        #    key=getattr(self, name)[key]
         if key is None:
             key=getattr(self, name)
-        mapping=self.get_mapping(name)
-        return mapping[key]
-
+        return self.get_tag(name, "mapping")[key]
+        
     def get_inv(self, name, value):
         """returns the inverse mapped value (meant for an Enum)"""
         self.gen_inv_map(name)
@@ -373,11 +356,6 @@ class Base(Atom):
         if name in self.all_params:
             self.set_log( name, value)
 
-    def _default_name(self):
-        """default naming. not working so well?"""
-        name= "_{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.boss.bases)-1)
-        return name
-
     def __init__(self, **kwargs):
         """extends __init__ to set boss and add instrument to boss's instrument list.
         Also adds observers for ContainerList parameters so if item in list is changed via some list function other than setattr, notification is still given.
@@ -386,17 +364,33 @@ class Base(Atom):
         if "name" not in kwargs:
             self.name= "{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.boss.bases))
         self.boss.bases.append(self)
-        
-        #self.boss.base_count+=1
         for key in self.all_params:
-            if self.get_type(key)==ContainerList:
+            typer=self.get_type(key)
+            if typer==ContainerList:
                 self.observe(key, self.value_changed)
-            if self.get_type(key)==Callable:
+            elif typer==Callable:
                 func=getattr(self, key)
                 if isinstance(func, FunctionType):
                     setattr(self, key, func_log(func, self))
-            if self.get_type(key) in [Range, FloatRange]:
+            elif typer in [Range, FloatRange]:
                 self.set_tag(key, low=self.get_member(key).validate_mode[1][0], high=self.get_member(key).validate_mode[1][1])
+            elif typer==Enum:
+                items=self.get_member(key).items
+                mapping=self.get_tag(key, 'mapping')
+                map_type=self.get_tag(key, 'map_type')
+                if mapping is None:
+                    try:
+                        map_type="attribute"
+                        mapping=dict(zip(items, [getattr(self, item) for item in items]))
+                    except (AttributeError, TypeError):
+                        map_type="default"
+                        mapping=dict(zip(items, items))
+                elif isinstance(mapping, basestring): #define a mapping as a property
+                    map_type="property"
+                    mapping=getattr(self, mapping)
+                elif not isinstance(mapping, dict):
+                    raise TypeError("mapping must be dict or str")
+                self.set_tag(key, mapping=mapping, map_type=map_type)
 
     def value_changed(self, change):
         """observer for ContainerLists to handle updates not covered by setattr"""

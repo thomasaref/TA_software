@@ -15,13 +15,13 @@ from EBL_Item import EBL_Item
 from atom.api import Enum, Float
     
 class EBL_SQUID(EBL_Item):
-    box_height=Float(2.0).tag(desc="height of connecting box", unit="um", good_value=20.0)
+    box_height=Float(3.0).tag(desc="height of connecting box", unit="um", good_value=20.0)
     box_width=Float(10.0).tag(desc="width of connecting box", unit="um")
-    height=Float(9.0).tag(desc="height of total qubit", unit="um")
+    height=Float(10.0).tag(desc="height of total qubit", unit="um")
     width=Float(10).tag(desc="width of total qubit", unit="um")
-    gap=Float(0.35).tag(desc="gap for making two angle lithography", unit="um")
+    gap=Float(0.2).tag(desc="gap for making two angle lithography", unit="um")
     w=Float(0.1).tag(desc="width of electrode fingers", unit="um")
-    h=Float(0.9).tag(desc="height of electrode fingers", unit="um")
+    h=Float(1.0).tag(desc="height of electrode fingers", unit="um")
     ew=Float(1.0).tag(desc="connecting electrode width", unit="um")
     edge_dist=Float(5.0).tag(desc="distance from edge to connecting electrodes", unit="um")
 
@@ -44,6 +44,10 @@ class EBL_SQUID(EBL_Item):
         self.get_map("squid_type")()
         if self.orientation=="Horizontal":
             self.rotate(90.0)
+
+    def _default_main_params(self):
+        return ["plot", "view_type", "squid_type", "orientation", "angle_x", "angle_y", "offset_verts", "rotate", "horiz_refl", "vert_refl", "clear_polylist", 
+        "width", "height", "wb", "box_height", "w", "h", "gap", "finger_gap"]
 
    #def testpads(self):
    #     self.P([(-self.testpad_width, self.testpad_height/2.0),
@@ -228,35 +232,31 @@ class EBL_SQUID(EBL_Item):
 
         self.rect(self.x_center-connx/2.0, -hbox/2.0+h, connx, w)
 
-
-
-
-
     def two_finger(self):
-        self.P([(self.x_center-self.width/2.0, self.height/2.0),
+        self.P([(-self.width/2.0, self.height/2.0),
                    (self.width/2.0, self.height/2.0),
                    (self.width/2.0, self.height/2.0-self.box_height),
                    (self.finger_gap/2.0+self.w/2.0, self.height/2.0-self.box_height),
                    (self.finger_gap/2.0+self.w/2.0, self.gap/2.0),
                    (self.finger_gap/2.0-self.w/2.0, self.gap/2.0),
                    (self.finger_gap/2.0-self.w/2.0, self.h+self.gap/2.0),
-                   (self.x_center-self.finger_gap/2.0+self.w/2.0, self.h+self.gap/2.0),
-                   (self.x_center-self.finger_gap/2.0+self.w/2.0, self.gap/2.0),
-                   (self.x_center-self.finger_gap/2.0-self.w/2.0, self.gap/2.0),
-                   (self.x_center-self.finger_gap/2.0-self.w/2.0, self.height/2.0-self.box_height),
-                   (self.x_center-self.width/2.0, self.height/2.0-self.box_height)])
-        self.P([(self.x_center-self.width/2.0, -self.height/2.0),
+                   (-self.finger_gap/2.0+self.w/2.0, self.h+self.gap/2.0),
+                   (-self.finger_gap/2.0+self.w/2.0, self.gap/2.0),
+                   (-self.finger_gap/2.0-self.w/2.0, self.gap/2.0),
+                   (-self.finger_gap/2.0-self.w/2.0, self.height/2.0-self.box_height),
+                   (-self.width/2.0, self.height/2.0-self.box_height)])
+        self.P([(-self.width/2.0, -self.height/2.0),
                    (self.width/2.0, -self.height/2.0),
                    (self.width/2.0, -self.height/2.0+self.box_height),
                    (self.finger_gap/2.0+self.wb/2.0, -self.height/2.0+self.box_height),
                    (self.finger_gap/2.0+self.wb/2.0, -self.gap/2.0),
                    (self.finger_gap/2.0-self.wb/2.0, -self.gap/2.0),
                    (self.finger_gap/2.0-self.wb/2.0, -self.h-self.gap/2.0),
-                   (self.x_center-self.finger_gap/2.0+self.wb/2.0, -self.h-self.gap/2.0),
-                   (self.x_center-self.finger_gap/2.0+self.wb/2.0, -self.gap/2.0),
-                   (self.x_center-self.finger_gap/2.0-self.wb/2.0, -self.gap/2.0),
-                   (self.x_center-self.finger_gap/2.0-self.wb/2.0, -self.height/2.0+self.box_height),
-                   (self.x_center-self.width/2.0, -self.height/2.0+self.box_height)])
+                   (-self.finger_gap/2.0+self.wb/2.0, -self.h-self.gap/2.0),
+                   (-self.finger_gap/2.0+self.wb/2.0, -self.gap/2.0),
+                   (-self.finger_gap/2.0-self.wb/2.0, -self.gap/2.0),
+                   (-self.finger_gap/2.0-self.wb/2.0, -self.height/2.0+self.box_height),
+                   (-self.width/2.0, -self.height/2.0+self.box_height)])
 
     def transmon(self):
         self.top_box()
@@ -308,7 +308,6 @@ class EBL_SQUID(EBL_Item):
     
 if __name__=="__main__":
     a=EBL_SQUID(name="EBL_Item_test")
-    a.bridge()
     a.show()
 
 #    def _s_bridge_TL(self):

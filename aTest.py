@@ -47,19 +47,22 @@ def myfunc(model, b=2):
 #        print "set {name} to {value}".format(name=name, value=value)
 #
 #    #main_params=['d', 'a', 'b']
-#
 
+    
+        
 class S(Base):
      aa=Float() #Enum("a","b","c")
      bb=Int()
+     gg=List(default=[1,2,3])
+
 class T(Base):
     a=Typed(S, ())
     ov=Int()
     b=Float(2.3).tag(unit="bbb", label="blahhafd", low=0.0)
-    g=ContainerList().tag(low=1)
-    
+    g=List().tag(low=1)
+    #tag(ov, label="mmdkgam")
     def _default_g(self):
-        return range(100)
+        return [S(), S()]
     c=Callable(myfunc)#    c=Coerced(int)#.tag()
 
     @Callable
@@ -71,14 +74,23 @@ class T(Base):
             self.ov=n
             print self.ov, self.b
             sleep(0.2)
-
-    d=Enum('b', 'c', 'ov')
+    cc.tag(label="ppp")
+    
+    @property
+    def mymp(self):
+        return dict(b=1, c=True, ov="5")        
+    d=Enum('b', 'c', 'ov')#.tag(mapping="mymp")#dict(b=1, c=True, ov="5"))
+    f=Enum(1,2,3)
 
 a=T()
-print a.get_map("g", 0)#print a.get_member('g').item
+print a.metadata("cc")
+print type(a.get_member("cc"))
+print len(a.g)
+b=T()
+#print a.get_map("g", 0)#print a.get_member('g').item
 a.show()
 print a.g
-b=T()
+#b=T()
 print [bb.name for bb in b.boss.bases]
 #b.cc()
 #b.boss.show_bases=True
