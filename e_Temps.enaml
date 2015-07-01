@@ -105,11 +105,11 @@ template VarView(instrin, name, baseType):
         Label: unt:
             text = get_tag(instrin, name, 'unit', "no unit")
             visible = get_tag(instrin, name, 'unit') is not None
-       
+
 template BaseView(instrin, baseType):
-    Container: 
+    Container:
         padding = 0
-        Looper: 
+        Looper:
             iterable<<form_spec(instrin)
             DynamicTemplate:
                 base = VarView
@@ -202,7 +202,7 @@ template TypedView(instrin, name, baseType: list):
 template TypedView(instrin, name, baseType: tuple):
     PushButton:
         text="tuple" #TypedView(instrin, name, Base):
-        
+
 class fake(object):
     def fff():
         pass
@@ -253,7 +253,7 @@ template ListView(Instr, Name, AttrType: Int, Index):
     SpinBox:
         value := getattr(Instr, Name)[Index]
         minimum=int(get_tag(Instr, Name, 'low', -2147483648))
-        maximum=int(get_tag(Instr, Name, 'high', 2147483647)) 
+        maximum=int(get_tag(Instr, Name, 'high', 2147483647))
 
 template ListView(Instr, Name, AttrType: int, Index):
     ListView(Instr, Name, Int, Index): pass
@@ -263,7 +263,7 @@ template TypedView(Instr, Name, AttrType: Int):
     SpinBox:
         value := getattr(Instr, Name)
         minimum=int(get_tag(Instr, Name, 'low', -2147483648))
-        maximum=int(get_tag(Instr, Name, 'high', 2147483647)) 
+        maximum=int(get_tag(Instr, Name, 'high', 2147483647))
 
 template TypedView(Instr, Name, AttrType: int):
     TypedView(Instr, Name, Int): pass
@@ -298,7 +298,7 @@ template TypedView(instr, name, baseType: Callable):
         constraints = [hbox(pb1, gb1 ,pb2), align('top', pb1, gb1, pb2)]
         PushButton: pb1:
             text = 'Run'
-            clicked :: 
+            clicked ::
                 try:
                     getattr(instr, name)(instr) #do_it_if_needed(var, "receive") #receive()
                 except TypeError:
@@ -315,8 +315,8 @@ template TypedView(instr, name, baseType: Callable):
                         args=(instr, loop_item, get_type(instr, loop_item))
         PushButton: pb2:
             text = 'Abort'
-            clicked :: 
-                instr.boss.abort=True 
+            clicked ::
+                instr.boss.abort=True
             enabled <<  instr.boss.busy
 
 def get_map(base, name):
@@ -399,39 +399,40 @@ template TypedView(base, name, baseType: bool):
 #
 
 
-enamldef iCo(Container): 
-    attr muv
-    attr mv = 0
-    attr rp = "value"
-    mv<< dyn.tagged[rp].value
-    mv::
-        if muv!=mv:
-            muv=mv
-    alias dyn
-    DynamicTemplate: dyn:
-                base = ListView
-                args << (type(muv),) #, get_type(base, name, ind.value))
-                data << dict(value=muv,)
-                tags = ('value',)
- 
+enamldef iCo(Container):
+    attr muv: Unicode
+#    attr mv = 0
+#    attr rp = "value"
+#    mv<< dyn.tagged["value"].value
+#     #    if muv!=mv:
+#    #        muv=mv
+#    alias dyn
+#    DynamicTemplate: dyn:
+#                base = ListView
+#                args << (type(muv),) #, get_type(base, name, ind.value))
+#                data << dict(value=muv,)
+#                tags = ('value',)
+
 
 template ListView(AttrType: int):
     """ A template for indexed Int members using a spin box"""
-    
-    SpinBox: pass 
-        #attr mv
-        #value:=mv
-#        event mye
-#        value :: mye()
-        #value := getattr(Instr, Name)[Index]
-        #minimum=int(get_tag(Instr, Name, 'low', -2147483648))
-        #maximum=int(get_tag(Instr, Name, 'high', 2147483647))  
-   
+
+    SpinBox: sb:
+            pass
+            #attr mv
+            #value:=mv
+            #value :: mye()
+            #value := getattr(Instr, Name)[Index]
+            #minimum=int(get_tag(Instr, Name, 'low', -2147483648))
+            #maximum=int(get_tag(Instr, Name, 'high', 2147483647))
+
 template TypedView(instrin, name, baseType: ContainerList):
     Container: cc:
-        #attr muv = getattr(instrin, name)[ind.value]
-        #muv<<val.dyn.tagged["value"].value
-        #muv::
+        attr rp = "value"
+#        attr muvy = getattr(instrin, name)[ind.value]
+ #       muvy<< val.dyn.tagged["pluto"][0].value
+  #      muvy:: print val.dyn.tagged
+        #val.mv:: print "change"
         #    if getattr(instrin, name)[ind.value]!=cc.muv:
         #        getattr(instrin, name)[ind.value]=cc.muv
         padding=0
@@ -439,28 +440,40 @@ template TypedView(instrin, name, baseType: ContainerList):
         SpinBox: ind:
             minimum=0
             maximum << max(0, len(getattr(instrin, name))-1)
-        iCo: val:#Container: val:
+        Container: val:
             padding = 0
-            muv=getattr(instrin, name)[ind.value]
-            muv::
-                if getattr(instrin, name)[ind.value]!=val.muv:
-                    getattr(instrin, name)[ind.value]=val.muv
-            
+            #attr muv<<getattr(instrin, name)[ind.value]
+            #mv::
+            #    print dyn.tagged
+            #    if getattr(instrin, name)[ind.value]!=val.mv:
+            #        getattr(instrin, name)[ind.value]=val.mv
+
             #dyn.tagged["value"].value :: print"value changed"
-            #alias dyn
-            #DynamicTemplate: dyn:
-            #    base = ListView
-            #    args << (type(getattr(instrin, name)[ind.value]),) #, get_type(base, name, ind.value))
-            #    data << dict(value=getattr(instrin, name)[ind.value],)
-            #    startag="pluto"
+            alias dyn
+            DynamicTemplate: dyn:
+
+                base = ListView
+                args << (type(getattr(instrin, name)[ind.value]),) #, get_type(base, name, ind.value))
+                data << {rp:getattr(instrin, name)[ind.value]}
+                startag="pluto"
+                data::print dir(dyn) #tagged
+                startag::print startag
+                tags=("value.value",)
+                #dyn.tagged["pluto"][0.value]::print tagged
             #    tags = ('value',)
                 #tagged:: print "cahnge" #>>getattr(instrin, name)[ind.value]
-
+        #iCo:
+        #    muv<< unicode(getattr(val.dyn.tagged["pluto"][0], rp))
+        #    muv::print "stuff"
         PushButton: insert_btn:
-            text<< unicode(val. muv)
-            text:: print val.muv #dyn.tags, val.dyn.startag, val.dyn.tagged
+            #text<< unicode(getattr(val.dyn.tagged["pluto"][0], rp))
+            #text::
+            #    if getattr(instrin, name)[ind.value]!=getattr(val.dyn.tagged["pluto"][0], rp):
+            #        getattr(instrin, name)[ind.value]=getattr(val.dyn.tagged["pluto"][0], rp)
+            #    print val.dyn.tags, val.dyn.startag, val.dyn.tagged, val.dyn.tagged["pluto"][0].value
+#                #dyn.tags, val.dyn.startag, val.dyn.tagged
             clicked::
-                print val.dyn.tags, val.dyn.startag, val.dyn.tagged
+                print val.dyn.tags, val.dyn.startag, val.dyn.tagged, val.dyn.tagged["pluto"][0].value
 #                if len(getattr(base, name))==0:
 #                    intype=base.get_tag(name, 'inside_type')() #if inside_type is not specified for an empty array, this will generate an error
 #                else:
@@ -472,7 +485,7 @@ template TypedView(instrin, name, baseType: ContainerList):
 #                getattr(base, name).insert(ind.value, intype) #pass #mydata.insert()
 #            #visible << base.get_tag(name, "full_interface", False)
         PushButton: pop_btn:
-            text="Remove"
+            text<<"Remove"
             clicked:: getattr(instrin, name).pop(ind.value)
 #            #visible << base.get_tag(name, "full_interface", False)
             enabled << len(getattr(instrin, name))>0
