@@ -14,23 +14,24 @@ from LOG_functions import log_debug
 
 class EBL_IDT(EBL_Item, IDT):
     """handles everything related to drawing a IDT. Units are microns (um)"""
-    trconnect_x=Float(9.0).tag(desc="connection length of transmon")
-    trconnect_y=Float(2.5).tag(desc="connection length of transmon")
-    trconnect_w=Float(0.5).tag(desc="connection length of transmon")
-    trc_wbox=Float(14.0)
-    trc_hbox=Float(12.5)
-    o=Float(0.5).tag(desc="gap between electrode and end of finger. The vertical offset of the fingers. Setting this to zero produces a shorted reflector")
-    hbox=Float(20.0).tag(desc="height of electrode box")
-    wbox=Float(0.0).tag(desc="width of electrode box. Setting to 0.0 (default) makes it autoscaling so it matches the width of the IDT")
+    trconnect_x=Float(9.0e-6).tag(desc="connection length of transmon", unit="um")
+    trconnect_y=Float(2.5e-6).tag(desc="connection length of transmon", unit="um")
+    trconnect_w=Float(0.5e-6).tag(desc="connection length of transmon", unit="um")
+    trc_wbox=Float(14.0e-6).tag(desc="width of transmon box", unit="um")
+    trc_hbox=Float(14.0e-6).tag(desc="height of transmon box", unit="um")
+    o=Float(0.5e-6).tag(unit="um",
+                    desc="gap between electrode and end of finger. The vertical offset of the fingers. Setting this to zero produces a shorted reflector")
+    hbox=Float(20.0e-6).tag(desc="height of electrode box", unit="um")
+    wbox=Float(0.0e-6).tag(unit="um", desc="width of electrode box. Setting to 0.0 (default) makes it autoscaling so it matches the width of the IDT")
 
-    idt_tooth=Float(0.3).tag(desc="tooth size on CPW connection to aid contact")
+    idt_tooth=Float(0.3e-6).tag(unit="um", desc="tooth size on CPW connection to aid contact")
     
     idt_type=Enum("basic", "stepped").tag(desc="basic is a regular IDT, stepped uses stepped fingers for harmonic suppression and angle shows how a double angle evaporation would look",
                                                     mapping={"basic":0, "angle": 0,"stepped": 1})
     qdt_type=Enum("IDT", "QDT")
     
     
-    conn_h=Float(65.0)
+    conn_h=Float(65.0e-6).tag(unit="um")
     add_gate=Bool(True)
     add_gnd=Bool(True)
     add_teeth=Bool(True)
@@ -40,7 +41,7 @@ class EBL_IDT(EBL_Item, IDT):
 
     
     def _default_main_params(self):
-        mp=["idt_type", "qdt_type", "finger_type",
+        mp=["idt_type", "qdt_type", "ft",
             "add_gate", "add_gnd", "add_teeth", "angle_x", "angle_y", "step_num",
             "Np", "a", "g", "W", "o","f0", "eta", "ef", "wbox", "hbox", "material",
             "trconnect_x", "trconnect_y", "trconnect_w", "trc_wbox", "trc_hbox",
@@ -49,7 +50,7 @@ class EBL_IDT(EBL_Item, IDT):
     
     @property    
     def mult(self):
-        return self.get_map("finger_type")
+        return self.get_map("ft")
     @property        
     def m(self):
         return self.get_map("idt_type") 
@@ -78,7 +79,7 @@ class EBL_IDT(EBL_Item, IDT):
                 self._qubitgnd()
 
     def _subfingrect(self, xt, yt, wt, ht, m):
-        if self.finger_type=="double":
+        if self.ft=="double":
             self.C(xt-(self.a+self.g)/2.0, yt, wt, ht)
             self.C(xt+(self.a+self.g)/2.0, yt, wt, ht)
         else:
@@ -96,7 +97,7 @@ class EBL_IDT(EBL_Item, IDT):
                 self._fingrect(xt+self.a*(1.0-1.0/self.step_num), yt+self.W/2.0, wt, self.o)
             self._subfingrect(xt, -self.W/2.0*(1.0-1.0/self.step_num), wt, self.W/self.step_num, self.step_num)
         else:
-            if self.finger_type=="double":
+            if self.ft=="double":
                 self.C(xt-(self.a+self.g)/2.0, yt, wt, ht)
                 self.C(xt+(self.a+self.g)/2.0, yt, wt, ht)
             else:
@@ -191,7 +192,7 @@ if __name__=="__main__":
         pass
     a.boss.run=runtemp
     a.boss.run_measurement()
-    #a.finger_type="single"
+    #a.ft="single"
     a.qdt_type="QDT"
     a.add_gate=False
     a.add_gnd=False

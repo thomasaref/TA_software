@@ -16,16 +16,20 @@ class EBL_Combiner(EBL_Item):
     sqd=Typed(EBL_SQUID)   
     
     def _default_idt(self):
-        return EBL_IDT(name="IDT", main_params=["theta", "x_center", "y_center", "idt_type", "qdt_type", "finger_type",
+        idt=EBL_IDT(name="IDT", main_params=["theta", "x_center", "y_center", "idt_type", "qdt_type", "ft",
             "add_gate", "add_gnd", "add_teeth", "step_num",
             "Np", "a", "g", "W", "o","f0", "eta", "ef", "wbox", "hbox", "material",
             "trconnect_x", "trconnect_y", "trconnect_w", "trc_wbox", "trc_hbox",
             "conn_h",  "idt_tooth", "v", "Dvv", "epsinf", "Ct", "p"])
+        idt.qdt_type="QDT"
+        return idt
         
     def _default_sqd(self):
-        return EBL_SQUID(name="SQUID", y_center=-20,
+        sqd=EBL_SQUID(name="SQUID",
               main_params=["theta", "x_center", "y_center", "squid_type",
                "width", "height", "wb", "box_height", "w", "h", "gap", "finger_gap"])
+        sqd.y_center=-20.0
+        return sqd
         
     subitems=Enum("idt", "sqd")
 

@@ -326,6 +326,7 @@ class Base(Atom):
        if self.get_tag(name, 'log', True):
            label=self.get_tag(name, 'label', name)
            unit=self.get_tag(name, 'unit', "")
+           
            if self.get_type(name)==ContainerList:
                log_info("Set {instr} {label} to {length} list {unit}".format(
                    instr=self.name, label=label, length=shape(getattr(self, name)), unit=unit))
@@ -342,6 +343,15 @@ class Base(Atom):
                log_info("Set {instr} {label}".format(instr=self.name, label=label))
            elif self.get_type(name)==Str:
                log_info("Set {instr} {label} to {length} string".format(instr=self.name, label=label, length=len(value)))
+           elif self.get_type(name) in (Float, FloatRange):
+               unit_factor=self.get_tag(name, 'unit_factor', 1.0)
+               log_info("Set {instr} {label} to {value} {unit}".format(
+                                 instr=self.name, label=label, value=value/unit_factor, unit=unit))
+           elif self.get_type(name) in (Int, Range):
+               unit_factor=self.get_tag(name, 'unit_factor', 1)
+               log_info("Set {instr} {label} to {value} {unit}".format(
+                                 instr=self.name, label=label, value=value/unit_factor, unit=unit))
+               
            else:
                log_info("Set {instr} {label} to {value} {unit}".format(
                                  instr=self.name, label=label, value=value, unit=unit))
@@ -356,6 +366,10 @@ class Base(Atom):
         if name in self.all_params:
             self.set_log( name, value)
 
+    @property
+    def unit_dict(self):
+        return {"u" : 1.0e-6, "G" : 1.0e9}
+
     def __init__(self, **kwargs):
         """extends __init__ to set boss and add instrument to boss's instrument list.
         Also adds observers for ContainerList parameters so if item in list is changed via some list function other than setattr, notification is still given.
@@ -364,6 +378,7 @@ class Base(Atom):
         if "name" not in kwargs:
             self.name= "{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.boss.bases))
         self.boss.bases.append(self)
+            
         for key in self.all_params:
             typer=self.get_type(key)
             if typer==ContainerList:
@@ -374,6 +389,12 @@ class Base(Atom):
                     setattr(self, key, func_log(func, self))
             elif typer in [Range, FloatRange]:
                 self.set_tag(key, low=self.get_member(key).validate_mode[1][0], high=self.get_member(key).validate_mode[1][1])
+            elif typer in [Range, FloatRange, Int, Float]:
+                if self.get_tag(key, "unit", False) and self.get_tag(key, "unit_factor", True):
+                    unit=self.get_tag(key, "unit", "")[0]
+                    if unit in self.unit_dict:
+                        self.set_tag(key, unit_factor=self.unit_dict[unit])
+#                setattr(self, key, getattr(self, key)*self.get_tag(key, "unit_factor", 1.0))
             elif typer==Enum:
                 items=self.get_member(key).items
                 mapping=self.get_tag(key, 'mapping')
