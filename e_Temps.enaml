@@ -243,24 +243,7 @@ def deffltconv(instr, name):
         return unicode(mult*value)
     return fltconv
 
-from enaml.validator import RegexValidator, IntValidator, FloatValidator
-#from enaml.widgets.field import Field
-
-enamldef myFloatField(Field):
-    """ A Field that only accept floating point values.
-
-    """
-    attr minimum = None
-    attr maximum = None
-    attr unit_factor = 1.0
-    attr allow_exponent : bool = True
-    attr value : float = 0.0
-    attr converter = unicode
-    text << converter(value/unit_factor)
-    text :: self.value = float(text)*unit_factor
-    validator << FloatValidator(
-        minimum=minimum, maximum=maximum, allow_exponent=allow_exponent
-    )    
+   
 template TypedView(base, name, baseType: Float):
     """specialization for Float members"""
     myFloatField:

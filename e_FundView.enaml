@@ -6,16 +6,72 @@ Created on Mon Jun 29 16:12:32 2015
 """
 
 from enaml.widgets.api import  Field, PushButton, Container, SpinBox
-from enaml.stdlib.fields import FloatField, IntField
-from Atom_Base import get_tag
+#from enaml.stdlib.fields import FloatField, IntField
+#from Atom_Base import get_tag
 
-enamldef IntSpinBox(Container):
-    attr instr1
-    attr name1
-    padding=0
-    SpinBox:
-        value := getattr(instr1, name1)
-        minimum=int(get_tag(instr1, name1, 'low', -2147483648))
-        maximum=int(get_tag(instr1, name1, 'high', 2147483647))
+#enamldef IntSpinBox(Container):
+#    attr instr1
+#    attr name1
+#    padding=0
+#    SpinBox:
+#        value := getattr(instr1, name1)
+#        minimum=int(get_tag(instr1, name1, 'low', -2147483648))#
+#        maximum=int(get_tag(instr1, name1, 'high', 2147483647))
 
 
+from enaml.validator import IntValidator, FloatValidator
+from enaml.widgets.field import Field
+from enaml.stdlib.fields import _int_converters
+
+enamldef UnitIntField(Field):
+    """ A field that only accept integer inputs.
+
+    """
+    attr minimum = None
+    attr maximum = None
+    attr base = 10
+    attr value : int = 0
+    attr converter << _int_converters.get(base, unicode)
+    attr unit_factor : int = 1
+    text << converter(value/unit_factor)
+    text :: self.value = int(text, base)*unit_factor
+    validator << IntValidator(base=base, minimum=minimum, maximum=maximum)
+    
+enamldef UnitFloatField(Field):
+    """ A Field that only accept floating point values and performs optional unit conversion using unit_factor
+
+    """
+    attr minimum = None
+    attr maximum = None
+    attr unit_factor : float = 1.0
+    attr allow_exponent : bool = True
+    attr value : float = 0.0
+    attr converter = unicode
+    text << converter(value/unit_factor)
+    text :: self.value = float(text)*unit_factor
+    validator << FloatValidator(
+        minimum=minimum, maximum=maximum, allow_exponent=allow_exponent
+    ) 
+
+###################test code########################
+from enaml.widgets.api import Form, Window, Label
+
+enamldef Main(Window):
+    Form:
+        Label:
+            text = "UnitFloatField"
+        UnitFloatField: uff:
+            unit_factor=10.0
+        Label:
+            text = "Actual value"
+        Label:
+            text << unicode(uff.value)
+        Label:
+                text = "UnitIntField"
+        UnitIntField: iff:
+                unit_factor=10
+        Label:
+            text = "Actual value:"
+        Label:
+            text << unicode(iff.value)
+        

@@ -5,7 +5,7 @@ Created on Sun Jun 28 23:15:33 2015
 @author: thomasaref
 """
 
-from atom.api import Atom, Float, Coerced, Enum, Typed, List
+from atom.api import Atom, Float, Coerced, Enum, Typed#, List
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
 from a_Base import get_type, get_main_params,  Base
@@ -13,12 +13,51 @@ from a_Boss import show
 from threading import Thread
 from time import sleep
 
-from atom.api import Atom, Bool, Int, Callable, ContainerList
+from atom.api import Atom, Bool, Int, Callable#, ContainerList
 
 from enaml.application import deferred_call
 from enaml.widgets.api import Window, Container, ProgressBar, PushButton, Field
 
 #print BaseView#(instr, type(instr))
+
+from enaml.validator import IntValidator, FloatValidator
+
+iv=IntValidator(minimum=2, maximum=10)
+print iv.validate(str(5))
+print iv.validate(str(11))
+
+#print assert a==1
+
+from numpy import array, ndarray
+print type(array)
+print type(array([1,2]))
+
+#from atom.api import Validate
+#from .list import List
+
+
+#class ContainerList(List):
+#    """ A List member which supports container notifications.
+#    """
+#    __slots__ = ()
+#
+#    def __init__(self, item=None, default=None):
+#        """ Initialize a ContainerList.
+#        """
+#        super(ContainerList, self).__init__(item, default)
+#        self.set_validate_mode(Validate.ContainerList, self.item)
+        
+class TA(Atom):
+    a=Coerced(int) #ndarray, args=([]), kwargs=dict(shape=(1,)), coercer=array)
+ 
+    def _validate_a(self, old, new):
+        assert isinstance(new, int)
+        return new
+t=TA()
+print type(t.a)
+print t.a
+t.a=array([1,2,3])
+print t.a, type(t.a)
 
 def myfunc(model, b=2):
     #model.busy=True
@@ -88,7 +127,7 @@ print type(a.get_member("cc"))
 print len(a.g)
 b=T()
 #print a.get_map("g", 0)#print a.get_member('g').item
-a.show()
+#a.show()
 print a.g
 #b=T()
 print [bb.name for bb in b.boss.bases]
