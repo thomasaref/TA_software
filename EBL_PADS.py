@@ -6,9 +6,11 @@ Created on Mon Dec  8 10:19:24 2014
 """
 
 #from EBLPolygon import EBLRectangle, EBLPolygon
-from atom.api import Atom, Float, Enum, Unicode, Int
+from atom.api import Float, Enum, Unicode, Int, Property, Typed
 from EBL_Item import EBL_Item
-
+from EBL_Combiner import EBL_Combiner
+    
+    
 class EBL_test_pads(EBL_Item):
     contact_width=Float(125.0).tag(unit="um", desc="width of contact")
     contact_height=Float(170.0).tag(unit="um", desc="height of contact")
@@ -66,16 +68,34 @@ class EBL_mark_box(EBL_Item):
     xbox=Float(2400.0).tag(unit="um", desc="real x edge of chip") #self.chip_width/2.0-self.blade_width/2.0 #set width of from center of pattern
     ybox=Float(2400.0).tag(unit="um", desc="real y edge of chip") #self.chip_height/2.0-self.blade_width/2.0 #set height from center of pattern
 
-    mark_box_width=Float(2400.0-750.0).tag(unit="um", desc="width of mark box")
-    mark_box_height=Float(1400.0).tag(unit="um", desc="height of mark box")
-    def make_polylist(self):
-        self._mark_box_TL()
-        #self._mark_box_TR()
-        #self._mark_box_BL()
-        #self._mark_box_BR()
+    mark_box_width=Float(1800.0).tag(unit="um", desc="width of mark box")
+    mark_box_height=Float(1800.0).tag(unit="um", desc="height of mark box")
 
-    def _mark_box_TL(self):
-        self.P([(-self.mark_box_width/2.0, self.mark_box_height/2.0),
+    mark_box_type=Enum("marklabel_box_TL", "mark_box_TL", "mark_box_TR", "mark_box_BL", "mark_box_BR")
+
+    def _default_x_center(self):
+        return -1500.0
+        
+    def _default_y_center(self):
+        return 1500.0
+        
+    #@Property
+    #def mark_box_width(self):
+    #    return abs(self.xbox)-abs(self.x_center)
+
+    #@Property
+    #def mark_box_height(self):
+    #    return abs(self.ybox)-abs(self.y_center)
+        
+    def make_polylist(self):
+        self.get_map("mark_box_type")()
+        
+    def marklabel_box_TL(self):
+        self.polys.extend(self._s_marklabel_box_TL)
+        
+    @property    
+    def _s_marklabel_box_TL(self):
+        return self.sP([(-self.mark_box_width/2.0, self.mark_box_height/2.0),
                    (self.mark_box_width/2.0, self.mark_box_height/2.0),
                    (self.mark_box_width/2.0, -self.mark_box_height/2.0),
                    (self.M1_size/2.0, -self.mark_box_height/2.0),
@@ -86,70 +106,85 @@ class EBL_mark_box(EBL_Item):
                    (-self.lbl_width/2.0, self.M1_size/2.0),
                    (-self.M1_size/2.0, self.M1_size/2.0),
                    (-self.M1_size/2.0, -self.mark_box_height/2.0),
-                   (-self.mark_box_x/2.0, -self.mark_box_height/2.0)])
-        self.P([(-self.M1_x+self.M1_size/2.0, self.mark_box_y),
-                   (-self.M1_x+self.M1_size/2.0, self.M1_y-self.M1_size/2.0),
-                   (-self.M1_x-self.M1_size/2.0, self.M1_y-self.M1_size/2.0),
-                   (-self.M1_x-self.M1_size/2.0, self.mark_box_y)])
+                   (-self.mark_box_width/2.0, -self.mark_box_height/2.0)])
+        #polyer.P([(self.M1_size/2.0, -self.mark_box_height/2.0),
+        #           (self.M1_size/2.0, -self.M1_size/2.0),
+        #           (-self.M1_size/2.0, -self.M1_size/2.0),
+        #           (-self.M1_size/2.0, -self.mark_box_height/2.0)])
+        #return polyer
+
+    def mark_box_TL(self):
+        self.polys.extend(self._s_mark_box_TL)
+        
+    @property
+    def _s_mark_box_TL(self):
+        return self.sP([(-self.mark_box_width/2.0, self.mark_box_height/2.0),
+                   (self.mark_box_width/2.0, self.mark_box_height/2.0),
+                   (self.mark_box_width/2.0, -self.mark_box_height/2.0),
+                   (self.M1_size/2.0, -self.mark_box_height/2.0),
+                   (self.M1_size/2.0, self.M1_size/2.0),
+                   (-self.M1_size/2.0, self.M1_size/2.0),
+                   (-self.M1_size/2.0, -self.mark_box_height/2.0),
+                   (-self.mark_box_width/2.0, -self.mark_box_height/2.0)])
+        #polyer2.P([(self.M1_size/2.0, -self.mark_box_height/2.0),
+        #           (self.M1_size/2.0, -self.M1_size/2.0),
+        #           (-self.M1_size/2.0, -self.M1_size/2.0),
+        #           (-self.M1_size/2.0, -self.mark_box_height/2.0)])
+        #return polyer2
 
     def mark_box_BL(self):
-        #self.poly([(-self.xbox, -self.ybox), (self.mark_box_x, -self.ybox),
-        #           (self.mark_box_x, -self.mark_box_y), (-self.xbox, -self.mark_box_y)])
-        M1_x=1500.0
-        M1_y=1500.0
-        M1_size=500.0
-        self.poly([(-self.xbox, -self.ybox),
-                   (self.mark_box_x, -self.ybox),
-                   (self.mark_box_x, -self.mark_box_y),
-                   (-M1_x+M1_size/2.0, -self.mark_box_y),
-                   (-M1_x+M1_size/2.0, -M1_y-M1_size/2.0-160.0),
-                   (-M1_x-M1_size/2.0, -M1_y-M1_size/2.0-160.0),
-                   (-M1_x-M1_size/2.0, -self.mark_box_y),
-                   (-self.xbox, -self.mark_box_y)])
-        self.poly([(-M1_x+M1_size/2.0, -self.mark_box_y),
-                   (-M1_x+M1_size/2.0, -M1_y+M1_size/2.0),
-                   (-M1_x-M1_size/2.0, -M1_y+M1_size/2.0),
-                   (-M1_x-M1_size/2.0, -self.mark_box_y)])
-
-    def mark_box_BR(self):
-        #self.poly([(self.xbox, -self.ybox), (-self.mark_box_x, -self.ybox),
-        #           (-self.mark_box_x, -self.mark_box_y), (self.xbox, -self.mark_box_y)])
-        M1_x=1500.0
-        M1_y=1500.0
-        M1_size=500.0
-        self.poly([(self.xbox, -self.ybox),
-                   (-self.mark_box_x, -self.ybox),
-                   (-self.mark_box_x, -self.mark_box_y),
-                   (M1_x-M1_size/2.0, -self.mark_box_y),
-                   (M1_x-M1_size/2.0, -(M1_y+M1_size/2.0)),
-                   (M1_x+M1_size/2.0, -M1_y-M1_size/2.0),
-                   (M1_x+M1_size/2.0, -self.mark_box_y),
-                   (self.xbox, -self.mark_box_y)])
-        self.poly([(M1_x-M1_size/2.0, -self.mark_box_y),
-                   (M1_x-M1_size/2.0, -M1_y+M1_size/2.0),
-                   (M1_x+M1_size/2.0, -M1_y+M1_size/2.0),
-                   (M1_x+M1_size/2.0, -self.mark_box_y)])
-
+        polyer=self._s_mark_box_TL
+        polyer.vert_refl()
+        self.polys.extend(polyer)
+        
     def mark_box_TR(self):
-        #self.poly([(self.xbox, self.ybox), (-self.mark_box_x, self.ybox),
-        #           (-self.mark_box_x, self.mark_box_y), (self.xbox, self.mark_box_y)])
-        M1_x=1500.0
-        M1_y=1500.0
-        M1_size=500.0
-        self.poly([(self.xbox, self.ybox),
-                   (-self.mark_box_x, self.ybox),
-                   (-self.mark_box_x, self.mark_box_y),
-                   (M1_x-M1_size/2.0, self.mark_box_y),
-                   (M1_x-M1_size/2.0, M1_y+M1_size/2.0),
-                   (M1_x+M1_size/2.0, M1_y+M1_size/2.0),
-                   (M1_x+M1_size/2.0, self.mark_box_y),
-                   (self.xbox, self.mark_box_y)])
-        self.poly([(M1_x-M1_size/2.0, self.mark_box_y),
-                   (M1_x-M1_size/2.0, M1_y-M1_size/2.0),
-                   (M1_x+M1_size/2.0, M1_y-M1_size/2.0),
-                   (M1_x+M1_size/2.0, self.mark_box_y)])
+        polyer=self._s_mark_box_TL
+        polyer.horiz_refl()
+        self.polys.extend(polyer)
+        
+    def mark_box_BR(self):
+        polyer=self._s_mark_box_TL
+        polyer.horiz_refl()
+        polyer.vert_refl()
+        self.polys.extend(polyer)
 
+class EBL_PADSALL(EBL_Combiner):
+    BL_testpad=Typed(EBL_test_pads)
+    BR_testpad=Typed(EBL_test_pads)
+    
+    TL_mark_box=Typed(EBL_mark_box)
+    TR_mark_box=Typed(EBL_mark_box)
+    BL_mark_box=Typed(EBL_mark_box)
+    BR_mark_box=Typed(EBL_mark_box)
 
+    def _default_TL_mark_box(self):
+        ebm=EBL_mark_box(name="TL_mark_box", x_center=-1500, y_center=1500)
+        ebm.mark_box_type="marklabel_box_TL"
+        return ebm
+
+    def _default_BL_mark_box(self):
+        ebm2=EBL_mark_box(name="BL_mark_box")
+        ebm2.x_center=-1500
+        ebm2.y_center=-1500
+        ebm2.mark_box_type="mark_box_BL"
+        return ebm2
+
+    def _default_BR_mark_box(self):
+        return EBL_mark_box(name="BR_mark_box", mark_box_type="mark_box_BR", x_center=1500, y_center=-1500)
+
+    def _default_TR_mark_box(self):
+        return EBL_mark_box(name="TR_mark_box", mark_box_type="mark_box_TR", x_center=1500, y_center=1500)
+        
+    def _default_BL_testpad(self):
+        return EBL_test_pads(name="BL_testpad", x_center=-500.0, y_center=-1500.0)
+
+    def _default_BR_testpad(self):
+        return EBL_test_pads(name="BR_testpad", x_center=500.0, y_center=-1500.0)
+        
+    subitems=Enum("BL_testpad", "BR_testpad",  "BL_mark_box", "TL_mark_box")#, "BL_mark_box", "BR_mark_box")
+
+class EBL_IDT_connect(EBL_Item):
+    pass    
 class EBL_PADS(EBL_Item):
     #testpad_BL=Typed(EBL_test_pads, kwargs=dict(x_center=-500.0, y_center=-1500.0))
     #testpad_BR=Typed(EBL_test_pads, kwargs=dict(x_center=500.0, y_center=-1500.0))
@@ -191,7 +226,7 @@ class EBL_PADS(EBL_Item):
     cpw_stop_y_t=Float() #self.y_center+self.w/2+self.gap
     cpw_stop_y_b=Float() #self.y_center-self.w/2-self.gap
     test_w=Float(500.0)
-
+    
     #@property
     #def pad_type_mapped(self):
     #    return self.get_map("pad_type")
@@ -227,8 +262,6 @@ class EBL_PADS(EBL_Item):
         self.test()
         self.test()
         self.test_strip()
-
-
 
     def testpads(self):
         self.contact_width=125.0
@@ -287,85 +320,7 @@ class EBL_PADS(EBL_Item):
                   (self.x_center+self.gndplane_big_gap/2.0, self.y_center-self.w/2.0-self.gap)])
 
 
-    def mark_box_TL(self):
-        M1_x=1500.0
-        M1_y=1500.0
-        M1_size=500.0
-        lbl_height=500.0
-        lbl_width=1100.0
-        self.poly([(-self.xbox, self.ybox),
-                   (self.mark_box_x, self.ybox),
-                   (self.mark_box_x, self.mark_box_y),
-                   (-M1_x+M1_size/2.0, self.mark_box_y),
-                   (-M1_x+M1_size/2.0, M1_y+M1_size/2.0),
-                   (-M1_x+lbl_width/2.0, M1_y+M1_size/2.0),
-                   (-M1_x+lbl_width/2.0, M1_y+M1_size/2.0+lbl_height),
-                   (-M1_x-lbl_width/2.0, M1_y+M1_size/2.0+lbl_height),
-                   (-M1_x-lbl_width/2.0, M1_y+M1_size/2.0),
-                   (-M1_x-M1_size/2.0, M1_y+M1_size/2.0),
-                   (-M1_x-M1_size/2.0, self.mark_box_y),
-                   (-self.xbox, self.mark_box_y)])
-        self.poly([(-M1_x+M1_size/2.0, self.mark_box_y),
-                   (-M1_x+M1_size/2.0, M1_y-M1_size/2.0),
-                   (-M1_x-M1_size/2.0, M1_y-M1_size/2.0),
-                   (-M1_x-M1_size/2.0, self.mark_box_y)])
 
-    def mark_box_BL(self):
-        #self.poly([(-self.xbox, -self.ybox), (self.mark_box_x, -self.ybox),
-        #           (self.mark_box_x, -self.mark_box_y), (-self.xbox, -self.mark_box_y)])
-        M1_x=1500.0
-        M1_y=1500.0
-        M1_size=500.0
-        self.poly([(-self.xbox, -self.ybox),
-                   (self.mark_box_x, -self.ybox),
-                   (self.mark_box_x, -self.mark_box_y),
-                   (-M1_x+M1_size/2.0, -self.mark_box_y),
-                   (-M1_x+M1_size/2.0, -M1_y-M1_size/2.0-160.0),
-                   (-M1_x-M1_size/2.0, -M1_y-M1_size/2.0-160.0),
-                   (-M1_x-M1_size/2.0, -self.mark_box_y),
-                   (-self.xbox, -self.mark_box_y)])
-        self.poly([(-M1_x+M1_size/2.0, -self.mark_box_y),
-                   (-M1_x+M1_size/2.0, -M1_y+M1_size/2.0),
-                   (-M1_x-M1_size/2.0, -M1_y+M1_size/2.0),
-                   (-M1_x-M1_size/2.0, -self.mark_box_y)])
-
-    def mark_box_BR(self):
-        #self.poly([(self.xbox, -self.ybox), (-self.mark_box_x, -self.ybox),
-        #           (-self.mark_box_x, -self.mark_box_y), (self.xbox, -self.mark_box_y)])
-        M1_x=1500.0
-        M1_y=1500.0
-        M1_size=500.0
-        self.poly([(self.xbox, -self.ybox),
-                   (-self.mark_box_x, -self.ybox),
-                   (-self.mark_box_x, -self.mark_box_y),
-                   (M1_x-M1_size/2.0, -self.mark_box_y),
-                   (M1_x-M1_size/2.0, -(M1_y+M1_size/2.0)),
-                   (M1_x+M1_size/2.0, -M1_y-M1_size/2.0),
-                   (M1_x+M1_size/2.0, -self.mark_box_y),
-                   (self.xbox, -self.mark_box_y)])
-        self.poly([(M1_x-M1_size/2.0, -self.mark_box_y),
-                   (M1_x-M1_size/2.0, -M1_y+M1_size/2.0),
-                   (M1_x+M1_size/2.0, -M1_y+M1_size/2.0),
-                   (M1_x+M1_size/2.0, -self.mark_box_y)])
-
-    def mark_box_TR(self):
-        #self.poly([(self.xbox, self.ybox), (-self.mark_box_x, self.ybox),
-        #           (-self.mark_box_x, self.mark_box_y), (self.xbox, self.mark_box_y)])
-        M1_x=1500.0
-        M1_y=1500.0
-        M1_size=500.0
-        self.poly([(self.xbox, self.ybox),
-                   (-self.mark_box_x, self.ybox),
-                   (-self.mark_box_x, self.mark_box_y),
-                   (M1_x-M1_size/2.0, self.mark_box_y),
-                   (M1_x-M1_size/2.0, M1_y+M1_size/2.0),
-                   (M1_x+M1_size/2.0, M1_y+M1_size/2.0),
-                   (M1_x+M1_size/2.0, self.mark_box_y),
-                   (self.xbox, self.mark_box_y)])
-        self.poly([(M1_x-M1_size/2.0, self.mark_box_y),
-                   (M1_x-M1_size/2.0, M1_y-M1_size/2.0),
-                   (M1_x+M1_size/2.0, M1_y-M1_size/2.0),
-                   (M1_x+M1_size/2.0, self.mark_box_y)])
 
     def cpw_T(self):
         self.cpw_T_strip()
@@ -519,5 +474,6 @@ class EBL_PADS(EBL_Item):
 
 if __name__=="__main__":
     #a=EBL_test_pads(name="EBL_Item_test")
-    a=EBL_mark_box(name="EBL_Item_test")
+#    a=EBL_mark_box(name="EBL_Item_test")
+    a=EBL_PADSALL(name="EBL_Item_test")
     a.show()

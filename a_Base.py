@@ -401,9 +401,14 @@ class Base(Atom):
                 map_type=self.get_tag(key, 'map_type')
                 if mapping is None:
                     try:
+                    
+                        log_debug(items)
+                        log_debug([hasattr(self, item) for item in items])
+                        log_debug([getattr(self, item) for item in items])
                         map_type="attribute"
                         mapping=dict(zip(items, [getattr(self, item) for item in items]))
-                    except (AttributeError, TypeError):
+                    except (AttributeError, TypeError) as e:
+                        print e
                         map_type="default"
                         mapping=dict(zip(items, items))
                 elif isinstance(mapping, basestring): #define a mapping as a property

@@ -7,11 +7,11 @@ Created on Sun Jun 28 20:12:11 2015
 
 from EBL_IDT import EBL_IDT
 from EBL_SQUID import EBL_SQUID
-from EBL_Item import EBL_Item
+from EBL_Combiner import EBL_Combiner
 
-from atom.api import Typed, Enum, Callable
+from atom.api import Typed, Enum
 
-class EBL_Combiner(EBL_Item):
+class IDT_SQUID(EBL_Combiner):
     idt=Typed(EBL_IDT)
     sqd=Typed(EBL_SQUID)   
     
@@ -32,19 +32,6 @@ class EBL_Combiner(EBL_Item):
         return sqd
         
     subitems=Enum("idt", "sqd")
-
-    def make_polylist(self):
-        for item in self.get_member("subitems").items:
-            subitem=self.get_map("subitems", item)
-            subitem.predraw()            
-            #subitem.polys.polylist=[]
-            #subitem.make_polylist()
-            #subitem.rotate()
-            #subitem.polys.offset_verts(subitem.x_center, subitem.y_center)
-            self.polys.extend(subitem.polys)
-            
-    def _default_main_params(self):
-        return ["plot", "view_type", "offset_verts", "rotate", "horiz_refl", "vert_refl", "clear_polylist"]
             
 a=EBL_Combiner(name="EBL_Item_test")            
 #a.plot(a)

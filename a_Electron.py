@@ -21,7 +21,8 @@ def members(obj):
     return dict([mem for mem in getmembers(obj) if mem[0][0]!="_"])
 
 def get_metadata(obj, name):
-    """returns the metadata of a member if it exists and generates an appropriately indexed empty dictionary if it does not"""
+    """returns the metadata of a member if it exists and generates 
+    an appropriately indexed empty dictionary if it does not"""
     member=get_member(obj, name)
     if hasattr(member, "metadata"):
         return member.metadata
@@ -51,8 +52,6 @@ def set_all_tags(obj, **kwargs):
 
 def get_tag(obj, name, key, none_value=None):
     """returns the tag key of a member name an returns none_value if it does not exist"""
-    if hasattr(obj, "get_tag"):
-        return obj.get_tag(name, key, none_value)
     metadata=get_metadata(obj, name)
     return metadata.get(key, none_value)
 
@@ -77,6 +76,34 @@ def get_type(obj, name):
     #     typer=type(getattr(obj, name)) #typer=get_member.validate_mode[1][1]
     return get_tag(obj, name, "typer", typer)
 
+def get_boss(obj):
+    """link to boss of object and uses base boss if none exists"""
+    if hasattr(obj, "boss"):
+        return obj.boss
+    return boss
+    
+def get_abort(obj):
+    """shortcut to boss' abort if boss exists and default if not"""
+    if hasattr(obj, "boss"):
+        return obj.boss.abort
+    return get_boss(obj).abort
+
+def get_reserved_names(obj):
+    """reserved names not to perform standard logging and display operations on,
+           i.e. members that are tagged as private and will behave as usual Atom members"""
+    return get_all_tags(obj, "private", True)    
+
+def get_all_main_params(obj):
+    """all members in all_params that are not tagged as sub.
+     Convenience function for more easily custom defining main_params in child classes"""
+    return get_all_tags(obj, 'sub', False, False, get_all_params(obj))
+
+def get_main_params(obj):
+    """returns main_params if it exists and all possible main params if it does not"""
+    if hasattr(obj, "main_params"):
+        return obj.main_params
+    return get_all_main_params(obj)
+
 def list_recursion(mylist, index=0):
     """a test of list recursion"""
     item=mylist[index]
@@ -97,6 +124,8 @@ def updater(fn):
             myfunc.callblock=""
     return myfunc
 
+from a_Boss import boss
+
 class Electron(Atom):
     name=Unicode().tag(private=True)
     desc=Unicode().tag(private=True)
@@ -104,47 +133,42 @@ class Electron(Atom):
     plot_all=Bool(False).tag(private=True)
     view=Enum("Auto").tag(private=True)
     main_params=List().tag(private=True)
-#
-#    @property
-#    def abort(self):
-#        """shortcut to boss' abort control"""
-#        return self.boss.abort
-#
-#    @property
-#    def boss(self):
-#        """returns boss singleton instance. can be overwritten in subclasses to change boss"""
-#        boss.make_boss()
-#        return boss
-#
+
+    @property
+    def abort(self):
+        """shortcut to boss' abort control"""
+        return self.boss.abort
+
+    @property
+    def boss(self):
+        """returns boss singleton instance. can be overwritten in subclasses to change boss"""
+        return boss
+
     @property
     def base_name(self):
         """default base name of base if no name is given"""
         return "base"
-#
-#    @property
-#    def reserved_names(self):
-#        """reserved names not to perform standard logging and display operations on,
-#           i.e. members that are tagged as private and will behave as usual Atom members"""
-#        return self.get_all_tags("private", True)
+
+    @property
+    def reserved_names(self):
+        """reserved names not to perform standard logging and display operations on,
+           i.e. members that are tagged as private and will behave as usual Atom members"""
+        return get_reserved_names(self) #get_all_tags("private", True)
 
     @property
     def all_params(self):
         return get_all_params(self)
-#        """all members that are not tagged as private, i.e. not in reserved_names and will behave as Bases"""
-#        return self.get_all_tags("private", False, False)
-#
-#    @property
-#    def all_main_params(self):
-#        """all members in all_params that are not tagged as sub.
-#        Convenience property for more easily custom defining main_params in child classes"""
-#        return self.get_all_tags('sub', False, False, self.all_params)
-#
-#    def _default_main_params(self):
-#        """defaults to all members in all_params that are not tagged as sub.
-#        Can be overwritten to allow some minimal custom layout control,
-#        e.g. order of presentation and which members are shown. Use self.all_main_params to get a list of
-#        all members that could be in main_params"""
-#        return self.all_main_params
+
+    @property
+    def all_main_params(self):
+        return get_all_main_params(self)
+
+    def _default_main_params(self):
+        """defaults to all members in all_params that are not tagged as sub.
+        Can be overwritten to allow some minimal custom layout control,
+        e.g. order of presentation and which members are shown. Use self.all_main_params to get a list of
+        all members that could be in main_params"""
+        return self.all_main_params
 #
 #    def copy(self):
 #        tempbase=type(self)()
@@ -204,15 +228,15 @@ class Electron(Atom):
 #                    run_params.remove(name)
 #            return run_params
 #
-#    def _observe_plot_all(self, change):
-#        """if instrument full_interface changes, change all full_interface tags of parameters"""
-#        if change['type']!='create':
-#            self.set_all_tags(plot=self.plot_all)
-#
-#    def _observe_full_interface(self, change):
-#        """if instrument full_interface changes, change all full_interface tags of parameters"""
-#        if change['type']!='create':
-#            self.set_all_tags(full_interface=self.full_interface)
+    def _observe_plot_all(self, change):
+        """if instrument plot_all changes, change all plot tags of parameters"""
+        if change['type']!='create':
+            set_all_tags(self, plot=self.plot_all)
+
+    def _observe_full_interface(self, change):
+        """if instrument full_interface changes, change all full_interface tags of parameters"""
+        if change['type']!='create':
+            self.set_all_tags(full_interface=self.full_interface)
 #
 #    def get_tag(self, name, key, none_value=None):
 #        """retrieves metadata associated with name if key is None.
@@ -340,52 +364,54 @@ class Electron(Atom):
 #        if name in self.all_params:
 #            self.set_log( name, value)
 #
-#    @property
-#    def unit_dict(self):
-#        return {"u" : 1.0e-6, "G" : 1.0e9}
-#
-#    def __init__(self, **kwargs):
-#        """extends __init__ to set boss and add instrument to boss's instrument list.
+    @property
+    def unit_dict(self):
+        return {"u" : 1.0e-6, "G" : 1.0e9}
+
+            
+    def log_changes(self, change):
+        self.set_log(change["name"], change["value"])
+        
+    def __init__(self, **kwargs):
+        """extends __init__ to set boss and add instrument to boss's instrument list.
 #        Also adds observers for ContainerList parameters so if item in list is changed via some list function other than setattr, notification is still given.
 #        Finally, sets all Callables to be log decorated if they weren't already."""
-#        super(Base, self).__init__(**kwargs)
-#        if "name" not in kwargs:
-#            self.name= "{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.boss.bases))
-#        self.boss.bases.append(self)
-#
-#        for key in self.all_params:
-#            typer=self.get_type(key)
-#            if typer==ContainerList:
-#                self.observe(key, self.value_changed)
-#            elif typer==Callable:
-#                func=getattr(self, key)
+        self.boss.make_boss()
+        super(Electron, self).__init__(**kwargs)
+        if "name" not in kwargs:
+            self.name= "{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.boss.bases))
+        self.boss.bases.append(self)
+        for key in self.all_params:
+            typer=self.get_type(key)
+            self.observe(key, self.log_changes)
+            if typer==Callable:
+                func=getattr(self, key)
 #                if isinstance(func, FunctionType):
 #                    setattr(self, key, func_log(func, self))
-#            elif typer in [Range, FloatRange]:
-#                self.set_tag(key, low=self.get_member(key).validate_mode[1][0], high=self.get_member(key).validate_mode[1][1])
-#            elif typer in [Range, FloatRange, Int, Float]:
-#                if self.get_tag(key, "unit", False) and self.get_tag(key, "unit_factor", True):
-#                    unit=self.get_tag(key, "unit", "")[0]
-#                    if unit in self.unit_dict:
-#                        self.set_tag(key, unit_factor=self.unit_dict[unit])
-##                setattr(self, key, getattr(self, key)*self.get_tag(key, "unit_factor", 1.0))
-#            elif typer==Enum:
-#                items=self.get_member(key).items
-#                mapping=self.get_tag(key, 'mapping')
-#                map_type=self.get_tag(key, 'map_type')
-#                if mapping is None:
-#                    try:
-#                        map_type="attribute"
-#                        mapping=dict(zip(items, [getattr(self, item) for item in items]))
-#                    except (AttributeError, TypeError):
-#                        map_type="default"
-#                        mapping=dict(zip(items, items))
-#                elif isinstance(mapping, basestring): #define a mapping as a property
-#                    map_type="property"
-#                    mapping=getattr(self, mapping)
-#                elif not isinstance(mapping, dict):
-#                    raise TypeError("mapping must be dict or str")
-#                self.set_tag(key, mapping=mapping, map_type=map_type)
+            elif typer in [Range, FloatRange]:
+                self.set_tag(key, low=self.get_member(key).validate_mode[1][0], high=self.get_member(key).validate_mode[1][1])
+            elif typer in [Int, Float]:
+                if self.get_tag(key, "unit", False) and self.get_tag(key, "unit_factor", True):
+                    unit=self.get_tag(key, "unit", "")[0]
+                    if unit in self.unit_dict:
+                        self.set_tag(key, unit_factor=self.unit_dict[unit])
+            elif typer==Enum:
+                items=self.get_member(key).items
+                mapping=self.get_tag(key, 'mapping')
+                map_type=self.get_tag(key, 'map_type')
+                if mapping is None:
+                    try:
+                        map_type="attribute"
+                        mapping=dict(zip(items, [getattr(self, item) for item in items]))
+                    except (AttributeError, TypeError):
+                        map_type="default"
+                        mapping=dict(zip(items, items))
+                elif isinstance(mapping, basestring): #define a mapping as a property
+                    map_type="property"
+                    mapping=getattr(self, mapping)
+                elif not isinstance(mapping, dict):
+                    raise TypeError("mapping must be dict or str")
+                self.set_tag(key, mapping=mapping, map_type=map_type)
 #
 #    def value_changed(self, change):
 #        """observer for ContainerLists to handle updates not covered by setattr"""
