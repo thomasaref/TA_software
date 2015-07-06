@@ -26,7 +26,7 @@ from LOG_functions import log_debug
 #from e_Instrument import BootClose
 from Atom_Instrument import Instrument
 from a_Base import get_tag, get_type, Base, get_main_params#, get_map
-from e_FundView import IntSpinBox
+#from e_FundView import IntSpinBox
 #########################################################
 #User Typed Specializations
 
@@ -45,7 +45,7 @@ template TypedView(base, name, baseType: Polyer):
     EBContWrap:
         polyer:=getattr(base, name)
 
-##########################################################        
+##########################################################
 #Variable Views, e.g. chooses between Base and Instrument
 def constraints_gen(base, name, lbl, val, unt, contents_width, contents_top, contents_left):
     """constraint generator for VarView Base, allows tagged width control"""
@@ -165,7 +165,7 @@ template ListView(base, name, baseType, Ind):
     Field:
         read_only = True
         text << unicode(getattr(base, name)[Ind])
-        
+
 
 template TypedView(instrin, name, baseType: Base):
     """specialization for type Base"""
@@ -214,7 +214,7 @@ template TypedView(Instr, Name, AttrType: Int):
     SpinBox:
         value := getattr(Instr, Name)
         minimum=int(get_tag(Instr, Name, 'low', -2147483648))
-        maximum=int(get_tag(Instr, Name, 'high', 2147483647))        
+        maximum=int(get_tag(Instr, Name, 'high', 2147483647))
 
 template TypedView(Instr, Name, AttrType: int):
     """a specialization for ints"""
@@ -225,7 +225,7 @@ template ListView(Instr, Name, AttrType: Int, Index):
     SpinBox:
         value := getattr(Instr, Name)[Index]
         minimum=int(get_tag(Instr, Name, 'low', -2147483648))
-        maximum=int(get_tag(Instr, Name, 'high', 2147483647))       
+        maximum=int(get_tag(Instr, Name, 'high', 2147483647))
 
 template ListView(Instr, Name, AttrType: int, Index):
     """A list specialization for ints"""
@@ -243,13 +243,13 @@ def deffltconv(instr, name):
         return unicode(mult*value)
     return fltconv
 
-   
+from e_FundView import UnitFloatField
 template TypedView(base, name, baseType: Float):
     """specialization for Float members"""
-    myFloatField:
+    UnitFloatField:
         unit_factor = get_tag(base, name, "unit_factor", 1.0)
         #text << converter(mult*value)
-        #text :: self.value = 1/mult*float(text)        
+        #text :: self.value = 1/mult*float(text)
         value :=  getattr(base, name)
         minimum=get_tag(base, name, 'low')
         maximum=get_tag(base, name, 'high')
@@ -396,7 +396,7 @@ template TypedView(instr, name, baseType: Callable):
             clicked ::
                 instr.boss.abort=True
             enabled <<  instr.boss.busy
-            
+
 template TypedView(instrin, name, baseType: Enum):
     """ A form control template specialization for Enum members using ObjectCombo."""
     Container:
@@ -409,13 +409,13 @@ template TypedView(instrin, name, baseType: Enum):
             padding = 0
             Conditional:
                 condition = get_tag(instrin, name, "map_type")=="attribute"
-                DynamicTemplate: 
+                DynamicTemplate:
                     base = VarView
                     args << (instrin, val.selected, get_type(instrin, val.selected))
-            Conditional: 
+            Conditional:
                 condition = get_tag(instrin, name, "map_type")!="attribute"
-                Label: 
-                    text <<  unicode(instrin.get_map(name, val.selected))                
+                Label:
+                    text <<  unicode(instrin.get_map(name, val.selected))
 
 template TypedView(instrin, name, baseType: ContainerList):
     Container: cc:
@@ -476,7 +476,7 @@ template ListView(Instr, Name, baseType: list, Index):
 
 template ListViewOFF(Instr, Name, baseType: ContainerList, Index):
     #when list is called the ListViews access only one deep, not two deep. Solve with recursion?
-    Container: 
+    Container:
         padding=0
         constraints = [hbox(ind, val, insert_btn, pop_btn), ind2.width==100]
         SpinBox: ind2:
@@ -494,7 +494,7 @@ template ListViewOFF(Instr, Name, baseType: ContainerList, Index):
                 if len(getattr(Instr, Name)[Index])==0:
                     #if inner_type is not specified for an empty array, this will generate an error
                     #only allows two layers of list for zero length list insert
-                    intype=get_tag(Instr, Name, 'inner_type')() 
+                    intype=get_tag(Instr, Name, 'inner_type')()
                 else:
                     temptype=getattr(Instr, Name)[Index][ind2.value]
                     if isinstance(temptype, Base):
