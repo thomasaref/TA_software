@@ -92,7 +92,6 @@ class EBL_Item(EBL_Base):
         self.draw()
         
     def draw(self):
-        print self.polys.get_verts()
         self.boss.plot.set_data(self.name, self.polys.get_verts())
 
         self.xmin=self.polys.xmin

@@ -26,7 +26,7 @@ def get_metadata(instr, name):
     try:
         return instr.get_member(str(name)).metadata
     except AttributeError,e:
-        log_debug(e)
+        #log_debug(e)
         return None
         
 def get_tag(instr, name, key, none_value=None):
@@ -402,13 +402,13 @@ class Base(Atom):
                 if mapping is None:
                     try:
                     
-                        log_debug(items)
-                        log_debug([hasattr(self, item) for item in items])
-                        log_debug([getattr(self, item) for item in items])
+                        #log_debug(items)
+                        #log_debug([hasattr(self, item) for item in items])
+                        #log_debug([getattr(self, item) for item in items])
                         map_type="attribute"
                         mapping=dict(zip(items, [getattr(self, item) for item in items]))
-                    except (AttributeError, TypeError) as e:
-                        print e
+                    except (AttributeError, TypeError):
+                        #print e
                         map_type="default"
                         mapping=dict(zip(items, items))
                 elif isinstance(mapping, basestring): #define a mapping as a property
@@ -417,7 +417,7 @@ class Base(Atom):
                 elif not isinstance(mapping, dict):
                     raise TypeError("mapping must be dict or str")
                 self.set_tag(key, mapping=mapping, map_type=map_type)
-
+                
     def value_changed(self, change):
         """observer for ContainerLists to handle updates not covered by setattr"""
         if change['type'] not in ('create', 'update'):

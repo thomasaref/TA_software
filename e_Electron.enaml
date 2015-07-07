@@ -1,0 +1,108 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jul  7 21:28:45 2015
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import MainWindow, Container, DockArea, DockItem,  Field, ScrollArea
+from enaml.core.api import DynamicTemplate, Looper
+from enaml.layout.api import TabLayout
+from atom.api import Unicode
+from a_Proton import get_main_params, get_type, get_tag, get_attr
+from TA_Fundamentals import cap_case
+
+template TypedView(varType):
+    """ This default specialization displays read-only text for the value."""
+    Field:
+        attr vname
+        read_only = True
+        text << unicode(getattr(instr, vname))
+
+from e_FundView import UnitFloatField, UnitIntField
+
+template TypedView(varType: int):
+    """ This default specialization displays read-only text for the value."""
+    UnitIntField:
+        attr vname
+        value := getattr(instr, vname)
+        minimum = get_tag(instr, vname, "low")
+        maximum = get_tag(instr, vname, "high")
+        unit_factor = get_tag(instr, vname, "unit_factor", 1)
+
+#template VarView(instrin, name, baseType):
+#    """view of a parameter in a base with identifying label and unit"""
+#    GroupBox:
+#        attr vname : Unicode
+#        flat = True
+#        padding=0
+#        constraints = constraints_gen(instrin, name, lbl, val, unt, contents_width, contents_top, contents_left) #[hbox( lbl, val, unt),#,
+#        #               align('top', val, unt), align('top', lbl, val),
+#        #                  align('left', gbcontents, 80, val) | 'medium']#, width == contents_width, height==contents_height]
+#                        #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
+##                         (lbl.bottom == contents_bottom) | 'medium']
+#        Label: lbl:
+#            text = get_tag(instrin, name, 'label', name)
+#        Container: val:
+#            padding = 0
+#            DynamicTemplate:
+#                base = TypedView
+#                args = (instrin, name, baseType)
+#        Label: unt:
+#            text = get_tag(instrin, name, 'unit', "no unit")
+#            visible = get_tag(instrin, name, 'unit') is not None
+#BaseView picks between the VarViews
+
+
+
+template InstrView(instrType):
+    Container:
+        padding = 0
+        Looper:
+            iterable<<get_main_params(instr)
+            DynamicTemplate:
+                base = TypedView
+                args = (get_type(instr, loop_item),)
+                data = dict(vname=loop_item)
+
+
+template BaseTemp(bview):
+    Container:
+        padding = 0
+        ScrollArea:
+            Container:
+                padding = 0
+                DynamicTemplate:
+                    base = InstrView
+                    args = (type(instr),)
+                    #data = dict(visible=True)
+
+#How to implement custom layouts. OtherCont could be imported from another file, i.e. from yourfile.enaml import OtherCont
+enamldef OtherCont(Container):
+    Field:
+        text:=instr.b
+
+template BaseTemp(bview: "field"):
+    OtherCont:
+        pass  
+
+enamldef InstrDockItem(DockItem):
+   attr instr
+   name = get_attr(instr, "name", "noitem")
+   title = cap_case(name)
+   DynamicTemplate:
+       base = BaseTemp
+       args=(get_attr(instr, "view", "Auto"), ) 
+
+enamldef AtomMain(MainWindow): main:
+    attr elect 
+    title=get_attr(main.elect, "name", "No Title")
+    #activated :: main.send_to_front()
+    alias bossarea
+    Container: mycont:
+        alias bossarea
+        DockArea: bossarea:
+            layout=TabLayout(di.name)
+            InstrDockItem: di:
+                instr=elect
+                
