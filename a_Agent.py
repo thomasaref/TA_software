@@ -4,7 +4,6 @@ Created on Sat Jul  4 13:03:26 2015
 
 @author: thomasaref
 """
-from functools import wraps
 from atom.api import Atom, Unicode, Bool, Enum, List
 
 from a_Nucleus import show
@@ -20,39 +19,30 @@ def list_recursion(mylist, index=0):
         return list_recursion(item)
     return
 
-def updater(fn):
-    """a decorator to stop infinite recursion"""
-    @wraps(fn)
-    def myfunc(self, change):
-        if not hasattr(myfunc, "callblock"):
-            myfunc.callblock=""
-        if change["name"]!=myfunc.callblock: # and change['type']!='create':
-            myfunc.callblock=change["name"]
-            fn(self, change)
-            myfunc.callblock=""
-    return myfunc
 
-class to(backbone):
-    a=2
-    b="hi"
+
     
-
-c=to()    
-print get_member(c, "a")
-print members(c)
-print get_metadata(c, "a")
-set_all_tags(c, bill="chicken")
-set_tag(c, "a", bill="cow")
-print get_tag(c, "a", "bill", "moose")
-print get_all_tags(c, "bill")
-print get_reserved_names(c)
-print get_all_params(c)
-print get_all_main_params(c)
-print get_main_params(c)
-for key in members(c):
-    print key, get_type(c, key)
-show(c)
-print c.b, c.a
+if __name__=="__main__":
+    class to(backbone):
+        a=2
+        b="hi"
+    c=to()    
+    if 0:
+        print get_member(c, "a")
+        print members(c)
+        print get_metadata(c, "a")
+        set_all_tags(c, bill="chicken")
+        set_tag(c, "a", bill="cow")
+        print get_tag(c, "a", "bill", "moose")
+        print get_all_tags(c, "bill")
+        print get_reserved_names(c)
+        print get_all_params(c)
+        print get_all_main_params(c)
+        print get_main_params(c)
+        for key in members(c):
+            print key, get_type(c, key)
+    show(c)
+    print c.b, c.a
 
 #from a_Boss import boss
 #
