@@ -3,75 +3,251 @@
 Created on Mon Jun 29 16:12:32 2015
 
 @author: thomasaref
+
+A collection of useful widgets
 """
 
-from enaml.widgets.api import  Field, PushButton, Container, SpinBox
-#from enaml.stdlib.fields import FloatField, IntField
-#from Atom_Base import get_tag
-
-#enamldef IntSpinBox(Container):
-#    attr instr1
-#    attr name1
-#    padding=0
-#    SpinBox:
-#        value := getattr(instr1, name1)
-#        minimum=int(get_tag(instr1, name1, 'low', -2147483648))#
-#        maximum=int(get_tag(instr1, name1, 'high', 2147483647))
-
-
+from enaml.widgets.api import  Label, Field, PushButton, Container, SpinBox, MultilineField, HGroup, VGroup
+from enaml.core.api import Conditional, DynamicTemplate
 from enaml.validator import IntValidator, FloatValidator
-from enaml.widgets.field import Field
 from enaml.stdlib.fields import _int_converters
+from enaml.layout.api import spacer, hbox
+from enaml.layout.spacers import LayoutSpacer
+
+def spacer_eval(no_spacer):
+    if no_spacer:
+        return None
+    return spacer
 
 enamldef UnitIntField(Field):
-    """ A field that only accept integer inputs.
+    """ A field that only accept integer inputs and normalizes them by a unit factor
 
     """
     attr minimum = None
     attr maximum = None
     attr base = 10
-    attr value : int = 0
+    attr uvalue : int = 0
     attr converter << _int_converters.get(base, unicode)
     attr unit_factor : int = 1
-    text << converter(value/unit_factor)
-    text :: self.value = int(text, base)*unit_factor
+    text << converter(uvalue/unit_factor)
+    text :: self.uvalue = int(text, base)*unit_factor
     validator << IntValidator(base=base, minimum=minimum, maximum=maximum)
-    
-enamldef UnitFloatField(Field):
-    """ A Field that only accept floating point values and performs optional unit conversion using unit_factor
 
-    """
+enamldef UnitSpinBox(HGroup):
+    attr uvalue : int = 0
+    attr unit_factor : int = 1
+    attr vlabel = ""
+    attr unit = None
+    attr show_uvalue : bool = False
+    attr no_spacer : bool = False
+
+
+    padding = 0    
+    trailing_spacer=spacer_eval(no_spacer)
+    align_widths=False
+    
+    func calc_uvalue(value, unit_factor):
+        self.uvalue = value*unit_factor
+
+    Label:
+        text = unicode(vlabel)
+
+    alias maximum : sb.maximum
+    alias minimum : sb.minimum
+    SpinBox: sb:
+        value << uvalue/unit_factor
+        value :: calc_uvalue(value, unit_factor) 
+
+    Label: ul:
+        text = unicode(unit) 
+        visible = unit is not None
+
+    Conditional:
+        condition = show_uvalue
+        Label: vl:
+            text << unicode("({})".format(uvalue)) #get_tag(instrin, name, 'unit', "no unit")
+        
+enamldef UnitFloatField(HGroup):
+    """ Effectively a field that only accept floating point values and performs optional unit conversion
+    using unit_factor. display unit and the true value"""
+    #constraints = [hbox(ff, ul, spacer)]
     attr minimum = None
     attr maximum = None
     attr unit_factor : float = 1.0
     attr allow_exponent : bool = True
-    attr value : float = 0.0
-    attr converter = unicode
-    text << converter(value/unit_factor)
-    text :: self.value = float(text)*unit_factor
-    validator << FloatValidator(
-        minimum=minimum, maximum=maximum, allow_exponent=allow_exponent
-    ) 
+    attr unit = None
+    attr uvalue : float = 0.0
+    attr show_uvalue : bool = False
+    attr vlabel = ""
+    attr no_spacer : bool = False
 
+    padding = 0    
+    trailing_spacer=spacer_eval(no_spacer)
+    align_widths=False
+    
+    func calc_uvalue(text, unit_factor):
+        self.uvalue=float(text)*unit_factor
+
+    Label:
+        text = unicode(vlabel)
+
+    Field: ff:
+        text << unicode(uvalue/unit_factor)
+        text :: calc_uvalue(text, unit_factor)
+        validator << FloatValidator(minimum=minimum, maximum=maximum, allow_exponent=allow_exponent) 
+
+    Label: ul:
+        text = unicode(unit) 
+        visible = unit is not None
+
+    Conditional:
+        condition = show_uvalue
+        Label: vl:
+            text << unicode("({})".format(uvalue)) #get_tag(instrin, name, 'unit', "no unit")
+
+enamldef ChoiceField(HGroup):
+    """A container that chooses between displaying a string as a Field or a MultilineField"""
+    attr vtext = ""
+    attr vcond : bool = False
+    attr vlabel = ""
+    attr no_spacer : bool = False
+
+    padding = 0    
+    trailing_spacer=spacer_eval(no_spacer)
+    align_widths=False
+    
+    Label:
+        text = unicode(vlabel)
+        
+    Conditional:
+        condition=vcond 
+        MultilineField:
+            text := vtext 
+    Conditional:
+        condition= not vcond 
+        Field:
+            text :=  vtext
+
+template ListView(AttrType):
+    Field:
+        text << unicode(var)
+
+template ListView(AttrType:int):
+    UnitSpinBox: sb:
+        uvalue :: update_vval()
+        
+enamldef ListContainer(HGroup):
+    attr vlist = [0]
+    attr vval = vlist[0]
+    #attr yoko
+    attr vlabel = ""
+    attr no_spacer : bool = False
+    attr inside_type = int
+    
+    #vval::update_vval()
+    #vval<<vlist[ind.value] #s.tagged["uvalue"].uvalue
+
+
+    padding=0
+    trailing_spacer=spacer_eval(no_spacer)
+    align_widths=False
+
+    func update_ind():
+        self.vval=self.vlist[ind.value]
+        
+        
+    func update_vval():
+        self.vlist[ind.value]=s.tagged["uvalue"].uvalue
+
+    Label:
+        text = unicode(vlabel)
+        
+    SpinBox: ind:
+        minimum=0
+        maximum = max(0, len(vlist)-1)
+        value:: update_ind()
+    DynamicTemplate: s:
+        base = ListView
+        args = (int,)
+        data << dict(uvalue=vlist[ind.value])
+        tags = ("uvalue",)
+    #SpinBox: 
+        
+    #    uvalue := vval #vlist[ind.value]
+    #    uvalue :: update_vval()
+    #Label:
+    #    text << unicode((vval, ind.value, vlist, s.tagged["uvalue"].uvalue))
+        #Container: val:
+        #    padding = 0
+        #    alias dyn
+        #    DynamicTemplate: dyn:
+        #        base = ListView
+        #        args << (instrin, name, type(getattr(instrin, name)[ind.value]), ind.value) #, get_type(base, name, ind.value))
+#    PushButton: insert_btn:
+#        text="Insert"
+#        clicked::
+#            if len(vlist)==0:
+#                intype=inside_type() #if inside_type is not specified for an empty array, this will generate an error
+#            else:
+#                temptype=vlist[ind.value]
+#                #if isinstance(temptype, Base):
+#                    #intype=temptype.copy()
+#                #else:
+#                intype=type(temptype)()
+#                vlist.insert(ind.value+1, intype) #pass #mydata.insert()
+#                ind.maximum=max(0, len(vlist)-1)
+#                ind.value+=1
+#    PushButton: pop_btn:
+#            text="Remove"
+#            clicked::
+#                if ind.value==ind.minimum:
+#                    vlist.pop(ind.value)
+#                    ind.value+=1 #force update
+#                    ind.value=ind.minimum
+#                else:
+#                    ind.value-=1
+#                    vlist.pop(ind.value+1)
+#                ind.maximum=max(0, len(vlist)-1)
+#            enabled << len(vlist)>0
+#            
 ###################test code########################
 from enaml.widgets.api import Form, Window, Label
 
+enamldef Main2(Window):
+    UnitFloatField:
+        uvalue=10.0
+        unit_factor=10.0
+        unit="Hz"
+        show_uvalue=True
+        
 enamldef Main(Window):
-    Form:
-        Label:
-            text = "UnitFloatField"
+    VGroup:
         UnitFloatField: uff:
+            vlabel="UnitFloatField"
+            uvalue = 0.1
             unit_factor=10.0
-        Label:
-            text = "Actual value"
-        Label:
-            text << unicode(uff.value)
-        Label:
-                text = "UnitIntField"
-        UnitIntField: iff:
-                unit_factor=10
-        Label:
-            text = "Actual value:"
-        Label:
-            text << unicode(iff.value)
+            unit="Hz"
+            show_uvalue=True
+            no_spacer=True
+        UnitSpinBox: isb:
+            vlabel="UnitSpinBox"
+            uvalue=10            
+            unit_factor=10
+            maximum = 100000
+            show_uvalue=True
+            no_spacer=True
+        ChoiceField:
+            vlabel = "ChoiceField vcond=False" 
+            vtext="blah"
+            vcond=False
+            no_spacer=True
+        ChoiceField:
+            vlabel="ChoiceField vcond=True"
+            vtext="foo\nbar"
+            vcond=True
+            no_spacer=True
+        ListContainer:
+            vlist=[1,2,3]
+            
+            
         

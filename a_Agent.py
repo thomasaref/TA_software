@@ -4,9 +4,9 @@ Created on Sat Jul  4 13:03:26 2015
 
 @author: thomasaref
 """
-from atom.api import Atom, Unicode, Bool, Enum, List
+from atom.api import Atom, Unicode, Bool, Enum, List, Float, Int
 
-from a_Nucleus import show
+from a_Chief import show
 from a_Backbone import (get_member, members, get_metadata, set_all_tags, set_tag, get_tag, get_all_tags, 
       get_reserved_names, get_all_params, get_all_main_params, get_main_params, get_type, backbone)
 
@@ -26,13 +26,17 @@ if __name__=="__main__":
     class to(backbone):
         a=2
         b="hi"
+        c=2.2
     c=to()    
-    if 0:
+    if 1:
         print get_member(c, "a")
         print members(c)
         print get_metadata(c, "a")
         set_all_tags(c, bill="chicken")
         set_tag(c, "a", bill="cow")
+        set_tag(c, "b", spec="multiline")
+        set_tag(c, "a", unit_factor=10)
+        print get_tag(c, "b", "spec")=="multiline"
         print get_tag(c, "a", "bill", "moose")
         print get_all_tags(c, "bill")
         print get_reserved_names(c)
@@ -41,7 +45,15 @@ if __name__=="__main__":
         print get_main_params(c)
         for key in members(c):
             print key, get_type(c, key)
-    show(c)
+            
+    class tA(Atom):
+        a=Float().tag(unit="A", unit_factor=10.0, label="Current", no_spacer=True, show_uvalue=True)
+        b=Unicode().tag(label="describer", no_spacer=True)
+        c=Unicode().tag(label="describer", no_spacer=True, spec="multiline")
+        d=Int().tag(unit="A", unit_factor=10, label="Current", no_spacer=True, show_uvalue=True)
+        
+    d=tA()    
+    show(d)
     print c.b, c.a
 
 #from a_Boss import boss
