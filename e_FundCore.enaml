@@ -1,0 +1,145 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jul  9 16:51:22 2015
+
+@author: thomasaref
+"""
+
+
+from enaml.widgets.api import  ( HGroup, Container, GroupBox,  Field, Label, SpinBox, MultilineField, PushButton, ObjectCombo, VGroup, ScrollArea)
+from enaml.core.api import Conditional, Looper, DynamicTemplate
+from enaml.validator import IntValidator, FloatValidator
+     
+enamldef aHGroup(HGroup):
+    padding=0
+    align_widths=False
+
+enamldef aVGroup(ScrollArea):
+    VGroup:
+        padding=0
+        
+enamldef aContainer(Container):
+    padding=0
+
+enamldef aGroupBox(GroupBox):
+    padding=0
+
+            
+enamldef UnitIntField(aHGroup):
+    """ A field that only accept integer inputs and normalizes them by a unit factor"""
+    attr minimum = None
+    attr maximum = None
+    attr uvalue : int = 0
+    attr unit_factor : int = 1
+    attr unit = ""
+    attr show_uvalue : bool = False
+    func calc_uvalue(value, unit_factor):
+        self.uvalue = int(value)*unit_factor
+    
+    Field:
+        text << unicode(uvalue/unit_factor)
+        text :: calc_uvalue(text, unit_factor)
+        validator << IntValidator(base=10, minimum=minimum, maximum=maximum)
+
+    Label: ul:
+        text = unicode(unit) 
+        visible = unit!=""
+
+    Conditional:
+        condition = show_uvalue
+        Label: vl:
+            text << unicode("({})".format(uvalue)) #get_tag(instrin, name, 'unit', "no unit")
+
+enamldef UnitSpinBox(aHGroup):
+    """A SpinBox for integers with units"""
+    attr uvalue : int = 0
+    attr unit_factor : int = 1
+    attr unit = ""
+    attr show_uvalue : bool = False
+    alias maximum : sb.maximum
+    alias minimum : sb.minimum
+    
+    func calc_uvalue(value, unit_factor):
+        self.uvalue = value*unit_factor
+
+    SpinBox: sb:
+        value << uvalue/unit_factor
+        value :: calc_uvalue(value, unit_factor) 
+
+    Label: ul:
+        text = unicode(unit) 
+        visible = unit!=""
+
+    Conditional:
+        condition = show_uvalue
+        Label: vl:
+            text << unicode("({})".format(uvalue)) #get_tag(instrin, name, 'unit', "no unit")
+            
+enamldef UnitFloatField(aHGroup):
+    """a field for floats with units"""
+    attr minimum = None
+    attr maximum = None
+    attr unit_factor : float = 1.0
+    attr allow_exponent : bool = True
+    attr unit = ""
+    attr uvalue : float = 0.0
+    attr show_uvalue : bool = False
+    
+    func calc_uvalue(text, unit_factor):
+        self.uvalue=float(text)*unit_factor
+
+    Field:
+        text << unicode(uvalue/unit_factor)
+        text :: calc_uvalue(text, unit_factor)
+        validator << FloatValidator(minimum=minimum, maximum=maximum, allow_exponent=allow_exponent) 
+
+    Label:
+        text = unicode(unit) 
+        visible = unit!=""
+
+    Conditional:
+        condition = show_uvalue
+        Label: vl:
+            text << unicode("({})".format(uvalue)) #get_tag(instrin, name, 'unit', "no unit")
+   
+enamldef ChoiceField(aContainer):
+    """A container that chooses between displaying a string as a Field or a MultilineField"""
+    attr ctext = ""
+    attr vcond : bool = False
+    Conditional:
+        condition=vcond 
+        MultilineField:
+            text := ctext 
+    Conditional:
+        condition= not vcond 
+        Field:
+            text :=  ctext
+
+
+
+from enaml.widgets.api import VGroup, Window    
+    
+enamldef Main(Window):
+    VGroup:
+        UnitFloatField: uff:
+            uvalue = 0.1
+            unit_factor=10.0
+            unit="Hz"
+            show_uvalue=True
+        UnitIntField:
+            uvalue=10
+        UnitSpinBox: isb:
+            uvalue=10            
+            unit_factor=10
+            maximum = 100000
+            show_uvalue=True
+        ChoiceField:
+            ctext="blah"
+            vcond=False
+        ChoiceField:
+            ctext="foo\nbar"
+            vcond=True
+        Field: fld:
+            text="blah2"
+        MultilineField:
+            text="foo\nbar2"

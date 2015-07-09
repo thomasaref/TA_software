@@ -1,17 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jul  7 21:28:45 2015
+Created on Thu Jul  9 14:55:56 2015
 
 @author: thomasaref
 """
-
-from enaml.widgets.api import MainWindow, Container, DockArea, DockItem,  Field, ScrollArea, MultilineField
-from enaml.core.api import DynamicTemplate, Looper, Conditional
-from enaml.layout.api import TabLayout
-from atom.api import Unicode, Str, Float, Int
-from a_Backbone import get_main_params, get_type, get_tag, get_attr
-from TA_Fundamentals import cap_case
-from e_FundView import UnitFloatField, UnitSpinBox, ChoiceField
 
 template TypedView(AttrType):
     """ This default specialization displays read-only text for the value."""
@@ -33,10 +25,6 @@ template TypedView(AttrType: Int):
         show_uvalue=get_tag(instr, vname, "show_uvalue", False)
         no_spacer=get_tag(instr, vname, "no_spacer", False)
 
-template TypedView(AttrType: int):
-    """a specialization for ints"""
-    TypedView(Int): pass
-
 template TypedView(AttrType: Float):
     """specialization for Float members"""
     UnitFloatField:
@@ -50,10 +38,6 @@ template TypedView(AttrType: Float):
         show_uvalue=get_tag(instr, vname, "show_uvalue", False)
         no_spacer=get_tag(instr, vname, "no_spacer", False)
 
-template TypedView(AttrType: float):
-    """specialization for floats"""
-    TypedView(Float): pass
-
 template TypedView(AttrType: Str):
     """ A template for Str using a either a MultilineField or a Field"""
     ChoiceField:
@@ -63,12 +47,7 @@ template TypedView(AttrType: Str):
         vcond = get_tag(instr, vname, "spec")=="multiline"
         no_spacer=get_tag(instr, vname, "no_spacer", False)
 
-template TypedView(AttrType: basestring):
-    TypedView(Str): pass
 
-template TypedView(AttrType: Unicode):
-    """A template for Unicode using a field"""
-    TypedView(Str): pass
 #template VarView(instrin, name, baseType):
 #    """view of a parameter in a base with identifying label and unit"""
 #    GroupBox:
@@ -92,56 +71,36 @@ template TypedView(AttrType: Unicode):
 #            visible = get_tag(instrin, name, 'unit') is not None
 #BaseView picks between the VarViews
 
-
-
+template VarView(instrin, name, baseType):
+    """view of a parameter in a base with identifying label and unit"""
+    GroupBox:
+        flat = True
+        padding=0
+        constraints = constraints_gen(instrin, name, lbl, val, unt, contents_width, contents_top, contents_left) #[hbox( lbl, val, unt),#,
+        #               align('top', val, unt), align('top', lbl, val),
+        #                  align('left', gbcontents, 80, val) | 'medium']#, width == contents_width, height==contents_height]
+                        #contents_top == lbl.top, contents_left == lbl.left]#, contents_right == set_params.right,
+#                         (lbl.bottom == contents_bottom) | 'medium']
+        Label: lbl:
+            text = get_tag(instrin, name, 'label', name)
+        Container: val:
+            padding = 0
+            DynamicTemplate:
+                base = TypedView
+                args = (instrin, name, baseType)
+        Label: unt:
+            text = get_tag(instrin, name, 'unit', "no unit")
+            visible = get_tag(instrin, name, 'unit') is not None
+            
+            
 template InstrView(instrType):
     Container:
         padding = 0
         Looper:
             iterable<<get_main_params(instr)
+            
             DynamicTemplate:
-                base = TypedView
+                base = VarView
                 args = (get_type(instr, loop_item),)
                 data = dict(vname=loop_item)
-
-
-template BaseTemp(bview):
-    Container:
-        padding = 0
-        ScrollArea:
-            Container:
-                padding = 0
-                DynamicTemplate:
-                    base = InstrView
-                    args = (type(instr),)
-                    #data = dict(visible=True)
-
-#How to implement custom layouts. OtherCont could be imported from another file, i.e. from yourfile.enaml import OtherCont
-enamldef OtherCont(Container):
-    Field:
-        text:=instr.b
-
-template BaseTemp(bview: "field"):
-    OtherCont:
-        pass  
-
-enamldef InstrDockItem(DockItem):
-   attr instr
-   name = get_attr(instr, "name", "noitem")
-   title = cap_case(name)
-   DynamicTemplate:
-       base = BaseTemp
-       args=(get_attr(instr, "view", "Auto"), ) 
-
-enamldef AtomMain(MainWindow): main:
-    attr elect 
-    title=get_attr(main.elect, "name", "No Title")
-    #activated :: main.send_to_front()
-    alias bossarea
-    Container: mycont:
-        alias bossarea
-        DockArea: bossarea:
-            layout=TabLayout(di.name)
-            InstrDockItem: di:
-                instr=elect
-                
+ 

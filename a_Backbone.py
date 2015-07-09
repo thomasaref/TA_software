@@ -63,11 +63,47 @@ def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
         return [x for x in search_list if none_value!=get_tag(obj, x, key, none_value)]
     return [x for x in search_list if key_value==get_tag(obj, x, key, none_value)]
 
-def get_map(obj, name, none_map={}):
+def get_map(obj, name, item=None, none_map={}):
     """gets the mapped value specified by dictionary mapping and uses none_map if it doesn't exist"""
-    item=getattr(obj, name)
-    mapping=get_tag(obj, name, "mapping", none_map)
+    if item is None:
+        item=getattr(obj, name)
+    mapping=get_mapping(obj, name, none_map) #get_tag(obj, name, "mapping", none_map)
+    if get_tag(obj, name, "map_type")=="attribute":
+        item=getattr(obj, item)
     return mapping.get(item, item)
+
+
+def find_targets(dock_items, target_items=[]):
+    names=(o.name for o in dock_items)
+    targets=(o.name for o in target_items)
+    overlap=list(set(targets).intersection(names))
+    return overlap
+    
+def get_mapping(obj, name, none_map={}):
+    mapping=get_tag(obj, name, 'mapping')
+    if isinstance(mapping, dict): 
+        #if mapping is already defined, just return it
+        return mapping
+    if isinstance(mapping, list):
+        return {}
+    if isinstance(mapping, basestring):
+        #if mapping is defined as the name of a property, update to a dictionary and return it
+        mapping=getattr(obj, mapping)
+        set_tag(obj, name, mapping=mapping, map_type="property")
+        return mapping
+    items=obj.get_member(name).items
+    if sorted(items)==sorted(set(items).intersection(members(obj))):
+        #if every name in items maps to a member, update to a dictionary mapping to the members
+        mapping=list(items) #dict(zip(items, [getattr(obj, item) for item in items]))
+        set_tag(obj, name, mapping=mapping, map_type="attribute")
+        return {}
+    #if nothing else, set mapping to none_map and return
+    set_tag(obj, name, mapping=none_map, map_type="none_map")
+    return none_map
+
+def get_map_type(obj, name):
+    get_mapping(obj, name)
+    return get_tag(obj, name, "map_type")
 
 def get_type(obj, name):
     """returns type of parameter with given name"""
@@ -125,6 +161,27 @@ def updater(fn):
             fn(self, change)
             myfunc.callblock=""
     return myfunc
+
+def get_run_params(f, include_self=False):
+    #if hasattr(f, "run_params"):
+    #    return f.run_params
+    argcount=f.func_code.co_argcount
+    argnames=list(f.func_code.co_varnames[0:argcount])
+    if not include_self and "self" in argnames:
+        argnames.remove("self")
+    return argnames
+    
+def get_args(obj, name):
+    f=getattr(obj, name)
+    run_params=get_run_params(f, True)
+    arglist=[]
+    if "self" in run_params:
+        arglist.append(obj)
+        run_params.remove("self")
+    arglist.extend([getattr(obj, an) for an in run_params])
+    return arglist
+        
+        
     
 #def get_name(obj, default_name="NO NAME"):
 #    if hasattr(obj, "name"):

@@ -6,171 +6,392 @@ Created on Mon Jun 29 16:12:32 2015
 
 A collection of useful widgets
 """
+from enaml.widgets.api import  CheckBox, Label, SpinBox, VGroup, ScrollArea, MultilineField, Field, PushButton, ObjectCombo, Slider, ScrollArea
+from enaml.core.api import Conditional, DynamicTemplate, Looper
+from enaml.core.declarative import d_ 
+from enaml.layout.api import spacer#, hbox
+from a_Backbone import get_tag, set_tag, get_run_params, get_args, get_map, get_map_type, get_type, get_main_params
+from atom.api import Unicode, Str, Float, Int, ContainerList, List, Typed, Instance, Coerced, Bool, Range, Enum, Callable, FloatRange
+from e_FundCore import aContainer, aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField
 
-from enaml.widgets.api import  Label, Field, PushButton, Container, SpinBox, MultilineField, HGroup, VGroup
-from enaml.core.api import Conditional, DynamicTemplate
-from enaml.validator import IntValidator, FloatValidator
-from enaml.stdlib.fields import _int_converters
-from enaml.layout.api import spacer, hbox
-from enaml.layout.spacers import LayoutSpacer
-
-def spacer_eval(no_spacer):
-    if no_spacer:
-        return None
-    return spacer
-
-enamldef UnitIntField(Field):
-    """ A field that only accept integer inputs and normalizes them by a unit factor
-
-    """
-    attr minimum = None
-    attr maximum = None
-    attr base = 10
-    attr uvalue : int = 0
-    attr converter << _int_converters.get(base, unicode)
-    attr unit_factor : int = 1
-    text << converter(uvalue/unit_factor)
-    text :: self.uvalue = int(text, base)*unit_factor
-    validator << IntValidator(base=base, minimum=minimum, maximum=maximum)
-
-enamldef UnitSpinBox(HGroup):
-    attr uvalue : int = 0
-    attr unit_factor : int = 1
-    attr vlabel = ""
-    attr unit = None
-    attr show_uvalue : bool = False
-    attr no_spacer : bool = False
+def spacer_eval(vmodel, vname):
+     """useful function for modifying spacer of aHGroup"""    
+     no_spacer = get_tag(vmodel, vname, "no_spacer", False)
+     if no_spacer:
+         return None
+     return spacer
+     
+enamldef Var(aContainer):
+    """the base var class defines model, name and value"""
+    attr vmodel
+    attr vname 
+    attr vvalue
 
 
-    padding = 0    
-    trailing_spacer=spacer_eval(no_spacer)
-    align_widths=False
+enamldef CallableVar(Var):
+    aHGroup:
+        PushButton: 
+            text = 'Run'
+            clicked :: 
+                args=get_args(vmodel, vname)
+                vvalue(*args) #print "ran"
+                    #try:
+    #                    getattr(instr, name)(instr) #do_it_if_needed(var, "receive") #receive()
+                    #except TypeError:
+                    #    getattr(instr, name)()
+                #enabled << not instr.boss.busy
+        aGroupBox: agb:
+            visible = get_run_params(vvalue)!=[]
+            title = get_tag(vmodel, vname, 'label', vname)+" parameters:"
+            aVGroup:
+                Looper: lo:
+                    iterable<<get_run_params(vvalue)
+                    aContainer:
+                        func update_vval():
+                            setattr(vmodel, loop_item, s.tagged["vvalue"].vvalue)
+                        DynamicTemplate: s:
+                            base = TypedView
+                            args << (type(getattr(vmodel, loop_item)),)
+                            data << dict(vmodel=vmodel, vname=vname, vvalue=getattr(vmodel, loop_item))
+                            tags = ("vvalue",)
     
-    func calc_uvalue(value, unit_factor):
-        self.uvalue = value*unit_factor
+        PushButton: pb2:
+            text = 'Abort'
+            clicked ::
+                print "abort pressed"
+                #instr.boss.abort=True
+                #enabled <<  instr.boss.busy
 
-    Label:
-        text = unicode(vlabel)
-
-    alias maximum : sb.maximum
-    alias minimum : sb.minimum
-    SpinBox: sb:
-        value << uvalue/unit_factor
-        value :: calc_uvalue(value, unit_factor) 
-
-    Label: ul:
-        text = unicode(unit) 
-        visible = unit is not None
-
-    Conditional:
-        condition = show_uvalue
-        Label: vl:
-            text << unicode("({})".format(uvalue)) #get_tag(instrin, name, 'unit', "no unit")
-        
-enamldef UnitFloatField(HGroup):
-    """ Effectively a field that only accept floating point values and performs optional unit conversion
-    using unit_factor. display unit and the true value"""
-    #constraints = [hbox(ff, ul, spacer)]
-    attr minimum = None
-    attr maximum = None
-    attr unit_factor : float = 1.0
-    attr allow_exponent : bool = True
-    attr unit = None
-    attr uvalue : float = 0.0
-    attr show_uvalue : bool = False
-    attr vlabel = ""
-    attr no_spacer : bool = False
-
-    padding = 0    
-    trailing_spacer=spacer_eval(no_spacer)
-    align_widths=False
-    
-    func calc_uvalue(text, unit_factor):
-        self.uvalue=float(text)*unit_factor
-
-    Label:
-        text = unicode(vlabel)
-
-    Field: ff:
-        text << unicode(uvalue/unit_factor)
-        text :: calc_uvalue(text, unit_factor)
-        validator << FloatValidator(minimum=minimum, maximum=maximum, allow_exponent=allow_exponent) 
-
-    Label: ul:
-        text = unicode(unit) 
-        visible = unit is not None
-
-    Conditional:
-        condition = show_uvalue
-        Label: vl:
-            text << unicode("({})".format(uvalue)) #get_tag(instrin, name, 'unit', "no unit")
-
-enamldef ChoiceField(HGroup):
-    """A container that chooses between displaying a string as a Field or a MultilineField"""
-    attr vtext = ""
-    attr vcond : bool = False
-    attr vlabel = ""
-    attr no_spacer : bool = False
-
-    padding = 0    
-    trailing_spacer=spacer_eval(no_spacer)
-    align_widths=False
-    
-    Label:
-        text = unicode(vlabel)
-        
-    Conditional:
-        condition=vcond 
-        MultilineField:
-            text := vtext 
-    Conditional:
-        condition= not vcond 
-        Field:
-            text :=  vtext
-
-template ListView(AttrType):
-    Field:
-        text << unicode(var)
-
-template ListView(AttrType:int):
-    UnitSpinBox: sb:
-        uvalue :: update_vval()
-        
-enamldef ListContainer(HGroup):
-    attr vlist = [0]
-    attr vval = vlist[0]
-    #attr yoko
-    attr vlabel = ""
-    attr no_spacer : bool = False
-    attr inside_type = int
-    
-    #vval::update_vval()
-    #vval<<vlist[ind.value] #s.tagged["uvalue"].uvalue
-
-
-    padding=0
-    trailing_spacer=spacer_eval(no_spacer)
-    align_widths=False
-
-    func update_ind():
-        self.vval=self.vlist[ind.value]
-        
-        
+enamldef CoercedVar(Var):
     func update_vval():
-        self.vlist[ind.value]=s.tagged["uvalue"].uvalue
+        setattr(vmodel, vname, s.tagged["vvalue"].vvalue)
+    DynamicTemplate: s:
+        base = TypedView
+        args << (type(vvalue),)
+        data << dict(vmodel=vmodel, vname=vname, vvalue=vvalue)
+        tags = ("vvalue",)
 
-    Label:
-        text = unicode(vlabel)
+enamldef TypedVar(Var):
+    ScrollArea:    
+        aContainer:
+            Looper:
+                iterable<<get_main_params(vvalue)
+                aHGroup:
+                    trailing_spacer=spacer_eval(vvalue, loop_item)
+                    func update_vval():
+                        pass
+                        #func update_vval():
+                            #setattr(vmodel, vname, s.tagged["vvalue"].vvalue)
+                    Label:
+                        text=get_tag(vvalue, loop_item, "label", loop_item)
+                    DynamicTemplate: s:
+                        base = TypedView
+                        args << (type(getattr(vvalue, loop_item)),)
+                        data << dict(vmodel=vvalue, vname=loop_item, vvalue=getattr(vvalue, loop_item))
+         
+enamldef EnumVar(Var):
+    aHGroup:
+        trailing_spacer=spacer_eval(vmodel, vvalue)
+        ObjectCombo: 
+            items = list(vmodel.get_member(vname).items)
+            selected := vvalue
+        Conditional:
+            condition = get_map_type(vmodel, vname)=="attribute"
+            aContainer:
+                func update_vval():
+                    setattr(vmodel, vvalue, s.tagged["vvalue"].vvalue)
+                DynamicTemplate: s:
+                    base = TypedView
+                    args << (get_type(vmodel, vvalue),)
+                    data << dict(vmodel=vmodel, vname=vvalue, vvalue=getattr(vmodel, vvalue))
+                    tags = ("vvalue",)
+        Conditional:
+            condition = get_map_type(vmodel, vname)!="attribute"
+            Label:
+                text <<  unicode(get_map(vmodel, vname, vvalue))         
+
+enamldef BoolVar(Var):
+    CheckBox:
+        checked := vvalue
+
+enamldef RangeVar(Var):
+    """a Range control with units"""
+    aHGroup:
+        UnitIntField: uif:
+            uvalue:=vvalue
+            unit=get_tag(vmodel, vname, "unit", u"")
+            show_uvalue=get_tag(vmodel, vname, "show_value", False)
+            unit_factor=int(get_tag(vmodel, vname, "unit_factor", 1))
+            minimum = sel_slider.minimum
+            maximum = sel_slider.maximum
+        Label: min_lbl:
+            text << str(sel_slider.minimum/uif.unit_factor)
+        Slider: sel_slider:
+            minimum = vmodel.get_member(vname).validate_mode[1][0]
+            maximum = vmodel.get_member(vname).validate_mode[1][1]
+            value :=vvalue
+            tracking = False
+        Label: max_lbl:
+            text << str(sel_slider.maximum/uif.unit_factor)
+
+from enaml.stdlib.slider_transform import FloatTransform
+enamldef FloatRangeVar(Var):
+    """ A form control template specialization for Float members"""
+    aHGroup:
+        UnitFloatField: sel:
+            uvalue:=vvalue
+            unit=get_tag(vmodel, vname, "unit", u"")
+            show_uvalue=get_tag(vmodel, vname, "show_value", False)
+            unit_factor=float(get_tag(vmodel, vname, "unit_factor", 1.0))
+            minimum = sel_slider.minimum
+            maximum = sel_slider.maximum
+        Label: min_lbl:
+                text << str(ft.minimum)
+        Slider: sel_slider:
+            tracking = False
+            FloatTransform: ft:
+                minimum = vmodel.get_member(vname).validate_mode[1][0]
+                maximum = vmodel.get_member(vname).validate_mode[1][1]
+                value :=vvalue
+                precision=get_tag(vmodel, vname, 'precision', 100)
+        Label: max_lbl:
+            text << str(ft.maximum)
+        
+enamldef IntVar(Var):
+    """extends Var for integer types"""
+    UnitSpinBox:
+        uvalue:=vvalue
+        unit=get_tag(vmodel, vname, "unit", u"")
+        show_uvalue=get_tag(vmodel, vname, "show_value", False)
+        unit_factor=int(get_tag(vmodel, vname, "unit_factor", 1))
+        minimum=int(get_tag(vmodel, vname, 'low', -2147483648))
+        maximum=int(get_tag(vmodel, vname, 'high', 2147483647))
+
+enamldef ChoiceIntVar(Var):
+    """extends Var for integer types"""
+    Conditional:
+        condition= get_tag(vmodel, vname, "spec")=="intfield"
+        UnitIntField:
+            uvalue:=vvalue
+            unit=get_tag(vmodel, vname, "unit", u"")
+            show_uvalue=get_tag(vmodel, vname, "show_value", False)
+            unit_factor=int(get_tag(vmodel, vname, "unit_factor", 1))
+            minimum=int(get_tag(vmodel, vname, 'low', -2147483648))
+            maximum=int(get_tag(vmodel, vname, 'high', 2147483647))
+    Conditional:
+        condition= get_tag(vmodel, vname, "spec")!="intfield"
+        UnitSpinBox:
+            uvalue:=vvalue
+            unit=get_tag(vmodel, vname, "unit", u"")
+            show_uvalue=get_tag(vmodel, vname, "show_value", False)
+            unit_factor=int(get_tag(vmodel, vname, "unit_factor", 1))
+            minimum=int(get_tag(vmodel, vname, 'low', -2147483648))
+            maximum=int(get_tag(vmodel, vname, 'high', 2147483647))
+
+enamldef FloatVar(Var):
+    """extends Var for float types"""
+    UnitFloatField:
+        uvalue:=vvalue
+        unit=get_tag(vmodel, vname, "unit", u"")
+        show_uvalue=get_tag(vmodel, vname, "show_value", False)
+        unit_factor=float(get_tag(vmodel, vname, "unit_factor", 1.0))
+        minimum=get_tag(vmodel, vname, 'low')
+        maximum=get_tag(vmodel, vname, 'high')
+
+enamldef UnicodeVar(Var):
+    """extends Var for string types"""
+    Field:
+        text:=vvalue
+
+enamldef StrVar(Var):
+    """extends Var for string types"""
+    MultilineField:
+        text:=vvalue
+
+enamldef ChoiceStrVar(Var):
+    Conditional:
+        condition= get_tag(vmodel, vname, "spec")=="multiline"
+        MultilineField:
+            text:=vvalue
+ 
+    Conditional:
+        condition= get_tag(vmodel, vname, "spec")!="multiline"
+        Field:
+            text:=vvalue
+      
+class aListHGroup(aHGroup): 
+    vlist = d_(ContainerList(default=[0]))
+
+enamldef ListSpinBox(aListHGroup):
+    """displays list as a single cell with a spinbox controlling which value is being observed"""
+    attr inside_type = int
+    func update_vval():
+        self.vlist[ind.value]=s.tagged["vvalue"].vvalue
         
     SpinBox: ind:
         minimum=0
         maximum = max(0, len(vlist)-1)
-        value:: update_ind()
+    #Label:
+    #    text << unicode((vlist, s.tagged))
     DynamicTemplate: s:
-        base = ListView
-        args = (int,)
-        data << dict(uvalue=vlist[ind.value])
-        tags = ("uvalue",)
+        base = TypedView
+        args = (type(vlist[ind.value]),)
+        data << dict(vmodel=vmodel, vname=vname, vvalue=vlist[ind.value])
+        tags = ("vvalue",)
+ 
+enamldef ListSBVar(Var):
+    """extends Var for list types"""
+    ListSpinBox:
+        vlist:=vvalue
+
+enamldef ListVGroup(aListHGroup): lvg:
+    """displays list as a looper inside a scollarea"""
+    attr inside_type = int
+    ScrollArea:
+        VGroup:
+            padding=0
+            #Label:
+            #   text << unicode(vlist)
+            Looper: lo:
+                iterable:=vlist
+                aContainer:
+                    func update_vval():
+                        lvg.vlist[loop_index]=s.tagged["vvalue"].vvalue
+                    DynamicTemplate: s:
+                        base = TypedView
+                        args << (type(loop_item),)
+                        data << dict(vmodel=vmodel, vname=vname, vvalue=loop_item)
+                        tags = ("vvalue",)
+ 
+enamldef ListVGVar(Var):
+    """extends Var for list types"""
+    ListVGroup:
+        vlist:=vvalue
+
+template TypedView(AttrType):
+    """default template for unknown type"""
+    Var:
+        Label:
+            text << unicode((vname, vvalue))
+
+template TypedView(AttrType : Int):
+    """template for int types"""
+    ChoiceIntVar:
+        vvalue :: update_vval()
+
+template TypedView(AttrType: int):
+    TypedView(Int): pass
+
+template TypedView(AttrType : Float):
+    """template for float types"""
+    FloatVar:
+        vvalue :: update_vval() 
+        
+template TypedView(AttrType: float):
+    """specialization for floats"""
+    TypedView(Float): pass
+
+template TypedView(AttrType : Unicode):
+    """template for string types"""
+    ChoiceStrVar: 
+        vvalue :: update_vval()
+        
+template TypedView(AttrType: unicode):
+    TypedView(Unicode): pass
+
+template TypedView(AttrType: str):
+    TypedView(Unicode): pass
+
+template TypedView(AttrType: Str):
+    TypedView(Unicode): pass
+
+template TypedView(AttrType:ContainerList):
+    """template for list types"""
+    ListSBVar: 
+        vvalue :: update_vval()
+        
+template TypedView(AttrType: list):
+    TypedView(ContainerList): pass
+
+template TypedView(AttrType: List):
+    ListVGVar: 
+        vvalue :: update_vval()
+
+template TypedView(AttrType: Typed):
+    """interface for a Typed member."""
+    TypedVar:
+        vvalue :: update_vval()
+
+template TypedView(AttrType: Instance):
+    TypedView(Typed): pass
+
+template TypedView(AttrType: Coerced):
+    CoercedVar:
+        vvalue :: update_vval()
+
+template TypedView(AttrType: Bool):
+    """ A template specialization for Bool members using CheckBox"""
+    BoolVar: 
+        vvalue :: update_vval()
+        
+template TypedView(AttrType: bool):
+    TypedView(Bool): pass
+
+template TypedView(AttrType: Range):
+    """ A template for Range members"""
+    RangeVar: 
+        vvalue :: update_vval()
+
+template TypedView(AttrType: FloatRange):
+    """ A template for Range members"""
+    FloatRangeVar: 
+        vvalue :: update_vval()
+
+template TypedView(AttrType: Callable):
+    """A template specialization for a Callable using a PushButton"""
+    CallableVar: 
+        vvalue :: update_vval()
+        
+template TypedView(AttrType: Enum):
+    """ A form control template specialization for Enum members using ObjectCombo."""
+    EnumVar: 
+        vvalue :: update_vval()
+         
+#enamldef ListContainer(HGroup):
+#    attr vlist = [0]
+#    attr vval = vlist[0]
+#    #attr yoko
+#    attr vlabel = ""
+#    attr no_spacer : bool = False
+#    attr inside_type = int
+#    
+#    #vval::update_vval()
+#    #vval<<vlist[ind.value] #s.tagged["uvalue"].uvalue
+#
+#
+#    padding=0
+#    trailing_spacer=spacer_eval(no_spacer)
+#    align_widths=False
+#
+#    func update_ind():
+#        self.vval=self.vlist[ind.value]
+#        
+#        
+#    func update_vval():
+#        self.vlist[ind.value]=s.tagged["vvalue"].vvalue
+#
+#    Label:
+#        text = unicode(vlabel)
+#        
+#    SpinBox: ind:
+#        minimum=0
+#        maximum = max(0, len(vlist)-1)
+#        value:: update_ind()
+#    DynamicTemplate: s:
+#        base = ListView
+#        args = (int,)
+#        data << dict(vvalue=vlist[ind.value])
+#        tags = ("vvalue",)
     #SpinBox: 
         
     #    uvalue := vval #vlist[ind.value]
@@ -209,45 +430,111 @@ enamldef ListContainer(HGroup):
 #                    vlist.pop(ind.value+1)
 #                ind.maximum=max(0, len(vlist)-1)
 #            enabled << len(vlist)>0
-#            
-###################test code########################
-from enaml.widgets.api import Form, Window, Label
+#  
 
-enamldef Main2(Window):
-    UnitFloatField:
-        uvalue=10.0
-        unit_factor=10.0
-        unit="Hz"
-        show_uvalue=True
-        
+
+                    
+###################test code########################
+from enaml.widgets.api import  Window
+from atom.api import Atom
+
+class testmodel(object):
+    a=4
+    b=3.2
+    c="blah"
+    d=[0, 1, 2,3,4,5,5,6,7,7,8,88,4,8,9,5,8,8,8]
+    g=True
+    def myfunc(self):
+        print "ran myfunc"
+    
+b=testmodel()
+set_tag(b, "a",  show_value=True, unit_factor=10, unit="MHz")
+set_tag(b, "b",  show_value=True, unit_factor=0.1, unit="Hz", label="float test", no_spacer=True)
+set_tag(b, "d",  show_value=True, unit_factor=2, unit="Hz", label="listy", no_spacer=True)
+#set_tag(b, "c",  spec="multiline")
+
+template TypedView(AttrType: testmodel):
+    TypedView(Typed): pass
+
+class testAtom(Atom):
+    a=Int(4).tag(show_value=True, unit_factor=10, unit="MHz", spec="intfield")
+    b=Float(3.2).tag(show_value=True, unit_factor=0.1, unit="Hz", label="float test", no_spacer=True)
+    c=Unicode("blah").tag(spec="multiline")
+    d=ContainerList(default=[testmodel()])
+    g=Bool()
+    h=Enum("a", "b", "c", "m", "k", "n", "p").tag(no_spacer=True)
+    k=Coerced(int, (234,)).tag(show_value=True, unit_factor=10, unit="MHz", spec="intfield")
+    m=Instance(testmodel, ())#.tag(no_spacer=True, spec="multiline")
+    n=Range(-100,100,0).tag(unit_factor=5, unit="MHz")
+    p=FloatRange(-100.0,100.0,0.0).tag(unit_factor=5, unit="MHz")
+    
+    @Callable
+    def myfunc(self):
+        print "rang"
+
+b=testAtom()  
+
 enamldef Main(Window):
+#    attr instr = b
+#    InstrView(None):
+#        pass
     VGroup:
-        UnitFloatField: uff:
-            vlabel="UnitFloatField"
-            uvalue = 0.1
-            unit_factor=10.0
-            unit="Hz"
-            show_uvalue=True
-            no_spacer=True
-        UnitSpinBox: isb:
-            vlabel="UnitSpinBox"
-            uvalue=10            
-            unit_factor=10
-            maximum = 100000
-            show_uvalue=True
-            no_spacer=True
-        ChoiceField:
-            vlabel = "ChoiceField vcond=False" 
-            vtext="blah"
-            vcond=False
-            no_spacer=True
-        ChoiceField:
-            vlabel="ChoiceField vcond=True"
-            vtext="foo\nbar"
-            vcond=True
-            no_spacer=True
-        ListContainer:
-            vlist=[1,2,3]
+        ChoiceIntVar: iv:
+            vmodel=b
+            vname="a"
+            vvalue:=b.a
+        Label:
+            text << unicode((b.a, iv.vvalue))
+        FloatVar:
+            vmodel=b
+            vname="b"
+            vvalue:=b.b
+        Label:
+            text << unicode((b.b, iv.vvalue))
+        ChoiceStrVar:
+            vmodel=b
+            vname="c"
+            vvalue:=b.c
+        ListSBVar:
+            vmodel=b
+            vname="d"
+            vvalue:=b.d
+        #ListVGVar:
+        #    vmodel=b
+        #    vname="d"
+        #    vvalue:=b.d
+        BoolVar:
+            vmodel=b
+            vname="g"
+            vvalue:=b.g
             
-            
+        CallableVar:
+            vmodel=b
+            vname="myfunc"
+            vvalue:=b.myfunc
+        EnumVar:
+            vmodel=b
+            vname="h"
+            vvalue:=b.h
+        CoercedVar: 
+            vmodel=b
+            vname="k"
+            vvalue:=b.k            
+        TypedVar: 
+            vmodel=b
+            vname="m"
+            vvalue:=b.m            
+
+#            
+#            
+#        #unit="MHz"
+#    #UnitFloatField:
+#    #    uvalue=10.0
+#    #    unit_factor=10.0
+#    #    unit="Hz"
+#    #    show_uvalue=True
+#        
+#
+##            
+#            
         
