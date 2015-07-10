@@ -4,10 +4,11 @@ Created on Thu Jun 25 09:52:31 2015
 
 @author: thomasaref
 """
-from atom.api import Atom, Enum, Float, ContainerList
+from atom.api import Atom, Enum, Float, ContainerList, List
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
 from numpy import sin, cos, pi
+from LOG_functions import log_debug
 
 class EBL_PolyBase(Atom):
     color=Enum("green").tag(desc="color or datatype of item, could be used for dosing possibly")
@@ -40,7 +41,7 @@ class EBLvert(Atom):
 
 class EBLPolygon(EBL_PolyBase):
     """Implements polygons for use in drawing EBL patterns and includes conversion of polygon to DXF or GDS format (text based)"""
-    verts=ContainerList().tag(inside_type=EBLvert, desc='list of vertices of polygon', log=False)
+    verts=List().tag(inside_type=EBLvert, desc='list of vertices of polygon', log=False)
 
     def _default_verts(self):
         return [EBLvert()]
@@ -93,21 +94,21 @@ class EBLPolygon(EBL_PolyBase):
             tlist.append('10\r\n{0}\r\n20\r\n{1}\r\n'.format(v.x,v.y)) #vertex coordinate X and Y
         return tlist
 
-def V(vtuple):
+def V(vtuple, uf=1.0):
     """creates vertice from tuple"""
-    return EBLvert(x=vtuple[0], y=vtuple[1])
+    return EBLvert(x=vtuple[0]/uf, y=vtuple[1]/uf)
 
-def P(verts, **kwargs):
+def P(verts, unit_factor=1.0, **kwargs):
     """creates EBLPolygon from tuple of vertices and keyword arguments"""
-    return EBLPolygon(verts=[V(v) for v in verts], **kwargs)
+    return EBLPolygon(verts=[V(v, unit_factor) for v in verts], **kwargs)
 
-def R(xr=0.0, yr=0.0, wr=1.0, hr=1.0, **kwargs):
+def R(xr=0.0, yr=0.0, wr=1.0, hr=1.0, unit_factor=1.0, **kwargs):
     """creates rectangle EBLpolygon with (x,y) coordinates=(xr,yr), width=wr, height=hr"""
-    return P(verts=[(xr,yr), (xr+wr,yr), (xr+wr, yr+hr), (xr, yr+hr)], **kwargs)
+    return P(verts=[(xr,yr), (xr+wr,yr), (xr+wr, yr+hr), (xr, yr+hr)], unit_factor=unit_factor, **kwargs)
 
 class Polyer(EBL_PolyBase):
-    polylist=ContainerList(EBLPolygon).tag(inside_type=EBLPolygon)
-
+    polylist=List(EBLPolygon).tag(inside_type=EBLPolygon)
+    unit_factor=Float(1.0)
     def get_verts(self):
         return [p.get_verts() for p in self.polylist]
 
@@ -135,7 +136,7 @@ class Polyer(EBL_PolyBase):
         
     def offset_verts(self, x=0.0, y=0.0):
         for p in self.polylist:
-            p.offset_verts(x,y)
+            p.offset_verts(x/self.unit_factor,y/self.unit_factor)
         #self.x_center+=x
         #self.y_center+=y
 
@@ -163,15 +164,15 @@ class Polyer(EBL_PolyBase):
         
     def P(self, verts, **kwargs):
         """adds a polygon to the polylist with vertices given as a list of tuples"""
-        self.polylist.append(P(verts, **kwargs))
+        self.polylist.append(P(verts, unit_factor=self.unit_factor, **kwargs))
 
     def R(self, xr, yr, wr, hr, **kwargs):
         """Adds a rectangle with bottom left corner coordinates to polylist"""
-        self.polylist.append(R(xr, yr, wr, hr, **kwargs))
+        self.polylist.append(R(xr, yr, wr, hr, unit_factor=self.unit_factor, **kwargs))
 
     def C(self, xr, yr, wr, hr, **kwargs):
         """Adds a centered rectangle to the polylist"""
-        self.R(xr-wr/2.0, yr-hr/2.0, wr, hr, **kwargs)
+        self.R(xr-wr/2.0, yr-hr/2.0, wr, hr, unit_factor=self.unit_factor, **kwargs)
 
     def show(self, inside_type=EBLPolygon, inner_type=EBLvert):
         """stand alone for showing polylist"""
@@ -193,7 +194,8 @@ if __name__=="__main__":
     print a.polylist[-2].get_verts()    
 
     a.polylist[1].offset_verts(3,4)
-    print a.polylist[1].get_verts()  
-    from a_Boss import show
+    print a.polylist[1].get_verts() 
+    from a_Chief import show
+    #from a_Boss import show
     show(a)
     #a.show()

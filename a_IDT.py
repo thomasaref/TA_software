@@ -4,43 +4,44 @@ Created on Thu Feb 26 11:08:19 2015
 
 @author: thomasaref
 """
-from a_Base import Base
+from a_Agent import Spy
+from a_Backbone import updater
 from atom.api import Enum, Int, Float, observe, Bool, Property, Str, List
 from scipy.constants import epsilon_0 as eps0
 from numpy import sqrt
 from LOG_functions import log_debug
-from functools import wraps
+#from functools import wraps
 
-def updater(fn):
-    @wraps(fn)
-    def myfunc(self, change):
-        if not hasattr(myfunc, "callblock"):
-            myfunc.callblock=""
-        if change["name"]!=myfunc.callblock: # and change['type']!='create':
-            myfunc.callblock=change["name"]
-            templog=self.get_tag(change["name"], "log", True)
-            self.set_tag(change["name"], log=False)
-            fn(self, change)
-            self.set_tag(change["name"], log=templog)
-            myfunc.callblock=""
-    return myfunc
+#def updater(fn):
+#    @wraps(fn)
+#    def myfunc(self, change):
+#        if not hasattr(myfunc, "callblock"):
+#            myfunc.callblock=""
+#        if change["name"]!=myfunc.callblock: # and change['type']!='create':
+#            myfunc.callblock=change["name"]
+#            templog=self.get_tag(change["name"], "log", True)
+#            self.set_tag(change["name"], log=False)
+#            fn(self, change)
+#            self.set_tag(change["name"], log=templog)
+#            myfunc.callblock=""
+#    return myfunc
     
 
-class IDT(Base):
+class IDT(Spy):
     
-    def __setattr__(self, name, value):
-        """extends __setattr__ to allow logging and data saving and automatic sending if tag send_now is true.
-        This is preferable to observing since it is called everytime the parameter value is set, not just when it changes."""
-        if name in self.all_params:
-            value=self.coercer(name, value)
-        super(Base, self).__setattr__( name, value)
-        loglist=self.get_all_tags("log", True, True, self.all_params)
-        for param in loglist:
-            self.observe(param, self.log_changes)
-            
-    def log_changes(self, change):
-        self.set_log(change["name"], change["value"])
-        
+#    def __setattr__(self, name, value):
+#        """extends __setattr__ to allow logging and data saving and automatic sending if tag send_now is true.
+#        This is preferable to observing since it is called everytime the parameter value is set, not just when it changes."""
+#        if name in self.all_params:
+#            value=self.coercer(name, value)
+#        super(IDT, self).__setattr__( name, value)
+#        loglist=self.get_all_tags("log", True, True, self.all_params)
+#        for param in loglist:
+#            self.observe(param, self.log_changes)
+#            
+#    def log_changes(self, change):
+#        self.set_log(change["name"], change["value"])
+#        
     ft=Enum("double", "single").tag(desc="'double' for double fingered, 'single' for single fingered.",
                                             mapping={"double" : 2, "single" : 1})
     Np=Int(7).tag(desc="number of finger pairs. this should be at least 1", low=1)

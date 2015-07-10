@@ -6,7 +6,7 @@ Created on Fri Apr  3 22:26:23 2015
 """
 from LOG_functions import log_warning#, log_debug
 #log_debug(1)
-from a_Base import Base#, boss#, NoShowBase
+from a_Agent import Spy#, boss#, NoShowBase
 from EBL_Boss import ebl_boss
 from atom.api import Enum, Float, Int, observe, Property, Typed, Callable#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
 from EBL_Polyer import Polyer, P, R, V
@@ -15,7 +15,7 @@ from Atom_Save_File import Save_TXT
 
 #boss.save_factory=Save_DXF
 
-class EBL_Base(Base):
+class EBL_Base(Spy):
     @property    
     def boss(self):
         ebl_boss.make_boss(save_log=False)
@@ -27,8 +27,8 @@ class NoShow_EBL_Base(EBL_Base):
 
 
 class EBL_Item(EBL_Base):
-    testsavefile=Typed(Save_TXT, ())
-    polys=Typed(Polyer, ()).tag(private=True)
+    testsavefile=Typed(Save_TXT, ()).tag(no_spacer=True)
+    polys=Typed(Polyer).tag(private=True)
     x_center=Float(0.0).tag(desc="x coordinate of center of pattern. this should almost always be 0.0, which is centered (default).", unit="um")
     y_center=Float(0.0).tag(desc="y coordinate of center of pattern. this should almost always be 0.0, which is centered (default).", unit="um")
 
@@ -48,7 +48,10 @@ class EBL_Item(EBL_Base):
     ymin=Float().tag(private=True)
     ymax=Float().tag(private=True)
     
+    unit_factor=Float(1.0e-6)
     
+    def _default_polys(self):
+        return Polyer(unit_factor=self.unit_factor)
     #def auto_lim(self):
     #    self.set_xlim(self.polys.xlim)
     #    self.set_ylim(self.polys.ylim)
@@ -99,10 +102,10 @@ class EBL_Item(EBL_Base):
         self.ymin=self.polys.ymin
         self.ymax=self.polys.ymax
         
-        xmin=min(b.xmin for b in self.boss.bases)
-        xmax=max(b.xmax for b in self.boss.bases)
-        ymin=min(b.ymin for b in self.boss.bases)
-        ymax=max(b.ymax for b in self.boss.bases)
+        xmin=min(b.xmin for b in self.boss.agents)
+        xmax=max(b.xmax for b in self.boss.agents)
+        ymin=min(b.ymin for b in self.boss.agents)
+        ymax=max(b.ymax for b in self.boss.agents)
         
         self.set_xlim(xmin, xmax)
         self.set_ylim(ymin, ymax)
@@ -115,20 +118,20 @@ class EBL_Item(EBL_Base):
 
     def sP(self, verts, polyer=None, **kwargs):
         if polyer==None:
-            polyer=Polyer()
+            polyer=Polyer(unit_factor=self.unit_factor)
         polyer.P(verts, **kwargs)
         return polyer
         
     def sR(self, xr, yr, wr, hr, polyer=None, **kwargs):
         if polyer==None:
-            polyer=Polyer()
-        polyer.R(xr, yr, wr, hr, polyer=None, **kwargs)
+            polyer=Polyer(unit_factor=self.unit_factor)
+        polyer.R(xr, yr, wr, hr, **kwargs)
         return polyer
         
     def sC(self, xr, yr, wr, hr, polyer=None, **kwargs):
         if polyer==None:
-            polyer=Polyer()
-        polyer.C(xr, yr, wr, hr, polyer=Polyer(), **kwargs)
+            polyer=Polyer(unit_factor=self.unit_factor)
+        polyer.C(xr, yr, wr, hr, **kwargs)
         return polyer
 
     def P(self, verts, **kwargs):

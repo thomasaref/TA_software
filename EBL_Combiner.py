@@ -16,10 +16,10 @@ class EBL_Combiner(EBL_Item):
     def make_polylist(self):
         for item in self.get_member("subitems").items:
             subitem=self.get_map("subitems", item)
-            log_debug(item)
-            log_debug(subitem)
+            #log_debug(item)
+            #log_debug(subitem)
             subitem.predraw()            
             self.polys.extend(subitem.polys)
             
     def _default_main_params(self):
-        return ["plot", "view_type", "offset_verts", "rotate", "horiz_refl", "vert_refl", "clear_polylist"]
+        return ["plot", "view_type", "offset_verts", "rotate", "horiz_refl", "vert_refl", "clear_polylist"]#, "subitems"]

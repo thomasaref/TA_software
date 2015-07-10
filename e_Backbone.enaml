@@ -5,91 +5,301 @@ Created on Tue Jul  7 21:28:45 2015
 @author: thomasaref
 """
 
-from enaml.widgets.api import MainWindow, Container, DockArea, DockItem,  Field, ScrollArea, MultilineField, Window, VGroup, Label
+from enaml.widgets.api import (MainWindow, Container, DockArea, DockItem,  Field, ScrollArea, MultilineField, Window, 
+                               VGroup, Label, ToolBar, Action, GroupBox, ObjectCombo, PushButton, DockPane, MainWindow)
 from enaml.core.api import DynamicTemplate, Looper, Conditional
 from enaml.layout.api import TabLayout, spacer
 from atom.api import Unicode, Str, Float, Int, Atom, ContainerList
 from a_Backbone import get_main_params, get_type, get_tag, get_attr, set_tag
 from TA_Fundamentals import cap_case
-from e_FundView import Var, IntVar, FloatVar, UnicodeVar, ListVar, aHGroup, TypedView, spacer_eval#UnitFloatField, UnitSpinBox, ChoiceField
+from e_FundView import  InstrView, TypedView, spacer_eval, aContainer, aHGroup#UnitFloatField, UnitSpinBox, ChoiceField
+
+from enaml.layout.api import vbox, hbox, align, InsertItem,  InsertTab, HSplitLayout
+#from enaml.widgets.api import (
+#    MainWindow,  Container, PushButton, Field, CheckBox, ObjectCombo, Form, DockArea, DockItem, Slider,
+#    StatusBar, StatusItem, Label, DockPane, MultilineField, Window, ToolBar, Action, ActionGroup, FileDialogEx, GroupBox
+#)
 
 
+from e_Plotter import  PlotItem, show_item as show_plot#, PlotArea
+from enaml_Filer import SaveWrap, ReadWrap, ReadSaveWrap
+#from atom.api import Atom, Str, Instance, Event
 
-                
-template InstrView(instrType):
+enamldef ChiefToolBar(ToolBar):
+    dock_area='left'
+    Action:
+        text="Log"
+        triggered::
+            logpane.show()
+        tool_tip = "Show log"
+    Action:
+        text="Save"
+        triggered::
+            savepane.show()
+        tool_tip = "Show save pane"
+    Action:
+        text = "PlotPane"
+        triggered:: plotpane.show() #print dir(bossarea) #show_plot(bossarea, boss.plot) #show_pane(dyn_pages, 'Plot')
+        tool_tip = "Show plot controls"
+    Action:
+        text = "Plot"
+        triggered::
+             tagent=[b for b in boss.agents if b.name=="EBL_Item_test"][0]
+             tagent.plot(tagent)
+                #print bossarea.dock_items()[0].name
+                #show_plot(boss.plot.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=boss.plot)
+        tool_tip = "Show plot"
+
+    Action:
+        separator=True
+    Action:
+        separator=True
+
+    Action: run:
+        text = "Run"
+        triggered :: boss.run()
+    Action:
+        separator=True
+    Action:
+        separator=True
+
+    Action:
+        text = "Agents"
+        triggered::
+              show_all_agents(bossarea, boss)
+        tool_tip = "Show all agents"
+    Action:
+        separator=True
+    Looper: loopy:
+        iterable << [b for b in boss.agents if b.name[0]!="_"]
+        Action:
+            text = loop_item.name
+            tool_tip = "Show agent: {0}".format(loop_item.name)
+            triggered:: 
+                show_agent(bossarea, loop_item)
+
+def get_plot_items(inlist):
+    if inlist==None:
+        return []
+    return inlist
+
+
+enamldef PlotBox(GroupBox):
+    attr plotr=boss.plot
+    #alias yinstr
     VGroup:
-        padding = 0
-        Looper:
-            iterable<<get_main_params(instr)
-            aHGroup:
-                trailing_spacer=spacer_eval(instr, loop_item)
-                func update_vval():
-                    pass
-                Label:
-                    text=get_tag(instr, loop_item, "label", loop_item)
-                DynamicTemplate: s:
-                    base = TypedView
-                    args << (type(getattr(instr, loop_item)),)
-                    data << dict(vmodel=instr, vname=loop_item, vvalue=getattr(instr, loop_item))
+        #constraints = [vbox(hbox(xinstr_lbl, xinstr, xvar_lbl, xvar), hbox(yinstr_lbl, yinstr, yvar_lbl, yvar), plot_btn)]
+        aHGroup:        
+            Label: xinstr_lbl:
+                text="X instr"
+            ObjectCombo: xinstr:
+                items = list(boss.plottables.keys())
+            Label: xvar_lbl:
+                text="X var"
+            ObjectCombo: xvar:
+                items = boss.plottables[xinstr.selected]
+        aHGroup:
+            Label: yinstr_lbl:
+                text="Y instr"
+            #alias yinstr
+            ObjectCombo: yinstr:
+                items = list(boss.plottables.keys())
+            Label: yvar_lbl:
+                text="Y var"
+            ObjectCombo: yvar:
+                items = boss.plottables[yinstr.selected]
 
+        PushButton: plot_btn:
+            text="Plot"
+            clicked ::
+                tagent=[b for b in boss.agents if b.name==yinstr.selected][0]
+                tagent.plot()
+                show_plot(plotr.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=plotr)
 
-
-class testmodel(object):
-    a=4
-    b=3.2
-    c="blah"
-    d=[0, 1, 2,3,4,5,5,6,7,7,8,88,4,8,9,5,8,8,8]
-    
-b=testmodel()
-set_tag(b, "a",  show_value=True, unit_factor=10, unit="MHz")
-set_tag(b, "b",  show_value=True, unit_factor=0.1, unit="Hz", label="float test", no_spacer=True)
-set_tag(b, "d",  show_value=True, unit_factor=2, unit="Hz", label="listy", no_spacer=True)
-
-#set_tag(b, "c",  spec="multiline")
-
-class testAtom(Atom):
-    a=Int(4).tag(show_value=True, unit_factor=10, unit="MHz")
-    b=Float(3.2).tag(show_value=True, unit_factor=0.1, unit="Hz", label="float test", no_spacer=True)
-    c=Unicode("blah").tag(spec="multiline")
-    d=ContainerList(default=[1,2,3, 3.4])
-b=testAtom()    
-
-enamldef Main(Window):
-    attr instr = b
-    InstrView(None):
+enamldef PlotPane(DockPane):
+    dock_area='right'
+    title = 'Plot Pane'
+    PlotBox:
         pass
 
-template BaseTemp(bview):
-    Container:
-        padding = 0
-        ScrollArea:
-            Container:
-                padding = 0
-                DynamicTemplate:
-                    base = InstrView
-                    args = (type(instr),)
-                    #data = dict(visible=True)
+enamldef LogPane(DockPane): lp:
+    dock_area='bottom'
+    title = "Log"
+    aContainer:
+        MultilineField: mlf:
+            text << boss.display.log_str
 
-#How to implement custom layouts. OtherCont could be imported from another file, i.e. from yourfile.enaml import OtherCont
-enamldef OtherCont(Container):
-    Field:
-        text:=instr.b
+enamldef StreamLogPane(LogPane): lp:
+    attr old_stdout=sys.stdout
+    attr old_stderr=sys.stderr
+    attr logstr=""
+    visible::
+        boss.display.redirect_stdout(lp.visible)
+    activated :: boss.display.redirect_stdout(lp.visible)
 
-template BaseTemp(bview: "field"):
-    OtherCont:
-        pass  
+enamldef SavePane(DockPane):
+    dock_area='top'
+    title = "Save"
+    SaveWrap:
+        filer = boss.save_file
+        coder=boss.run
+        olp=boss.BASE_DIR+boss.DIVIDER+boss.LOG_NAME
+
+enamldef ReadPane(DockPane):
+    dock_area='top'
+    title = "Read"
+    ReadWrap:
+        filer = boss.read_file
+
+enamldef ReadSavePane(DockPane):
+    dock_area='top'
+    title = "Save and Read"
+    ReadSaveWrap:
+        read_file = boss.read_file
+        save_file = boss.save_file
+        runcode = boss.run
+
+class tempclass:
+    name="plot1"
+
+def find_targets(dock_items, target_items=[]):
+    names=(o.name for o in dock_items)
+    targets=(o.name for o in target_items)
+    overlap=list(set(targets).intersection(names))
+    return overlap
+
+def show_all_agents(area, boss):
+    for item in boss.agents:
+        show_agent(area, item)
+
+def show_item(name, area, target=None, ItemType=DockItem, position='left', OP=InsertItem, **kwargs):
+    item=ItemType(area, **kwargs)
+    if target==None:
+        if OP==InsertItem:
+            op = OP(item=name, position=position)
+        else:
+            op = OP(item=name)
+    else:
+        if OP==InsertItem:
+            op = OP(item=name, target=target, position=position)
+        else:
+            op = OP(item=name, target=target)
+    area.update_layout(op)
+
+def show_general_item(area, item, ItemType=DockItem, position='left', target_items=[tempclass()], **kwargs):
+    if item!=None:
+        targets = find_targets(dock_items=area.dock_items(), target_items=target_items)
+        if targets==[]:
+            show_item(item.name, area, ItemType=ItemType, OP=InsertItem, position=position, **kwargs)
+        elif item.name not in targets:
+            show_item(item.name, area, target=targets[0], ItemType=ItemType, OP=InsertTab, **kwargs)
 
 enamldef InstrDockItem(DockItem):
    attr instr
    name = get_attr(instr, "name", "noitem")
-   title = cap_case(name)
-   DynamicTemplate:
-       base = BaseTemp
-       args=(get_attr(instr, "view", "Auto"), ) 
+   title = get_attr(instr, "name", "No Title")
+   aContainer:
+       ScrollArea:
+           aContainer:
+               DynamicTemplate:
+                   base = InstrView
+                   args=(get_attr(instr, "view", "Auto"), ) 
+       
+def show_agent(area, agent):
+    if agent!=None:
+        show_general_item(area, agent, ItemType=InstrDockItem, target_items=agent.boss.agents, instr=agent)
+
+def show_plot2(area, plot):
+    show_general_item(area, plot, ItemType=PlotItem, position='right', target_items=agent.boss.plot_list, plotr=plot)
+
+def bshow_plot(bossarea, boss):
+        plotr=boss.plot 
+        if "EBL_Item_test" in (b.name for b in boss.agents):
+            tagent=[b for b in boss.agents if b.name=="EBL_Item_test"][0]
+            tagent.plot(tagent)
+            show_plot(plotr.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=plotr)
+                
+enamldef ChiefMain(MainWindow): main:
+    attr agent = None 
+    attr boss
+    title=get_attr(main.boss, "name", "No Title")
+    #activated :: main.send_to_front()
+    initial_position=(0,0)
+
+    ChiefToolBar:
+        pass
+    alias savepane
+    SavePane: savepane:
+        visible = False
+    alias logpane
+    LogPane: logpane:
+        pass
+    alias plotpane
+    PlotPane: plotpane:
+        visible = False
+
+    alias bossarea
+    Container: mycont:
+        alias bossarea
+        DockArea: bossarea:
+            activated ::
+                for item in boss.agents:
+                    if (agent==item or boss.show_agents) and item.name[0]!="_":
+                        show_agent(bossarea, item)
+                bshow_plot(bossarea, boss)
+
+#            layout=TabLayout(di.name)
+#            InstrDockItem: di:
+#                instr=agent
+                
+#enamldef BossMain(MainWindow): main:
+#    attr boss    
+#    attr myinstr : None
+#    attr other: Window
+#    title=boss.name
+#    BossToolBar: 
+#        pass #alias main:
+#    initial_position=(0,0)
+#    #alias readpane
+#    #ReadSavePane: readpane:
+#    #    visible = True #False
+#    alias savepane
+#    SavePane: savepane:
+#        visible = False
+#    alias logpane
+#    LogPane: logpane:
+#        pass
+#    alias plotpane
+#    PlotPane: plotpane:
+#        visible = False
+#    #attr counter = 0
+#    #StatusBar: statbar:
+#    #    StatusItem:
+#    #        Label:
+#    #            text << unicode(boss.busy)
+# 
+#    alias bossarea
+#    Container: mycont:
+#        
+#        #PushButton:
+#        #    clicked ::
+#        #        if not main.other:
+#        #            main.other = OtherWindow()
+#        #        main.other.show()
+#        alias bossarea
+#        DockArea: bossarea:
+#            activated ::
+#                for item in boss.agents:
+#                    if (myinstr==item or boss.show_agents) and item.name[0]!="_":
+#                        show_agent(bossarea, item)
+#                bshow_plot(bossarea, boss)
+                    
+
 
 enamldef AtomMain(MainWindow): main:
-    attr elect 
-    title=get_attr(main.elect, "name", "No Title")
+    attr agent = None 
+    attr chief
+    title=get_attr(main.chief, "name", "No Title")
     #activated :: main.send_to_front()
     alias bossarea
     Container: mycont:
@@ -97,5 +307,5 @@ enamldef AtomMain(MainWindow): main:
         DockArea: bossarea:
             layout=TabLayout(di.name)
             InstrDockItem: di:
-                instr=elect
+                instr=agent
                 

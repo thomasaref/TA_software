@@ -12,7 +12,7 @@ Created on Sat Apr  4 13:15:45 2015
 @author: thomasaref
 """
 from EBL_Item import EBL_Item
-from atom.api import Enum, Float
+from atom.api import Enum, Float, Callable
     
 class EBL_SQUID(EBL_Item):
     box_height=Float(3.0).tag(desc="height of connecting box", unit="um", good_value=20.0)
@@ -41,9 +41,11 @@ class EBL_SQUID(EBL_Item):
 
     def make_polylist(self):
         """Draws IDT depending on object parameters"""
-        self.get_map("squid_type")()
+        self.get_map("squid_type")(self)
+
+        #self.run_func(self.squid_type)        
         if self.orientation=="Horizontal":
-            self.rotate(90.0)
+            self.rotate(self, 90.0)
 
     def _default_main_params(self):
         return ["plot", "view_type", "squid_type", "orientation", "angle_x", "angle_y", "offset_verts", "rotate", "horiz_refl", "vert_refl", "clear_polylist", 
@@ -56,7 +58,7 @@ class EBL_SQUID(EBL_Item):
    #                (self.x_center-self.contact_width/2.0, self.contact_height/2.0)
    #                ])
 
- 
+    @Callable
     def bridge(self):
         self._bridge_TL()
         self._bridge_TR()
@@ -231,7 +233,7 @@ class EBL_SQUID(EBL_Item):
         self.rect(self.x_center-connx/2.0, hbox/2.0-h, connx, -w)
 
         self.rect(self.x_center-connx/2.0, -hbox/2.0+h, connx, w)
-
+    @Callable
     def two_finger(self):
         self.P([(-self.width/2.0, self.height/2.0),
                    (self.width/2.0, self.height/2.0),
@@ -308,6 +310,9 @@ class EBL_SQUID(EBL_Item):
     
 if __name__=="__main__":
     a=EBL_SQUID(name="EBL_Item_test")
+    #print a.two_finger.run_params
+    from a_Backbone import run_func
+    run_func(a, "plot") #plot(a)
     a.show()
 
 #    def _s_bridge_TL(self):

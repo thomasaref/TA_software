@@ -6,7 +6,7 @@ Created on Thu Mar  5 20:50:49 2015
 """
 
 from Atom_Filer import Filer
-from atom.api import Bool, Dict, Unicode, observe, List, Event
+from atom.api import Bool, Dict, Unicode, observe, List, Event, Enum
 import os
 import shutil
 import inspect
@@ -25,6 +25,7 @@ class Save_File(Filer):
     default_group_name=Unicode()
     group_names=List()
     save_event=Event()
+    view=Enum("Save_File", "Auto")
     #files_exist=Bool(False)
 
     def _default_data_buffer(self):

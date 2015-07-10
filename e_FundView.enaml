@@ -4,18 +4,72 @@ Created on Mon Jun 29 16:12:32 2015
 
 @author: thomasaref
 
-A collection of useful widgets
+Workhorse of templates
 """
 from enaml.widgets.api import  CheckBox, Label, SpinBox, VGroup, ScrollArea, MultilineField, Field, PushButton, ObjectCombo, Slider, ScrollArea
 from enaml.core.api import Conditional, DynamicTemplate, Looper
 from enaml.core.declarative import d_ 
 from enaml.layout.api import spacer#, hbox
-from a_Backbone import get_tag, set_tag, get_run_params, get_args, get_map, get_map_type, get_type, get_main_params
-from atom.api import Unicode, Str, Float, Int, ContainerList, List, Typed, Instance, Coerced, Bool, Range, Enum, Callable, FloatRange
+from a_Backbone import get_attr, get_tag, set_tag, get_run_params, get_map, get_map_type, get_type, get_main_params, get_boss, run_func
+from atom.api import Atom, Unicode, Str, Float, Int, ContainerList, List, Typed, Instance, Coerced, Bool, Range, Enum, Callable, FloatRange
 from e_FundCore import aContainer, aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField
 
+from LOG_functions import log_debug
+#from e_Instrument import BootClose
+#from Atom_Instrument import Instrument
+
+#########################################################
+#Custom User layouts 
+from enaml_Filer import ReadWrap, SaveWrap
+from EBL_enaml import EBContWrap
+
+template InstrView(instr_view: "Read_File"):
+    """ Displays a read file interface"""
+    ReadWrap:
+        filer:=getattr(vmodel, vname)
+
+template InstrView(instr_view: "Save_File"):
+    """Displays a save file interface"""
+    SaveWrap:
+        filer:=getattr(vmodel, vname)
+
+template InstrView(instr_view: "Polyer"):
+    """Displays a polyer polygon list interface. very ineffecient. too many notifications"""
+    EBContWrap:
+        polyer:=getattr(vmodel, vname)
+
+############################################################     
+template InstrView(instr_view):
+    AutoInstrCont:
+        pass
+
+enamldef InstrHolder(aContainer):
+   attr instr
+   ScrollArea:
+       aContainer:
+           DynamicTemplate:
+               base = InstrView
+               args=(get_attr(instr, "view", "Auto"), )
+
+enamldef AutoInstrCont(aContainer):
+    Looper:
+        iterable<<get_main_params(instr)
+        aHGroup:
+            trailing_spacer=spacer_eval(instr, loop_item)
+            func update_vval():
+                setattr(instr, loop_item, s.tagged["instrvalue"].vvalue)
+            Label:
+                text=get_tag(instr, loop_item, "label", loop_item)
+            DynamicTemplate: s:
+                base = TypedView
+                args << (get_type(instr, loop_item),)
+                data << dict(vmodel=instr, vname=loop_item, vvalue=getattr(instr, loop_item))
+                tags = ("instrvalue",)                    
+
+
+   
 def spacer_eval(vmodel, vname):
-     """useful function for modifying spacer of aHGroup"""    
+     """useful function for modifying spacer of aHGroup"""
      no_spacer = get_tag(vmodel, vname, "no_spacer", False)
      if no_spacer:
          return None
@@ -27,26 +81,43 @@ enamldef Var(aContainer):
     attr vname 
     attr vvalue
 
+enamldef TypedVar(Var):
+    InstrHolder:
+        instr:=vvalue
+#    ScrollArea:    
+#        aContainer:
+#            Looper:
+#                iterable<<get_main_params(vvalue)
+#                aHGroup:
+#                    trailing_spacer=spacer_eval(vvalue, loop_item)
+#                    func update_vval():
+#                        setattr(vvalue, loop_item, s.tagged["typedvalue"].vvalue)
+#                    Label:
+#                        text=get_tag(vvalue, loop_item, "label", loop_item)
+#                    DynamicTemplate: s:
+#                        base = TypedView
+#                        args << (get_type(vvalue, loop_item),)
+#                        data << dict(vmodel=vvalue, vname=loop_item, vvalue=getattr(vvalue, loop_item))
+#                        tags=("typedvalue",)
+
 
 enamldef CallableVar(Var):
     aHGroup:
         PushButton: 
             text = 'Run'
             clicked :: 
-                args=get_args(vmodel, vname)
-                vvalue(*args) #print "ran"
-                    #try:
-    #                    getattr(instr, name)(instr) #do_it_if_needed(var, "receive") #receive()
-                    #except TypeError:
-                    #    getattr(instr, name)()
-                #enabled << not instr.boss.busy
+                run_func(vmodel, vname)
+            enabled << not get_boss(vmodel).busy
         aGroupBox: agb:
-            visible = get_run_params(vvalue)!=[]
+            visible = get_tag(vmodel, vname, "run_params", get_run_params(vvalue))!=[]
             title = get_tag(vmodel, vname, 'label', vname)+" parameters:"
-            aVGroup:
+            aContainer:
                 Looper: lo:
-                    iterable<<get_run_params(vvalue)
-                    aContainer:
+                    iterable=get_run_params(vvalue)
+                    aHGroup:
+                        trailing_spacer=spacer_eval(vmodel, loop_item)
+                        Label:
+                            text=get_tag(vmodel, loop_item, "label", loop_item)
                         func update_vval():
                             setattr(vmodel, loop_item, s.tagged["vvalue"].vvalue)
                         DynamicTemplate: s:
@@ -59,8 +130,8 @@ enamldef CallableVar(Var):
             text = 'Abort'
             clicked ::
                 print "abort pressed"
-                #instr.boss.abort=True
-                #enabled <<  instr.boss.busy
+                get_boss(vmodel).abort=True
+            enabled <<  get_boss(vmodel).busy
 
 enamldef CoercedVar(Var):
     func update_vval():
@@ -71,27 +142,14 @@ enamldef CoercedVar(Var):
         data << dict(vmodel=vmodel, vname=vname, vvalue=vvalue)
         tags = ("vvalue",)
 
-enamldef TypedVar(Var):
-    ScrollArea:    
-        aContainer:
-            Looper:
-                iterable<<get_main_params(vvalue)
-                aHGroup:
-                    trailing_spacer=spacer_eval(vvalue, loop_item)
-                    func update_vval():
-                        pass
-                        #func update_vval():
-                            #setattr(vmodel, vname, s.tagged["vvalue"].vvalue)
-                    Label:
-                        text=get_tag(vvalue, loop_item, "label", loop_item)
-                    DynamicTemplate: s:
-                        base = TypedView
-                        args << (type(getattr(vvalue, loop_item)),)
-                        data << dict(vmodel=vvalue, vname=loop_item, vvalue=getattr(vvalue, loop_item))
-         
+def enum_spacer_eval(vmodel, vname, vvalue):
+      if get_map_type(vmodel, vname)=="attribute":
+          return spacer_eval(vmodel, vvalue)
+      return spacer_eval(vmodel, vname)
+      
 enamldef EnumVar(Var):
     aHGroup:
-        trailing_spacer=spacer_eval(vmodel, vvalue)
+        trailing_spacer=enum_spacer_eval(vmodel, vname, vvalue)
         ObjectCombo: 
             items = list(vmodel.get_member(vname).items)
             selected := vvalue
@@ -314,13 +372,17 @@ template TypedView(AttrType: list):
     TypedView(ContainerList): pass
 
 template TypedView(AttrType: List):
-    ListVGVar: 
-        vvalue :: update_vval()
+    TypedView(ContainerList): pass
+    #ListVGVar: 
+    #    vvalue :: update_vval()
 
 template TypedView(AttrType: Typed):
     """interface for a Typed member."""
     TypedVar:
         vvalue :: update_vval()
+
+#template TypedView(AttrType: Atom):
+#    TypedView(Typed): pass
 
 template TypedView(AttrType: Instance):
     TypedView(Typed): pass

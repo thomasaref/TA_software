@@ -5,7 +5,7 @@ Created on Fri Apr  3 18:23:12 2015
 @author: thomasaref
 """
 
-from a_Boss import Boss
+from a_Chief import Chief
 from Atom_Save_File import Save_DXF
 from LOG_functions import log_info
 from Plotter import Plotter
@@ -13,10 +13,10 @@ from atom.api import Typed
 #from enaml import imports
 #from enaml.qt.qt_application import QtApplication#
 
-class EBL_Boss(Boss):
+class EBL_Boss(Chief):
     plot=Typed(Plotter, ())
     
-    def _default_show_bases(self):
+    def _default_show_agents(self):
         return True
 
     def _default_save_factory(self):
