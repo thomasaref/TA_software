@@ -1,0 +1,369 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Jul 11 12:26:26 2015
+
+@author: thomasaref
+Workhorse templates for TypedView. Also adds Var definitions for variables that depend on TypedView
+"""
+
+from enaml.widgets.api import Label, SpinBox, VGroup, ScrollArea, MultilineField, Field, PushButton, ObjectCombo, Slider, ScrollArea
+from enaml.core.api import Conditional, DynamicTemplate, Looper
+from enaml.core.declarative import d_ 
+from enaml.layout.api import spacer#, hbox
+from a_Backbone import get_attr, get_tag, set_tag, get_run_params, get_map, get_map_type, get_type, get_main_params, get_boss, run_func
+from atom.api import Atom, Unicode, Str, Float, Int, ContainerList, List, Typed, Instance, Coerced, Bool, Range, Enum, Callable, FloatRange
+from e_FundView import (aContainer, aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField, Var, BoolVar,
+                        IntVar, FloatVar, ChoiceIntVar, RangeVar, FloatRangeVar)
+
+from LOG_functions import log_debug
+#from e_Instrument import BootClose
+#from Atom_Instrument import Instrument
+
+from e_UserTemps import UserInstrView
+ 
+   
+def spacer_eval(vmodel, vname):
+     """useful function for modifying spacer of aHGroup"""
+     no_spacer = get_tag(vmodel, vname, "no_spacer", False)
+     if no_spacer:
+         return None
+     return spacer
+      
+template InstrView(instr_view):
+    """goes to user defined templates"""
+    UserInstrView(instr_view): 
+        pass
+
+template InstrView(instr_view: "Auto"):
+    AutoInstrCont:
+        pass
+
+enamldef InstrHolder(aContainer):
+   attr instr
+   ScrollArea:
+       aContainer:
+           DynamicTemplate:
+               base = InstrView
+               args=(get_attr(instr, "view", "Auto"), )
+
+enamldef AutoInstrCont(aContainer):
+    Looper:
+        iterable<<get_main_params(instr)
+        aHGroup:
+            trailing_spacer=spacer_eval(instr, loop_item)
+            func update_vval():
+                setattr(instr, loop_item, s.tagged["instrvalue"].vvalue)
+            Label:
+                text=get_tag(instr, loop_item, "label", loop_item)
+            DynamicTemplate: s:
+                base = TypedView
+                args << (get_type(instr, loop_item),)
+                data << dict(vmodel=instr, vname=loop_item, vvalue=getattr(instr, loop_item))
+                tags = ("instrvalue",)                    
+
+enamldef TypedVar(Var):
+    InstrHolder:
+        instr:=vvalue
+#    ScrollArea:    
+#        aContainer:
+#            Looper:
+#                iterable<<get_main_params(vvalue)
+#                aHGroup:
+#                    trailing_spacer=spacer_eval(vvalue, loop_item)
+#                    func update_vval():
+#                        setattr(vvalue, loop_item, s.tagged["typedvalue"].vvalue)
+#                    Label:
+#                        text=get_tag(vvalue, loop_item, "label", loop_item)
+#                    DynamicTemplate: s:
+#                        base = TypedView
+#                        args << (get_type(vvalue, loop_item),)
+#                        data << dict(vmodel=vvalue, vname=loop_item, vvalue=getattr(vvalue, loop_item))
+#                        tags=("typedvalue",)
+
+enamldef CoercedVar(Var):
+    func update_vval():
+        setattr(vmodel, vname, s.tagged["vvalue"].vvalue)
+    DynamicTemplate: s:
+        base = TypedView
+        args << (type(vvalue),)
+        data << dict(vmodel=vmodel, vname=vname, vvalue=vvalue)
+        tags = ("vvalue",)
+
+def enum_spacer_eval(vmodel, vname, vvalue):
+      if get_map_type(vmodel, vname)=="attribute":
+          return spacer_eval(vmodel, vvalue)
+      return spacer_eval(vmodel, vname)
+      
+enamldef EnumVar(Var):
+    aHGroup:
+        trailing_spacer=enum_spacer_eval(vmodel, vname, vvalue)
+        ObjectCombo: 
+            items = list(vmodel.get_member(vname).items)
+            selected := vvalue
+        Conditional:
+            condition = get_map_type(vmodel, vname)=="attribute"
+            aContainer:
+                func update_vval():
+                    setattr(vmodel, vvalue, s.tagged["vvalue"].vvalue)
+                DynamicTemplate: s:
+                    base = TypedView
+                    args << (get_type(vmodel, vvalue),)
+                    data << dict(vmodel=vmodel, vname=vvalue, vvalue=getattr(vmodel, vvalue))
+                    tags = ("vvalue",)
+        Conditional:
+            condition = get_map_type(vmodel, vname)!="attribute"
+            Label:
+                text <<  unicode(get_map(vmodel, vname, vvalue))  
+
+enamldef CallableVar(Var):
+    aHGroup:
+        PushButton: 
+            text = 'Run'
+            clicked :: 
+                run_func(vmodel, vname)
+            enabled << not get_boss(vmodel).busy
+        aGroupBox: agb:
+            visible = get_tag(vmodel, vname, "run_params", get_run_params(vvalue))!=[]
+            title = get_tag(vmodel, vname, 'label', vname)+" parameters:"
+            aContainer:
+                Looper: lo:
+                    iterable=get_run_params(vvalue)
+                    aHGroup:
+                        trailing_spacer=spacer_eval(vmodel, loop_item)
+                        Label:
+                            text=get_tag(vmodel, loop_item, "label", loop_item)
+                        func update_vval():
+                            setattr(vmodel, loop_item, s.tagged["vvalue"].vvalue)
+                        DynamicTemplate: s:
+                            base = TypedView
+                            args << (type(getattr(vmodel, loop_item)),)
+                            data << dict(vmodel=vmodel, vname=vname, vvalue=getattr(vmodel, loop_item))
+                            tags = ("vvalue",)
+    
+        PushButton: pb2:
+            text = 'Abort'
+            clicked ::
+                print "abort pressed"
+                get_boss(vmodel).abort=True
+            enabled <<  get_boss(vmodel).busy
+
+     
+class aListHGroup(aHGroup): 
+    vlist = d_(ContainerList(default=[0]))
+
+enamldef ListSpinBox(aListHGroup):
+    """displays list as a single cell with a spinbox controlling which value is being observed"""
+    attr inside_type = int
+    func update_vval():
+        self.vlist[ind.value]=s.tagged["vvalue"].vvalue
+        
+    SpinBox: ind:
+        minimum=0
+        maximum = max(0, len(vlist)-1)
+    #Label:
+    #    text << unicode((vlist, s.tagged))
+    DynamicTemplate: s:
+        base = TypedView
+        args = (type(vlist[ind.value]),)
+        data << dict(vmodel=vmodel, vname=vname, vvalue=vlist[ind.value])
+        tags = ("vvalue",)
+ 
+enamldef ListSBVar(Var):
+    """extends Var for list types"""
+    ListSpinBox:
+        vlist:=vvalue
+
+enamldef ListVGroup(aListHGroup): lvg:
+    """displays list as a looper inside a scollarea"""
+    attr inside_type = int
+    ScrollArea:
+        VGroup:
+            padding=0
+            #Label:
+            #   text << unicode(vlist)
+            Looper: lo:
+                iterable:=vlist
+                aContainer:
+                    func update_vval():
+                        lvg.vlist[loop_index]=s.tagged["vvalue"].vvalue
+                    DynamicTemplate: s:
+                        base = TypedView
+                        args << (type(loop_item),)
+                        data << dict(vmodel=vmodel, vname=vname, vvalue=loop_item)
+                        tags = ("vvalue",)
+ 
+enamldef ListVGVar(Var):
+    """extends Var for list types"""
+    ListVGroup:
+        vlist:=vvalue
+
+template TypedView(AttrType):
+    """default template for unknown type"""
+    Var:
+        Label:
+            text << unicode((vname, vvalue))
+
+template TypedView(AttrType : Int):
+    """template for int types"""
+    ChoiceIntVar:
+        vvalue :: update_vval()
+
+template TypedView(AttrType: int):
+    TypedView(Int): pass
+
+template TypedView(AttrType : Float):
+    """template for float types"""
+    FloatVar:
+        vvalue :: update_vval() 
+        
+template TypedView(AttrType: float):
+    """specialization for floats"""
+    TypedView(Float): pass
+
+template TypedView(AttrType : Unicode):
+    """template for string types"""
+    ChoiceStrVar: 
+        vvalue :: update_vval()
+        
+template TypedView(AttrType: unicode):
+    TypedView(Unicode): pass
+
+template TypedView(AttrType: str):
+    TypedView(Unicode): pass
+
+template TypedView(AttrType: Str):
+    TypedView(Unicode): pass
+
+template TypedView(AttrType:ContainerList):
+    """template for list types"""
+    ListSBVar: 
+        vvalue :: update_vval()
+        
+template TypedView(AttrType: list):
+    TypedView(ContainerList): pass
+
+template TypedView(AttrType: List):
+    TypedView(ContainerList): pass
+    #ListVGVar: 
+    #    vvalue :: update_vval()
+
+template TypedView(AttrType: Typed):
+    """interface for a Typed member."""
+    TypedVar:
+        vvalue :: update_vval()
+
+#template TypedView(AttrType: Atom):
+#    TypedView(Typed): pass
+
+template TypedView(AttrType: Instance):
+    TypedView(Typed): pass
+
+template TypedView(AttrType: Coerced):
+    CoercedVar:
+        vvalue :: update_vval()
+
+template TypedView(AttrType: Bool):
+    """ A template specialization for Bool members using CheckBox"""
+    BoolVar: 
+        vvalue :: update_vval()
+        
+template TypedView(AttrType: bool):
+    TypedView(Bool): pass
+
+template TypedView(AttrType: Range):
+    """ A template for Range members"""
+    RangeVar: 
+        vvalue :: update_vval()
+
+template TypedView(AttrType: FloatRange):
+    """ A template for Range members"""
+    FloatRangeVar: 
+        vvalue :: update_vval()
+
+template TypedView(AttrType: Callable):
+    """A template specialization for a Callable using a PushButton"""
+    CallableVar: 
+        vvalue :: update_vval()
+        
+template TypedView(AttrType: Enum):
+    """ A form control template specialization for Enum members using ObjectCombo."""
+    EnumVar: 
+        vvalue :: update_vval()
+         
+#enamldef ListContainer(HGroup):
+#    attr vlist = [0]
+#    attr vval = vlist[0]
+#    #attr yoko
+#    attr vlabel = ""
+#    attr no_spacer : bool = False
+#    attr inside_type = int
+#    
+#    #vval::update_vval()
+#    #vval<<vlist[ind.value] #s.tagged["uvalue"].uvalue
+#
+#
+#    padding=0
+#    trailing_spacer=spacer_eval(no_spacer)
+#    align_widths=False
+#
+#    func update_ind():
+#        self.vval=self.vlist[ind.value]
+#        
+#        
+#    func update_vval():
+#        self.vlist[ind.value]=s.tagged["vvalue"].vvalue
+#
+#    Label:
+#        text = unicode(vlabel)
+#        
+#    SpinBox: ind:
+#        minimum=0
+#        maximum = max(0, len(vlist)-1)
+#        value:: update_ind()
+#    DynamicTemplate: s:
+#        base = ListView
+#        args = (int,)
+#        data << dict(vvalue=vlist[ind.value])
+#        tags = ("vvalue",)
+    #SpinBox: 
+        
+    #    uvalue := vval #vlist[ind.value]
+    #    uvalue :: update_vval()
+    #Label:
+    #    text << unicode((vval, ind.value, vlist, s.tagged["uvalue"].uvalue))
+        #Container: val:
+        #    padding = 0
+        #    alias dyn
+        #    DynamicTemplate: dyn:
+        #        base = ListView
+        #        args << (instrin, name, type(getattr(instrin, name)[ind.value]), ind.value) #, get_type(base, name, ind.value))
+#    PushButton: insert_btn:
+#        text="Insert"
+#        clicked::
+#            if len(vlist)==0:
+#                intype=inside_type() #if inside_type is not specified for an empty array, this will generate an error
+#            else:
+#                temptype=vlist[ind.value]
+#                #if isinstance(temptype, Base):
+#                    #intype=temptype.copy()
+#                #else:
+#                intype=type(temptype)()
+#                vlist.insert(ind.value+1, intype) #pass #mydata.insert()
+#                ind.maximum=max(0, len(vlist)-1)
+#                ind.value+=1
+#    PushButton: pop_btn:
+#            text="Remove"
+#            clicked::
+#                if ind.value==ind.minimum:
+#                    vlist.pop(ind.value)
+#                    ind.value+=1 #force update
+#                    ind.value=ind.minimum
+#                else:
+#                    ind.value-=1
+#                    vlist.pop(ind.value+1)
+#                ind.maximum=max(0, len(vlist)-1)
+#            enabled << len(vlist)>0
+#  
+
+                
+                

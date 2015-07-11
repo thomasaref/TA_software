@@ -13,6 +13,7 @@ Created on Sat Apr  4 13:15:45 2015
 """
 from EBL_Item import EBL_Item
 from atom.api import Enum, Float, Callable
+from EBL_Polygons import horiz_refl, vert_refl, horizvert_refl
     
 class EBL_SQUID(EBL_Item):
     box_height=Float(3.0).tag(desc="height of connecting box", unit="um", good_value=20.0)
@@ -47,8 +48,8 @@ class EBL_SQUID(EBL_Item):
         if self.orientation=="Horizontal":
             self.rotate(self, 90.0)
 
-    def _default_main_params(self):
-        return ["plot", "view_type", "squid_type", "orientation", "angle_x", "angle_y", "offset_verts", "rotate", "horiz_refl", "vert_refl", "clear_polylist", 
+    def _default_main_params2(self):
+        return ["plot", "view_type", "squid_type", "orientation", "angle_x", "angle_y", "offset_verts", "rotate", "horiz_refl", "vert_refl", "do_clear_verts", 
         "width", "height", "wb", "box_height", "w", "h", "gap", "finger_gap"]
 
    #def testpads(self):
@@ -60,12 +61,11 @@ class EBL_SQUID(EBL_Item):
 
     @Callable
     def bridge(self):
-        self._bridge_TL()
-        self._bridge_TR()
-        self._bridge_BL()
-        self._bridge_BR()
-        #self.drawdfqubitbottom()
-
+        self.extend(self._s_bridge_TL)
+        self.extend(horiz_refl(self._s_bridge_TL))
+        self.extend(vert_refl(self._s_bridge_TL))
+        self.extend(horizvert_refl(self._s_bridge_TL))
+        
     def _new_transmon(self):
         self.P([(-self.width/2.0, self.gap/2.0),
                    (self.x_center-self.width/2.0-self.w, self.gap/2.0),
@@ -85,7 +85,7 @@ class EBL_SQUID(EBL_Item):
                    (self.width/2.0, -self.h-self.gap/2.0),
                    (self.x_center-self.width/2.0, -self.h-self.gap/2.0)])
 
-
+    @property
     def _s_bridge_TL(self):
         contact_width=125.0
         #contact_height=170.0
@@ -108,24 +108,7 @@ class EBL_SQUID(EBL_Item):
                    (self.x_center-conn_x/2.0-conn_w, conn_y/2.0),
                    (self.x_center-contact_width/2.0, bridge_gap_y/2.0-free_space)])
          
-    def _bridge_TL(self):
-        self.polys.extend(self._s_bridge_TL())
-        
-    def _bridge_TR(self):
-        polyer=self._s_bridge_TL()
-        polyer.horiz_refl()
-        self.polys.extend(polyer)
 
-    def _bridge_BL(self):
-        polyer=self._s_bridge_TL()
-        polyer.vert_refl()
-        self.polys.extend(polyer)
-
-    def _bridge_BR(self):
-        polyer=self._s_bridge_TL()
-        polyer.horiz_refl()
-        polyer.vert_refl()
-        self.polys.extend(polyer)
 
         
     def _new_transmon_H(self):

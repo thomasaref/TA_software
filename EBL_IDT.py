@@ -46,7 +46,7 @@ class EBL_IDT(EBL_Item, IDT):
             "add_gate", "add_gnd", "add_teeth", "angle_x", "angle_y", "step_num",
             "Np", "a", "g", "W", "o","f0", "eta", "ef", "wbox", "hbox", "material",
             "trconnect_x", "trconnect_y", "trconnect_w", "trc_wbox", "trc_hbox",
-            "conn_h",  "idt_tooth", "v", "Dvv", "epsinf", "Ct", "p", "x_center", "y_center"]
+            "conn_h",  "idt_tooth", "v", "Dvv", "epsinf", "Ct", "p", "x_ref", "y_ref"]
         return mp
     
     @property    
@@ -189,10 +189,7 @@ class EBL_IDT(EBL_Item, IDT):
 
 if __name__=="__main__":
     a=EBL_IDT(name="EBL_Item_test")
-    def runtemp():
-        pass
-    a.boss.run=runtemp
-    a.boss.run_measurement()
+    
     #a.ft="single"
     a.qdt_type="QDT"
     a.add_gate=False

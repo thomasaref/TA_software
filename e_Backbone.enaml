@@ -12,7 +12,7 @@ from enaml.layout.api import TabLayout, spacer
 from atom.api import Unicode, Str, Float, Int, Atom, ContainerList
 from a_Backbone import get_main_params, get_type, get_tag, get_attr, set_tag
 from TA_Fundamentals import cap_case
-from e_FundView import  InstrView, TypedView, spacer_eval, aContainer, aHGroup#UnitFloatField, UnitSpinBox, ChoiceField
+from e_FundTemps import  InstrView, TypedView, spacer_eval, aContainer, aHGroup#UnitFloatField, UnitSpinBox, ChoiceField
 
 from enaml.layout.api import vbox, hbox, align, InsertItem,  InsertTab, HSplitLayout
 #from enaml.widgets.api import (

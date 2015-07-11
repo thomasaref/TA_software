@@ -6,88 +6,63 @@ Created on Fri Apr  3 22:26:23 2015
 """
 from LOG_functions import log_warning#, log_debug
 #log_debug(1)
-from a_Agent import Spy#, boss#, NoShowBase
+from a_Agent import Spy, Agent#, boss#, NoShowBase
 from EBL_Boss import ebl_boss
-from atom.api import Enum, Float, Int, observe, Property, Typed, Callable#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
-from EBL_Polyer import Polyer, P, R, V
-from numpy import sin, cos, pi
+from atom.api import Enum, Float, Typed, Callable#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
+from EBL_Polygons import EBL_Polygons
 from Atom_Save_File import Save_TXT
 
-#boss.save_factory=Save_DXF
-
-class EBL_Base(Spy):
+class EBL_Item(Agent, EBL_Polygons):
+    testsavefile=Typed(Save_TXT, ()).tag(no_spacer=True)
+    angle_x=Float(0.3).tag(desc="shift in x direction when doing angle evaporation")
+    angle_y=Float().tag(desc="shift in y direction when doing angle evaporation")
+    view_type=Enum("pattern", "angle")
+    add_type=Enum("overwrite", "add")
+    
+    
     @property    
     def boss(self):
         ebl_boss.make_boss(save_log=False)
         return ebl_boss
-
-class NoShow_EBL_Base(EBL_Base):
-    def _default_show_base(self):
-        return False
-
-
-class EBL_Item(EBL_Base):
-    testsavefile=Typed(Save_TXT, ()).tag(no_spacer=True)
-    polys=Typed(Polyer).tag(private=True)
-    x_center=Float(0.0).tag(desc="x coordinate of center of pattern. this should almost always be 0.0, which is centered (default).", unit="um")
-    y_center=Float(0.0).tag(desc="y coordinate of center of pattern. this should almost always be 0.0, which is centered (default).", unit="um")
-
-    all_color=Enum("green").tag(desc="set all colors")
-    all_layer=Enum("Al").tag(desc='set all layers')   
     
-    theta=Float(0.0).tag(desc="angle to rotate in degrees")
-
-    angle_x=Float(0.3).tag(desc="shift in x direction when doing angle evaporation")
-    angle_y=Float().tag(desc="shift in y direction when doing angle evaporation")
-    view_type=Enum("pattern", "angle")
-    
-    add_type=Enum("overwrite", "add")
-    
-    xmin=Float().tag(private=True)
-    xmax=Float().tag(private=True)
-    ymin=Float().tag(private=True)
-    ymax=Float().tag(private=True)
-    
-    unit_factor=Float(1.0e-6)
-    
-    def _default_polys(self):
-        return Polyer(unit_factor=self.unit_factor)
-    #def auto_lim(self):
-    #    self.set_xlim(self.polys.xlim)
-    #    self.set_ylim(self.polys.ylim)
-
     def set_xlim(self, xmin, xmax):
         self.boss.plot.set_xlim(xmin, xmax)
 
     def set_ylim(self, ymin, ymax):
         self.boss.plot.set_ylim(ymin, ymax)
 
+    def children_predraw(self):
+        self.make_polylist()
+        for c in self.children:
+            c.predraw()
+            self.extend(c.verts)
+
     def make_polylist(self):
-        pass #self.polys.polylist=[]
+        self.P([(0,0)])
 
     @Callable
-    def offset_verts(self, x_center=0, y_center=0):
-        self.polys.offset_verts(x_center, y_center)
+    def do_offset(self, x_ref=0, y_ref=0):
+        self.offset(x_ref, y_ref)
         self.draw()
 
     @Callable
-    def clear_polylist(self):
-        self.polys.clear_polylist() #=[]
+    def do_clear_verts(self):
+        self.clear_verts()
         self.draw()
         
     def predraw(self):
         if self.add_type=="overwrite":
-            self.polys.polylist=[]
+            self.verts=[]
         if self.view_type=="angle":
-            self.make_polylist()
-            self.polys.offset_verts(x=self.angle_x, y=self.angle_y)
-            tpolylist=self.polys.polylist
-            self.make_polylist()
-            self.polys.polylist.extend(tpolylist)
+            self.children_predraw()
+            self.offset(x=self.angle_x, y=self.angle_y)
+            tverts=self.verts[:]
+            self.children_predraw()
+            self.extend(tverts)
         else:            
-            self.make_polylist()
-        self.polys.rotate(self.theta)
-        self.polys.offset_verts(self.x_center, self.y_center)
+            self.children_predraw()
+        self.rotate(self.theta)
+        self.offset(self.x_ref, self.y_ref)
         
     @Callable
     def plot(self):
@@ -95,77 +70,52 @@ class EBL_Item(EBL_Base):
         self.draw()
         
     def draw(self):
-        self.boss.plot.set_data(self.name, self.polys.get_verts())
+        self.boss.plot.set_data(self.name, self.verts)
 
-        self.xmin=self.polys.xmin
-        self.xmax=self.polys.xmax
-        self.ymin=self.polys.ymin
-        self.ymax=self.polys.ymax
-        
-        xmin=min(b.xmin for b in self.boss.agents)
-        xmax=max(b.xmax for b in self.boss.agents)
-        ymin=min(b.ymin for b in self.boss.agents)
-        ymax=max(b.ymax for b in self.boss.agents)
-        
+        if 0: #self.children!=[]:
+            xmin=min(b.xmin for b in self.children)
+            xmax=max(b.xmax for b in self.children)
+            xmin=min(self.xmin, xmin)        
+            xmax=max(self.xmax, xmax)        
+            ymin=min(b.ymin for b in self.children)
+            ymax=max(b.ymax for b in self.children)
+            ymin=min(self.ymin, ymin)        
+            ymax=max(self.ymax, ymax)        
+        else:
+            xmin=self.xmin
+            xmax=self.xmax
+            ymax=self.ymax
+            ymin=self.ymin
+
         self.set_xlim(xmin, xmax)
+
         self.set_ylim(ymin, ymax)
 
         self.boss.plot.draw()
 
 
-    def copyP(self, index=-1, x=0.0, y=0.0, **kwargs):
-        self.polys.copyP(index, x, y, **kwargs)
-
-    def sP(self, verts, polyer=None, **kwargs):
-        if polyer==None:
-            polyer=Polyer(unit_factor=self.unit_factor)
-        polyer.P(verts, **kwargs)
-        return polyer
-        
-    def sR(self, xr, yr, wr, hr, polyer=None, **kwargs):
-        if polyer==None:
-            polyer=Polyer(unit_factor=self.unit_factor)
-        polyer.R(xr, yr, wr, hr, **kwargs)
-        return polyer
-        
-    def sC(self, xr, yr, wr, hr, polyer=None, **kwargs):
-        if polyer==None:
-            polyer=Polyer(unit_factor=self.unit_factor)
-        polyer.C(xr, yr, wr, hr, **kwargs)
-        return polyer
-
-    def P(self, verts, **kwargs):
-        """adds a polygon to the polylist with vertices given as a list of tuples"""
-        self.polys.P(verts, **kwargs)
-        
-    def R(self, xr, yr, wr, hr, **kwargs):
-        """Adds a rectangle with bottom left corner coordinates to polylist"""
-        self.polys.R(xr, yr, wr, hr, **kwargs)
-
-    def C(self, xr, yr, wr, hr, **kwargs):
-        """Adds a centered rectangle to the polylist"""
-        self.polys.R(xr-wr/2.0, yr-hr/2.0, wr, hr, **kwargs)
-
     @Callable
-    def rotate(self, theta=0.0):
-        self.polys.rotate(theta)
+    def do_rotate(self, theta=0.0):
+        self.rotate(theta)
         self.draw()
         
     @Callable
-    def horiz_refl(self):
-        self.polys.horiz_refl()
+    def do_horiz_refl(self):
+        self.horiz_refl()
         self.draw()
 
     @Callable
-    def vert_refl(self):
-        self.polys.vert_refl()
+    def do_vert_refl(self):
+        self.vert_refl()
         self.draw()
-                
                 
 if __name__=="__main__":  
     a=EBL_Item(name="EBL_Item_test")
-    a.polys.polylist=[R(), R(5), P([(0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1), (0,1)])]
-    a.P([(0,0), (0,25), (0.1,25), (0.1, 0), (5, -5), (10, -5), (10, -10), (5, -10), (5, -5.1)])
-    a.P([(-0.3, -5), (-0.30,25), (-0.2,25), (-0.2, -5), (5, -10), (10, -10), (10, -15), (5, -15), (5, -10.1)])
-    #a.CP(x=2.0, y=2.0)
+    print a.xmin
+#    print a.sP([(0,0), (1,0), (0,1)])
+#    print a.sR(0,0,1,1)
+#    print a.sC(0,0,1,1)
+
+#    print a.verts
+#    print a.xmax
     a.show()

@@ -5,9 +5,11 @@ Created on Mon Dec  8 10:19:24 2014
 @author: thomasaref
 """
 
-from atom.api import Float, Enum, Int, Typed
+from atom.api import Float, Enum, Int, Typed, ForwardTyped, observe
 from EBL_Item import EBL_Item
-from EBL_Combiner import EBL_Combiner
+from EBL_Polygons import horiz_refl, vert_refl, horizvert_refl, EBL_Polygons
+
+#from EBL_Combiner import EBL_Combiner
     
 class EBL_test_pads(EBL_Item):
     contact_width=Float(125.0e-6).tag(unit="um", desc="width of contact")
@@ -19,11 +21,11 @@ class EBL_test_pads(EBL_Item):
     tp_bond_pad=Float(100.0e-6).tag(unit="um", desc="bonding area of testpad")
 
     def make_polylist(self):
-        self._testpad_TL()
-        self._testpad_TR()
-        self._testpad_BL()
-        self._testpad_BR()
-
+        self.extend(self._s_testpad_TL)
+        self.extend(horiz_refl(self._s_testpad_TL))
+        self.extend(vert_refl(self._s_testpad_TL))
+        self.extend(horizvert_refl(self._s_testpad_TL))
+        
     @property
     def _s_testpad_TL(self):
         return self.sP([(-self.testpad_width/2.0, -self.testpad_height/2.0),
@@ -33,142 +35,154 @@ class EBL_test_pads(EBL_Item):
                   (-self.bridge_gap_x/2.0, -self.bridge_gap_y/2.0),
                   (-self.bridge_gap_x/2.0, -self.contact_height/2.0),
                   (-self.testpad_width/2.0+self.tp_bond_pad, -self.testpad_height/2.0)])
-
-    def _testpad_TL(self):
-        self.polys.extend(self._s_testpad_TL)
-
-    def _testpad_TR(self):
-        polyer=self._s_testpad_TL
-        polyer.horiz_refl()
-        self.polys.extend(polyer)
-
-    def _testpad_BL(self):
-        polyer=self._s_testpad_TL
-        polyer.vert_refl()
-        self.polys.extend(polyer)
-
-    def _testpad_BR(self):
-        polyer=self._s_testpad_TL
-        polyer.horiz_refl()
-        polyer.vert_refl()
-        self.polys.extend(polyer)
-
+        
 class EBL_mark_box(EBL_Item):
+    chip=ForwardTyped(lambda: EBL_PADSALL)
     M1_size=Float(500.0e-6).tag(unit="um", desc="size of marker 1")
     lbl_height=Float(500.0e-6).tag(unit="um", desc="label height (assumed above marker 1)")
     lbl_width=Float(1100.0e-6).tag(unit="um", desc="label width (label assumed above marker 1)")
 
-    mark_box_outer_width=Float(900.0e-6).tag(unit="um", desc="width of outer part of mark box")
-    mark_box_inner_width=Float(700.0e-6).tag(unit="um", desc="width of inner part of mark box")
+    mb_type=Enum("mark_box", "label_box")
 
-    mark_box_outer_height=Float(900.0e-6).tag(unit="um", desc="height of outer part of mark box")
-    mark_box_inner_height=Float(700.0e-6).tag(unit="um", desc="height of inner part of mark box")
+    
+    @property 
+    def outer_width(self):
+        return self.chip.xbox-self.chip.mb_x
+    
+    @property
+    def outer_height(self):
+        return self.chip.ybox-self.chip.mb_y
 
-    mark_box_type=Enum("marklabel_box_TL", "mark_box_TL", "mark_box_TR", "mark_box_BL", "mark_box_BR")
+    @property
+    def inner_width(self):
+        return self.chip.mb_x-self.chip.mb_cx
+    
+    @property
+    def inner_height(self):
+        return self.chip.mb_y-self.chip.mb_cy        
 
-    def _default_x_center(self):
-        return -1500.0e-6
-        
-    def _default_y_center(self):
-        return 1500.0e-6
-        
     def make_polylist(self):
-        getattr(self, self.mark_box_type)()
-        
-    def marklabel_box_TL(self):
-        self.polys.extend(self._s_marklabel_box_TL)
+        if self.mb_type=="label_box":
+            vs=self._s_label_box_TL
+        else:
+            vs=self._s_mark_box_TL
+        self.extend(vs)
         
     @property    
-    def _s_marklabel_box_TL(self):
-        polyer=self.sP([(-self.mark_box_outer_width, self.mark_box_outer_height),
-                   (self.mark_box_inner_width, self.mark_box_outer_height),
-                   (self.mark_box_inner_width, -self.mark_box_inner_height),
-                   (self.M1_size/2.0, -self.mark_box_inner_height),
+    def _s_label_box_TL(self):
+        vs=self.sP([(-self.outer_width, self.outer_height),
+                   (self.inner_width, self.outer_height),
+                   (self.inner_width, -self.inner_height),
+                   (self.M1_size/2.0, -self.inner_height),
                    (self.M1_size/2.0, self.M1_size/2.0),
                    (self.lbl_width/2.0, self.M1_size/2.0),
                    (self.lbl_width/2.0, self.M1_size/2.0+self.lbl_height),
                    (-self.lbl_width/2.0, self.M1_size/2.0+self.lbl_height),
                    (-self.lbl_width/2.0, self.M1_size/2.0),
                    (-self.M1_size/2.0, self.M1_size/2.0),
-                   (-self.M1_size/2.0, -self.mark_box_inner_height),
-                   (-self.mark_box_outer_width, -self.mark_box_inner_height)])
-        polyer.P([(self.M1_size/2.0, -self.mark_box_inner_height),
+                   (-self.M1_size/2.0, -self.inner_height),
+                   (-self.outer_width, -self.inner_height)])
+        vs=self.sP([(self.M1_size/2.0, -self.inner_height),
                    (self.M1_size/2.0, -self.M1_size/2.0),
                    (-self.M1_size/2.0, -self.M1_size/2.0),
-                   (-self.M1_size/2.0, -self.mark_box_inner_height)])
-        return polyer
-
-    def mark_box_TL(self):
-        self.polys.extend(self._s_mark_box_TL)
+                   (-self.M1_size/2.0, -self.inner_height)], vs)
+        return vs
         
     @property
     def _s_mark_box_TL(self):
-        polyer2=self.sP([(-self.mark_box_outer_width, self.mark_box_outer_height),
-                   (self.mark_box_inner_width, self.mark_box_outer_height),
-                   (self.mark_box_inner_width, -self.mark_box_inner_height),
-                   (self.M1_size/2.0, -self.mark_box_inner_height),
+        vs=self.sP([(-self.outer_width, self.outer_height),
+                   (self.inner_width, self.outer_height),
+                   (self.inner_width, -self.inner_height),
+                   (self.M1_size/2.0, -self.inner_height),
                    (self.M1_size/2.0, self.M1_size/2.0),
                    (-self.M1_size/2.0, self.M1_size/2.0),
-                   (-self.M1_size/2.0, -self.mark_box_inner_height),
-                   (-self.mark_box_outer_width, -self.mark_box_inner_height)])
-        polyer2.P([(self.M1_size/2.0, -self.mark_box_inner_height),
+                   (-self.M1_size/2.0, -self.inner_height),
+                   (-self.outer_width, -self.inner_height)])
+        vs=self.sP([(self.M1_size/2.0, -self.inner_height),
                    (self.M1_size/2.0, -self.M1_size/2.0),
                    (-self.M1_size/2.0, -self.M1_size/2.0),
-                   (-self.M1_size/2.0, -self.mark_box_inner_height)])
-        return polyer2
+                   (-self.M1_size/2.0, -self.inner_height)], vs)
+        return vs
 
-    def mark_box_BL(self):
-        polyer=self._s_mark_box_TL
-        polyer.vert_refl()
-        self.polys.extend(polyer)
-        
-    def mark_box_TR(self):
-        polyer=self._s_mark_box_TL
-        polyer.horiz_refl()
-        self.polys.extend(polyer)
-        
-    def mark_box_BR(self):
-        polyer=self._s_mark_box_TL
-        polyer.horiz_refl()
-        polyer.vert_refl()
-        self.polys.extend(polyer)
-
-class EBL_IDT_connect(EBL_Item):
-    idt_tooth=Float(4.0e-6).tag(unit='um', desc="tooth size on CPW connection to aid contact")
-    idt_numteeth=Int(5) #52 um, 12.5 um
-    w=Float(40.0e-6).tag(unit='um', desc= "width of the center strip. should be 50 Ohm impedance matched with gap (40 um)") #50
-    gap=Float(120.0e-6).tag(unit='um', desc="gap of center strip. should be 50 Ohm impedance matched with w (120 um)") #180
-    h_idt=Float(52.0e-6).tag(unit='um', desc="height of idt electrode one is trying to connect to.")
-
-    IDT_conn_type=Enum("IDT_connect_R", "IDT_connect_L")
-
-    def make_polylist(self):
-        getattr(self, self.IDT_conn_type)()
-        
-    def IDT_connect_R(self):
-        self.polys.extend(self._s_IDT_connect_R)
-
-    def IDT_connect_L(self):
-        polyp=self._s_IDT_connect_R
-        polyp.horiz_refl()
-        self.polys.extend(polyp)
+class tooth_connect(EBL_Polygons):
+    """creates a centered box with teeth"""
+    tooth_size=Float(4.0e-6).tag(unit='um', desc="tooth size on CPW connection to aid contact")
+    width=Float(40.0e-6).tag(unit="um")
+    height=Float(100.0e-6).tag(unit="um")
         
     @property
-    def _s_IDT_connect_R(self):
-        idt_conn=self.idt_tooth*(2*self.idt_numteeth-1)
-        polyer=self.sP([(0.0, self.w/2.0+self.gap/2.0),
-                   (idt_conn+self.h_idt, self.w/2.0+self.gap/2.0),
-                   (idt_conn, self.h_idt/2.0),
-                   (0.0, self.h_idt/2.0)])
-        polyer.P([(0.0, -self.w/2.0-self.gap/2.0),
-                   (idt_conn+self.h_idt, -self.w/2.0-self.gap/2.0),
-                   (idt_conn, -self.h_idt/2.0),
-                   (0.0, -self.h_idt/2.0)])
-        for i in range(self.idt_numteeth):
-            polyer.R(2*i*self.idt_tooth, self.h_idt/2.0, self.idt_tooth, -self.idt_tooth )
-            polyer.R(2*i*self.idt_tooth, -self.h_idt/2.0, self.idt_tooth, self.idt_tooth ) 
-        return polyer
+    def num_teeth(self):
+        """number of teeth that fit"""
+        return int(self.width/(2*self.tooth_size))
 
+    @property
+    def conn_width(self):
+        """width of part actually with teeth"""
+        return self.tooth_size*(2*self.num_teeth-1)
+
+    @property
+    def tc_verts(self):
+        vs=self.sC(0,0, self.width, self.height)
+        for i in range(self.num_teeth):
+            vs=self.sR(-self.conn_width/2.0+2*i*self.tooth_size, self.height/2.0, self.tooth_size, self.tooth_size, vs )
+        return vs
+        
+    def make_polylist(self):
+        self.extend(self.tc_verts)  
+
+class taper_tooth_connect(tooth_connect):
+    @property
+    def tri(self):
+        return self.sP([(-self.width/2.0, -self.height/2.0), (-self.width/2.0, self.height/2.0), (-3.0*self.width/2.0, -self.height/2.0)])
+        
+    def make_polylist(self):
+        self.extend(self.tc_verts)  
+        self.extend(self.tri)                 
+
+class IDT_connect(EBL_Item):
+    width=Float(40.0e-6).tag(unit="um")
+    height=Float(100.0e-6).tag(unit="um")
+    tooth_size=Float(4.0e-6).tag(unit='um', desc="tooth size on CPW connection to aid contact")
+
+    y_spacing=Float(52.0e-6).tag(unit='um', desc="height of idt electrode one is trying to connect to.")
+        
+    def make_polylist(self):
+        tc=taper_tooth_connect(width=self.width, height=self.height, tooth_size=self.tooth_size, y_ref=-self.y_spacing/2.0-self.height)
+        self.pro_vs(tc)
+        tc.orient="BL"
+        tc.y_ref=self.y_spacing/2.0+self.height
+        self.pro_vs(tc)
+        
+class CPW_strip(EBL_Item):
+    taper_length=Float(800.0e-6).tag(unit='um', desc="length of taper of from bondpad to center conductor")
+    chip=ForwardTyped(lambda: EBL_PADSALL)
+    bond_pad=Float(200.0e-6).tag(unit='um', desc="size of bond pad. in general, this should be above 100 um")
+    bond_pad_gap=Float(500.0e-6).tag(unit='um', desc="the bond pad gap should roughly match 50 Ohms but chip thickness effects may dominate")
+
+    w=Float(40.0e-6).tag(unit='um', desc= "width of the center strip. should be 50 Ohm impedance matched with gap (40 um)") #50
+    gap=Float(120.0e-6).tag(unit='um', desc="gap of center strip. should be 50 Ohm impedance matched with w (120 um)") #180
+
+    Au_sec=Float(300.0e-6).tag(unit='um', desc="x coordinate of left idt")
+    Al_sec=Float(200.0e-6).tag(unit='um', desc="x coordinate of left idt")
+    overlap=Float(20.0e-6).tag(unit='um', desc="x coordinate of left idt")
+    
+    #@property
+    #def Au_sec(self):
+    #    return -(-self.chip.mb_cx+self.Al_sec-self.overlap)
+    @property
+    def bp_x(self):
+        return -self.chip.xbox+abs(self.x_ref)
+        
+    def make_polylist(self):
+        self.R(self.bp_x, -self.bond_pad/2.0+self.w, self.bond_pad, self.bond_pad)
+        self.R(0.0, 0.0, -self.Al_sec, self.w)
+        tc=tooth_connect( width=self.w, height=self.Au_sec, theta=-90.0, y_ref=self.w/2.0, x_ref=-self.Au_sec/2.0-self.Al_sec+self.overlap)
+        self.pro_vs(tc)
+        self.P([(self.bp_x+self.bond_pad, -self.bond_pad/2.0+self.w),
+                (self.bp_x+self.bond_pad, self.bond_pad/2.0+self.w),
+                (tc.x_ref-self.Au_sec/2.0, self.w),
+                (tc.x_ref-self.Au_sec/2.0, 0)])
+        
 class EBL_test_strip(EBL_Item):
     w=Float(40.0e-6).tag(unit='um', desc= "width of the center strip. should be 50 Ohm impedance matched with gap (40 um)") #50
     gap=Float(120.0e-6).tag(unit='um', desc="gap of center strip. should be 50 Ohm impedance matched with w (120 um)") #180
@@ -185,8 +199,6 @@ class EBL_test_strip(EBL_Item):
     gndplane_side_gap=Float(30.0e-6).tag(unit='um', desc="side gap in ground plane")
 
     def make_polylist(self):
-        self.test_strip()
-    def test_strip(self)          :
         self.R(-self.gndplane_testgap/2.0, -self.ybox, self.gndplane_testgap, self.ybox-self.yheight)
         self.P([(-self.gndplane_testgap/2.0, -self.yheight),
                    (self.gndplane_testgap/2.0, -self.yheight),
@@ -203,130 +215,133 @@ class EBL_test_strip(EBL_Item):
 
 class EBL_CPW(EBL_Item): 
     taper_length=Float(800.0e-6).tag(unit='um', desc="length of taper of from bondpad to center conductor")
-    xbox=Float(2400.0e-6).tag(unit="um", desc="real x edge of chip") #self.chip_width/2.0-self.blade_width/2.0 #set width of from center of pattern
-    ybox=Float(2400.0e-6).tag(unit="um", desc="real y edge of chip") #self.chip_height/2.0-self.blade_width/2.0 #set height from center of pattern
-
+    bp_x=Float(2400.0e-6).tag(unit="um", desc="real x edge of chip") #self.chip_width/2.0-self.blade_width/2.0 #set width of from center of pattern
+    
     bond_pad=Float(200.0e-6).tag(unit='um', desc="size of bond pad. in general, this should be above 100 um")
     bond_pad_gap=Float(500.0e-6).tag(unit='um', desc="the bond pad gap should roughly match 50 Ohms but chip thickness effects may dominate")
 
     w=Float(40.0e-6).tag(unit='um', desc= "width of the center strip. should be 50 Ohm impedance matched with gap (40 um)") #50
     gap=Float(120.0e-6).tag(unit='um', desc="gap of center strip. should be 50 Ohm impedance matched with w (120 um)") #180
 
-    taper_length=Float(800.0e-6).tag(unit='um', desc="length of taper of from bondpad to center conductor")
-    cpw_stop_x_l=Float(-200.0e-6+27.7e-6/2.0).tag(unit='um', desc="x coordinate of left idt")
-    cpw_stop_x_r=Float(300.0e-6-27.7e-6/2.0).tag(unit='um', desc="x coordinate of right idt")
-    idt_y=Float(0.0e-6).tag(unit='um', desc="y coordinateof IDT")
-
-    gate_extension=Float(100.0e-6).tag(unit='um', desc="length gate extends into CPW")
-
-    mark_box_x=Float(-900.0e-6)
-    mark_box_y=Float(900.0e-6)
+    cpw_stop_x_l=Float(-200.0e-6).tag(unit='um', desc="x coordinate of left idt")
     
+    #gate_extension=Float(100.0e-6).tag(unit='um', desc="length gate extends into CPW")
+    mark_box_x=Float(-800.0e-6)
+    top_mb_y=Float(800.0e-6)
+    bot_mb_y=Float(800.0e-6)
+    
+    chip=ForwardTyped(lambda: EBL_PADSALL)
+
+    @observe("chip.chip_width")
+    def chip_update(self, change):
+        self.bp_x=self.chip.xbox
+
+    @observe("chip.idt_x")
+    def idt_update(self, change):
+        self.cpw_stop_x_l=self.chip.idt_x+27.7e-6/2.0
+
+    @observe("chip.mb_cy")
+    def mby_update(self, change):
+        self.top_mb_y=self.chip.mb_cy-self.y_ref
+        self.bot_mb_y=self.chip.mb_cy+self.y_ref
+        
     gndplane_gap=Float(80.0e-6).tag(unit='um', desc="gap in ground plane that lets SAW through")
     gndplane_big_gap=Float(60.0e-6).tag(unit='um', desc="gap in ground plane where qubit IDT resides")
     gndplane_width=Float(30.0e-6).tag(unit='um', desc="width of ground plane fingers that block SAW")
     gndplane_testgap=Float(500.0e-6).tag(unit='um', desc="gap in ground plane for test structures")
     gndplane_side_gap=Float(30.0e-6).tag(unit='um', desc="side gap in ground plane")
 
+    cpw_type=Enum("L", "R")
+    
     def make_polylist(self):
-        self.cpw_L_strip()
+        #self.cpw_L_strip()
         self.cpw_L_top()
         self.cpw_L_bottom()
+        if self.cpw_type=="R":
+            self.horiz_refl()
 
     def cpw_L_strip(self):
-        self.R(-self.xbox, -self.bond_pad/2.0, self.bond_pad, self.bond_pad)
-        self.P([(-(self.xbox-self.bond_pad), -self.bond_pad/2.0),
-                   (-(self.xbox-self.bond_pad), self.bond_pad/2.0),
-                   (-(self.xbox-self.bond_pad-self.taper_length), self.w/2.0),
-                   (-(self.xbox-self.bond_pad-self.taper_length), -self.w/2.0)])
-        self.P([(-(self.xbox-self.bond_pad-self.taper_length), -self.w/2.0),
-                   (-(self.xbox-self.bond_pad-self.taper_length), self.w/2.0),
-                   (self.cpw_stop_x_l, self.w/2.0),
-                   (self.cpw_stop_x_l, -self.w/2.0)])
+        self.R(-self.bp_x, -self.bond_pad/2.0, self.bond_pad, self.bond_pad)
+        self.P([(-self.bp_x+self.bond_pad, -self.bond_pad/2.0),
+                (-self.bp_x+self.bond_pad, self.bond_pad/2.0),
+                (-self.bp_x+self.bond_pad+self.taper_length, self.w/2.0),
+                (-self.bp_x+self.bond_pad+self.taper_length, -self.w/2.0)])
+        self.P([(-self.bp_x+self.bond_pad+self.taper_length, -self.w/2.0),
+                (-self.bp_x+self.bond_pad+self.taper_length, self.w/2.0),
+                (self.cpw_stop_x_l, self.w/2.0),
+                (self.cpw_stop_x_l, -self.w/2.0)])
 
     def cpw_L_top(self):
-        self.P([(-self.xbox, self.bond_pad/2.0+self.bond_pad_gap),
-                   (-(self.xbox-self.bond_pad), self.bond_pad/2.0+self.bond_pad_gap),
-                   (-(self.xbox-self.bond_pad),  self.mark_box_y),
-                   (-self.xbox, self.mark_box_y)])
-        self.P([(-(self.xbox-self.bond_pad), self.bond_pad/2.0+self.bond_pad_gap),
-                   (-(self.xbox-self.bond_pad), self.mark_box_y),
-                   (-(self.xbox-self.bond_pad-self.taper_length), self.mark_box_y),
-                   (-(self.xbox-self.bond_pad-self.taper_length), self.w/2.0+self.gap)])
-        self.P([(-(self.xbox-self.bond_pad-self.taper_length), self.w/2.0+self.gap),
-                   (-(self.xbox-self.bond_pad-self.taper_length), self.mark_box_y),
-                   (self.mark_box_x, self.mark_box_y),
+        self.P([(-self.bp_x, self.bond_pad/2.0+self.bond_pad_gap),
+                   (-(self.bp_x-self.bond_pad), self.bond_pad/2.0+self.bond_pad_gap),
+                   (-(self.bp_x-self.bond_pad),  self.top_mb_y),
+                   (-self.bp_x, self.top_mb_y)])
+        self.P([(-(self.bp_x-self.bond_pad), self.bond_pad/2.0+self.bond_pad_gap),
+                   (-(self.bp_x-self.bond_pad), self.top_mb_y),
+                   (-(self.bp_x-self.bond_pad-self.taper_length), self.top_mb_y),
+                   (-(self.bp_x-self.bond_pad-self.taper_length), self.w/2.0+self.gap)])
+        self.P([(-(self.bp_x-self.bond_pad-self.taper_length), self.w/2.0+self.gap),
+                   (-(self.bp_x-self.bond_pad-self.taper_length), self.top_mb_y),
+                   (self.mark_box_x, self.top_mb_y),
                    (-self.gndplane_big_gap/2.0-self.gndplane_width-self.gndplane_side_gap, self.w/2.0+self.gap)])
 
     def cpw_L_bottom(self):
-        self.P([(-self.xbox, -self.bond_pad/2.0-self.bond_pad_gap),
-                   (-(self.xbox-self.bond_pad), -self.bond_pad/2.0-self.bond_pad_gap),
-                   (-(self.xbox-self.bond_pad),  -self.mark_box_y),
-                   (-self.xbox, -self.mark_box_y)])
+        self.P([(-self.bp_x, -self.bond_pad/2.0-self.bond_pad_gap),
+                   (-(self.bp_x-self.bond_pad), -self.bond_pad/2.0-self.bond_pad_gap),
+                   (-(self.bp_x-self.bond_pad),  -self.bot_mb_y),
+                   (-self.bp_x, -self.bot_mb_y)])
 
-        self.P([(-(self.xbox-self.bond_pad), -self.bond_pad/2.0-self.bond_pad_gap),
-                   (-(self.xbox-self.bond_pad), -self.mark_box_y),
-                   (-(self.xbox-self.bond_pad-self.taper_length), -self.mark_box_y),
-                   (-(self.xbox-self.bond_pad-self.taper_length), -self.w/2.0-self.gap),])
-        self.P([(-(self.xbox-self.bond_pad-self.taper_length), -self.w/2.0-self.gap),
-                   (-(self.xbox-self.bond_pad-self.taper_length), -self.mark_box_y),
-                   (self.mark_box_x, -self.mark_box_y),
+        self.P([(-(self.bp_x-self.bond_pad), -self.bond_pad/2.0-self.bond_pad_gap),
+                   (-(self.bp_x-self.bond_pad), -self.bot_mb_y),
+                   (-(self.bp_x-self.bond_pad-self.taper_length), -self.bot_mb_y),
+                   (-(self.bp_x-self.bond_pad-self.taper_length), -self.w/2.0-self.gap),])
+        self.P([(-(self.bp_x-self.bond_pad-self.taper_length), -self.w/2.0-self.gap),
+                   (-(self.bp_x-self.bond_pad-self.taper_length), -self.bot_mb_y),
+                   (self.mark_box_x, -self.bot_mb_y),
                    (-self.gndplane_big_gap/2.0-self.gndplane_width-self.gndplane_side_gap, -self.w/2.0-self.gap),])    
+
                    
-class EBL_PADSALL(EBL_Combiner):
-    BL_testpad=Typed(EBL_test_pads)
-    BR_testpad=Typed(EBL_test_pads)
+class EBL_PADSALL(EBL_Item):
+    chip_height=Float(5000.0e-6).tag(unit='um', desc="the height of the chip (in um though would be more natural in mm) as defined by the dicing saw")
+    chip_width=Float(5000.0e-6).tag(unit='um', desc="the width of the chip (in um though would be more natural in mm) as defined by the dicing saw")
+    blade_width=Float(200.0e-6).tag(unit='um', desc="width of blade used to make dicing cuts")
+    mb_x=Float(1500.0e-6).tag(unit="um")
+    mb_y=Float(1500.0e-6).tag(unit="um")
+    l_idt_x=Float(-200e-6).tag(unit="um")
+    r_idt_x=Float(300e-6).tag(unit="um")
+    mb_cx=Float(800.0e-6).tag(unit="um")
+    mb_cy=Float(800.0e-6).tag(unit="um")
     
-    TL_mark_box=Typed(EBL_mark_box)
-    TR_mark_box=Typed(EBL_mark_box)
-    BL_mark_box=Typed(EBL_mark_box)
-    BR_mark_box=Typed(EBL_mark_box)
-
-    L_IDT_conn=Typed(EBL_IDT_connect)
-    R_IDT_conn=Typed(EBL_IDT_connect)
+    @property
+    def xbox(self):
+        """width from center of pattern"""
+        return self.chip_width/2.0-self.blade_width/2.0
     
-    test_strip=Typed(EBL_test_strip)
-    L_CPW=Typed(EBL_CPW)
+    @property
+    def ybox(self):
+        """height from center of pattern"""
+        return self.chip_height/2.0-self.blade_width/2.0
 
-    def _default_L_CPW(self):
-        return EBL_CPW(y_center=80.0e-6)
-
-    def _default_test_strip(self):
-        return EBL_test_strip()
-
-    def _default_L_IDT_conn(self):
-        return EBL_IDT_connect(name="_L_IDT_conn", IDT_conn_type="IDT_connect_L", x_center=-200.0e-6+27.7e-6/2.0)
-
-    def _default_R_IDT_conn(self):
-        return EBL_IDT_connect(name="_R_IDT_conn", IDT_conn_type="IDT_connect_R", x_center=300.0e-6-27.7e-6/2.0)
-        
-    def _default_TL_mark_box(self):
-        return EBL_mark_box(name="_TL_mark_box", mark_box_type="marklabel_box_TL", x_center=-1500e-6, y_center=1500e-6)
-
-    def _default_BL_mark_box(self):
-        return EBL_mark_box(name="_BL_mark_box", x_center=-1500e-6, y_center=-1500e-6, mark_box_type="mark_box_BL")
-    
-
-    def _default_BR_mark_box(self):
-        return EBL_mark_box(name="_BR_mark_box", mark_box_type="mark_box_BR", x_center=1500e-6, y_center=-1500e-6)
-
-    def _default_TR_mark_box(self):
-        return EBL_mark_box(name="_TR_mark_box", mark_box_type="mark_box_TR", x_center=1500e-6, y_center=1500e-6)
-        
-    def _default_BL_testpad(self):
-        return EBL_test_pads(name="_BL_testpad", x_center=-500.0e-6, y_center=-1500.0e-6)
-
-    def _default_BR_testpad(self):
-        return EBL_test_pads(name="_BR_testpad", x_center=500.0e-6, y_center=-1500.0e-6)
-        
-    subitems=Enum("BL_testpad", "BR_testpad",  "BL_mark_box", "TL_mark_box", "TR_mark_box", "BR_mark_box", 
-                    "L_IDT_conn", "R_IDT_conn", "test_strip", "L_CPW").tag(no_spacer=True)
 
         
-
-
-
-
+    def _default_children(self):
+        TL_mb=EBL_mark_box(name="_TL_mb", mb_type="label_box", orient="TL", x_ref=-self.mb_x, y_ref=self.mb_y, chip=self)
+        BL_mb=EBL_mark_box(name="_BL_mb", orient="BL", x_ref=-self.mb_x, y_ref=-self.mb_y, chip=self)
+        BR_mb=EBL_mark_box(name="_BR_mark_box", orient="BR", x_ref=self.mb_x, y_ref=-self.mb_y, chip=self)
+        TR_mb=EBL_mark_box(name="_TR_mark_box", orient="TR", x_ref=self.mb_x, y_ref=self.mb_y, chip=self)
+        
+        RR_CPW=EBL_CPW(name="_R_CPW", cpw_type="R", y_ref=80.0e-6, chip=self)
+        idt_conn_l=IDT_connect(name="_L_IDT_conn", x_ref=self.l_idt_x)
+        idt_conn_r=IDT_connect(name="_R_IDT_conn", orient="TR", x_ref=self.r_idt_x)
+        L_CPW=CPW_strip(name="_L_CPW", y_ref=idt_conn_l.ymax/1.0e6, x_ref=idt_conn_l.xmax/1.0e6, chip=self)
+        R_CPW=CPW_strip(name="_R_CPW", y_ref=idt_conn_r.ymax/1.0e6, x_ref=idt_conn_r.x_ref-idt_conn_r.width/2.0, chip=self, orient="TR")
+        return [TL_mb, BL_mb, BR_mb, TR_mb, L_CPW, R_CPW, RR_CPW,
+        idt_conn_l, idt_conn_r,
+        EBL_test_strip(name="_test_strip"),
+              
+              EBL_test_pads(name="_BL_testpad", x_ref=-500.0e-6, y_ref=-1500.0e-6),
+              EBL_test_pads(name="_BR_testpad", x_ref=500.0e-6, y_ref=-1500.0e-6)
+    ]
                   
 class EBL_PADS(EBL_Item):
     #testpad_BL=Typed(EBL_test_pads, kwargs=dict(x_center=-500.0, y_center=-1500.0))
