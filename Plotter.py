@@ -373,11 +373,11 @@ class Plotter(Atom):
          plot_gc.render_component(self.plot)
          plot_gc.save("image_test.png")
 
-     def set_data(self, zname, zdata):
+     def set_data(self, zname, zdata, zcolor):
          if zdata!=None:
             if zname not in self.clts: #plottables['plotted']:#self.pd.list_data():
                 clt=PolyCollection(zdata, alpha=0.5, antialiased=True)#, rasterized=False, antialiased=False)
-                clt.set_color(colorConverter.to_rgba('g'))                
+                clt.set_color(colorConverter.to_rgba(zcolor))                
                 self.clts[zname]=clt
                 self.axe.add_collection(self.clts[zname], autolim=True)
             else:                

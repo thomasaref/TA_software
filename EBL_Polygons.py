@@ -50,23 +50,9 @@ def maxy(verts):
         return 1.0
     return max([max([v[1] for v in p]) for p in verts])
 
-def poly2dxf(p, color, layer):
-    """converts polygon to dxf format and returns list of commands (text based)"""
-    tlist=['0\r\nLWPOLYLINE\r\n',  #place line
-               '8\r\n{0}\r\n'.format(layer), #add to layer
-               '62\r\n{0}\r\n'.format(color),
-               '90\r\n{0}\r\n'.format(len(p)), #number of vertices=4
-               '70\r\n1\r\n'] #is closed
-    for v in p:
-            tlist.append('10\r\n{0}\r\n20\r\n{1}\r\n'.format(v[0],v[1])) #vertex coordinate X and Y
-    return tlist
-
-def polylist2dxf(verts, color, layer):
-    return [poly2dxf(p, color, layer) for p in verts] #flatten?
-
 class EBL_Polygons(Atom):
-    color=Enum("green").tag(desc="color or datatype of item, could be used for dosing possibly")
-    layer=Enum("Al").tag(desc='layer of item')
+    color=Enum("green", "blue", "red", "purple", "brown", "black").tag(desc="color or datatype of item, could be used for dosing possibly")
+    layer=Enum("Al", "Al_35nA", "Au").tag(desc='layer of item')
     unit_factor=Float(1.0e-6)
     verts=List().tag(private=True)
     children=List().tag(private=True)

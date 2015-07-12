@@ -8,17 +8,40 @@ from LOG_functions import log_warning#, log_debug
 #log_debug(1)
 from a_Agent import Spy, Agent#, boss#, NoShowBase
 from EBL_Boss import ebl_boss
-from atom.api import Enum, Float, Typed, Callable#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
+from atom.api import Enum, Float, Typed, Callable, observe#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
 from EBL_Polygons import EBL_Polygons
-from Atom_Save_File import Save_TXT
+from Atom_Save_File import Save_DXF
 
 class EBL_Item(Agent, EBL_Polygons):
-    testsavefile=Typed(Save_TXT, ()).tag(no_spacer=True)
-    angle_x=Float(0.3).tag(desc="shift in x direction when doing angle evaporation")
-    angle_y=Float().tag(desc="shift in y direction when doing angle evaporation")
+    save_file=Typed(Save_DXF, ()).tag(no_spacer=True)
+    angle_x=Float(0.3e-6).tag(desc="shift in x direction when doing angle evaporation", unit="um")
+    angle_y=Float(0.0e-6).tag(desc="shift in y direction when doing angle evaporation", unit="um")
     view_type=Enum("pattern", "angle")
     add_type=Enum("overwrite", "add")
     
+    @observe('save_file.save_event')
+    def obs_save_event(self, change):
+        self.save_file.direct_save(self, write_mode='w')
+
+    #def _default_read_file(self):
+    #    return Read_TXT(main_file=self.main_file, dir_path=self.dir_path)
+
+    #def _default_save_file(self):
+    #    return Save_TXT(main_file=self.read_file.main_file, dir_path=self.read_file.dir_path)
+    
+    def full_EBL_save(self):
+        print "saving to file"
+        self.save_file.direct_save(self)
+        #self.bmr=BeamerGen()
+        self.bmr.name=self.name
+        self.bmr.mod_table_name = self.shot_mod_table
+        self.bmr.bias=-0.009
+        self.bmr.base_path=self.filer.dir_path+self.filer.divider
+        self.bmr.extentLLy=-150
+        self.bmr.extentURy=150
+        self.bmr.gen_flow()
+        self.jdf.add_pattern(self.name, self.shot_mod_table)
+
     
     @property    
     def boss(self):
@@ -35,7 +58,7 @@ class EBL_Item(Agent, EBL_Polygons):
         self.make_polylist()
         for c in self.children:
             c.predraw()
-            self.extend(c.verts)
+            #self.extend(c.verts)
 
     def make_polylist(self):
         self.P([(0,0)])
@@ -63,6 +86,7 @@ class EBL_Item(Agent, EBL_Polygons):
             self.children_predraw()
         self.rotate(self.theta)
         self.offset(self.x_ref, self.y_ref)
+        self.boss.plot.set_data(self.name, self.verts, self.color)
         
     @Callable
     def plot(self):
@@ -70,9 +94,8 @@ class EBL_Item(Agent, EBL_Polygons):
         self.draw()
         
     def draw(self):
-        self.boss.plot.set_data(self.name, self.verts)
 
-        if 0: #self.children!=[]:
+        if self.children!=[]:
             xmin=min(b.xmin for b in self.children)
             xmax=max(b.xmax for b in self.children)
             xmin=min(self.xmin, xmin)        

@@ -16,25 +16,25 @@ from atom.api import Enum, Float, Callable
 from EBL_Polygons import horiz_refl, vert_refl, horizvert_refl
     
 class EBL_SQUID(EBL_Item):
-    box_height=Float(3.0).tag(desc="height of connecting box", unit="um", good_value=20.0)
-    box_width=Float(10.0).tag(desc="width of connecting box", unit="um")
-    height=Float(10.0).tag(desc="height of total qubit", unit="um")
-    width=Float(10).tag(desc="width of total qubit", unit="um")
-    gap=Float(0.2).tag(desc="gap for making two angle lithography", unit="um")
-    w=Float(0.1).tag(desc="width of electrode fingers", unit="um")
-    h=Float(1.0).tag(desc="height of electrode fingers", unit="um")
-    ew=Float(1.0).tag(desc="connecting electrode width", unit="um")
-    edge_dist=Float(5.0).tag(desc="distance from edge to connecting electrodes", unit="um")
+    box_height=Float(3.0e-6).tag(desc="height of connecting box", unit="um", good_value=20.0)
+    box_width=Float(10.0e-6).tag(desc="width of connecting box", unit="um")
+    height=Float(10.0e-6).tag(desc="height of total qubit", unit="um")
+    width=Float(10e-6).tag(desc="width of total qubit", unit="um")
+    gap=Float(0.2e-6).tag(desc="gap for making two angle lithography", unit="um")
+    w=Float(0.1e-6).tag(desc="width of electrode fingers", unit="um")
+    h=Float(1.0e-6).tag(desc="height of electrode fingers", unit="um")
+    ew=Float(1.0e-6).tag(desc="connecting electrode width", unit="um")
+    edge_dist=Float(5.0e-6).tag(desc="distance from edge to connecting electrodes", unit="um")
 
-    finger_gap=Float(3.0).tag(desc="gap between fingers")
-    wb=Float(0.2).tag(desc="width of bottom fingers")
+    finger_gap=Float(3.0e-6).tag(desc="gap between fingers")
+    wb=Float(0.2e-6).tag(desc="width of bottom fingers")
     
-    contact_width=Float(125.0)
-    contact_height=Float(170.0)
-    bridge_gap_x=Float(20.0)
-    bridge_gap_y=Float(15.0)
-    testpad_width=Float(400.0)
-    testpad_height=Float(450.0)
+    contact_width=Float(125.0e-6)
+    contact_height=Float(170.0e-6)
+    bridge_gap_x=Float(20.0e-6)
+    bridge_gap_y=Float(15.0e-6)
+    testpad_width=Float(400.0e-6)
+    testpad_height=Float(450.0e-6)
 
     orientation=Enum("Vertical", "Horizontal")
             
@@ -42,12 +42,15 @@ class EBL_SQUID(EBL_Item):
 
     def make_polylist(self):
         """Draws IDT depending on object parameters"""
-        self.get_map("squid_type")(self)
-
+        #self.get_map("squid_type")(self)
+        self.two_finger()
         #self.run_func(self.squid_type)        
         if self.orientation=="Horizontal":
             self.rotate(self, 90.0)
 
+    def _default_color(self):
+        return "blue"
+        
     def _default_main_params2(self):
         return ["plot", "view_type", "squid_type", "orientation", "angle_x", "angle_y", "offset_verts", "rotate", "horiz_refl", "vert_refl", "do_clear_verts", 
         "width", "height", "wb", "box_height", "w", "h", "gap", "finger_gap"]
@@ -216,7 +219,7 @@ class EBL_SQUID(EBL_Item):
         self.rect(self.x_center-connx/2.0, hbox/2.0-h, connx, -w)
 
         self.rect(self.x_center-connx/2.0, -hbox/2.0+h, connx, w)
-    @Callable
+    #@Callable
     def two_finger(self):
         self.P([(-self.width/2.0, self.height/2.0),
                    (self.width/2.0, self.height/2.0),

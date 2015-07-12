@@ -174,12 +174,18 @@ class Save_NP(Save_TXT):
     def do_data_save(self, data, name, group_name, append):
         save_np_data(self.dir_path+self.divider, data, name)
 
+from DXF_functions import save_dxf
+
 class Save_DXF(Save_File):
     def _default_file_type(self):
         return "dxf"
 
-    def _default_base_dir(self):
-        return self.base_dir+self.divider+"OutputPatterns"
+    #def _default_base_dir(self):
+    #    return self.base_dir+self.divider+"OutputPatterns"
+
+    def direct_save(self, data, write_mode='w'):
+        save_dxf(file_path=self.file_path, data=data, write_mode=write_mode)
+        log_info("Direct save of data to: {}".format(self.file_path))
 
 if __name__=="__main__":
 

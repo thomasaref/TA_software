@@ -15,6 +15,8 @@ from LOG_functions import log_debug
 
 class EBL_IDT(EBL_Item, IDT):
     """handles everything related to drawing a IDT. Units are microns (um)"""
+    def _default_color(self):
+        return "blue"
     trconnect_x=Float(9.0e-6).tag(desc="connection length of transmon", unit="um")
     trconnect_y=Float(2.5e-6).tag(desc="connection length of transmon", unit="um")
     trconnect_w=Float(0.5e-6).tag(desc="connection length of transmon", unit="um")
@@ -22,7 +24,7 @@ class EBL_IDT(EBL_Item, IDT):
     trc_hbox=Float(14.0e-6).tag(desc="height of transmon box", unit="um")
     o=Float(0.5e-6).tag(unit="um",
                     desc="gap between electrode and end of finger. The vertical offset of the fingers. Setting this to zero produces a shorted reflector")
-    hbox=Float(20.0e-6).tag(desc="height of electrode box", unit="um")
+    hbox=Float(0.5e-6).tag(desc="height of electrode box", unit="um")
     wbox=Float(0.0e-6).tag(unit="um", desc="width of electrode box. Setting to 0.0 (default) makes it autoscaling so it matches the width of the IDT")
 
     idt_tooth=Float(0.3e-6).tag(unit="um", desc="tooth size on CPW connection to aid contact")
@@ -41,7 +43,7 @@ class EBL_IDT(EBL_Item, IDT):
     step_num=Int(3)
 
     
-    def _default_main_params(self):
+    def _default_main_params2(self):
         mp=["idt_type", "qdt_type", "ft",
             "add_gate", "add_gnd", "add_teeth", "angle_x", "angle_y", "step_num",
             "Np", "a", "g", "W", "o","f0", "eta", "ef", "wbox", "hbox", "material",
@@ -141,10 +143,10 @@ class EBL_IDT(EBL_Item, IDT):
         
     def _qubitgate(self):
         """writes ground for a qubit IDT"""
-        self.P([(-self.trc_wbox/2.0, self.o/2.0+self.W/2.0+self.hbox+10.0-0.25),
-                (self.trc_wbox/2.0, self.o/2.0+self.W/2.0+self.hbox+10.0-0.25),
-                (self.trc_wbox/2.0, 125.0),
-                   (-self.trc_wbox/2.0, 125.0)])
+        self.P([(-self.trc_wbox/2.0, self.o/2.0+self.W/2.0+self.hbox+10.0e-6),#-0.25e-6),
+                (self.trc_wbox/2.0, self.o/2.0+self.W/2.0+self.hbox+10.0e-6), #-0.25e-6),
+                (self.trc_wbox/2.0, self.conn_h),
+                   (-self.trc_wbox/2.0, self.conn_h)])
 
     def _squid_touch(self):
         """writes squid connections"""
