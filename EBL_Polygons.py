@@ -23,7 +23,7 @@ def rotate(verts, theta):
 
 def horiz_refl(verts):
     return [tuple([(-v[0], v[1]) for v in p]) for p in verts]
-    
+
 def vert_refl(verts):
     return [tuple([(v[0], -v[1]) for v in p]) for p in verts]
 
@@ -62,7 +62,7 @@ def poly2dxf(p, color, layer):
     return tlist
 
 def polylist2dxf(verts, color, layer):
-    return [poly2dxf(p, color, layer) for p in verts] #flatten?    
+    return [poly2dxf(p, color, layer) for p in verts] #flatten?
 
 class EBL_Polygons(Atom):
     color=Enum("green").tag(desc="color or datatype of item, could be used for dosing possibly")
@@ -74,20 +74,20 @@ class EBL_Polygons(Atom):
     y_ref=Float(0.0).tag(desc="y coordinate of reference point of pattern", unit="um")
     theta=Float(0.0).tag(desc="angle to rotate in degrees")
     orient=Enum("TL", "TR", "BL", "BR")
-    
+
     @property
     def xmin(self):
         if self.verts==[]:
             self.pros(self)
         return minx(self.verts)
-        
+
     @property
     def xmax(self):
         if self.verts==[]:
             self.pros(self)
         return maxx(self.verts)
-    
-    @property             
+
+    @property
     def ymin(self):
         if self.verts==[]:
             self.pros(self)
@@ -98,7 +98,7 @@ class EBL_Polygons(Atom):
         if self.verts==[]:
             self.pros(self)
         return maxy(self.verts)
-            
+
     def extend(self, verts):
         if self.orient=="TL":
             self.verts.extend(verts)
@@ -115,14 +115,14 @@ class EBL_Polygons(Atom):
         EP.rotate(EP.theta)
         EP.offset(EP.x_ref, EP.y_ref)
         self.extend(EP.verts)
-        
+
     def pro_vs(self, EP):
         EP.make_polylist()
         EP.rotate(EP.theta)
         EP.offset(EP.x_ref, EP.y_ref)
         self.extend(EP.verts)
         EP.verts=[]
-        
+
     def P(self, verts):
         """adds a polygon to the polylist with vertices given as a list of tuples"""
         #self.verts.append(self._gen_sP(verts))
@@ -130,13 +130,41 @@ class EBL_Polygons(Atom):
 
     def R(self, xr, yr, wr, hr):
         """creates rectangle EBLpolygon with (x,y) coordinates=(xr,yr), width=wr, height=hr"""
-        #self.verts.append(self._gen_sR(xr, yr, wr, hr)) 
+        #self.verts.append(self._gen_sR(xr, yr, wr, hr))
         self.extend(self.sR(xr, yr, wr, hr))
 
     def C(self, xr, yr, wr, hr):
         """Adds a centered rectangle to the polylist"""
         #self.verts.append(self._gen_sC(xr, yr, wr, hr))
         self.extend(self.sC(xr, yr, wr, hr))
+
+    def T(self, xr, yr, wr, hr, ot="R", nt=10):
+        self.extend(self.sT(xr, yr, wr, hr, ot=ot, nt=nt))
+
+    def sT(self, xr, yr, wr, hr, ot="R", nt=10, vs=None):
+        vs=self.sR(xr, yr, wr, hr, vs)
+        if ot in ("T", "B"):
+            ts=wr/(2.0*nt)
+        else:
+            ts=hr/(2.0*nt)
+        ct=ts*(2*nt-1)
+
+        for tn in range(nt):
+            if ot=="T":
+                vs=self.sR(xr+wr/2.0-ct/2.0+2*tn*ts, yr+hr, ts, ts, vs )
+            elif ot=="B":
+                vs=self.sR(xr+wr/2.0-ct/2.0+2*tn*ts, yr, ts, -ts, vs )
+            elif ot=="B":
+                vs=self.sR(xr, yr+hr/2.0-ct/2.0+2*tn*ts, -ts, ts, vs )
+            else:
+                vs=self.sR(xr+wr, yr+hr/2.0-ct/2.0+2*tn*ts, ts, ts, vs )
+        return vs
+
+    def CT(self, xr, yr, wr, hr, ot="R", nt=10):
+        self.extend(self.sCT(xr, yr, wr, hr, ot=ot, nt=nt))
+
+    def sCT(self, xr, yr, wr, hr, ot="R", nt=10, vs=None):
+        return self.sT(xr-wr/2.0, yr-hr/2.0, wr, hr, ot, nt=nt, vs=vs)
 
     def sP(self, verts, inlist=None):
         if inlist is None:
@@ -155,7 +183,7 @@ class EBL_Polygons(Atom):
         """Adds a centered rectangle to the polylist"""
         if inlist is None:
             inlist=[]
-        inlist.append(self._gen_sC(xr, yr, wr, hr)) 
+        inlist.append(self._gen_sC(xr, yr, wr, hr))
         return inlist
 
     def _gen_sP(self, verts):
@@ -164,11 +192,11 @@ class EBL_Polygons(Atom):
     def _gen_sR(self, xr, yr, wr, hr):
         """creates rectangle EBLpolygon with (x,y) coordinates=(xr,yr), width=wr, height=hr"""
         return self._gen_sP(verts=[(xr,yr), (xr+wr,yr), (xr+wr, yr+hr), (xr, yr+hr)])
-    
+
     def _gen_sC(self, xr, yr, wr, hr):
         """Adds a centered rectangle to the polylist"""
         return self._gen_sR(xr-wr/2.0, yr-hr/2.0, wr, hr)
-        
+
     def offset(self, x, y):
         self.verts=offset(self.verts, x, y, self.unit_factor)
 
@@ -177,14 +205,14 @@ class EBL_Polygons(Atom):
 
     def vert_refl(self):
         self.verts=vert_refl(self.verts)
-        
+
     def rotate(self, theta):
         self.verts=rotate(self.verts, theta)
-        
+
     def clear_verts(self):
         self.verts=[((0,0),)]
 
-if __name__=="__main__":                
+if __name__=="__main__":
     a=EBL_Polygons(unit_factor=2.0)
     print a.sP([(0,0), (1,0), (0,1)])
     print a.sR(0,0,1,1)
