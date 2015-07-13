@@ -8,9 +8,10 @@ from LOG_functions import log_warning#, log_debug
 #log_debug(1)
 from a_Agent import Spy, Agent#, boss#, NoShowBase
 from EBL_Boss import ebl_boss
-from atom.api import Enum, Float, Typed, Callable, observe#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
+from atom.api import Enum, Float, Typed, Callable, observe, Unicode#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
 from EBL_Polygons import EBL_Polygons
 from Atom_Save_File import Save_DXF
+from a_BeamerGen import BeamerGen
 
 class EBL_Item(Agent, EBL_Polygons):
     save_file=Typed(Save_DXF, ()).tag(no_spacer=True)
@@ -18,6 +19,9 @@ class EBL_Item(Agent, EBL_Polygons):
     angle_y=Float(0.0e-6).tag(desc="shift in y direction when doing angle evaporation", unit="um")
     view_type=Enum("pattern", "angle")
     add_type=Enum("overwrite", "add")
+    name_sug=Unicode().tag(no_spacer=True)
+    shot_mod_table=Unicode()
+    bmr=Typed(BeamerGen).tag(private=True)
     
     @observe('save_file.save_event')
     def obs_save_event(self, change):
@@ -32,16 +36,14 @@ class EBL_Item(Agent, EBL_Polygons):
     def full_EBL_save(self):
         print "saving to file"
         self.save_file.direct_save(self)
-        #self.bmr=BeamerGen()
-        self.bmr.name=self.name
-        self.bmr.mod_table_name = self.shot_mod_table
-        self.bmr.bias=-0.009
-        self.bmr.base_path=self.filer.dir_path+self.filer.divider
-        self.bmr.extentLLy=-150
-        self.bmr.extentURy=150
+        self.bmr=BeamerGen(file_name=self.name_sug, mod_table_name = self.shot_mod_table, bias=-0.009, base_path=self.filer.dir_path+self.filer.divider, 
+                           extentLLy=-150, extentURy=150)
         self.bmr.gen_flow()
         self.jdf.add_pattern(self.name, self.shot_mod_table)
-
+  
+    def make_name_sug(self):
+        name_sug=""
+        self.name_sug=name_sug
     
     @property    
     def boss(self):
@@ -87,6 +89,8 @@ class EBL_Item(Agent, EBL_Polygons):
         self.rotate(self.theta)
         self.offset(self.x_ref, self.y_ref)
         self.boss.plot.set_data(self.name, self.verts, self.color)
+        self.make_name_sug()
+        self.save_file.main_file=self.name_sug+".dxf"
         
     @Callable
     def plot(self):

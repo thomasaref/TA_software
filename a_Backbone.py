@@ -4,7 +4,7 @@ Created on Tue Jul  7 21:52:51 2015
 
 @author: thomasaref
 
-A collection of for using my dynamic view with various objects. also defines common backbone
+A collection of functions for using my dynamic view with both objects and Atoms.
 """
 
 from inspect import getmembers
@@ -100,8 +100,8 @@ def get_mapping(obj, name, none_map={}):
         return mapping
     items=obj.get_member(name).items
     if sorted(items)==sorted(set(items).intersection(members(obj))):
-        #if every name in items maps to a member, update to a dictionary mapping to the members
-        mapping=list(items) #dict(zip(items, [getattr(obj, item) for item in items]))
+        #if every name in items maps to a member, update to a list mapping to the members
+        mapping=list(items) 
         set_tag(obj, name, mapping=mapping, map_type="attribute")
         return {}
     #if nothing else, set mapping to none_map and return
@@ -109,7 +109,7 @@ def get_mapping(obj, name, none_map={}):
     return none_map
 
 def get_map_type(obj, name):
-    """makes sure to get mapping to update map_type before returning map_type"""
+    """makes sure to get mapping to update map_type before returning it"""
     get_mapping(obj, name)
     return get_tag(obj, name, "map_type")
 
@@ -121,7 +121,7 @@ def get_inv(obj, name, value):
     return get_tag(obj, name, 'inv_map').get(value, value)
 
 def get_type(obj, name):
-    """returns type of member with given name"""
+    """returns type of member with given name, with possible override via tag typer"""
     typer=type(get_member(obj, name))
     return get_tag(obj, name, "typer", typer)
 
@@ -159,10 +159,14 @@ class fakeboss(object):
     abort=False
     busy=False
     progress=0
+    agents=[]
+    
+    def __init__(self, agent=None):
+        self.agents=[agent]
 
 def get_boss(obj):
     """link to boss of object and uses base boss if none exists. boss is assumed to have abort and busy attributes"""
-    return get_attr(obj, "boss", fakeboss())
+    return get_attr(obj, "boss", fakeboss(agent=obj))
 
 def get_run_params(f, include_self=False):
     """returns names of parameters a function will call"""
@@ -246,10 +250,8 @@ def log_func(fn):
 #    arglist.extend([getattr(obj, an) for an in run_params])
 #    return arglist
     
-def get_name(obj, default_name="NO NAME"):
-    if hasattr(obj, "name"):
-        return obj.name
-    return default_name
+def get_name(obj, default_name="NO_NAME"):
+    return get_attr(obj, "name", default_name)
  
 def lowhigh_check(obj, name, value):
     """can specify low and high tags to keep float or int within a range."""
@@ -324,81 +326,6 @@ unit_dict=dict(u=1.0e-6, m=1.0e-3, c=1.0e-2,
               G=1.0e9, M=1.0e6, k=1.0e3)
 
 
-           
-class Backbone(Atom):
-    """underlying backbone class that implements all universal aspects except those boss related"""
-    name=Unicode().tag(private=True, desc="name of agent. A default will be provided if none is given")
-    #title=Unicode().tag(private=True, desc="optional title/label")
-    desc=Unicode().tag(private=True, desc="optional description of agent")
-    full_interface=Bool(False).tag(private=True, desc="agent wide GUI control")
-    plot_all=Bool(False).tag(private=True, desc="agent wide override for plotting")
-    view=Enum("Auto").tag(private=True, desc="can be overwritten in children to allow custom views")
-    main_params=List().tag(private=True, desc="main parameters: allows control over what is displayed and in what order")
-
-    @property
-    def base_name(self):
-        """default base name of base if no name is given. can be overwritten in subclasses"""
-        return "base"
-
-    @property
-    def reserved_names(self):
-        """reserved names not to perform standard logging and display operations on,
-           i.e. members that are tagged as private and will behave as usual Atom members"""
-        return get_reserved_names(self) #get_all_tags("private", True)
-
-    @property
-    def all_params(self):
-        """all params to perform logging and display operations on"""
-        return get_all_params(self)
-
-    @property
-    def all_main_params(self):
-        """all_params that are not tagged as sub"""
-        return get_all_main_params(self)
-
-    def _default_main_params(self):
-        """defaults to all members in all_params that are not tagged as sub.
-        Can be overwritten to allow some minimal custom layout control,
-        e.g. order of presentation and which members are shown. Use self.all_main_params to get a list of
-        all members that could be in main_params"""
-        return self.all_main_params
-
-    def get_map(self, name, item=None, none_map={}):
-        return get_map(self, name=name, item=item, none_map=none_map)
-        
-    def run_func(self, name, **kwargs):
-        return run_func(self, name, **kwargs)
-#
-#    def func2log(self, name, cmdstr):
-#        """returns cmd associated with cmdstr in tag and converts it to a log if it isn't already.
-#          returns None if cmdstr is not in metadata"""
-#        cmd=self.get_tag(name, cmdstr)
-#        if not isinstance(cmd, func_log) and cmd is not None:
-#            cmd=func_log(cmd)
-#            self.set_tag(name, **{cmdstr:cmd})
-#        return cmd
-#
-#    def get_run_params(self, name, key, notself=False, none_value=[]):
-#        """returns the run parameters of get_cmd and set_cmd. Used in GUI"""
-#        cmd=self.func2log(name, key)
-#        if cmd is None:
-#            return none_value
-#        else:
-#            run_params=cmd.run_params[:]
-#            if notself:
-#                if name in run_params:
-#                    run_params.remove(name)
-#            return run_params
-#
-    def _observe_plot_all(self, change):
-        """if instrument plot_all changes, change all plot tags of parameters"""
-        if change['type']!='create':
-            set_all_tags(self, plot=self.plot_all)
-
-    def _observe_full_interface(self, change):
-        """if instrument full_interface changes, change all full_interface tags of parameters"""
-        if change['type']!='create':
-            self.set_all_tags(full_interface=self.full_interface)
         
 if __name__=="__main__":
     class to(object):
@@ -459,8 +386,7 @@ if __name__=="__main__":
     run_func(b, "ff", a=1), run_func(a, "ff", a=1), run_func(a, "gg")
     print b.a, a.a
     
-    c=Backbone()
-    print c.view, c.main_params, c.base_name, c.all_params, c.all_main_params, c.reserved_names
+    
 
 
     #print ff.func_code.co_argcount
@@ -528,49 +454,3 @@ if __name__=="__main__":
 #    if log_it:
 #        set_log(obj, name, value)
 
-class obackbone(object):
-    """a non-atom convenience backbone class"""
-
-    def __setattr__(self, name, value):
-        log_it=False
-        if name in get_all_params(self):
-            log_it=True
-            value=lowhigh_check(self, name, value)            
-        super(obackbone, self).__setattr__(name, value)
-        if log_it:
-            set_log(self, name, value)
-
-    name="" 
-    title= ""
-    desc= ""
-    full_interface=False 
-    plot_all=False 
-    view="Auto" 
-
-    @property
-    def base_name(self):
-        """default base name of base if no name is given. can be overwritten in subclasses"""
-        return "base"
-
-    @property
-    def reserved_names(self):
-        """reserved names not to perform standard logging and display operations on,
-           i.e. members that are tagged as private and will behave as usual Atom members"""
-        return get_reserved_names(self) #get_all_tags("private", True)
-
-    @property
-    def all_params(self):
-        """all params to perform logging and display operations on"""
-        return get_all_params(self)
-
-    @property
-    def all_main_params(self):
-        """all_params that are not tagged as sub"""
-        return get_all_main_params(self)
-    @property
-    def main_params(self):
-        """defaults to all members in all_params that are not tagged as sub.
-        Can be overwritten to allow some minimal custom layout control,
-        e.g. order of presentation and which members are shown. Use self.all_main_params to get a list of
-        all members that could be in main_params"""
-        return self.all_main_params 

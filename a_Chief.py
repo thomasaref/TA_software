@@ -17,11 +17,7 @@ from Plotter import Plotter
 
 
 import sys
-from a_Backbone import get_tag, get_type, get_boss, get_all_tags, do_it_if_needed
-
-def show(agent):
-    chief=get_boss(agent)
-    chief_show(chief, agent)
+from a_Backbone import get_tag, get_type, get_all_tags, do_it_if_needed, get_attr, get_all_params, get_main_params, get_name
     
 def chief_show(chief, agent):
     with imports():
@@ -29,6 +25,23 @@ def chief_show(chief, agent):
     app = QtApplication()
     view = ChiefMain(boss=chief, agent=agent)
     view.show()
+    app.start()
+
+def show_alone(agent):
+    app = QtApplication()
+    view=agent.viewprop
+    view.show()
+    app.start()
+    
+def show_old( agent):
+    with imports():
+            from e_Backbone import AtomMain
+    app = QtApplication()
+    #view = AtomMain( agent=agent)
+    #view.show()
+    myview=agent.viewprop
+    myview.title=get_attr(agent, "name", "boog")
+    myview.show()
     app.start()
     
 class StreamCatch(Atom):
@@ -86,15 +99,13 @@ class Chief(Atom):
         do_it_if_needed(self.run)
         log_info("Master finished")
 
-
-
     @property
     def plottables(self):
         tempdict=dict()
         for instr in self.agents:
-            tempdict[instr.name]=get_all_tags(instr, 'plot', True, instr.plot_all, instr.all_params)
-            if tempdict[instr.name]==[]:
-                tempdict[instr.name]=instr.main_params #members().keys()
+            tempdict[get_name(instr)]=get_all_tags(instr, 'plot', True, get_attr(instr, "plot_all", False), get_all_params(instr))
+            if tempdict[get_name(instr)]==[]:
+                tempdict[get_name(instr)]=get_main_params(instr) #members().keys()
         return tempdict
 
     def _observe_saving(self, change):
@@ -179,6 +190,12 @@ class Chief(Atom):
             make_log_file(log_path=self.BASE_DIR+self.DIVIDER+self.LOG_NAME+".log", display=self.display)  #default log file
 
 boss=Chief()
+
+def show(agent):
+    chief=boss
+    boss.agents.append(agent)
+    chief_show(chief, agent)
+
 #master.save_file=Save_File()
 #master.save_file.test_logger()
 #print master.logger

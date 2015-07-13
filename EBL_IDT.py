@@ -50,6 +50,21 @@ class EBL_IDT(EBL_Item, IDT):
             "trconnect_x", "trconnect_y", "trconnect_w", "trc_wbox", "trc_hbox",
             "conn_h",  "idt_tooth", "v", "Dvv", "epsinf", "Ct", "p", "x_ref", "y_ref"]
         return mp
+
+    def make_name_sug(self):
+        name_sug=""
+        name_sug+=dict(basic="", stepped="stp")[self.idt_type]
+        name_sug+=self.qdt_type
+        name_sug+=dict(single="s", double="d")[self.ft]
+        name_sug+="{0}ef{1}w{2}wb{3}".format(self.idt.Np, self.idt.ef, int(self.idt.a*1e9), int(self.idt.wbox))
+        self.name_sug=name_sug
+        shot_mod=""
+        shot_mod+=dict(basic="", stepped="T")[self.idt_type]
+        shot_mod+=dict(IDT="I", QDT="Q")[self.qdt_type]
+        shot_mod+=dict(single="S", double="D")[self.ft]
+        shot_mod+="{0}{1}{2}".format(self.idt.Np, self.idt.ef, int(self.idt.a*1e9))
+        self.shot_mod_table=shot_mod
+                
     
     @property    
     def mult(self):

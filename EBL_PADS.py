@@ -55,6 +55,10 @@ class Al_PADS(EBL_Item):
     gate_stop=Float(60.0e-6).tag(unit="cm")
     locpw=Float(0.0e-6).tag(unit='um', desc="local offset to cpw")
 
+    def make_name_sug(self):
+        self.name_sug="alpads"
+        self.shot_mod_table="ALP"
+
     @property
     def gndplane_testgap(self):
         return self.chip.gndplane_testgap
@@ -292,6 +296,10 @@ class EBL_PADS(EBL_Item):
     lbl_height=Float(500.0e-6).tag(unit="um", desc="label height (assumed above marker 1)")
     lbl_width=Float(1100.0e-6).tag(unit="um", desc="label width (label assumed above marker 1)")
 
+    def make_name_sug(self):
+        self.name_sug="tpads"
+        self.shot_mod_table="TPD"
+
     def _default_layer(self):
         return "Au"
 
@@ -420,5 +428,5 @@ class EBL_PADS(EBL_Item):
 if __name__=="__main__":
     #a=EBL_test_pads(name="EBL_Item_test")
 #    a=EBL_mark_box(name="EBL_Item_test")
-    a=EBL_PADSALL(name="EBL_Item_test")
+    a=EBL_PADS(name="EBL_Item_test")
     a.show()

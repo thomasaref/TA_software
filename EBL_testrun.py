@@ -13,9 +13,9 @@ from EBL_Item import EBL_Item
 from atom.api import Typed, Enum
 
 ####general PADS
-pads=EBL_PADS(name="_pads")
+pads=EBL_PADS(name="pads")
 
-al_pads=Al_PADS(name="_Al_pads", chip=pads)
+al_pads=Al_PADS(name="Al_pads", chip=pads)
 
 
 ####single tilt IDTS
@@ -37,7 +37,7 @@ r_idt.idt_type="stepped"
 r_idt.o=10.0e-6
 
 ## 3rd harmonic   50%
-if 1:
+if 0:
     l_idt.step_num=3
     r_idt.step_num=3
     l_idt.f0=f0/3
@@ -67,7 +67,7 @@ if 0:
     print l_idt.a, l_idt.g, l_idt.eta, l_idt.a/(l_idt.g+l_idt.a), l_idt.Dvv, l_idt.epsinf
 
 ## 5 harmonic   20%
-if 1:
+if 0:
     l_idt.step_num=5
     r_idt.step_num=5
     l_idt.f0=f0/5
@@ -91,7 +91,7 @@ l_idt.ft="single"
 r_idt.ft="single"
 
 ## single finger 3rd harmonic   20%
-if 1:
+if 0:
     l_idt.step_num=3
     r_idt.step_num=3
     l_idt.f0=f0/3
@@ -101,7 +101,7 @@ if 1:
     print l_idt.a, l_idt.g, l_idt.eta, l_idt.a/(l_idt.g+l_idt.a), l_idt.Dvv, l_idt.epsinf
 
 ## single finger 5th harmonic   50%
-if 1:
+if 0:
     l_idt.step_num=5
     r_idt.step_num=5
     l_idt.f0=f0/5
@@ -111,7 +111,7 @@ if 1:
     print l_idt.a, l_idt.g, l_idt.eta, l_idt.a/(l_idt.g+l_idt.a), l_idt.Dvv, l_idt.epsinf
 #children=[l_idt, r_idt, al_pads]#, q_idt, pads, ]
 
-if 1:
+if 0:
     q_idt=EBL_IDT(name="_EBL_Item_test", qdt_type="QDT", idt_type="basic", ft="single", eta=0.25, angle_x=0.2e-6)
     q_idt.a=0.1e-6
     q_idt.hbox=10e-6
@@ -137,10 +137,11 @@ if 1:
     l_idt.W=7e-6
     r_idt.W=7e-6
     children=[ q_idt, sqd, l_idt, r_idt, al_pads]
-if 0:
-    r_idt.save_file.file_path="blah"
-    r_idt.save_file.direct_save(r_idt)
 
+if 1:
+    #pads.save_file.file_path="paddytest.dxf"
+    #pads.save_file.direct_save(pads)
+    children=[al_pads, pads]
 #class IDT_SQUID(EBL_Item):
 #    def _default_children(self):
 #        return [q_idt, sqd]

@@ -5,7 +5,7 @@ Created on Mon Jun 29 14:41:36 2015
 @author: thomasaref
 """
 
-from enaml.widgets.api import  Field, PushButton
+from enaml.widgets.api import  Field, PushButton, MultilineField, VGroup, Window
 from enaml.stdlib.fields import FloatField, IntField
 #from e_FundView import FundView
 #from Atom_Base import myobject
@@ -18,43 +18,57 @@ from EBL_enaml import EBContWrap
 template UserInstrView(instr_view: "Read_File"):
     """ Displays a read file interface"""
     ReadWrap:
-        filer:=getattr(vmodel, vname)
+        filer:= instr #getattr(vmodel, vname)
 
 template UserInstrView(instr_view: "Save_File"):
     """Displays a save file interface"""
     SaveWrap:
-        filer:=getattr(vmodel, vname)
+        filer:=instr #getattr(vmodel, vname)
 
 template UserInstrView(instr_view: "Polyer"):
     """Displays a polyer polygon list interface. very ineffecient. too many notifications"""
     EBContWrap:
-        polyer:=getattr(vmodel, vname)
+        polyer:= instr #getattr(vmodel, vname)
 
+template UserInstrView(instr_view: "Text_Editor"):
+    """ Displays a read file interface"""
+    Window: wi:
+        #visible=True #activated :: wi.show()
+        #destroy_on_close=False
+        #always_on_top=True
+        VGroup:
+                ReadWrap:
+                    filer:=instr.read_file
+                SaveWrap:
+                    filer:=instr.save_file
+                MultilineField:
+                    text:=instr.data
+
+enamldef TextEditorWindow(Window):
+    attr instr
+    #visible=True #activated :: wi.show()
+    destroy_on_close=False
+    #always_on_top=True
+    VGroup:
+            ReadWrap:
+                filer:=instr.read_file
+            SaveWrap:
+                filer:=instr.save_file
+            MultilineField:
+                text:=instr.data
+                
 ############################################################  
 template UserInstrView(instr_view):
     """ This default specialization displays read-only text for the value."""
     Field:
         read_only = True
-        text << unicode((vmodel, vname))
+        text << unicode((instr, vmodel, vname))
 
 
-template UserTypedView(instrin, name, baseType: list):
-    PushButton:
-        text="list" #TypedView(instrin, name, Base):
-        #pass
-
-template UserTypedView(instrin, name, baseType: tuple):
-    PushButton:
-        text="tuple" #TypedView(instrin, name, Base):
         
 class fake(object):
     def fff():
         pass
-#a=fake()
-
-#template UserTypedView(instrin, name, baseType: type(a)):
-#    TypedView(instrin, name, Base):
-#        pass
 
 template FundView(base, name, baseType: type(fake.fff)):
     """A template specialization for a Callable using a PushButton"""

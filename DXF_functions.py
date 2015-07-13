@@ -74,7 +74,6 @@ def EBL_Polygons2dxf(verts, color, layer):
     mlist=[poly2dxf(p, color, layer) for p in verts]
     dlist.extend([item for sublist in mlist for item in sublist])
 
-    print dlist    
     dlist.extend(dxfend())
     return dlist
 

@@ -10,9 +10,9 @@ from enaml.widgets.api import (MainWindow, Container, DockArea, DockItem,  Field
 from enaml.core.api import DynamicTemplate, Looper, Conditional
 from enaml.layout.api import TabLayout, spacer
 from atom.api import Unicode, Str, Float, Int, Atom, ContainerList
-from a_Backbone import get_main_params, get_type, get_tag, get_attr, set_tag
+from a_Backbone import get_main_params, get_type, get_tag, get_attr, set_tag, get_name, get_boss
 from TA_Fundamentals import cap_case
-from e_FundTemps import  InstrView, TypedView, spacer_eval, aContainer, aHGroup#UnitFloatField, UnitSpinBox, ChoiceField
+from e_FundTemps import  InstrView, TypedView, spacer_eval, aContainer, aHGroup, InstrHolder#UnitFloatField, UnitSpinBox, ChoiceField
 
 from enaml.layout.api import vbox, hbox, align, InsertItem,  InsertTab, HSplitLayout
 #from enaml.widgets.api import (
@@ -71,10 +71,10 @@ enamldef ChiefToolBar(ToolBar):
     Action:
         separator=True
     Looper: loopy:
-        iterable << [b for b in boss.agents if b.name[0]!="_"]
+        iterable << [b for b in boss.agents if get_name(b)[0]!="_"]
         Action:
-            text = loop_item.name
-            tool_tip = "Show agent: {0}".format(loop_item.name)
+            text = get_name(loop_item)
+            tool_tip = "Show agent: {0}".format(get_name(loop_item))
             triggered:: 
                 show_agent(bossarea, loop_item)
 
@@ -164,7 +164,7 @@ class tempclass:
 
 def find_targets(dock_items, target_items=[]):
     names=(o.name for o in dock_items)
-    targets=(o.name for o in target_items)
+    targets=(get_name(o) for o in target_items)
     overlap=list(set(targets).intersection(names))
     return overlap
 
@@ -190,34 +190,37 @@ def show_general_item(area, item, ItemType=DockItem, position='left', target_ite
     if item!=None:
         targets = find_targets(dock_items=area.dock_items(), target_items=target_items)
         if targets==[]:
-            show_item(item.name, area, ItemType=ItemType, OP=InsertItem, position=position, **kwargs)
+            show_item(get_name(item), area, ItemType=ItemType, OP=InsertItem, position=position, **kwargs)
         elif item.name not in targets:
             show_item(item.name, area, target=targets[0], ItemType=ItemType, OP=InsertTab, **kwargs)
 
 enamldef InstrDockItem(DockItem):
-   attr instr
+   alias instr : ih.instr
    name = get_attr(instr, "name", "noitem")
    title = get_attr(instr, "name", "No Title")
-   aContainer:
-       ScrollArea:
-           aContainer:
-               DynamicTemplate:
-                   base = InstrView
-                   args=(get_attr(instr, "view", "Auto"), ) 
+   InstrHolder: ih:
+       pass
+        
+   #aContainer:
+   #    ScrollArea:
+   #        aContainer:
+   #            DynamicTemplate:
+   #                base = InstrView
+   #                args=(get_attr(instr, "view", "Auto"), ) 
        
 def show_agent(area, agent):
     if agent!=None:
-        show_general_item(area, agent, ItemType=InstrDockItem, target_items=agent.boss.agents, instr=agent)
+        show_general_item(area, agent, ItemType=InstrDockItem, target_items=get_boss(agent).agents, instr=agent)
 
 def show_plot2(area, plot):
     show_general_item(area, plot, ItemType=PlotItem, position='right', target_items=agent.boss.plot_list, plotr=plot)
 
 def bshow_plot(bossarea, boss):
         plotr=boss.plot 
-        if "EBL_Item_test" in (b.name for b in boss.agents):
-            tagent=[b for b in boss.agents if b.name=="EBL_Item_test"][0]
+        if "EBL_Item_test" in (get_name(b) for b in boss.agents):
+            tagent=[b for b in boss.agents if get_name(b)=="EBL_Item_test"][0]
             tagent.plot(tagent)
-            show_plot(plotr.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=plotr)
+            show_plot(plotr.name+'plot', bossarea, target=get_name(bossarea.dock_items()[0]), ItemType=PlotItem, position="right", plotr=plotr)
                 
 enamldef ChiefMain(MainWindow): main:
     attr agent = None 
@@ -244,7 +247,7 @@ enamldef ChiefMain(MainWindow): main:
         DockArea: bossarea:
             activated ::
                 for item in boss.agents:
-                    if (agent==item or boss.show_agents) and item.name[0]!="_":
+                    if (agent==item or boss.show_agents) and get_name(item)[0]!="_":
                         show_agent(bossarea, item)
                 bshow_plot(bossarea, boss)
 
@@ -300,12 +303,20 @@ enamldef AtomMain(MainWindow): main:
     attr agent = None 
     attr chief
     title=get_attr(main.chief, "name", "No Title")
-    #activated :: main.send_to_front()
-    alias bossarea
-    Container: mycont:
-        alias bossarea
-        DockArea: bossarea:
-            layout=TabLayout(di.name)
-            InstrDockItem: di:
-                instr=agent
+    #activated :: ih.wi.show() #main.send_to_front()
+    Container:
+        PushButton: 
+            clicked :: 
+                for w in main.windows:
+                    w.show()
+                    print w.name
+        InstrHolder: ih:
+            instr:=agent
+    #alias bossarea
+    #Container: mycont:
+    #    alias bossarea
+    #    DockArea: bossarea:
+    #        layout=TabLayout(di.name)
+    #        InstrDockItem: di:
+    #            instr=agent
                 

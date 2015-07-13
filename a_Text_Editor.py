@@ -7,13 +7,16 @@ Created on Thu May 14 18:38:47 2015
 A simple text editor driver allowing one to load, edit and save text files
 """
 
-from a_Agent import Spy
-from atom.api import Str, observe, Unicode, Typed, ContainerList, Int, Float, Bool, List, Atom, Coerced, Instance
+#from a_Agent import Spy
+from a_Chief import show_old as show
+from atom.api import Atom, Str, observe, Unicode, Typed, ContainerList, Int, Float, Bool, List, Atom, Coerced, Instance, Enum
 from Atom_Read_File import Read_TXT
 from Atom_Save_File import Save_TXT
 #from LOG_functions import log_info, log_debug, make_log_file, log_warning
+from enaml import imports
 
-class Text_Editor(Spy):
+class Text_Editor(Atom):
+    view=Enum("Text_Editor")
     main_file=Unicode("idt.jdf").tag(private=True)
     dir_path=Unicode("/Users/thomasaref/Dropbox/Current stuff/TA_software").tag(private=True)
     data=Str().tag(discard=True, log=False, no_spacer=True, label="", spec="multiline")
@@ -36,8 +39,16 @@ class Text_Editor(Spy):
 
     def data_list(self):
         return self.data.split("\n")
+ 
+    @property       
+    def viewprop(self):
+        with imports():
+            from e_UserTemps import TextEditorWindow
+        return TextEditorWindow(instr=self)
+        #myview = TextEditorWindow(name="boog", instr=self)
+        #myview.show()
 
 
 if __name__=="__main__":
-    a=Text_Editor(name="Text_Editor", dir_path="/Volumes/aref/jbx9300/job/TA150515B/IDTs", main_file="idt.jdf")
-    a.show()    
+    a=Text_Editor( dir_path="/Volumes/aref/jbx9300/job/TA130715_stp/PADS", main_file="pads.jdf")
+    show(a)    

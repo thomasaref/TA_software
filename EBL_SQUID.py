@@ -40,6 +40,10 @@ class EBL_SQUID(EBL_Item):
             
     squid_type=Enum('two_finger', 'bridge').tag(desc="")
 
+    def make_name_sug(self):
+        self.name_sug="qbit"
+        self.shot_mod_table="QBT"
+
     def make_polylist(self):
         """Draws IDT depending on object parameters"""
         #self.get_map("squid_type")(self)
