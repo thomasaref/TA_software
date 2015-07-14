@@ -1,0 +1,44 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jul 13 20:55:47 2015
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import Window, Field, PushButton, ToolBar, Action
+from enaml.layout.geometry import Pos, Rect, Size
+
+enamldef Main(Window):
+    attr test
+    destroy_on_close=False
+    Field:
+        text:=test.a
+
+enamldef defaultView(Window):
+    attr agent
+    destroy_on_close=False
+    PushButton:
+        text<<agent.a
+
+enamldef showView(Window): sv:
+    always_on_top=True
+    activated ::
+        print sv.windows
+        print sv.position()
+        print sv.size().width
+        sv.set_position(Pos(0,0))
+        print sv.position()
+        x=300# sv.size().width
+        for w in sorted(sv.windows):
+            if w!=sv:
+                w.set_position(Pos(x,0))
+                x+=w.size().width#+w.position().x
+                #w.send_to_front()
+            #w.set_position(Pos(x,0))
+#        print sv.width
+    ToolBar:
+        Action:
+            text="do stuff"
+            triggered::
+                for w in sv.windows:
+                    w.show()
