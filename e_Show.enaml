@@ -5,40 +5,191 @@ Created on Mon Jul 13 20:55:47 2015
 @author: thomasaref
 """
 
-from enaml.widgets.api import Window, Field, PushButton, ToolBar, Action
+from enaml.widgets.api import Window, Field, PushButton, ToolBar, Action, MainWindow, Container, MultilineField, DockPane
 from enaml.layout.geometry import Pos, Rect, Size
+from enaml.core.api import Looper, Conditional
+from atom.api import List
+from enaml.core.declarative import d_
 
-enamldef Main(Window):
-    attr test
+enamldef aWindow(Window):
     destroy_on_close=False
+    always_on_top=True
+    
+enamldef Main(aWindow):
+    attr test
     Field:
         text:=test.a
+from e_FundTemps import InstrHolder
 
-enamldef defaultView(Window):
+enamldef defaultView(aWindow):
     attr agent
-    destroy_on_close=False
     PushButton:
         text<<agent.a
+    aWindow:
+        InstrHolder:
+            instr:=agent
+#class chiefy(Atom):
+#    pass
+        
+class showWindow(MainWindow):
+    a_wins=d_(List(default=[]))
+#    chief=d_(Typed())
+    
+    @property
+    def all_showing(self):
+        all_showing=True
+        for w in self.a_wins:
+            if not w.visible:
+                all_showing=False
+        return all_showing
+        
+enamldef LogPane(DockPane): lp:
+    dock_area='bottom'
+    title = "Log"
+    visible= chief is not None
+    Conditional: cd:
+        condition = chief is not None
+        Container:
+            MultilineField: mlf:
+                text << chief.name #.display.log_str
+            
+enamldef showView(showWindow): sv:
+#    attr a_wins=[]
+    attr chief
+    initial_position=(0,0)
+    initial_size=(500, 200)
 
-enamldef showView(Window): sv:
-    always_on_top=True
+    #always_on_top=True
     activated ::
+        
         print sv.windows
         print sv.position()
         print sv.size().width
         sv.set_position(Pos(0,0))
         print sv.position()
         x=300# sv.size().width
-        for w in sorted(sv.windows):
-            if w!=sv:
-                w.set_position(Pos(x,0))
-                x+=w.size().width#+w.position().x
-                #w.send_to_front()
+        sv.a_wins=sorted([w for w in sv.windows if w!=sv])        
+        x=0 #sv.a_wins[0].size().width
+        y=sv.size().height+sv.position().y+50      
+        for w in a_wins: #sorted(sv.windows):
+            w.set_position(Pos(x,y))
+            x+=w.size().width#+w.position().x
+            w.activate_window()
+            w.send_to_front()
+        #sv.maximize()
+    closed ::
+        for w in sv.a_wins:#windows:
+            w.close()
             #w.set_position(Pos(x,0))
 #        print sv.width
+    #alias logpane 
+                
+    
+    alias logpane            
+    LogPane: logpane:
+        pass
+    
     ToolBar:
-        Action:
-            text="do stuff"
-            triggered::
-                for w in sv.windows:
-                    w.show()
+        dock_area="top"
+        Conditional:
+            condition = sv.chief is not None
+                
+            Action:
+                text="Log"
+                triggered::
+                    logpane.show()
+                tool_tip = "Show log"
+            Action:
+                text="Save"
+            #    triggered::
+            #        savepane.show()
+                tool_tip = "Show save pane"
+            Action:
+                text = "PlotPane"
+             #   triggered:: plotpane.show() #print dir(bossarea) #show_plot(bossarea, boss.plot) #show_pane(dyn_pages, 'Plot')
+             #   tool_tip = "Show plot controls"
+    Conditional:
+        condition = sv.chief is not None
+        ToolBar:
+            dock_area="left"
+    
+            Action:
+                text = "Plot"
+            #    triggered::
+            #         tagent=[b for b in boss.agents if b.name=="EBL_Item_test"][0]
+            #         tagent.plot(tagent)
+                        #print bossarea.dock_items()[0].name
+                        #show_plot(boss.plot.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=boss.plot)
+                tool_tip = "Show plot"
+        
+            Action:
+                separator=True
+            Action:
+                separator=True
+        
+            Action: run:
+                text = "Run"
+                triggered :: boss.run()
+            Action:
+                separator=True
+            Action:
+                separator=True
+
+            Action:
+                text="Agents:"
+                triggered::
+                    all_showing=sv.all_showing
+                    for w in sv.a_wins:
+                        print w.name
+                        if all_showing:
+                            w.hide()
+                        else:
+                            w.show()
+                            w.send_to_front()
+                tool_tip = "Show/hide all agents"
+            Action:
+                separator=True
+            Looper: loopy:
+                iterable << sv.a_wins
+                Action:
+                    text = loop_item.name
+                    tool_tip = "Show/hide agent: {0}".format(loop_item.name)
+                    triggered:: 
+                        if loop_item.visible:
+                            loop_item.hide()
+                        else:
+                            loop_item.show()
+    ToolBar: 
+        dock_area="right"                       
+        Conditional:
+            condition = sv.chief is not None
+            Action:
+                separator=True
+            Action:
+                separator=True              
+            Action:
+                text="Plots"
+                triggered::
+                    all_showing=sv.all_showing
+                    for w in sv.a_wins:
+                        print w.name
+                        if all_showing:
+                            w.hide()
+                        else:
+                            w.show()
+                            w.send_to_front()
+                tool_tip = "Show/hide all agents"
+            Action:
+                separator=True
+                    
+            Looper: #loopy:
+                iterable << sv.chief.plots #a_wins
+                Action:
+                    text = loop_item
+                    tool_tip = "Show/hide plot: {0}".format(loop_item)
+                    #triggered:: 
+                    #    if loop_item.visible:
+                    #        loop_item.hide()
+                    #    else:
+                    #        loop_item.show()
+                        
