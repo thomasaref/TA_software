@@ -5,9 +5,8 @@ Created on Thu Mar  5 20:46:23 2015
 @author: thomasaref
 """
 
-def dxfstart():  
+def dxfstart(tlist=[]):  
     """starts dxf file"""
-    tlist=[]
     tlist.append('0\r\n')
     tlist.append('SECTION\r\n')
     tlist.append('2\r\n')
@@ -40,16 +39,19 @@ def dxfstart():
     tlist.append('1000.0\r\n')
     tlist.append('0\r\n')
     tlist.append('ENDSEC\r\n')
+    return tlist
+    
 
+    
+def start_entities(tlist=[]):
     tlist.append('0\r\n')  #starts entities section
     tlist.append('SECTION\r\n')
     tlist.append('2\r\n')
     tlist.append('ENTITIES\r\n')
     return tlist
     
-def dxfend():  
+def dxfend(tlist=[]):  
     """ends dxf file"""
-    tlist=[]
     tlist.append('0\r\n')
     tlist.append('ENDSEC\r\n')
     tlist.append('0\r\n')
@@ -82,7 +84,31 @@ def save_dxf(file_path, data, write_mode="w"):
     dxfstr=''.join(dlist)
     with open(file_path, write_mode) as g:
         g.write(dxfstr)    
-    
+
+class AC_List(object):
+    tlist=[]
+    def append(self, value):
+        self.tlist.append(value)
+
+    def ac(self, num_start, ac_command, num_end=None):
+        self.tlist.append("{0}\r\n".format(num_start))
+        self.tlist.append("{0}\r\n".format(ac_command))
+        if num_end is not None:
+            self.tlist.append("{0}\r\n".format(num_end))
+            
+def insert_block(acl=AC_List()):
+    acl.ac(0, 'INSERT',)
+    acl.ac(5, "F8B0")  #330  #1F
+    acl.ac(100, "AcDbEntity")  #Subclass marker
+    acl.ac(8, 'Photomarks')
+    acl.ac(100, "AcDcBlockReference") #Subclass marker
+    acl.ac(2, 'PL cross') #Block name
+    acl.ac(10, -7500.0) #x    
+    acl.ac(20, 4000.0)  #y  
+    acl.ac(30, 0.0)     #z
+    #acl.ac(50, 0.0)     #rotation
+        
+#    
 #def dlist2dxf(self):
 #    """writes dlist to dxf file"""
 #    if '.dxf' in self.filer.main_file:
@@ -104,7 +130,193 @@ def save_dxf(file_path, data, write_mode="w"):
 #        """reads text file and places in filestr. mostly for debugging"""
 #        with open(self.fullfilein, 'r') as f:
 #            self.filestr = f.read()
-            
+
+class testverts(object):
+    unit_factor=1.0
+    verts=[]
+    
+    def sP(self, verts, inlist=None):
+        if inlist is None:
+            inlist=[]
+        inlist.append(self._gen_sP(verts)) #tuple([(v[0]/self.unit_factor, v[1]/self.unit_factor) for v in verts])
+        return inlist
+
+    def _gen_sP(self, verts):
+        return tuple([(v[0]/self.unit_factor, v[1]/self.unit_factor) for v in verts])
+
+    def _gen_sR(self, xr, yr, wr, hr):
+        """creates rectangle EBLpolygon with (x,y) coordinates=(xr,yr), width=wr, height=hr"""
+        return self._gen_sP(verts=[(xr,yr), (xr+wr,yr), (xr+wr, yr+hr), (xr, yr+hr)])
+        
+def start_blocks(acl=AC_List()):
+    acl.ac(0, "SECTION")
+    acl.ac(2, "TABLES")
+    acl.ac(0, "TABLE")
+    acl.ac(2, "LAYER")
+    #acl.ac(0, LAYER)
+    acl.ac(100, "AcDbSymbolTableRecord")
+    acl.ac(100, "AcDbLayerTableRecord")
+    acl.ac(2, "Photomarks") #layer name
+    acl.ac(70, 0) #flags
+    acl.ac(62, 1) #color number, if negative, layer is off
+    acl.ac(6, "Continuous") #linetype name
+
+#370
+#    -3
+#390
+#F
+#1001
+#AcAecLayerStandard
+#1000
+
+#1000
+    acl.ac(0, "ENDTAB")
+
+    acl.ac(0, "TABLE")
+    acl.ac(2, "BLOCK_RECORD")
+    
+    acl.ac(0, "BLOCK_RECORD")
+    acl.ac(100, "AcDbSymbolTableRecord")
+    acl.ac(100, "AcDbBlockTableRecord")
+    acl.ac(2, "PL cross")
+    acl.ac(0, "ENDTAB")
+    
+    acl.ac(0, "ENDSEC")
+    
+    acl.ac(0, "SECTION")
+    acl.ac(2, "BLOCKS")
+    #acl.ac(0, "BLOCK")
+    #acl.ac(5, 20) #330 #1F
+    #acl.ac(100, "AcDbEntity")
+    #acl.ac(8, 0)
+    #acl.ac(100, "AcDbBlockBegin")
+    #acl.ac(2, "*Model_Space")
+    #acl.ac(70, 0)
+    #acl.ac(10, 0.0)
+# 20
+#0.0
+# 30
+#0.0
+#  3
+#*Model_Space
+#  1
+#
+#  0
+#ENDBLK
+#  5
+#21
+#330
+#1F
+#100
+#AcDbEntity
+#  8
+#0
+#100
+#AcDbBlockEnd
+#
+    acl.ac(0, "BLOCK")
+    acl.ac(5, "F8B0")
+    #330
+    #F85E
+    acl.ac(100, "AcDbEntity")
+    acl.ac(8, 0) #layer name
+    acl.ac(100, "AcDbBlockBegin")
+    acl.ac(2, "PL cross")  #black name"
+    acl.ac(70, 0) #block type flags
+    acl.ac(10, 0.0) #x
+    acl.ac(20, 0.0) #y
+    acl.ac(30, 0.0) #z
+    acl.ac(3, "PL cross") #block name again
+    acl.ac(1, "") #xref name (present only if block is an xref)
+#
+    tp=testverts()
+
+    verts=tp.sP([(0.0, 0.0), (1.0,1.0), (0.0,1.0)])
+
+    mlist=[poly2dxf(p, 0, 0) for p in verts]
+    acl.tlist.extend([item for sublist in mlist for item in sublist])
+
+#    tp=testverts()
+#    p=[]
+#    p.extend(tp.sP([(0, 0), (1,0), (0,1)]))
+#    acl.ac(0, "LWPOLYLINE") ##regular polygon
+###    acl.ac(5, "F860")
+#    acl.ac(8, 0) #layer \r\n{0}\r\n'.format(layer), #add to layer
+#    #acl.ac(62, 0) #\r\n{0}\r\n'.format(color),
+#    acl.ac(90, "{0}".format(len(p))) #number of vertices=4
+#    acl.ac(70, 1) #is closed
+#    for v in p:
+#        acl.tlist.append('10\r\n{0}\r\n20\r\n{1}\r\n'.format(v[0],v[1])) #vertex coordinate X and Y
+
+#330
+#F85E
+#100
+#AcDbEntity
+#  8
+#0
+#100
+#AcDbPolyline
+# 90
+#        5
+# 70
+#     1
+# 43
+#0.0
+    acl.ac(0, "ENDBLK")
+#  5
+#F864
+#330
+#F85E
+    acl.ac(100, "AcDbEntity")
+    acl.ac(8, 0)
+    acl.ac(100, "AcDbBlockEnd")
+    acl.ac(0, "ENDSEC")
+    return acl
+
+def testblock():
+    tlist=dxfstart()
+    tacl=start_blocks()
+    tlist.extend(tacl.tlist)    
+    tlist=start_entities(tlist)
+    tp=testverts()
+
+    verts=tp.sP([(0.0, 0.0), (0.5,0.0), (0.0,1.0)])
+
+    mlist=[poly2dxf(p, 0, "al") for p in verts]
+    tlist.extend([item for sublist in mlist for item in sublist])
+    
+    #cacl=AC_List()
+    #cacl.ac(0, "LWPOLYLINE") ##regular polygon
+##    acl.ac(5, "F860")
+    #cacl.ac(8, 0) #layer \r\n{0}\r\n'.format(layer), #add to layer
+    #acl.ac(62, 0) #\r\n{0}\r\n'.format(color),
+    #cacl.ac(90, "{0}".format(len(p))) #number of vertices=4
+    #cacl.ac(70, 1) #is closed
+    #for v in p:
+    #    cacl.tlist.append('10\r\n{0}\r\n20\r\n{1}\r\n'.format(v[0],v[1])) #vertex coordinate X and Y
+
+    bacl=AC_List()
+    bacl.ac(0, 'INSERT',)
+    bacl.ac(5, "F8B0")  #330  #1F
+    bacl.ac(100, "AcDbEntity")  #Subclass marker
+    bacl.ac(8, 0)
+    bacl.ac(100, "AcDcBlockReference") #Subclass marker
+    bacl.ac(2, 'PL cross') #Block name
+    bacl.ac(10, 0.0) #x    
+    bacl.ac(20, 0.0)  #y  
+    bacl.ac(30, 0.0)     #z
+    #b#acl.ac(50, 0.0)     #rotation
+    tlist.extend(bacl.tlist)
+    tlist=dxfend(tlist)
+
+    for i,t in enumerate(tlist):
+        print 2*i, t, 2*i
+    dxfstr=''.join(tlist)
+    with open("/Users/thomasaref/Documents/TA_software/dxfblocktest.dxf", "w") as g:
+        g.write(dxfstr) 
+if __name__=="__main__":
+    testblock()
+      
 def readdxf(self, layername='Al'):
     """reads dxf file in and places polygons in polylist"""
     if '.dxf' in self.filein:

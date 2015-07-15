@@ -50,6 +50,55 @@ def maxy(verts):
         return 1.0
     return max([max([v[1] for v in p]) for p in verts])
 
+def D(self, xr, yr, wr, lw, theta=0):
+    """draws a horizontal diamond"""
+    self.extend(self.sD(xr, yr, wr, lw, theta))
+        
+def sD(self, xr, yr, wr, lw, theta=0, vs=None):
+    if vs is None:
+        vs=[]
+    vs.extend(offset(rotate([self.sP([(0, 0), (lw/2.0, lw/2), (wr-lw/2.0, lw/2.0),
+                 (wr, yr), (wr-lw/2.0, lw/2.0), (lw/2.0, lw/2)])], theta), xr, yr))
+    return vs
+    
+def M(self, xr, yr, wr, hr, vs):
+    return sD(self, xr, yr, wr, hr, 0, vs)
+    
+def T(self, xr, yr, wr, hr, vs):
+    return sD(self, xr, yr+wr, wr, hr, 0, vs)
+
+def B(self, xr, yr, wr, hr, vs):
+    return sD(self, xr, yr, wr, hr, 0, vs)
+
+def TL(self, xr, yr, wr, hr, vs):
+    return sD(self, xr-wr/2.0, yr+wr, wr, hr, 90, vs)
+        
+def TR(self, xr, yr, wr, hr, vs):
+    return sD(self, xr+wr/2.0, yr+wr, wr, hr, 90, vs)
+
+def BR(self, xr, yr, wr, hr, vs):
+    return sD(self, xr+wr/2.0, yr-wr, wr, hr, 90, vs)
+
+def BL(self, xr, yr, wr, hr, vs):
+    return sD(self, xr-wr/2.0, yr+wr, wr, hr, 90, vs)
+
+digit_dict={    "0":[T, TL, BL, B, BR, TR],
+                "1":[TR, BR],
+                "2":[T, TR, M, BL, B],
+                "3":[T, TR, M, BR, B],
+                "4":[TL, TR, M, BR],
+                "5":[T, TL, M, BR, B],
+                "6":[T, TL, M, BR, B, BL],
+                "7":[T, TR, TL],
+                "8":[T, TL, TR, M, BL, BR, B], 
+                "9":[T, TL, TR, M, BR, B],
+                "A":[T, TL, TR, M, BL, BR],
+                "B":[T, TL, TR, M, BL, BR, B],
+                "C":[T, TL, BL, B],
+                "D":[T, TL, BL, B, BR, TR]}
+
+#digit_dict.update(dict(zip([str(key) for key in digit_dict.keys()], digit_dict.values())))
+
 class EBL_Polygons(Atom):
     color=Enum("green", "blue", "red", "purple", "brown", "black").tag(desc="color or datatype of item, could be used for dosing possibly")
     layer=Enum("Al", "Al_35nA", "Au").tag(desc='layer of item')
@@ -197,6 +246,32 @@ class EBL_Polygons(Atom):
 
     def clear_verts(self):
         self.verts=[((0,0),)]
+    
+
+
+    def sDig(self, dig_key, xr, yr, wr, hr):
+        vs=None
+        for func in digit_dict[str(dig_key)]:
+            vs=func(self, xr, yr, wr, hr, vs)
+        return vs
+
+    def Cross(self, xr, yr, wr, lw):
+        self.extend(self.sCross(xr, yr, wr, lw))
+
+    def sCross(self, xr, yr, wr, lw, vs=None):
+        return self.sP([(xr-wr/2.0, yr-lw/2.0),
+                        (xr-wr/2.0, yr+lw/2.0),
+                        (xr-lw/2.0, yr+lw/2.0),
+                        (xr-lw/2.0, yr+wr/2.0),
+                        (xr+lw/2.0, yr+wr/2.0),
+                        (xr+lw/2.0, yr+lw/2.0),
+                        (xr+wr/2.0, yr+lw/2.0),
+                        (xr+wr/2.0, yr-lw/2.0),
+                        (xr+lw/2.0, yr-lw/2.0),
+                        (xr+lw/2.0, yr-wr/2.0),
+                        (xr-lw/2.0, yr-wr/2.0),
+                        (xr-lw/2.0, yr-lw/2.0)], vs)
+                    
 
 if __name__=="__main__":
     a=EBL_Polygons(unit_factor=2.0)

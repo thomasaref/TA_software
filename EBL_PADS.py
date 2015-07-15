@@ -397,6 +397,11 @@ class EBL_PADS(EBL_Item):
         self.extend(self._s_markbox_BL)
         self.extend(horiz_refl(self._s_markbox_BL))
         self.extend(horizvert_refl(self._s_markbox_BL))
+        self.Cross(self.mb_x, self.mb_y, self.M1_size-50.0e-6, 20.0e-6)
+        self.Cross(self.mb_x, -self.mb_y, self.M1_size-50.0e-6, 20.0e-6)
+        self.Cross(-self.mb_x, self.mb_y, self.M1_size-50.0e-6, 20.0e-6)
+        self.Cross(-self.mb_x, -self.mb_y, self.M1_size-50.0e-6, 20.0e-6)
+        #self.extend(self.sDig(1, -self.mb_x, self.mb_y, self.lbl_height/2.0, 20.0e-6))
         #self.make_teststrip()
         #self.make_idt_conn()
         pass
