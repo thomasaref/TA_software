@@ -10,26 +10,29 @@ from enaml.layout.geometry import Pos, Rect, Size
 from enaml.core.api import Looper, Conditional
 from atom.api import List
 from enaml.core.declarative import d_
+from a_Backbone import get_attr
+
+screen_width=1920
+screen_height=1102
 
 enamldef aWindow(Window):
     destroy_on_close=False
-    always_on_top=True
+    #always_on_top=True
     
 enamldef Main(aWindow):
+    initial_size=(500,500)
     attr test
     Field:
         text:=test.a
+        
 from e_FundTemps import InstrHolder
 
 enamldef defaultView(aWindow):
     attr agent
-    PushButton:
-        text<<agent.a
-    aWindow:
-        InstrHolder:
-            instr:=agent
-#class chiefy(Atom):
-#    pass
+    initial_size=get_attr(agent, "initial_size", (-1,-1))
+    initial_position=get_attr(agent, "initial_position", (-1,-1))
+    InstrHolder:
+        instr:=agent
         
 class showWindow(MainWindow):
     a_wins=d_(List(default=[]))
@@ -42,7 +45,15 @@ class showWindow(MainWindow):
             if not w.visible:
                 all_showing=False
         return all_showing
-        
+
+enamldef LogWindow(aWindow):
+    initial_position=(0, screen_height-100)
+    initial_size=(screen_width, 100)
+    title="Log"
+    Container:
+        MultilineField: 
+            text := chief.log_str
+            
 enamldef LogPane(DockPane): lp:
     dock_area='bottom'
     title = "Log"
@@ -56,52 +67,43 @@ enamldef LogPane(DockPane): lp:
 enamldef showView(showWindow): sv:
 #    attr a_wins=[]
     attr chief
+    attr logw : LogWindow
     initial_position=(0,0)
-    initial_size=(500, 200)
-
+    #initial_size=(500, 200)
     #always_on_top=True
     activated ::
-        
-        print sv.windows
-        print sv.position()
-        print sv.size().width
-        sv.set_position(Pos(0,0))
-        print sv.position()
-        x=300# sv.size().width
-        sv.a_wins=sorted([w for w in sv.windows if w!=sv])        
-        x=0 #sv.a_wins[0].size().width
-        y=sv.size().height+sv.position().y+50      
-        for w in a_wins: #sorted(sv.windows):
-            w.set_position(Pos(x,y))
-            x+=w.size().width#+w.position().x
-            w.activate_window()
-            w.send_to_front()
+        sv.a_wins=[w for w in sv.windows if w!=sv]
         #sv.maximize()
+        #print sv.size()
+        #sv.restore()
     closed ::
-        for w in sv.a_wins:#windows:
+        for w in sv.a_wins:
             w.close()
-            #w.set_position(Pos(x,0))
-#        print sv.width
-    #alias logpane 
-                
-    
-    alias logpane            
-    LogPane: logpane:
-        pass
-    
-    ToolBar:
-        dock_area="top"
+    Container:            
         Conditional:
             condition = sv.chief is not None
-                
+            LogWindow: logw:
+                visible=True
+    #alias logpane            
+    #LogPane: logpane:
+    #    pass
+    
+    ToolBar:
+        dock_area="left"
+        Conditional:
+            condition = sv.chief is not None
             Action:
                 text="Log"
                 triggered::
-                    logpane.show()
-                tool_tip = "Show log"
+                    if logw.visible:
+                        logw.hide()
+                    else:
+                        logw.show()
+                tool_tip = "Show/hide log"
             Action:
                 text="Save"
-            #    triggered::
+                triggered::
+                    print sv.windows
             #        savepane.show()
                 tool_tip = "Show save pane"
             Action:
@@ -140,7 +142,7 @@ enamldef showView(showWindow): sv:
                 triggered::
                     all_showing=sv.all_showing
                     for w in sv.a_wins:
-                        print w.name
+                        #print w.name
                         if all_showing:
                             w.hide()
                         else:
@@ -160,7 +162,7 @@ enamldef showView(showWindow): sv:
                         else:
                             loop_item.show()
     ToolBar: 
-        dock_area="right"                       
+        dock_area="left"                       
         Conditional:
             condition = sv.chief is not None
             Action:

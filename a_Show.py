@@ -28,6 +28,10 @@ class Chief(Atom):
     name=Unicode()
     show_all=Bool(False)
     plots=List(default=["a", "b"])
+    log_str=Unicode("blarg")
+    
+    def _observe_log_str(self, change):
+        print change
 
 chief=Chief()
  
@@ -44,7 +48,7 @@ chief=Chief()
 def show(*agents):
     app = QtApplication()
     with imports():
-        from e_Show import defaultView, showView
+        from e_Show import defaultView, showView, LogWindow
     loc_chief=None
     for n, a in enumerate(agents):
         if hasattr(a, "view"):
@@ -65,9 +69,12 @@ def show(*agents):
     view=showView(title="ShowControl", name="show_control")#, chief=chief)
     if loc_chief is not None:
         view.chief=loc_chief
-    view.show()
-    app.start()
+        #view.logw=LogWindow()#log_str=chief.log_str)
+        #view.logw.show()
 
+    view.show()
+
+    app.start()
 if __name__=="__main__":
     from atom.api import Atom, Unicode
 
@@ -89,6 +96,9 @@ if __name__=="__main__":
     class test2(Atom):
         """example test class without view defined"""
         a=Unicode("bob")
+        @property
+        def initial_size(self):
+            return (300,300)
 
     a=test()
     #show(a)
