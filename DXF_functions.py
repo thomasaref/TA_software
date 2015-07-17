@@ -73,10 +73,10 @@ def poly2dxf(p, color, layer):
 #from numpy import flat    
 def EBL_Polygons2dxf(verts, color, layer):
     dlist=dxfstart()
+    dlist=start_entities(dlist)
     mlist=[poly2dxf(p, color, layer) for p in verts]
     dlist.extend([item for sublist in mlist for item in sublist])
-
-    dlist.extend(dxfend())
+    dlist=dxfend(dlist)
     return dlist
 
 def save_dxf(file_path, data, write_mode="w"):

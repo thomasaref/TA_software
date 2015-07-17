@@ -56,13 +56,13 @@ class EBL_IDT(EBL_Item, IDT):
         name_sug+=dict(basic="", stepped="stp")[self.idt_type]
         name_sug+=self.qdt_type
         name_sug+=dict(single="s", double="d")[self.ft]
-        name_sug+="{0}ef{1}w{2}wb{3}".format(self.idt.Np, self.idt.ef, int(self.idt.a*1e9), int(self.idt.wbox))
+        name_sug+="{0}ef{1}a{2}b{3}".format(self.Np, self.ef, int(self.a*1e9), int(self.wbox))
         self.name_sug=name_sug
         shot_mod=""
         shot_mod+=dict(basic="", stepped="T")[self.idt_type]
         shot_mod+=dict(IDT="I", QDT="Q")[self.qdt_type]
         shot_mod+=dict(single="S", double="D")[self.ft]
-        shot_mod+="{0}{1}{2}".format(self.idt.Np, self.idt.ef, int(self.idt.a*1e9))
+        shot_mod+="{0}{1}{2}".format(self.Np, self.ef, int(self.a*1e9))
         self.shot_mod_table=shot_mod
                 
     
@@ -127,8 +127,8 @@ class EBL_IDT(EBL_Item, IDT):
             self._fingrect(self.mult*n*(self.a+self.g), self.o/2.0, self.a, self.W+self.o, self.m)
             self._fingrect(self.mult*(n-1)*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, -self.m)
             if n in [-1,0] and self.qdt_type=="QDT":
-                self._fingrect(self.mult*n*(self.a+self.g), self.o/2.0-self.W/2.0-(self.o+self.trconnect_y+self.trconnect_w)/2.0, self.a, -(self.o+self.trconnect_y+self.trconnect_w))
-                self._fingrect(self.mult*n*(self.a+self.g), -self.W/2.0-self.o/2.0-self.trc_hbox+self.trconnect_y/2.0, self.a, self.trconnect_y)
+                self._fingrect(self.mult*n*(self.a+self.g), -self.W/2.0-(self.o+self.trconnect_y+self.trconnect_w)/2.0, self.a, -(self.o+self.trconnect_y+self.trconnect_w))
+                self._fingrect(self.mult*n*(self.a+self.g), -self.W/2.0-self.o-self.trc_hbox+self.trconnect_y/2.0, self.a, self.trconnect_y)
         self._fingrect(self.mult*self.Np*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, -self.m)
 
     def _IDTextrafingers(self):
@@ -143,11 +143,11 @@ class EBL_IDT(EBL_Item, IDT):
             wr=self.mult*2*self.Np*(self.a+self.g) +self.mult*self.a+self.mult*2*self.ef*(self.a+self.g)+(self.mult-1)*self.g
         else:
             wr=self.wbox
-        self.C(self.xo, self.o/2.0+self.W/2.0+self.hbox/2.0, wr, self.hbox)
+        self.C(self.xo, self.o+self.W/2.0+self.hbox/2.0, wr, self.hbox)
         if self.qdt_type=="QDT":
-            self.R(-self.trc_wbox/2.0, -self.o/2.0-self.W/2.0-self.trc_hbox-self.trconnect_w, self.trc_wbox, self.trconnect_w)
+            self.R(-self.trc_wbox/2.0, -self.o-self.W/2.0-self.trc_hbox-self.trconnect_w, self.trc_wbox, self.trconnect_w)
         else:
-            self.C(0, -self.o/2.0-self.W/2.0-self.hbox/2.0, wr, self.hbox)
+            self.C(0, -self.o-self.W/2.0-self.hbox/2.0, wr, self.hbox)
 
     def _qubitgnd(self):
         """writes qubit gate"""
@@ -165,8 +165,8 @@ class EBL_IDT(EBL_Item, IDT):
 
     def _squid_touch(self):
         """writes squid connections"""
-        self.R(-self.trconnect_x/2.0, -self.o/2.0-self.W/2.0-self.trconnect_y-self.trconnect_w, self.trconnect_x, -self.trconnect_w)
-        self.R(-self.trconnect_x/2.0, -self.o/2.0-self.W/2.0-self.trc_hbox+self.trconnect_y, self.trconnect_x, self.trconnect_w)
+        self.R(-self.trconnect_x/2.0, -self.o-self.W/2.0-self.trconnect_y-self.trconnect_w, self.trconnect_x, -self.trconnect_w)
+        self.R(-self.trconnect_x/2.0, -self.o-self.W/2.0-self.trc_hbox+self.trconnect_y, self.trconnect_x, self.trconnect_w)
 
     def _left_transmon_connect(self):
         """write left part of transmon connect"""
@@ -176,9 +176,9 @@ class EBL_IDT(EBL_Item, IDT):
         else:
             wr=-(self.mult*self.ef*(self.a+self.g)+self.mult*self.Np*(self.a+self.g)-self.g)
             xr=-self.mult*self.a/2.0-self.g-(self.mult-1)*self.g/2.0
-        self.R(xr, -self.o/2.0-self.W/2.0, wr, -self.trconnect_w)
-        self.R(xr, -self.o/2.0-self.W/2.0, -(self.trc_wbox/2.0-self.a/2.0-self.g), -self.trconnect_w)
-        self.R(-self.trc_wbox/2.0, -self.o/2.0-self.W/2.0, -self.trconnect_w, -self.trc_hbox-self.trconnect_w)
+        self.R(xr, -self.o-self.W/2.0, wr, -self.trconnect_w)
+        self.R(xr, -self.o-self.W/2.0, -(self.trc_wbox/2.0-self.a/2.0-self.g), -self.trconnect_w)
+        self.R(-self.trc_wbox/2.0, -self.o-self.W/2.0, -self.trconnect_w, -self.trc_hbox-self.trconnect_w)
 
     def _right_transmon_connect(self):
         """write right part of transmon connect"""
@@ -188,9 +188,9 @@ class EBL_IDT(EBL_Item, IDT):
         else:
             wr=self.mult*self.ef*(self.a+self.g)+self.mult*self.Np*(self.a+self.g)-self.g
             xr=self.mult*self.a/2.0+self.g+(self.mult-1)*self.g/2.0
-        self.R(xr, -self.o/2.0-self.W/2.0, wr, -self.trconnect_w)
-        self.R(xr, -self.o/2.0-self.W/2.0, self.trc_wbox/2.0-self.a/2.0-self.g, -self.trconnect_w)
-        self.R(self.trc_wbox/2.0, -self.o/2.0-self.W/2.0, self.trconnect_w, -self.trc_hbox-self.trconnect_w)
+        self.R(xr, -self.o-self.W/2.0, wr, -self.trconnect_w)
+        self.R(xr, -self.o-self.W/2.0, self.trc_wbox/2.0-self.a/2.0-self.g, -self.trconnect_w)
+        self.R(self.trc_wbox/2.0, -self.o-self.W/2.0, self.trconnect_w, -self.trc_hbox-self.trconnect_w)
 
     def _add_qubit_idt_teeth(self):
         idt_numteeth=int(self.trconnect_x/(2*self.idt_tooth))
