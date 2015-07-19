@@ -48,11 +48,11 @@ chief=Chief()
 def show(*agents):
     app = QtApplication()
     with imports():
-        from e_Show import defaultView, showView, LogWindow
+        from e_Show import defaultView, showView, basicView#, LogWindow
     loc_chief=None
     for n, a in enumerate(agents):
-        if hasattr(a, "view"):
-            view=a.view
+        if hasattr(a, "view_window"):
+            view=a.view_window
         else:
             view=defaultView(agent=a)
         if hasattr(a, "name"):
@@ -66,9 +66,13 @@ def show(*agents):
         if loc_chief is not None:
             if not chief.show_all and n!=0:
                 view.visible=False
-    view=showView(title="ShowControl", name="show_control")#, chief=chief)
-    if loc_chief is not None:
-        view.chief=loc_chief
+    if loc_chief is None:
+        view=basicView(title="Show Control", name="show_control")
+    else:
+        if hasattr(loc_chief, "view_window"):
+            view=loc_chief.view_window
+        else:
+            view=showView(title="ShowControl", name="show_control", chief=chief)
         #view.logw=LogWindow()#log_str=chief.log_str)
         #view.logw.show()
 
@@ -89,22 +93,28 @@ if __name__=="__main__":
             
         @property
         def view(self):
+            return "field"
+            
+        @property
+        def view_window(self):
             with imports():
-                from e_Show import Main
+                from e_UserTemps import Main
             return Main(test=self)
 
     class test2(Atom):
         """example test class without view defined"""
         a=Unicode("bob")
+        b=Typed(test, ())
         @property
         def initial_size(self):
             return (300,300)
+            
 
     a=test()
     #show(a)
     b=test2()
     c=test2()
-    show(a,b, c)
+    show(a, b, c)
 
 
 #

@@ -191,8 +191,6 @@ if __name__=="__main__":
 
     a=Save_HDF5(buffer_save=True)
     print a.log_name
-    from LOG_functions import make_log_file
-    #make_log_file(a.log_name+".log")
     log_info("prowdy")
     a.full_save()
     a.data_save(2, name="a")

@@ -405,9 +405,10 @@ class EBL_PADS(EBL_Item):
         self.Dig("B", -self.mb_x, self.mb_y+self.M1_size/2+self.lbl_height/2, self.lbl_height/2-100e-6, 20e-6)
         self.Dig("8", -self.mb_x+200e-6, self.mb_y+self.M1_size/2+self.lbl_height/2, self.lbl_height/2-100e-6, 20e-6)
         #self.extend(
-        a=EBL_test_pads(name="_BL_testpad", x_ref=-self.testx, y_ref=self.testy)#)
-        print a.x_ref
-        self.extend(a)
+        self.Poly(EBL_test_pads(name="_BL_testpad", x_ref=-self.testx, y_ref=self.testy))
+        self.Poly(EBL_test_pads(name="_BR_testpad", x_ref=self.testx, y_ref=self.testy))
+        self.Poly(EBL_test_pads(name="_TR_testpad", x_ref=self.testx, y_ref=-self.testy))
+
         #self.extend(self.sDig(1, -self.mb_x, self.mb_y, self.lbl_height/2.0, 20.0e-6))
         #self.make_teststrip()
         #self.make_idt_conn()

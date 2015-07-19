@@ -19,11 +19,7 @@ enamldef aWindow(Window):
     destroy_on_close=False
     #always_on_top=True
     
-enamldef Main(aWindow):
-    initial_size=(500,500)
-    attr test
-    Field:
-        text:=test.a
+
         
 from e_FundTemps import InstrHolder
 
@@ -46,6 +42,14 @@ class showWindow(MainWindow):
                 all_showing=False
         return all_showing
 
+enamldef coreWindow(showWindow): sv:
+    initial_position=(0,0)
+    activated ::
+        sv.a_wins=[w for w in sv.windows if w!=sv]
+    closed ::
+        for w in sv.a_wins:
+            w.close()
+            
 enamldef LogWindow(aWindow):
     initial_position=(0, screen_height-100)
     initial_size=(screen_width, 100)
@@ -63,25 +67,47 @@ enamldef LogPane(DockPane): lp:
         Container:
             MultilineField: mlf:
                 text << chief.name #.display.log_str
-            
-enamldef showView(showWindow): sv:
-#    attr a_wins=[]
+
+enamldef AgentToolBar(ToolBar):
+    attr boss_window
+    ToolBar:
+        dock_area="left"
+        Action:
+            text="Agents:"
+            triggered::
+                all_showing=boss_window.all_showing
+                for w in boss_window.a_wins:
+                    if all_showing:
+                        w.hide()
+                    else:
+                        w.show()
+                        w.send_to_front()
+            tool_tip = "Show/hide all agents"
+        Action:
+            separator=True
+        Looper: loopy:
+            iterable << boss_window.a_wins
+            Action:
+                text = loop_item.name
+                tool_tip = "Show/hide agent: {0}".format(loop_item.name)
+                triggered:: 
+                    if loop_item.visible:
+                        loop_item.hide()
+                    else:
+                        loop_item.show()
+                
+enamldef basicView(coreWindow): sv:
+    Container:
+        pass
+    AgentToolBar:
+        dock_area="left"
+        boss_window:=sv
+                                    
+enamldef showView(coreWindow): sv:
     attr chief
-    attr logw : LogWindow
-    initial_position=(0,0)
-    #initial_size=(500, 200)
-    #always_on_top=True
-    activated ::
-        sv.a_wins=[w for w in sv.windows if w!=sv]
-        #sv.maximize()
-        #print sv.size()
-        #sv.restore()
-    closed ::
-        for w in sv.a_wins:
-            w.close()
     Container:            
         Conditional:
-            condition = sv.chief is not None
+            condition = sv.chief is not None and hasattr(sv.chief, "log_str")
             LogWindow: logw:
                 visible=True
     #alias logpane            
@@ -136,31 +162,8 @@ enamldef showView(showWindow): sv:
                 separator=True
             Action:
                 separator=True
-
-            Action:
-                text="Agents:"
-                triggered::
-                    all_showing=sv.all_showing
-                    for w in sv.a_wins:
-                        #print w.name
-                        if all_showing:
-                            w.hide()
-                        else:
-                            w.show()
-                            w.send_to_front()
-                tool_tip = "Show/hide all agents"
-            Action:
-                separator=True
-            Looper: loopy:
-                iterable << sv.a_wins
-                Action:
-                    text = loop_item.name
-                    tool_tip = "Show/hide agent: {0}".format(loop_item.name)
-                    triggered:: 
-                        if loop_item.visible:
-                            loop_item.hide()
-                        else:
-                            loop_item.show()
+    AgentToolBar:
+        pass
     ToolBar: 
         dock_area="left"                       
         Conditional:

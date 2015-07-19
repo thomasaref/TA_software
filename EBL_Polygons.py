@@ -4,7 +4,7 @@ Created on Thu Jun 25 09:52:31 2015
 
 @author: thomasaref
 """
-from atom.api import Atom, Enum, Float, List
+from atom.api import Atom, Enum, Float, List, Unicode
 from numpy import sin, cos, pi
 #from LOG_functions import log_debug
 
@@ -181,7 +181,33 @@ def sDig(dig_key, xr, yr, wr, hr, vs=None):
         vs=func(xr, yr, wr, hr, vs)
     return vs
 
+    
+def sPoly(obj, vs=None):
+    if vs is None:
+        vs=[]
+    obj.make_polylist()
+    if obj.orient=="BR":
+        obj.horizvert_refl()
+    elif obj.orient=="BL":
+        obj.vert_refl()
+    elif obj.orient=="TR":
+        obj.horiz_refl()
+    obj.rotate(obj.theta)
+    obj.offset(obj.x_ref, obj.y_ref)
+    vs.extend(obj.verts)
+    return vs
+
 #digit_dict.update(dict(zip([str(key) for key in digit_dict.keys()], digit_dict.values())))
+class Polygon_Chief(Atom):
+    save_file=Unicode()
+    name=Unicode()
+    plots=List(default=["a", "b"])
+    #log_str=Unicode("blarg")
+    
+    @property
+    def show_all(self):
+        return True
+pc=Polygon_Chief()
 
 class EBL_Polygons(Atom):
     color=Enum("green", "blue", "red", "purple", "brown", "black").tag(desc="color or datatype of item, could be used for dosing possibly")
@@ -194,34 +220,29 @@ class EBL_Polygons(Atom):
     theta=Float(0.0).tag(desc="angle to rotate in degrees")
     orient=Enum("TL", "TR", "BL", "BR")
 
+    #@property
+    #def chief(self):
+    #    return pc
+    
     @property
     def xmin(self):
-        if self.verts==[]:
-            self.pros(self)
         return minx(self.verts)
 
     @property
     def xmax(self):
-        if self.verts==[]:
-            self.pros(self)
         return maxx(self.verts)
 
     @property
     def ymin(self):
-        if self.verts==[]:
-            self.pros(self)
         return miny(self.verts)
 
     @property
     def ymax(self):
-        if self.verts==[]:
-            self.pros(self)
         return maxy(self.verts)
         
     def extend(self, vert_obj):
         """accepts either a list of vertices or an EBL_Polygons object and adds its vertices to self.verts"""
         if hasattr(vert_obj, "verts"):
-            print vert_obj.x_ref
             vert_obj.make_verts()
             self.verts.extend(vert_obj.verts)
         else:
@@ -231,21 +252,19 @@ class EBL_Polygons(Atom):
         pass
         #self.P([(0,0)])
     
-    def make_verts(self):
-        self.make_polylist()
-        if self.orient=="BR":
-            self.horizvert_refl()
-        elif self.orient=="BL":
-            self.vert_refl()
-        elif self.orient=="TR":
-            self.horiz_refl()
-        self.rotate(self.theta)
-        print self.x_ref, self.y_ref
-        self.offset(self.x_ref, self.y_ref)
-        for c in self.children:
-            c.make_verts()
+#    def make_verts(self):
+#        self.make_polylist()
+#        if self.orient=="BR":
+#            self.horizvert_refl()
+#        elif self.orient=="BL":
+#            self.vert_refl()
+#        elif self.orient=="TR":
+#            self.horiz_refl()
+#        self.rotate(self.theta)
+#        self.offset(self.x_ref, self.y_ref)
+#        for c in self.children:
+#            c.make_verts()
 
-#    def extend(self, verts):
 
 
 #    def pros(self, EP):
@@ -268,6 +287,9 @@ class EBL_Polygons(Atom):
         """adds a polygon to the polylist with vertices given as a list of tuples"""
         sP(verts, self.verts) #extend necesary
 
+    def Poly(self, obj):
+        sPoly(obj, self.verts)
+
     def R(self, xr, yr, wr, hr):
         """creates rectangle EBLpolygon with (x,y) coordinates=(xr,yr), width=wr, height=hr"""
         sR(xr, yr, wr, hr, self.verts)
@@ -289,7 +311,6 @@ class EBL_Polygons(Atom):
         sDig(dig_key, xr, yr, wr, hr, self.verts)
 
     def offset(self, x, y):
-        print x, y
         if x!=0.0 and y!=0.0:
             self.verts=offset(self.verts, x, y)
 
@@ -317,6 +338,8 @@ if __name__=="__main__":
     
     a.P([(0,0), (1.5,2), (2,2)])
     print a.verts
+    from a_Show import show
+    show(a)
 
 #    print a.sP([(0,0), (1,0), (0,1)])
 #    print a.sR(0,0,1,1)

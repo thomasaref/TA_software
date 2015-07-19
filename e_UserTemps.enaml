@@ -5,7 +5,7 @@ Created on Mon Jun 29 14:41:36 2015
 @author: thomasaref
 """
 
-from enaml.widgets.api import  Field, PushButton, MultilineField, VGroup, Window
+from enaml.widgets.api import  Field, PushButton, MultilineField, VGroup, Window, GroupBox
 from enaml.stdlib.fields import FloatField, IntField
 #from e_FundView import FundView
 #from Atom_Base import myobject
@@ -30,39 +30,54 @@ template UserInstrView(instr_view: "Polyer"):
     EBContWrap:
         polyer:= instr #getattr(vmodel, vname)
 
-template UserInstrView(instr_view: "Text_Editor"):
-    """ Displays a read file interface"""
-    Window: wi:
-        #visible=True #activated :: wi.show()
-        #destroy_on_close=False
-        #always_on_top=True
-        VGroup:
-                ReadWrap:
-                    filer:=instr.read_file
-                SaveWrap:
-                    filer:=instr.save_file
-                MultilineField:
-                    text:=instr.data
-
-enamldef TextEditorWindow(Window):
-    attr instr
-    #visible=True #activated :: wi.show()
-    destroy_on_close=False
-    #always_on_top=True
+enamldef TextEditorVGroup(VGroup):
+    """Text Editor container"""
     VGroup:
-            ReadWrap:
-                filer:=instr.read_file
+        ReadWrap:
+            filer:=instr.read_file
+        GroupBox:
             SaveWrap:
                 filer:=instr.save_file
-            MultilineField:
-                text:=instr.data
-                
+        MultilineField:
+            text:=instr.data
+
+template UserInstrView(instr_view: "Text_Editor"):
+    """ Displays a text editor in a agent"""
+    TextEditorVGroup:
+            pass
+    
+enamldef TextEditorWindow(Window):
+    """displays a text editor in a standalone window"""
+    attr instr
+    activated :: self.maximize()
+    destroy_on_close=False
+    TextEditorVGroup:
+        pass
+
+enamldef fieldcont(Field):
+    attr test
+    text := test.a
+    
+enamldef Main(Window):
+    initial_size=(500,500)
+    fieldcont:
+        pass #attr test
+    #Field:
+    #    text:=test.a
+
+template UserInstrView(instr_view : "field"):
+    fieldcont:
+        test:=instr            
 ############################################################  
 template UserInstrView(instr_view):
     """ This default specialization displays read-only text for the value."""
+    #instr_view:
+    #    visible=True
     Field:
         read_only = True
-        text << unicode((instr, vmodel, vname))
+    #cont(Main):
+    #    pass #visible=True
+    #    text << unicode((instr, vmodel, vname))
 
 
         

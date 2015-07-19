@@ -62,6 +62,8 @@ enamldef AutoInstrCont(aContainer):
                 tags = ("instrvalue",)                    
 
 enamldef TypedVar(Var):
+    #PushButton:
+    #    clicked :: vvalue.viewprop.show()
     InstrHolder:
         instr:=vvalue
 #    ScrollArea:    

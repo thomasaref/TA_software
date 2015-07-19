@@ -60,12 +60,12 @@ class EBL_Item(Agent, EBL_Polygons):
 #        self.make_polylist()
 #        for c in self.children:
 #            c.predraw()
-#            #self.extend(c.verts)
+##            #self.extend(c.verts)
 
     def set_data(self):
         self.boss.plot.set_data(self.name, self.verts, self.color)
-        for c in self.children:
-            c.set_data()
+        #for c in self.children:
+        #    c.set_data()
         
     @Callable
     def do_offset(self, x_ref=0, y_ref=0):
@@ -81,13 +81,13 @@ class EBL_Item(Agent, EBL_Polygons):
         if self.add_type=="overwrite":
             self.verts=[]
         if self.view_type=="angle":
-            self.make_verts()
+            self.make_polylist()
             self.offset(x=self.angle_x, y=self.angle_y)
             tverts=self.verts[:]
-            self.make_verts()
+            self.make_polylist()
             self.extend(tverts)
         else:            
-            self.make_verts()
+            self.make_polylist()
         self.set_data()
         self.make_name_sug()
         self.save_file.main_file=self.name_sug+".dxf"

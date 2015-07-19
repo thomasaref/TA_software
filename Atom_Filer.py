@@ -15,7 +15,6 @@ from atom.api import Atom, Unicode, Enum, observe
 from time import strftime, localtime
 #from LOG_functions import log_info, log_warning
 from enaml import imports
-from enaml.qt.qt_application import QtApplication
 
 class Filer(Atom):
     """A generic filing system where a primary directory path and file path are composed of a base directory,
@@ -77,16 +76,13 @@ class Filer(Atom):
     def _default_dir_path(self):
         return self.base_dir+self.divider+self.quality+self.divider+self.main_dir
 
-
-if __name__=="__main__":
-    def show_filer(f):
-        """stand alone for showing filer."""
+    @property
+    def view_window(self):
         with imports():
-            from enaml_Filer import FilerMain
-        app = QtApplication()
-        view = FilerMain(filer=f)
-        view.show()
-        app.start()
-
+            from e_Filer import FilerMain
+        return FilerMain(filer=self)
+        
+if __name__=="__main__":
+    from a_Show import show
     f=Filer(file_type="text")
-    show_filer(f)
+    show(f)
