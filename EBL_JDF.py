@@ -24,9 +24,9 @@ class JDF_Assign(Atom):
     pos_assign=List()# list of tuples of position.tag(inside_type=jdf_pos)#inside_labels=["x", "y"])
     shot_assign=Unicode() # shot mod table name ContainerList(default=[0])
     assign_comment=Unicode()  #comment to assign
-            
+
 class JDF_Array(Atom):
-    """describes a jdf array. defaults to an array centered at 0,0 with one item. 
+    """describes a jdf array. defaults to an array centered at 0,0 with one item.
     array_num=0 corresponds to the main array"""
     array_num=Coerced(int) #Int()
     x_start=Coerced(int) #Int()
@@ -36,7 +36,7 @@ class JDF_Array(Atom):
     y_num=Coerced(int) #Int(1)
     y_step=Coerced(int) #Int()
     assigns=ContainerList().tag(no_spacer=True)# inside_type=jdf_assign)
-    
+
     def add_assign(self, tempstr, comment):
         assign_type=tempstr.split("ASSIGN")[1].split("->")[0].strip().split("+")
         assign_type=[unicode(at) for at in assign_type]
@@ -70,9 +70,10 @@ def parse_comment(line):
     if line.startswith(";"):
         tempstr=""
     return tempstr, comment
-    
+
 class JDF_Top(Atom):
     text=Unicode()
+    output_jdf=Unicode()
     comments=List() #Unicode()
     Px=Coerced(int)
     Py=Coerced(int)
@@ -80,7 +81,7 @@ class JDF_Top(Atom):
     Qy=Coerced(int)
 
     mgn_name=Unicode()
-    wafer_diameter=Coerced(float)
+    wafer_diameter=Coerced(int)
     write_diameter=Coerced(float)
 
     stdcur=Coerced(int)
@@ -89,23 +90,38 @@ class JDF_Top(Atom):
     arrays=ContainerList()#.tag(width='max', inside_type=jdf_array)
     patterns=ContainerList()#.tag(width='max', inside_type=jdf_pattern)
     jdis=ContainerList()
-    
+
+    def do_plot(self, a=None):
+        if a==None:
+            a=self.arrays[0]
+        for s in a.assigns:
+            for p in s.assign_type:
+                #generate verts
+                if p[0]=="P":
+                    verts=[t.name for t in self.patterns if t.num==int(p[2])][0]
+                elif p[0]=="A":
+                    pass #do_plot array given by num
+            for o in s.pos_assign:
+                x_ref=a.x_start+(int(o[0])-1)*a.x_step
+                y_ref=a.y_start+(int(o[1])-1)*a.x_step
+                print x_ref, y_ref #offset vertices by x_ref, y_ref
+
     def _observe_text(self, change):
         self.jdf_parse(self.text)
-        print self.arrays[1].assigns[0].assign_type
-    
+        self.output_jdf=self.jdf_produce()
+
     @property
     def view_window(self):
         with imports():
             from e_Show import JDFView
         return JDFView(jdf=self)
-            
+
     def clear_JDF(self):
         self.comments=[]
         self.arrays=[]
         self.patterns=[]
         self.jdis=[]
-        
+
     def jdf_parse(self, jdf_data):
         jdf_list=jdf_data.split("\n")
         inside_path=False
@@ -165,15 +181,14 @@ class JDF_Top(Atom):
                 elif tempstr.startswith('@'):
                     jdi_str=tempstr.split("'")[1].split(".jdi")[0]
                     self.jdis.append(jdi_str)
-                
+
     def jdf_produce(self):
         jl=[] #jdf_data.split("\n")
         jl.append("JOB/W '{name}', {waf_diam}, {write_diam}\n".format(name=self.mgn_name,
                   waf_diam=self.wafer_diameter, write_diam=self.write_diameter))
-        jl.append(";{comment}\n".format(comment=self.comment))
+        jl.append(";{comment}\n".format(comment=self.comments[0]))
         jl.append("GLMPOS P=({Px}, {Py}), Q=({Qx},{Qx})".format(Px=self.Px, Py=self.Py, Qx=self.Qx, Qy=self.Qy))
         jl.append("PATH")
-
 
         for n, item in enumerate(self.arrays):
             if item.array_num==0:
@@ -189,7 +204,7 @@ class JDF_Top(Atom):
                 asgn_type="+".join(item.assign_type)
                 pos_asgn=""
                 for pos in item.pos_assign:
-                    pos_asgn+="({x},{y}),".format(x=pos.x, y=pos.y)
+                    pos_asgn+="({x},{y}),".format(x=pos[0], y=pos[1])
                 pos_asgn=pos_asgn[:-1]
                 if item.shot_assign=="":
                     shot_asgn=""
@@ -207,11 +222,11 @@ class JDF_Top(Atom):
 
         for n, item in enumerate(self.patterns):
             jl.append("P({pnum}) '{pname}.v30' ({px},{py})".format(
-                      pnum=item.pattern_num, pname=item.pattern_name, px=item.pattern_x, py=item.pattern_y))
+                      pnum=item.num, pname=item.name, px=item.x, py=item.y))
         jl.append("\nSTDCUR {0}".format(self.stdcur))
         jl.append("SHOT A,{0}".format(self.shot))
         jl.append("RESIST {}\n".format(self.resist))
-        
+
         for item in self.jdis:
             jl.append("@ '{jdi_name}.jdi'".format(jdi_name=item))
         jl.append("\nEND 1")
@@ -224,26 +239,11 @@ if __name__=="__main__":
     jdf_data="""JOB/W 'IDT',4,-4.2
 
 ; For exposure on YZ-cut LiNbO3, Cop+ZEP., q-wafer D
-
-;GLMPOS P=(-40000,4000),Q=(-4000,40000)   ;A wafer
-;GLMPOS P=(4000,40000),Q=(40000,4000)  ; B wafer
-;GLMPOS P=(-20000,-4000),Q=(-4000,-20000); C wafer
 GLMPOS P=(4000,-40000),Q=(40000,-4000)   ;D wafer
 PATH
-;ARRAY (-42500,8,5000)/(42500,8,5000)  ; A wafer
-;ARRAY (7500,8,5000)/(42500,8,5000)   ;B wafer
-;ARRAY (-42500,8,5000)/(-7500,8,5000) ;C wafer
 ARRAY (7500,8,5000)/(-7500,8,5000)  ; D wafer
         CHMPOS M1=(1500, 1500)
-	;ASSIGN A(1) -> ((1,1), (1,2), (1,3), (1,4), (1,5), (1,6), (1,7), (1,8))
-	;ASSIGN A(1) -> ((2,1), (2,2), (2,3), (2,4), (2,5), (2,6), (2,7), (2,8))
-	;ASSIGN A(1) -> ((3,1), (3,2), (3,3), (3,4), (3,5), (3,6), (3,7))
-	;ASSIGN A(1) -> ((4,1), (4,2), (4,3), (4,4), (4,5), (4,6), (4,7))
-	;ASSIGN A(1) -> ((5,1), (5,2), (5,3), (5,4), (5,5), (5,6))
-	;ASSIGN A(1) -> ((6,1), (6,2), (6,3), (6,4), (6,5))
-	;ASSIGN A(1) -> ((7,1), (7,2), (7,3), (7,4))
-	;ASSIGN A(1) -> ((8,1), (8,2))
-	
+
 	ASSIGN A(1)+A(2)+A(15)  ->  ((1,1), (7,2), (6,4)) ;D32080 with two IDTs and Squid connect
 	ASSIGN A(1)+A(3)+A(15)  ->  ((2,1), (8,2), (7,4)) ;S32080 with two IDTs and Squid connect
 	ASSIGN A(1)+A(4)+A(15)  ->  ((3,1), (1,3), (1,5), (2,7)) ;S32050 with two IDTs and Squid connect
@@ -259,94 +259,7 @@ ARRAY (7500,8,5000)/(-7500,8,5000)  ; D wafer
 	ASSIGN A(1)+A(15)        -> ((5,2), (4,4), (5,6))     ;Two IDTs alone with squid connect
 	ASSIGN A(12)+A(15)       -> ((6,2), (5,4), (1,7))          ;two FDTs alone with squid connect
 
-	;ASSIGN A(1) ->                                           ((7,1), (8,1)) 
-	;ASSIGN A(2) ->                             ((5,2), (6,2), (7,2), (8,2))
-	;ASSIGN A(3) ->                      ((4,3), (5,3), (6,3), (7,3), (8,3))
-	;ASSIGN A(4) ->               ((3,4), (4,4), (5,4), (6,4), (7,4), (8,4))
-	;ASSIGN A(5) ->        ((2,5), (3,5), (4,5), (5,5), (6,5), (7,5), (8,5))
-	;ASSIGN A(6) ->        ((2,6), (3,6), (4,6), (5,6), (6,6), (7,6), (8,6))
-	;ASSIGN A(7) -> ((1,7), (2,7), (3,7), (4,7), (5,7), (6,7), (7,7), (8,7))
-	;ASSIGN A(8) -> ((1,8), (2,8), (3,8), (4,8), (5,8), (6,8), (7,8), (8,8))
-	
-	;ASSIGN A(1)+A(2)+A(15)  ->  ((7,1), (6,2), (1,8)) ;D32080 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(3)+A(15)  ->  ((8,1), (7,2), (2,8)) ;S32080 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(4)+A(15)  ->  ((5,2), (5,3), (3,8), (3,7)) ;S32050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(5)+A(15)  ->  ((8,2), (6,3), (4,8), (4,7))  ;D32050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(6)+A(15)  ->  ((4,3), (7,3), (5,8), (5,7)) ;D9050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(7)+A(15)  ->  ((8,3), (4,4), (6,8), (6,7))  ;S9050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(8)+A(15)  ->  ((3,4), (5,4), (7,8))  ;S9080 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(9)+A(15)  ->  ((8,4), (6,4), (8,8), (7,7))  ;D9080 with two IDTs and Squid connect
-	;ASSIGN A(12)+A(10)+A(15) -> ((2,5),  (7,4), (3,6)) ;D5080 with two FDTs and Squid connect
-        ;ASSIGN A(12)+A(11)+A(15) ->  ((8,5), (3,5), (4,6))   ;D5096 with two FDTs and Squid connect
-        ;ASSIGN A(13)+A(15)       ->  ((2,6), (4,5), (5,6))   ;IDT by itself
-        ;ASSIGN A(14)+A(15)       ->  ((8,6), (5,5), (6,6))         ;FDT by itself
-	;ASSIGN A(1)+A(15)        -> ((1,7), (6,5), (7,6))     ;Two IDTs alone with squid connect
-	;ASSIGN A(12)+A(15)       -> ((8,7), (7,5), (2,7))          ;two FDTs alone with squid connect
 
-	;ASSIGN A(1)+A(2)+A(15)  ->  ((1,1), (2,7), (4,7)) ;D32080 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(3)+A(15)  ->  ((1,2), (2,8), (4,8)) ;S32080 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(4)+A(15)  ->  ((1,3), (3,2), (5,3), (7,7)) ;S32050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(5)+A(15)  ->  ((1,4), (3,3), (5,4), (7,8))  ;D32050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(6)+A(15)  ->  ((1,5), (3,4), (5,6), (8,7)) ;D9050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(7)+A(15)  ->  ((1,6), (3,5), (5,7), (5,5))  ;S9050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(8)+A(15)  ->  ((1,7), (3,6), (5,8))  ;S9080 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(9)+A(15)  ->  ((1,8), (3,7), (6,4))  ;D9080 with two IDTs and Squid connect
-	;ASSIGN A(12)+A(10)+A(15) -> ((2,1),  (3,8), (6,5), (8,8)) ;D5080 with two FDTs and Squid connect
-        ;ASSIGN A(12)+A(11)+A(15) ->  ((2,2), (4,2), (6,6))   ;D5096 with two FDTs and Squid connect
-        ;ASSIGN A(13)+A(15)       ->  ((2,3), (4,3), (6,7))   ;IDT by itself
-        ;ASSIGN A(14)+A(15)       ->  ((2,4), (4,4), (6,8))         ;FDT by itself
-	;ASSIGN A(1)+A(15)        -> ((2,5), (4,5), (7,5))     ;Two IDTs alone with squid connect
-	;ASSIGN A(12)+A(15)       -> ((2,6), (4,6), (7,6))          ;two FDTs alone with squid connect
-
-        ;ASSIGN A(1) ->  ((1, 1), (2, 1))
-        ;ASSIGN A(1) ->  ((1, 2), (2, 2), (3, 2), (4, 2))
-        ;ASSIGN A(1) ->  ((1, 3), (2, 3), (3, 3), (4, 3), (5, 3))
-        ;ASSIGN A(1) ->  ((1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4))
-        ;ASSIGN A(1) ->  ((1, 5), (2, 5), (3, 5), (4, 5), (5, 5), (6, 5), (7, 5))
-        ;ASSIGN A(1) ->  ((1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6))
-        ;ASSIGN A(1) ->  ((1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7), (8, 7))
-        ;ASSIGN A(1) ->  ((1, 8), (2, 8), (3, 8), (4, 8), (5, 8), (6, 8), (7, 8), (8, 8))
-
-	;ASSIGN A(1)+A(2)+A(15)  ->  ((1,1), (2,7), (4,7)) ;D32080 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(3)+A(15)  ->  ((1,2), (2,8), (4,8)) ;S32080 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(4)+A(15)  ->  ((1,3), (3,2), (5,3), (7,8)) ;S32050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(5)+A(15)  ->  ((1,4), (3,3), (5,4), (7,7))  ;D32050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(6)+A(15)  ->  ((1,5), (3,4), (5,5), (8,8)) ;D9050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(7)+A(15)  ->  ((1,6), (3,5), (5,6), (7,7))  ;S9050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(8)+A(15)  ->  ((1,7), (3,6), (5,7))  ;S9080 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(9)+A(15)  ->  ((1,8), (3,7), (5,8))  ;D9080 with two IDTs and Squid connect
-	;ASSIGN A(12)+A(10)+A(15) -> ((2,1),  (3,8), (6,4), (7,6)) ;D5080 with two FDTs and Squid connect
-        ;ASSIGN A(12)+A(11)+A(15) ->  ((2,2), (3,2), (6,5))   ;D5096 with two FDTs and Squid connect
-        ;ASSIGN A(13)+A(15)       ->  ((2,3), (4,3), (6,6))   ;IDT by itself
-        ;ASSIGN A(14)+A(15)       ->  ((2,4), (4,4), (6,7))         ;FDT by itself
-	;ASSIGN A(1)+A(15)-> ((2,5), (4,5), (6,8))     ;Two IDTs alone with squid connect
-	;ASSIGN A(12)+A(15) ->         ((2,6), (4,6), (7,5))          ;two FDTs alone with squid connect
-
-        ;C wafer
-	;ASSIGN P(1) ->  ((1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1), PADS)
-	;ASSIGN P(1) ->  ((1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2), PADS)
-	;ASSIGN P(1) ->          ((2, 3), (3, 3), (4, 3), (5, 3), (6, 3), (7, 3), (8, 3), PADS)
-	;ASSIGN P(1) ->          ((2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4), (8, 4), PADS)
-	;ASSIGN P(1) ->                  ((3, 5), (4, 5), (5, 5), (6, 5), (7, 5), (8, 5), PADS)
-	;ASSIGN P(1) ->                          ((4, 6), (5, 6), (6, 6), (7, 6), (8, 6), PADS)
-	;ASSIGN P(1) ->                                  ((5, 7), (6, 7), (7, 7), (8, 7), PADS)
-	;ASSIGN P(1) ->                                                  ((7, 8), (8, 8), PADS)
-
-	;ASSIGN A(1)+A(2)+A(15)  ->  ((1,1), (4,4), (6,5)) ;D32080 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(3)+A(15)  ->  ((1,2), (4,5), (6,6)) ;S32080 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(4)+A(15)  ->  ((2,1), (4,6), (6,7), (8,4)) ;S32050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(5)+A(15)  ->  ((2,2), (5,1), (7,1), (8,5))  ;D32050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(6)+A(15)  ->  ((2,3), (5,2), (7,2), (8,6)) ;D9050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(7)+A(15)  ->  ((2,4), (5,3), (7,3), (8,7))  ;S9050 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(8)+A(15)  ->  ((3,1), (5,4), (7,4))  ;S9080 with two IDTs and Squid connect
-	;ASSIGN A(1)+A(9)+A(15)  ->  ((3,2), (5,5), (7,5))  ;D9080 with two IDTs and Squid connect
-	;ASSIGN A(12)+A(10)+A(15) -> ((3,3),  (5,6), (7,6), (8,8)) ;D5080 with two FDTs and Squid connect
-        ;ASSIGN A(12)+A(11)+A(15) ->  ((3,4), (5,7), (7,7))   ;D5096 with two FDTs and Squid connect
-        ;ASSIGN A(13)+A(15)       ->  ((3,5), (6,1), (7,8))   ;IDT by itself
-        ;ASSIGN A(14)+A(15)       ->  ((4,1), (6,2), (8,1))         ;FDT by itself
-	;ASSIGN A(1)+A(15)        -> ((4,2), (6,3), (8,2))     ;Two IDTs alone with squid connect
-	;ASSIGN A(12)+A(15)       -> ((4,3), (6,4), (8,3))          ;two FDTs alone with squid connect
-        
 AEND
 
 1: ARRAY (-200, 2, 500)/(0, 1, 0)
@@ -409,7 +322,7 @@ AEND
 
 15: ARRAY (-500, 2, 1000)/(-1500, 1, 0)
 	ASSIGN P(13) -> ((1,1), QBRI)
-	ASSIGN P(14) -> ((2,1), QBR3)	
+	ASSIGN P(14) -> ((2,1), QBR3)
 AEND
 PEND
 
@@ -434,7 +347,7 @@ LAYER 1
    SHOT A,8
    RESIST 165 ; new dose from dose test TA020315A_dt with modified bias from TA060315B
 
-@ 'idt_s.jdi'   
+@ 'idt_s.jdi'
 @ 'cQDT9bd3ef20w80wb0.jdi'
 @ 'cQDT9bs3ef20w80wb0.jdi'
 @ 'cQDT9bs3ef20w50wb0.jdi'
@@ -452,11 +365,12 @@ LAYER 1
 END 1"""
     #a=Text_Editor(name="Text_Editor", dir_path="/Volumes/aref/jbx9300/job/TA150515B/IDTs", main_file="idt.jdf")
     b=JDF_Top(text=jdf_data)#_base()
+    b.do_plot()
     #b.jdf_parse(jdf_data)
-    print b.Px, b.Py, b.Qx, b.Qy
-    print b.arrays[0].assigns
-    print b.patterns[0].name
-    
+    #print b.Px, b.Py, b.Qx, b.Qy
+    #print b.arrays[0].assigns
+    #print b.patterns[0].name
+
     #b.arrays.extend((jdf_array(), jdf_array(x_start=5), jdf_array(x_start=5), jdf_array(x_start=5)))
     #a.read_file.read()
     #print a.data
