@@ -5,7 +5,7 @@ Created on Fri Dec 26 19:13:08 2014
 @author: thomasaref
 """
 from enaml.widgets.api import (
-        Container, Field, ObjectCombo, MainWindow, Form, Label, PushButton, DockPane, ToolBar, Action, MPLCanvas, DockArea, DockItem
+        Container, Field, ObjectCombo, Window, MainWindow, Form, Label, PushButton, DockPane, ToolBar, Action, MPLCanvas, DockArea, DockItem
         )
 from enaml.widgets.color_dialog import ColorDialog
 from enaml.stdlib.fields import FloatField
@@ -297,10 +297,18 @@ enamldef PlotFormatItem(DockItem):
     title = "Plot Format"
     PlotFormat:
         pass
+
+enamldef PlotWindow(Window):
+    attr plotr
+    title="Plot"
+    destroy_on_close=False
+    MatPlotContainer:
+        pass
     
 enamldef PlotMain(MainWindow): 
     attr plotr
-    initial_position=(0,0)
+
+    #initial_position=(0,0)
     Container: 
         alias plot_area
         DockArea: plot_area:

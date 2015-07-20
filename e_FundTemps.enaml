@@ -151,7 +151,9 @@ enamldef CallableVar(Var):
 
      
 class aListHGroup(aHGroup): 
-    vlist = d_(ContainerList(default=[0]))
+    vlist = d_(Coerced(list)) #ContainerList(default=[0]))
+
+
 
 enamldef ListSpinBox(aListHGroup):
     """displays list as a single cell with a spinbox controlling which value is being observed"""
@@ -201,9 +203,10 @@ enamldef ListVGVar(Var):
 
 template TypedView(AttrType):
     """default template for unknown type"""
-    Var:
-        Label:
-            text << unicode((vname, vvalue))
+    TypedView(Typed): pass
+    #Var:
+    #    Label:
+    #        text << unicode((vname, vvalue))
 
 template TypedView(AttrType : Int):
     """template for int types"""

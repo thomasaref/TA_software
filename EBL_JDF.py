@@ -5,11 +5,13 @@ Created on Mon Jun  1 10:46:56 2015
 @author: thomasaref
 """
 
-from a_Base import Base, NoShowBase
+#from a_Base import Base, NoShowBase
 from Atom_Text_Editor import Text_Editor
 from EBL_quarter_coords import distr_coords
-from atom.api import Unicode, ContainerList, Int, Float
+from atom.api import Unicode, ContainerList, Int, Float, Atom, List, Coerced
 #from LOG_functions import log_info, log_debug, make_log_file, log_warning
+from a_Show import show
+from enaml import imports
 
 def xy_string_split(tempstr):
     return tempstr.split("(")[1].split(")")[0].split(",")+tempstr.split("(")[2].split(")")[0].split(",")
@@ -17,132 +19,109 @@ def xy_string_split(tempstr):
 def tuple_split(tempstr):
     return tempstr.split("(")[1].split(")")[0].split(",")
 
-class jdf_pos(NoShowBase):
-    x=Int()
-    y=Int()
-
-class jdf_assign(NoShowBase):
-    assign_type=ContainerList().tag(inside_type=unicode)
-    pos_assign=ContainerList().tag(inside_type=jdf_pos)#inside_labels=["x", "y"])
-    shot_assign=Unicode() #ContainerList(default=[0])
-    assign_comment=Unicode()
-
-    def add_pos(self, pos_x, pos_y):
-        tempassign=jdf_pos(name="pos_assign{0}".format(len(self.pos_assign)), show_base=False)
-        tempassign.x=pos_x
-        tempassign.y=pos_y
-        self.pos_assign.append(tempassign)
-
-class jdf_array(NoShowBase):
-    """describes a jdf array. defaults to an array centered at 0,0 with one item. array_num=0 corresponds to the main array"""
-    array_num=Int()
-    x_start=Int()
-    x_num=Int(1)
-    x_step=Int()
-    y_start=Int()
-    y_num=Int(1)
-    y_step=Int()
-    M1x=Int()
-    M1y=Int()
-    assigns=ContainerList().tag(width='max', inside_type=jdf_assign)
+class JDF_Assign(Atom):
+    assign_type=List() #list of assigns #.tag(inside_type=unicode)
+    pos_assign=List()# list of tuples of position.tag(inside_type=jdf_pos)#inside_labels=["x", "y"])
+    shot_assign=Unicode() # shot mod table name ContainerList(default=[0])
+    assign_comment=Unicode()  #comment to assign
+            
+class JDF_Array(Atom):
+    """describes a jdf array. defaults to an array centered at 0,0 with one item. 
+    array_num=0 corresponds to the main array"""
+    array_num=Coerced(int) #Int()
+    x_start=Coerced(int) #Int()
+    x_num=Coerced(int) #Int(1)
+    x_step=Coerced(int) #Int()
+    y_start=Coerced(int) #Int()
+    y_num=Coerced(int) #Int(1)
+    y_step=Coerced(int) #Int()
+    assigns=ContainerList().tag(no_spacer=True)# inside_type=jdf_assign)
     
-    def change_pos(self, pos_assign):
-        for n, item in enumerate(self.assigns):
-            item.pos_assign=[]
-            
-            
-            
-        
+    def add_assign(self, tempstr, comment):
+        assign_type=tempstr.split("ASSIGN")[1].split("->")[0].strip().split("+")
+        assign_type=[unicode(at) for at in assign_type]
+        pos_assign=[]
+        shot_assign=""
+        for item in tempstr.split("->")[1].partition("(")[2].rpartition(")")[0].split(")"):
+            if "(" in item:
+                xcor, ycor=item.split("(")[1].split(",")
+                pos_assign.append((xcor,ycor))
+            elif "," in item:
+                shot_assign=unicode(item.split(",")[1].strip())
+        self.assigns.append(JDF_Assign(assign_type=assign_type, pos_assign=pos_assign,
+                        shot_assign=shot_assign, assign_comment=comment))
 
-    def add_assign(self, assign_type, pos_assign, shot_assign, assign_comment):
-        tempassign=jdf_assign(name="jdf_assign{0}".format(len(self.assigns)), show_base=False)
-        tempassign.assign_type=assign_type
-        for item in pos_assign:
-            tempassign.add_pos(item[0], item[1])
-        tempassign.shot_assign=shot_assign
-        tempassign.assign_comment=assign_comment
-        self.assigns.append(tempassign)
+class JDF_Main_Array(JDF_Array):
+    M1x=Coerced(int) #Int()
+    M1y=Coerced(int) #Int()
 
-    def _default_main_params(self):
-        return ['array_num', 'x_start', 'x_num', 'x_step', 'y_start', 'y_num', 'y_step', 'M1x', 'M1y']
+class JDF_Pattern(Atom):
+    num=Coerced(int) #Int(1)
+    x=Coerced(int) #Int()
+    y=Coerced(int) #Int()
+    name=Unicode()
 
-
-class jdf_pattern(NoShowBase):
-    pattern_num=Int(1)
-    pattern_x=Int()
-    pattern_y=Int()
-    pattern_name=Unicode()
-
-    def _default_main_params(self):
-        return ['pattern_num', 'pattern_name', 'pattern_x', 'pattern_y']
-
-class jdf_base(Base):
-    comment=Unicode()
-    Px=Int()
-    Py=Int()
-    Qx=Int()
-    Qy=Int()
-
-    GLMPOS_comment=Unicode()
+def parse_comment(line):
+    comment=""
+    templist=line.split(";")
+    tempstr=templist[0].strip() #remove comments
+    if ';' in line:
+        comment=templist[1].strip()
+    if line.startswith(";"):
+        tempstr=""
+    return tempstr, comment
+    
+class JDF_Top(Atom):
+    text=Unicode()
+    comments=List() #Unicode()
+    Px=Coerced(int)
+    Py=Coerced(int)
+    Qx=Coerced(int)
+    Qy=Coerced(int)
 
     mgn_name=Unicode()
-    wafer_diameter=Float()
-    write_diameter=Float()
+    wafer_diameter=Coerced(float)
+    write_diameter=Coerced(float)
 
-    stdcur=Int(2)
-    shot=Int(8)
-    resist=Int(165)
-    arrays=ContainerList().tag(width='max', inside_type=jdf_array)
-    patterns=ContainerList().tag(width='max', inside_type=jdf_pattern)
+    stdcur=Coerced(int)
+    shot=Coerced(int)
+    resist=Coerced(int) #Int(165)
+    arrays=ContainerList()#.tag(width='max', inside_type=jdf_array)
+    patterns=ContainerList()#.tag(width='max', inside_type=jdf_pattern)
     jdis=ContainerList()
-
-    def add_array(self, x_start, x_num, x_step, y_start, y_num, y_step, M1x=0, M1y=0, array_num=0):
-        temparray=jdf_array(name="jdf_array{0}".format(len(self.arrays)), show_base=False)
-        temparray.x_start=x_start
-        temparray.x_num=x_num
-        temparray.x_step=x_step
-        temparray.y_start=y_start
-        temparray.y_num=y_num
-        temparray.y_step=y_step
-        temparray.M1x=M1x
-        temparray.M1y=M1y
-        temparray.array_num=array_num
-        self.arrays.append(temparray)
-
-    def add_assign(self, arr_ind, assign_type, pos_assign, shot_assign, assign_comment):
-        self.arrays[arr_ind].add_assign(assign_type=assign_type, pos_assign=pos_assign, shot_assign=shot_assign, assign_comment=assign_comment)
-
-    def add_pattern(self, pattern_num, pattern_name, pattern_x, pattern_y):
-        temppattern=jdf_pattern(name="jdf_pattern{0}".format(len(self.patterns)), show_base=False)
-        temppattern.pattern_name=pattern_name
-        temppattern.pattern_x=pattern_x
-        temppattern.pattern_y=pattern_y
-        temppattern.pattern_num=pattern_num
-        self.patterns.append(temppattern)
-
+    
+    def _observe_text(self, change):
+        self.jdf_parse(self.text)
+        print self.arrays[1].assigns[0].assign_type
+    
+    @property
+    def view_window(self):
+        with imports():
+            from e_Show import JDFView
+        return JDFView(jdf=self)
+            
+    def clear_JDF(self):
+        self.comments=[]
+        self.arrays=[]
+        self.patterns=[]
+        self.jdis=[]
+        
     def jdf_parse(self, jdf_data):
         jdf_list=jdf_data.split("\n")
         inside_path=False
         inside_layer=False
-        patterns=[]
+        self.clear_JDF()
         array_num=0
-        com_cnt=0
         for n, line in enumerate(jdf_list):
-            comment=""
-            templist=line.split(";")
-            tempstr=templist[0].strip() #remove comments
-            if ';' in line:
-                comment=templist[1].strip()
-            if line.startswith(";"):
-                if com_cnt==0:
-                    self.comment=comment
-                com_cnt+=1
+            tempstr, comment=parse_comment(line)
+            if tempstr=="" and comment!="":
+                self.comments.append(comment)
             if tempstr.startswith('GLMPOS'):
                 self.Px, self.Py, self.Qx, self.Qy=xy_string_split(tempstr) #get P and Q mark positions
-            elif 'JOB' in tempstr:
+            elif tempstr.startswith('JOB'):
                 mgn_name, self.wafer_diameter, self.write_diameter=tempstr.split(",") #magazine name and wafer size
                 self.mgn_name=mgn_name.split("'")[1].strip()
-            elif 'PATH' in tempstr:
+            elif tempstr.startswith("PATH"):
                 inside_path=True
             elif "LAYER" in tempstr:
                 inside_layer=True
@@ -151,22 +130,14 @@ class jdf_base(Base):
                     if ":" in tempstr:
                         array_num=tempstr.split(":")[0] #for subarrays
                         x_start, x_num, x_step, y_start, y_num, y_step=xy_string_split(tempstr)
+                        self.arrays.append(JDF_Array(array_num=array_num, x_start=x_start, x_num=x_num, x_step=x_step,
+                                         y_start=y_start, y_num=y_num, y_step=y_step))
                     else:
-                        x_start, x_num, x_step, y_start, y_num, y_step=xy_string_split(tempstr) #for main array
-                    self.add_array(x_start=x_start, x_num=x_num, x_step=x_step, y_start=y_start, y_num=y_num, y_step=y_step, array_num=array_num)
+                        x_start, x_num, x_step, y_start, y_num, y_step=xy_string_split(tempstr)
+                        self.arrays.append(JDF_Main_Array(x_start=x_start, x_num=x_num, x_step=x_step,
+                                                         y_start=y_start, y_num=y_num, y_step=y_step))
                 elif 'ASSIGN' in tempstr:
-                    assign_type=tempstr.split("ASSIGN")[1].split("->")[0].strip().split("+")
-                    assign_type=[unicode(at) for at in assign_type]
-                    pos_assign=[]
-                    shot_assign=""
-                    for item in tempstr.split("->")[1].partition("(")[2].rpartition(")")[0].split(")"):
-                        if "(" in item:
-                            xcor, ycor=item.split("(")[1].split(",")
-                            pos_assign.append((xcor,ycor))
-                        elif "," in item:
-                            shot_assign=unicode(item.split(",")[1].strip())
-                    self.arrays[-1].add_assign(assign_type=assign_type, pos_assign=pos_assign,
-                                         shot_assign=shot_assign, assign_comment=comment)
+                    self.arrays[-1].add_assign(tempstr, comment)
                 elif 'CHMPOS' in tempstr:
                     M1x, M1y=tuple_split(tempstr)
                     self.arrays[-1].M1x=M1x
@@ -187,11 +158,10 @@ class jdf_base(Base):
                     self.resist=resist
                 elif 'P(' in tempstr:
                     pattern_name=tempstr.split("'")[1].split(".")[0]
-                    patterns.append(pattern_name)
                     pattern_num=tempstr.split("(")[1].split(")")[0]
                     pattern_x=tempstr.split("(")[2].split(")")[0].split(",")[0]
                     pattern_y=tempstr.split("(")[2].split(")")[0].split(",")[0]
-                    self.add_pattern(pattern_num=pattern_num, pattern_name=pattern_name, pattern_x=pattern_x, pattern_y=pattern_y)
+                    self.patterns.append(JDF_Pattern(num=pattern_num, x=pattern_x, y=pattern_y, name=pattern_name))
                 elif tempstr.startswith('@'):
                     jdi_str=tempstr.split("'")[1].split(".jdi")[0]
                     self.jdis.append(jdi_str)
@@ -251,9 +221,243 @@ class jdf_base(Base):
 
 
 if __name__=="__main__":
+    jdf_data="""JOB/W 'IDT',4,-4.2
+
+; For exposure on YZ-cut LiNbO3, Cop+ZEP., q-wafer D
+
+;GLMPOS P=(-40000,4000),Q=(-4000,40000)   ;A wafer
+;GLMPOS P=(4000,40000),Q=(40000,4000)  ; B wafer
+;GLMPOS P=(-20000,-4000),Q=(-4000,-20000); C wafer
+GLMPOS P=(4000,-40000),Q=(40000,-4000)   ;D wafer
+PATH
+;ARRAY (-42500,8,5000)/(42500,8,5000)  ; A wafer
+;ARRAY (7500,8,5000)/(42500,8,5000)   ;B wafer
+;ARRAY (-42500,8,5000)/(-7500,8,5000) ;C wafer
+ARRAY (7500,8,5000)/(-7500,8,5000)  ; D wafer
+        CHMPOS M1=(1500, 1500)
+	;ASSIGN A(1) -> ((1,1), (1,2), (1,3), (1,4), (1,5), (1,6), (1,7), (1,8))
+	;ASSIGN A(1) -> ((2,1), (2,2), (2,3), (2,4), (2,5), (2,6), (2,7), (2,8))
+	;ASSIGN A(1) -> ((3,1), (3,2), (3,3), (3,4), (3,5), (3,6), (3,7))
+	;ASSIGN A(1) -> ((4,1), (4,2), (4,3), (4,4), (4,5), (4,6), (4,7))
+	;ASSIGN A(1) -> ((5,1), (5,2), (5,3), (5,4), (5,5), (5,6))
+	;ASSIGN A(1) -> ((6,1), (6,2), (6,3), (6,4), (6,5))
+	;ASSIGN A(1) -> ((7,1), (7,2), (7,3), (7,4))
+	;ASSIGN A(1) -> ((8,1), (8,2))
+	
+	ASSIGN A(1)+A(2)+A(15)  ->  ((1,1), (7,2), (6,4)) ;D32080 with two IDTs and Squid connect
+	ASSIGN A(1)+A(3)+A(15)  ->  ((2,1), (8,2), (7,4)) ;S32080 with two IDTs and Squid connect
+	ASSIGN A(1)+A(4)+A(15)  ->  ((3,1), (1,3), (1,5), (2,7)) ;S32050 with two IDTs and Squid connect
+	ASSIGN A(1)+A(5)+A(15)  ->  ((4,1), (2,3), (2,5), (3,7))  ;D32050 with two IDTs and Squid connect
+	ASSIGN A(1)+A(6)+A(15)  ->  ((5,1), (3,3), (3,5), (4,7)) ;D9050 with two IDTs and Squid connect
+	ASSIGN A(1)+A(7)+A(15)  ->  ((6,1), (4,3), (4,5), (1,8))  ;S9050 with two IDTs and Squid connect
+	ASSIGN A(1)+A(8)+A(15)  ->  ((7,1), (5,3), (5,5))  ;S9080 with two IDTs and Squid connect
+	ASSIGN A(1)+A(9)+A(15)  ->  ((8,1), (6,3), (6,5), (2,8))  ;D9080 with two IDTs and Squid connect
+	ASSIGN A(12)+A(10)+A(15) -> ((1,2),  (7,3), (1,6)) ;D5080 with two FDTs and Squid connect
+        ASSIGN A(12)+A(11)+A(15) ->  ((2,2), (1,4), (2,6))   ;D5096 with two FDTs and Squid connect
+        ASSIGN A(13)+A(15)       ->  ((3,2), (2,4), (3,6))   ;IDT by itself
+        ASSIGN A(14)+A(15)       ->  ((4,2), (3,4), (4,6))         ;FDT by itself
+	ASSIGN A(1)+A(15)        -> ((5,2), (4,4), (5,6))     ;Two IDTs alone with squid connect
+	ASSIGN A(12)+A(15)       -> ((6,2), (5,4), (1,7))          ;two FDTs alone with squid connect
+
+	;ASSIGN A(1) ->                                           ((7,1), (8,1)) 
+	;ASSIGN A(2) ->                             ((5,2), (6,2), (7,2), (8,2))
+	;ASSIGN A(3) ->                      ((4,3), (5,3), (6,3), (7,3), (8,3))
+	;ASSIGN A(4) ->               ((3,4), (4,4), (5,4), (6,4), (7,4), (8,4))
+	;ASSIGN A(5) ->        ((2,5), (3,5), (4,5), (5,5), (6,5), (7,5), (8,5))
+	;ASSIGN A(6) ->        ((2,6), (3,6), (4,6), (5,6), (6,6), (7,6), (8,6))
+	;ASSIGN A(7) -> ((1,7), (2,7), (3,7), (4,7), (5,7), (6,7), (7,7), (8,7))
+	;ASSIGN A(8) -> ((1,8), (2,8), (3,8), (4,8), (5,8), (6,8), (7,8), (8,8))
+	
+	;ASSIGN A(1)+A(2)+A(15)  ->  ((7,1), (6,2), (1,8)) ;D32080 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(3)+A(15)  ->  ((8,1), (7,2), (2,8)) ;S32080 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(4)+A(15)  ->  ((5,2), (5,3), (3,8), (3,7)) ;S32050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(5)+A(15)  ->  ((8,2), (6,3), (4,8), (4,7))  ;D32050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(6)+A(15)  ->  ((4,3), (7,3), (5,8), (5,7)) ;D9050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(7)+A(15)  ->  ((8,3), (4,4), (6,8), (6,7))  ;S9050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(8)+A(15)  ->  ((3,4), (5,4), (7,8))  ;S9080 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(9)+A(15)  ->  ((8,4), (6,4), (8,8), (7,7))  ;D9080 with two IDTs and Squid connect
+	;ASSIGN A(12)+A(10)+A(15) -> ((2,5),  (7,4), (3,6)) ;D5080 with two FDTs and Squid connect
+        ;ASSIGN A(12)+A(11)+A(15) ->  ((8,5), (3,5), (4,6))   ;D5096 with two FDTs and Squid connect
+        ;ASSIGN A(13)+A(15)       ->  ((2,6), (4,5), (5,6))   ;IDT by itself
+        ;ASSIGN A(14)+A(15)       ->  ((8,6), (5,5), (6,6))         ;FDT by itself
+	;ASSIGN A(1)+A(15)        -> ((1,7), (6,5), (7,6))     ;Two IDTs alone with squid connect
+	;ASSIGN A(12)+A(15)       -> ((8,7), (7,5), (2,7))          ;two FDTs alone with squid connect
+
+	;ASSIGN A(1)+A(2)+A(15)  ->  ((1,1), (2,7), (4,7)) ;D32080 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(3)+A(15)  ->  ((1,2), (2,8), (4,8)) ;S32080 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(4)+A(15)  ->  ((1,3), (3,2), (5,3), (7,7)) ;S32050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(5)+A(15)  ->  ((1,4), (3,3), (5,4), (7,8))  ;D32050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(6)+A(15)  ->  ((1,5), (3,4), (5,6), (8,7)) ;D9050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(7)+A(15)  ->  ((1,6), (3,5), (5,7), (5,5))  ;S9050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(8)+A(15)  ->  ((1,7), (3,6), (5,8))  ;S9080 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(9)+A(15)  ->  ((1,8), (3,7), (6,4))  ;D9080 with two IDTs and Squid connect
+	;ASSIGN A(12)+A(10)+A(15) -> ((2,1),  (3,8), (6,5), (8,8)) ;D5080 with two FDTs and Squid connect
+        ;ASSIGN A(12)+A(11)+A(15) ->  ((2,2), (4,2), (6,6))   ;D5096 with two FDTs and Squid connect
+        ;ASSIGN A(13)+A(15)       ->  ((2,3), (4,3), (6,7))   ;IDT by itself
+        ;ASSIGN A(14)+A(15)       ->  ((2,4), (4,4), (6,8))         ;FDT by itself
+	;ASSIGN A(1)+A(15)        -> ((2,5), (4,5), (7,5))     ;Two IDTs alone with squid connect
+	;ASSIGN A(12)+A(15)       -> ((2,6), (4,6), (7,6))          ;two FDTs alone with squid connect
+
+        ;ASSIGN A(1) ->  ((1, 1), (2, 1))
+        ;ASSIGN A(1) ->  ((1, 2), (2, 2), (3, 2), (4, 2))
+        ;ASSIGN A(1) ->  ((1, 3), (2, 3), (3, 3), (4, 3), (5, 3))
+        ;ASSIGN A(1) ->  ((1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4))
+        ;ASSIGN A(1) ->  ((1, 5), (2, 5), (3, 5), (4, 5), (5, 5), (6, 5), (7, 5))
+        ;ASSIGN A(1) ->  ((1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6))
+        ;ASSIGN A(1) ->  ((1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7), (8, 7))
+        ;ASSIGN A(1) ->  ((1, 8), (2, 8), (3, 8), (4, 8), (5, 8), (6, 8), (7, 8), (8, 8))
+
+	;ASSIGN A(1)+A(2)+A(15)  ->  ((1,1), (2,7), (4,7)) ;D32080 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(3)+A(15)  ->  ((1,2), (2,8), (4,8)) ;S32080 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(4)+A(15)  ->  ((1,3), (3,2), (5,3), (7,8)) ;S32050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(5)+A(15)  ->  ((1,4), (3,3), (5,4), (7,7))  ;D32050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(6)+A(15)  ->  ((1,5), (3,4), (5,5), (8,8)) ;D9050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(7)+A(15)  ->  ((1,6), (3,5), (5,6), (7,7))  ;S9050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(8)+A(15)  ->  ((1,7), (3,6), (5,7))  ;S9080 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(9)+A(15)  ->  ((1,8), (3,7), (5,8))  ;D9080 with two IDTs and Squid connect
+	;ASSIGN A(12)+A(10)+A(15) -> ((2,1),  (3,8), (6,4), (7,6)) ;D5080 with two FDTs and Squid connect
+        ;ASSIGN A(12)+A(11)+A(15) ->  ((2,2), (3,2), (6,5))   ;D5096 with two FDTs and Squid connect
+        ;ASSIGN A(13)+A(15)       ->  ((2,3), (4,3), (6,6))   ;IDT by itself
+        ;ASSIGN A(14)+A(15)       ->  ((2,4), (4,4), (6,7))         ;FDT by itself
+	;ASSIGN A(1)+A(15)-> ((2,5), (4,5), (6,8))     ;Two IDTs alone with squid connect
+	;ASSIGN A(12)+A(15) ->         ((2,6), (4,6), (7,5))          ;two FDTs alone with squid connect
+
+        ;C wafer
+	;ASSIGN P(1) ->  ((1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1), PADS)
+	;ASSIGN P(1) ->  ((1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2), PADS)
+	;ASSIGN P(1) ->          ((2, 3), (3, 3), (4, 3), (5, 3), (6, 3), (7, 3), (8, 3), PADS)
+	;ASSIGN P(1) ->          ((2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4), (8, 4), PADS)
+	;ASSIGN P(1) ->                  ((3, 5), (4, 5), (5, 5), (6, 5), (7, 5), (8, 5), PADS)
+	;ASSIGN P(1) ->                          ((4, 6), (5, 6), (6, 6), (7, 6), (8, 6), PADS)
+	;ASSIGN P(1) ->                                  ((5, 7), (6, 7), (7, 7), (8, 7), PADS)
+	;ASSIGN P(1) ->                                                  ((7, 8), (8, 8), PADS)
+
+	;ASSIGN A(1)+A(2)+A(15)  ->  ((1,1), (4,4), (6,5)) ;D32080 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(3)+A(15)  ->  ((1,2), (4,5), (6,6)) ;S32080 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(4)+A(15)  ->  ((2,1), (4,6), (6,7), (8,4)) ;S32050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(5)+A(15)  ->  ((2,2), (5,1), (7,1), (8,5))  ;D32050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(6)+A(15)  ->  ((2,3), (5,2), (7,2), (8,6)) ;D9050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(7)+A(15)  ->  ((2,4), (5,3), (7,3), (8,7))  ;S9050 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(8)+A(15)  ->  ((3,1), (5,4), (7,4))  ;S9080 with two IDTs and Squid connect
+	;ASSIGN A(1)+A(9)+A(15)  ->  ((3,2), (5,5), (7,5))  ;D9080 with two IDTs and Squid connect
+	;ASSIGN A(12)+A(10)+A(15) -> ((3,3),  (5,6), (7,6), (8,8)) ;D5080 with two FDTs and Squid connect
+        ;ASSIGN A(12)+A(11)+A(15) ->  ((3,4), (5,7), (7,7))   ;D5096 with two FDTs and Squid connect
+        ;ASSIGN A(13)+A(15)       ->  ((3,5), (6,1), (7,8))   ;IDT by itself
+        ;ASSIGN A(14)+A(15)       ->  ((4,1), (6,2), (8,1))         ;FDT by itself
+	;ASSIGN A(1)+A(15)        -> ((4,2), (6,3), (8,2))     ;Two IDTs alone with squid connect
+	;ASSIGN A(12)+A(15)       -> ((4,3), (6,4), (8,3))          ;two FDTs alone with squid connect
+        
+AEND
+
+1: ARRAY (-200, 2, 500)/(0, 1, 0)
+	ASSIGN P(1) -> ((1,1), IDT2)
+	ASSIGN P(1) -> ((2,1), IDT2)
+AEND
+
+2: ARRAY (0,1,0)/(0,1,0)
+	ASSIGN P(2) -> ((1,1), D32080)
+AEND
+
+3: ARRAY (0, 1, 0)/(0, 1, 0)
+	ASSIGN P(3) -> ((1,1), S32080)
+AEND
+
+4: ARRAY (0, 1, 0)/(0, 1, 0)
+	ASSIGN P(4) -> ((1,1), S32050)
+AEND
+
+5: ARRAY (0, 1, 0)/(0, 1, 0)
+	ASSIGN P(5) -> ((1,1), D32050)
+AEND
+
+6: ARRAY (0, 1, 0)/(0, 1, 0)
+	ASSIGN P(6) -> ((1,1), D9050)
+AEND
+
+7: ARRAY (0, 1, 0)/(0, 1, 0)
+	ASSIGN P(7) -> ((1,1), S9050)
+AEND
+
+8: ARRAY (0, 1, 0)/(0, 1, 0)
+	ASSIGN P(8) -> ((1,1), S9080)
+AEND
+
+9: ARRAY (0, 1, 0)/(0, 1, 0)
+	ASSIGN P(9) -> ((1,1), D9080)
+AEND
+
+10: ARRAY (0, 1, 0)/(0, 1, 0)
+	ASSIGN P(10) -> ((1,1), D5080)
+AEND
+
+11: ARRAY (0, 1, 0)/(0, 1, 0)
+	ASSIGN P(11) -> ((1,1), SCB2)
+AEND
+
+12: ARRAY (-200, 2, 500)/(0, 1, 0)
+	ASSIGN P(12) -> ((1,1), FDT2)
+	ASSIGN P(12) -> ((2,1), FDT2)
+AEND
+
+13: ARRAY (-200, 2, 500)/(0, 1, 0)
+	ASSIGN P(1) -> ((1,1), IDT2)
+AEND
+
+14: ARRAY (-200, 2, 500)/(0, 1, 0)
+	ASSIGN P(12) -> ((1,1), FDT2)
+AEND
+
+15: ARRAY (-500, 2, 1000)/(-1500, 1, 0)
+	ASSIGN P(13) -> ((1,1), QBRI)
+	ASSIGN P(14) -> ((2,1), QBR3)	
+AEND
+PEND
+
+LAYER 1
+   P(1) 'cIDT9bd36ef0w96wb0.v30' (0,0)
+   P(2) 'cQDT9bd3ef20w80wb0.v30' (0,0)
+   P(3) 'cQDT9bs3ef20w80wb0.v30' (0,0)
+   P(4) 'cQDT9bs3ef20w50wb0.v30' (0,0)
+   P(5) 'cQDT9bd3ef20w50wb0.v30' (0,0)
+   P(6) 'cQDT9bd9ef0w50wb0.v30' (0,0)
+   P(7) 'cQDT9bs9ef0w50wb0.v30' (0,0)
+   P(8) 'cQDT9bs9ef0w80wb0.v30' (0,0)
+   P(9) 'cQDT9bd9ef0w80wb0.v30' (0,0)
+   P(10) 'cQDT9bd5ef0w80wb0.v30' (0,0)
+   P(11) 'cQDT9bd5ef0w96wb0.v30' (0,0)
+   P(12) 'cIDT9bd55ef0w96wb0.v30' (0,0)
+
+   P(13) 'cQbri.v30' (0,0)
+   P(14) 'cQbr3.v30' (0,0)
+   ;SPPRM 3.996,,,1,1 ;use if SHOT is 6 nm (doesn't divide 4 um which is default)
+   STDCUR 2
+   SHOT A,8
+   RESIST 165 ; new dose from dose test TA020315A_dt with modified bias from TA060315B
+
+@ 'idt_s.jdi'   
+@ 'cQDT9bd3ef20w80wb0.jdi'
+@ 'cQDT9bs3ef20w80wb0.jdi'
+@ 'cQDT9bs3ef20w50wb0.jdi'
+@ 'cQDT9bd3ef20w50wb0.jdi'
+@ 'cQDT9bd9ef0w50wb0.jdi'
+@ 'cQDT9bs9ef0w50wb0.jdi'
+@ 'cQDT9bs9ef0w80wb0.jdi'
+@ 'cQDT9bd9ef0w80wb0.jdi'
+@ 'cQDT9bd5ef0w80wb0.jdi'
+@ 'scb_s.jdi'
+@ 'fdt_s.jdi'
+@ 'cQbri.jdi'
+@ 'cQbr3.jdi'
+
+END 1"""
     #a=Text_Editor(name="Text_Editor", dir_path="/Volumes/aref/jbx9300/job/TA150515B/IDTs", main_file="idt.jdf")
-    b=jdf_base(name="JDF")#_base()
-    b.arrays.extend((jdf_array(), jdf_array(x_start=5), jdf_array(x_start=5), jdf_array(x_start=5)))
+    b=JDF_Top(text=jdf_data)#_base()
+    #b.jdf_parse(jdf_data)
+    print b.Px, b.Py, b.Qx, b.Qy
+    print b.arrays[0].assigns
+    print b.patterns[0].name
+    
+    #b.arrays.extend((jdf_array(), jdf_array(x_start=5), jdf_array(x_start=5), jdf_array(x_start=5)))
     #a.read_file.read()
     #print a.data
     #b.jdf_parse(a.data)
@@ -265,8 +469,8 @@ if __name__=="__main__":
     #print [a.get_tag(aa, 'label', aa) for aa in a.all_params]
     #print a.jdf_list
     #print b.get_member('arrays').item.validate_mode[1]
-
-    b.show()
+    show(b)
+#    b.show()
     #print a.data
     #print b.jdf_produce()
     #print a.jdf_save_file.file_path

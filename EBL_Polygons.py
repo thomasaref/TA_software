@@ -4,9 +4,11 @@ Created on Thu Jun 25 09:52:31 2015
 
 @author: thomasaref
 """
-from atom.api import Atom, Enum, Float, List, Unicode
+from atom.api import Atom, Enum, Float, List, Unicode, Typed
+#from Plotter import Plotter
 from numpy import sin, cos, pi
 #from LOG_functions import log_debug
+#from enaml import imports
 
 def gen_sP(verts):
     """generates a polygon from a list of vert tuples using a list comprehension. 
@@ -198,16 +200,6 @@ def sPoly(obj, vs=None):
     return vs
 
 #digit_dict.update(dict(zip([str(key) for key in digit_dict.keys()], digit_dict.values())))
-class Polygon_Chief(Atom):
-    save_file=Unicode()
-    name=Unicode()
-    plots=List(default=["a", "b"])
-    #log_str=Unicode("blarg")
-    
-    @property
-    def show_all(self):
-        return True
-pc=Polygon_Chief()
 
 class EBL_Polygons(Atom):
     color=Enum("green", "blue", "red", "purple", "brown", "black").tag(desc="color or datatype of item, could be used for dosing possibly")
@@ -219,10 +211,6 @@ class EBL_Polygons(Atom):
     y_ref=Float(0.0).tag(desc="y coordinate of reference point of pattern", unit="um")
     theta=Float(0.0).tag(desc="angle to rotate in degrees")
     orient=Enum("TL", "TR", "BL", "BR")
-
-    #@property
-    #def chief(self):
-    #    return pc
     
     @property
     def xmin(self):

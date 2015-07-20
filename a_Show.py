@@ -64,8 +64,8 @@ def show(*agents):
         view.title=view.name
         view.show()
         if loc_chief is not None:
-            if not chief.show_all and n!=0:
-                view.visible=False
+            if chief.show_all or n==0:
+                view.visible=True
     if loc_chief is None:
         view=basicView(title="Show Control", name="show_control")
     else:

@@ -4,16 +4,53 @@ Created on Fri Apr  3 22:26:23 2015
 
 @author: thomasaref
 """
-from LOG_functions import log_warning#, log_debug
+#from LOG_functions import log_warning#, log_debug
 #log_debug(1)
 from a_Agent import Spy, Agent#, boss#, NoShowBase
 from EBL_Boss import ebl_boss
-from atom.api import Enum, Float, Typed, Callable, observe, Unicode#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
+from atom.api import Enum, Float, Typed, Callable, observe, Unicode, Atom, List#, Str#, Typed, List, Unicode, Int, Atom, Range, Bool, observe
 from EBL_Polygons import EBL_Polygons
 from Atom_Save_File import Save_DXF
 from a_BeamerGen import BeamerGen
+from Plotter import Plotter
+#from LOG_functions import log_debug
+from enaml import imports
+from a_Show import show
 
-class EBL_Item(Agent, EBL_Polygons):
+class Polygon_Chief(Atom):
+    save_file=Unicode()
+    name=Unicode()
+    plot=Typed(Plotter, ())
+    agents=List()
+    #log_str=Unicode("blarg")
+    def show(self):
+        show(*self.agents)
+
+    def do_plot(self):
+        for agent in self.agents:
+            agent.predraw()
+        xmin=min(b.xmin for b in self.agents)
+        xmax=max(b.xmax for b in self.agents)
+        ymin=min(b.ymin for b in self.agents)
+        ymax=max(b.ymax for b in self.agents)
+        self.plot.set_xlim(xmin, xmax)
+        self.plot.set_ylim(ymin, ymax)
+        self.plot.draw()        
+
+    @property
+    def show_all(self):
+        return True
+        
+    @property
+    def view_window(self):
+        with imports():
+            from e_Show import EBLView
+        return EBLView(chief=self)
+        
+pc=Polygon_Chief()
+
+class EBL_Item(EBL_Polygons):
+    name=Unicode()
     save_file=Typed(Save_DXF, ()).tag(no_spacer=True)
     angle_x=Float(0.3e-6).tag(desc="shift in x direction when doing angle evaporation", unit="um")
     angle_y=Float(0.0e-6).tag(desc="shift in y direction when doing angle evaporation", unit="um")
@@ -22,7 +59,20 @@ class EBL_Item(Agent, EBL_Polygons):
     name_sug=Unicode().tag(no_spacer=True)
     shot_mod_table=Unicode()
     bmr=Typed(BeamerGen).tag(private=True)
+
+    @property
+    def base_name(self):
+        return "ebl_item"
     
+    def __init__(self, **kwargs):
+        """extends __init__ to set boss, add agent to boss's agent list and give unique default name.
+        does some extra setup for particular types"""
+        #self.boss.make_boss()
+        super(EBL_Item, self).__init__(**kwargs)
+        if "name" not in kwargs:
+            self.name= "{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.chief.agents))
+        self.chief.agents.append(self)
+        
     @observe('save_file.save_event')
     def obs_save_event(self, change):
         self.save_file.direct_save(self, write_mode='w')
@@ -45,25 +95,38 @@ class EBL_Item(Agent, EBL_Polygons):
         name_sug=""
         self.name_sug=name_sug
     
-    @property    
-    def boss(self):
-        ebl_boss.make_boss(save_log=False)
-        return ebl_boss
-    
+#    @property    
+#    def boss(self):
+#        ebl_boss.make_boss(save_log=False)
+#        return ebl_boss
+
+    @property
+    def initial_position(self):
+        return (0,300)
+
+    @property
+    def chief(self):
+        return pc
+
+    def _default_color(self):
+        return "blue"
+        
     def set_xlim(self, xmin, xmax):
-        self.boss.plot.set_xlim(xmin, xmax)
+        self.chief.plot.set_xlim(xmin, xmax)
 
     def set_ylim(self, ymin, ymax):
-        self.boss.plot.set_ylim(ymin, ymax)
+        self.chief.plot.set_ylim(ymin, ymax)
 
 #    def children_predraw(self):
 #        self.make_polylist()
 #        for c in self.children:
 #            c.predraw()
 ##            #self.extend(c.verts)
-
+    def show(self):
+        self.chief.show()
+        
     def set_data(self):
-        self.boss.plot.set_data(self.name, self.verts, self.color)
+        self.chief.plot.set_data(self.name, self.verts, self.color)
         #for c in self.children:
         #    c.set_data()
         
@@ -118,7 +181,7 @@ class EBL_Item(Agent, EBL_Polygons):
 
         self.set_ylim(ymin, ymax)
 
-        self.boss.plot.draw()
+        self.chief.plot.draw()
 
 
     @Callable
@@ -135,14 +198,16 @@ class EBL_Item(Agent, EBL_Polygons):
     def do_vert_refl(self):
         self.vert_refl()
         self.draw()
-                
+
+    def make_polylist(self):                
+        self.P([(0,0), (1,0), (0,1)])
+
 if __name__=="__main__":  
-    a=EBL_Item(name="EBL_Item_test")
-    print a.xmin
-#    print a.sP([(0,0), (1,0), (0,1)])
+    a=EBL_Item()
+        
 #    print a.sR(0,0,1,1)
 #    print a.sC(0,0,1,1)
 
 #    print a.verts
 #    print a.xmax
-    a.show()
+    show(a)

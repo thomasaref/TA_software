@@ -7,11 +7,11 @@ Created on Mon Dec  8 10:19:24 2014
 
 from atom.api import Float, Typed
 from EBL_Item import EBL_Item
-from EBL_Polygons import horiz_refl, vert_refl, horizvert_refl, rotate, sC, sP, sT
+from EBL_Polygons import horiz_refl, vert_refl, horizvert_refl, rotate, sC, sP, sT, EBL_Polygons
 from EBL_IDT import EBL_IDT
 #from EBL_Combiner import EBL_Combiner
 
-class EBL_test_pads(EBL_Item):
+class EBL_test_pads(EBL_Polygons):
     contact_width=Float(125.0e-6).tag(unit="um", desc="width of contact")
     contact_height=Float(170.0e-6).tag(unit="um", desc="height of contact")
     bridge_gap_x=Float(20.0e-6).tag(unit="um", desc="horizontal gap between testpad electrodes")
@@ -405,9 +405,9 @@ class EBL_PADS(EBL_Item):
         self.Dig("B", -self.mb_x, self.mb_y+self.M1_size/2+self.lbl_height/2, self.lbl_height/2-100e-6, 20e-6)
         self.Dig("8", -self.mb_x+200e-6, self.mb_y+self.M1_size/2+self.lbl_height/2, self.lbl_height/2-100e-6, 20e-6)
         #self.extend(
-        self.Poly(EBL_test_pads(name="_BL_testpad", x_ref=-self.testx, y_ref=self.testy))
-        self.Poly(EBL_test_pads(name="_BR_testpad", x_ref=self.testx, y_ref=self.testy))
-        self.Poly(EBL_test_pads(name="_TR_testpad", x_ref=self.testx, y_ref=-self.testy))
+        self.Poly(EBL_test_pads( x_ref=-self.testx, y_ref=self.testy))
+        self.Poly(EBL_test_pads( x_ref=self.testx, y_ref=self.testy))
+        self.Poly(EBL_test_pads( x_ref=self.testx, y_ref=-self.testy))
 
         #self.extend(self.sDig(1, -self.mb_x, self.mb_y, self.lbl_height/2.0, 20.0e-6))
         #self.make_teststrip()
@@ -425,21 +425,22 @@ class EBL_PADS(EBL_Item):
 
     def _default_ocpw(self):
         return self.gap/2.0+self.w/2.0
-    def _default_children(self):
-        self.ocpw=self.gap/2.0+self.w/2.0
-        return [
+    #def _default_children(self):
+    #    self.ocpw=self.gap/2.0+self.w/2.0
+    #    return [
                 #Al_PADS(chip=self),
                 #EBL_IDT(name="quDT", qdt_type="QDT"),
                 #EBL_IDT(name="IDT_L", qdt_type="IDT", hbox=30.0e-6, x_ref=-200e-6),#self.l_idt_x),
                 #EBL_IDT(name="IDT_R", qdt_type="IDT", hbox=30.0e-6, x_ref=300e-6), #self.r_idt_x),
               #EBL_test_pads(name="_BL_testpad", x_ref=-self.testx, y_ref=self.testy),
-              EBL_test_pads(name="_BR_testpad", x_ref=self.testx, y_ref=self.testy),
-              EBL_test_pads(name="_TR_testpad", x_ref=self.testx, y_ref=-self.testy)
-              ]
+    #          EBL_test_pads(name="_BR_testpad", x_ref=self.testx, y_ref=self.testy),
+    #          EBL_test_pads(name="_TR_testpad", x_ref=self.testx, y_ref=-self.testy)
+    #          ]
 
 
 if __name__=="__main__":
     #a=EBL_test_pads(name="EBL_Item_test")
 #    a=EBL_mark_box(name="EBL_Item_test")
-    a=EBL_PADS(name="EBL_Item_test")
+    a=EBL_PADS(name="Pads")
+    b=Al_PADS(chip=a)
     a.show()
