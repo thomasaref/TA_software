@@ -6,9 +6,10 @@ Created on Mon Jun  1 10:46:56 2015
 """
 
 #from a_Base import Base, NoShowBase
+from Plotter import Plotter
 from Atom_Text_Editor import Text_Editor
 from EBL_quarter_coords import distr_coords
-from atom.api import Unicode, ContainerList, Int, Float, Atom, List, Coerced
+from atom.api import Typed, Dict, Unicode, ContainerList, Int, Float, Atom, List, Coerced
 #from LOG_functions import log_info, log_debug, make_log_file, log_warning
 from a_Show import show
 from enaml import imports
@@ -72,6 +73,35 @@ def parse_comment(line):
     return tempstr, comment
 
 class JDF_Top(Atom):
+    plot=Typed(Plotter, ())
+    agents=List()
+    pattern_dict=Dict()
+    
+    def show(self):
+        show(*self.agents)
+
+    def do_plot(self):
+        for p in self.agents:
+            p.verts=[]
+            p.make_polylist()
+            self.pattern_dict[p.name]=dict(verts=p.verts[:], color=p.color, layer=p.layer, plot_sep=p.plot_sep)
+
+        for key in self.pattern_dict:
+            if self.pattern_dict[key]["plot_sep"]:
+                self.plot.set_data(key, self.pattern_dict[key]["verts"], self.pattern_dict[key]["color"])
+    
+        xmin=min(b.xmin for b in self.agents)
+        xmax=max(b.xmax for b in self.agents)
+        ymin=min(b.ymin for b in self.agents)
+        ymax=max(b.ymax for b in self.agents)
+        self.plot.set_xlim(xmin, xmax)
+        self.plot.set_ylim(ymin, ymax)
+        self.plot.draw()        
+
+    @property
+    def show_all(self):
+        return True
+        
     text=Unicode()
     output_jdf=Unicode()
     comments=List() #Unicode()

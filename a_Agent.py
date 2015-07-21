@@ -20,6 +20,49 @@ class aAtom(Atom):
             from e_UserTemps import TextEditorWindow
         return TextEditorWindow
         
+
+class sAgent(Atom):
+    name=Unicode().tag(private=True, desc="name of agent. A default will be provided if none is given")
+
+    def show(self):
+        self.chief.show()
+
+    def extra_setup(self, param, typer):
+        """do nothing function to allow custom setup extension in subclasses"""
+        pass
+
+    @property
+    def base_name(self):
+        return "sagent"#, basenum=len(self.chief.agents))
+    
+    @property
+    def chief(self):
+        return boss
+        
+    def __init__(self, **kwargs):
+        """extends __init__ to set boss, add agent to boss's agent list and give unique default name.
+        does some extra setup for particular types"""
+        #self.boss.make_boss()
+        super(sAgent, self).__init__(**kwargs)
+        if "name" not in kwargs:
+            self.name="{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.chief.agents))
+        self.chief.agents.append(self)
+        for param in get_all_params(self):
+            typer=get_type(self, param)
+            if typer in [Range, FloatRange]:
+                """autosets low/high tags for Range and FloatRange"""
+                set_tag(self, param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
+            if typer in [Int, Float, Range, FloatRange]:
+                """autosets units for Ints and Floats"""
+                if get_tag(self, param, "unit", False) and get_tag(self, param, "unit_factor", True):
+                    unit=get_tag(self, param, "unit", "")[0]
+                    if unit in unit_dict:
+                        set_tag(self, param, unit_factor=unit_dict[unit])
+            elif typer==Callable:
+                """autosets Callables to be logged"""
+                func=getattr(self, param)
+                setattr(self, param, log_func(func))
+            self.extra_setup(param, typer)
         
 class SubAgent(Atom):
     """Underlying class that implements all universal aspects and adds boss functionalities"""

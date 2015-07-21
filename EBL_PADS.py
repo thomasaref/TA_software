@@ -12,6 +12,16 @@ from EBL_IDT import EBL_IDT
 #from EBL_Combiner import EBL_Combiner
 
 class EBL_test_pads(EBL_Polygons):
+    def _default_plot_sep(self):
+        return False
+    
+    @property    
+    def base_name(self):
+        return "Test_Pads"
+        
+    def _default_color(self):
+        return "blue"
+        
     contact_width=Float(125.0e-6).tag(unit="um", desc="width of contact")
     contact_height=Float(170.0e-6).tag(unit="um", desc="height of contact")
     bridge_gap_x=Float(20.0e-6).tag(unit="um", desc="horizontal gap between testpad electrodes")
@@ -41,14 +51,18 @@ class EBL_test_pads(EBL_Polygons):
 
 
 
-class Al_PADS(EBL_Item):
+class Al_PADS(EBL_Polygons):
     def _default_color(self):
         return "red"
 
     def _default_layer(self):
         return "Al_35nA"
+
+    @property    
+    def base_name(self):
+        return "Al_PADS"
         
-    chip=Typed(EBL_Item)
+    chip=Typed(EBL_Polygons)
     gndplane_side_gap=Float(30.0e-6).tag(unit='um', desc="side gap in ground plane")
     gndplane_gap=Float(80.0e-6).tag(unit='um', desc="gap in ground plane that lets SAW through")
     gndplane_big_gap=Float(60.0e-6).tag(unit='um', desc="gap in ground plane where qubit IDT resides")
@@ -252,14 +266,14 @@ class Al_PADS(EBL_Item):
         return vs
 
     def make_polylist(self):
-        self.extend(self._s_CPW_strip_L)
-        self.extend(self._s_CPW_strip_R)
-        self.extend(self._s_CPW_strip_T)
-        self.extend(self._s_CPW_strip_B)
+        self.verts.extend(self._s_CPW_strip_L)
+        self.verts.extend(self._s_CPW_strip_R)
+        self.verts.extend(self._s_CPW_strip_T)
+        self.verts.extend(self._s_CPW_strip_B)
 
 
 
-class EBL_PADS(EBL_Item):
+class EBL_PADS(EBL_Polygons):
     chip_height=Float(5000.0e-6).tag(unit='um', desc="the height of the chip (in um though would be more natural in mm) as defined by the dicing saw")
     chip_width=Float(5000.0e-6).tag(unit='um', desc="the width of the chip (in um though would be more natural in mm) as defined by the dicing saw")
     blade_width=Float(200.0e-6).tag(unit='um', desc="width of blade used to make dicing cuts")
@@ -299,13 +313,19 @@ class EBL_PADS(EBL_Item):
     lbl_height=Float(500.0e-6).tag(unit="um", desc="label height (assumed above marker 1)")
     lbl_width=Float(1100.0e-6).tag(unit="um", desc="label width (label assumed above marker 1)")
 
+    test_pads=Typed(EBL_test_pads, ())
+    
     def make_name_sug(self):
         self.name_sug="tpads"
         self.shot_mod_table="TPD"
 
     def _default_layer(self):
         return "Au"
-
+    
+    @property    
+    def base_name(self):
+        return "PADS"
+        
     @property
     def xbox(self):
         """width from center of pattern"""
@@ -405,9 +425,9 @@ class EBL_PADS(EBL_Item):
         self.Dig("B", -self.mb_x, self.mb_y+self.M1_size/2+self.lbl_height/2, self.lbl_height/2-100e-6, 20e-6)
         self.Dig("8", -self.mb_x+200e-6, self.mb_y+self.M1_size/2+self.lbl_height/2, self.lbl_height/2-100e-6, 20e-6)
         #self.extend(
-        self.Poly(EBL_test_pads( x_ref=-self.testx, y_ref=self.testy))
-        self.Poly(EBL_test_pads( x_ref=self.testx, y_ref=self.testy))
-        self.Poly(EBL_test_pads( x_ref=self.testx, y_ref=-self.testy))
+        self.Poly(self.test_pads, x_off=-self.testx, y_off=self.testy)
+        self.Poly(self.test_pads, x_off=self.testx, y_off=self.testy)
+        self.Poly(self.test_pads, x_off=self.testx, y_off=-self.testy)
 
         #self.extend(self.sDig(1, -self.mb_x, self.mb_y, self.lbl_height/2.0, 20.0e-6))
         #self.make_teststrip()
@@ -441,6 +461,7 @@ class EBL_PADS(EBL_Item):
 if __name__=="__main__":
     #a=EBL_test_pads(name="EBL_Item_test")
 #    a=EBL_mark_box(name="EBL_Item_test")
-    a=EBL_PADS(name="Pads")
+    #tp=EBL_test_pads()
+    a=EBL_PADS()#test_pads=tp)
     b=Al_PADS(chip=a)
     a.show()

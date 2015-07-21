@@ -4,17 +4,18 @@ Created on Thu Jun 25 09:52:31 2015
 
 @author: thomasaref
 """
-from atom.api import Atom, Enum, Float, List, Unicode, Typed
+from atom.api import Atom, Enum, Float, List, Unicode, Typed, Dict, Bool
 #from Plotter import Plotter
 from numpy import sin, cos, pi
 #from LOG_functions import log_debug
 #from enaml import imports
+from a_Agent import sAgent
 
 def gen_sP(verts):
     """generates a polygon from a list of vert tuples using a list comprehension. 
     Returns a tuple of verts divided by function defined unit factor"""
     return tuple([(v[0]/gen_sP.UNIT_FACTOR, v[1]/gen_sP.UNIT_FACTOR) for v in verts])
-gen_sP.UNIT_FACTOR=1.0e-6  #microns
+gen_sP.UNIT_FACTOR=1.0e-0#6  #microns
 
 def sP(verts, vs=None):
     """converts verts to a polygon tuple, appends it to vs and returns vs. 
@@ -74,12 +75,16 @@ def sCross(xr, yr, wr, lw, vs=None):
 
 def offset(verts, x, y):
     """offsets verts by x and y"""
+    if x==0.0 and y==0.0:
+        return verts
     x=x/gen_sP.UNIT_FACTOR
     y=y/gen_sP.UNIT_FACTOR
     return [tuple([(v[0]+x, v[1]+y) for v in p]) for p in verts]
 
 def rotate(verts, theta):
     """rotates verts by theta. theta is in degrees"""
+    if theta==0.0:
+        return verts
     theta=theta/180.0*pi
     cos_theta=cos(theta)
     sin_theta=sin(theta)
@@ -183,35 +188,112 @@ def sDig(dig_key, xr, yr, wr, hr, vs=None):
         vs=func(xr, yr, wr, hr, vs)
     return vs
 
-    
-def sPoly(obj, vs=None):
+
+def sTransform(verts, x_off=0.0, y_off=0.0, theta=0.0, orient="TL", vs=None):
+    #print x_off
     if vs is None:
         vs=[]
-    obj.make_polylist()
-    if obj.orient=="BR":
-        obj.horizvert_refl()
-    elif obj.orient=="BL":
-        obj.vert_refl()
-    elif obj.orient=="TR":
-        obj.horiz_refl()
-    obj.rotate(obj.theta)
-    obj.offset(obj.x_ref, obj.y_ref)
-    vs.extend(obj.verts)
+    if orient=="BR":
+        verts=horizvert_refl(verts)
+    elif orient=="BL":
+        verts=vert_refl(verts)
+    elif orient=="TR":
+        verts=horiz_refl(verts)
+    verts=rotate(verts, theta)
+    verts=offset(verts, x_off, y_off)
+    vs.extend(verts)
     return vs
+    
+def sPoly(obj, x_off=0.0, y_off=0.0, theta=0.0, orient="TL", vs=None):
+    if vs is None:
+        vs=[]
+    obj.verts=[]
+    obj.make_polylist()
+    return sTransform(obj.verts[:], x_off, y_off, theta, orient, vs)
 
 #digit_dict.update(dict(zip([str(key) for key in digit_dict.keys()], digit_dict.values())))
+from Plotter import Plotter
+from enaml import imports
+from a_Show import show
 
-class EBL_Polygons(Atom):
+class Polygon_Chief(Atom):
+    angle_x=Float(0.3e-6).tag(desc="shift in x direction when doing angle evaporation", unit="um")
+    angle_y=Float(0.0e-6).tag(desc="shift in y direction when doing angle evaporation", unit="um")
+    view_type=Enum("pattern", "angle")
+    add_type=Enum("overwrite", "add")
+
+    save_file=Unicode()
+    name=Unicode()
+    plot=Typed(Plotter, ())
+    agents=List()
+    pattern_dict=Dict()
+    
+    def show(self):
+        show(*self.agents)
+
+    def do_plot(self):
+        for p in self.agents:
+            p.verts=[]
+            p.make_polylist()
+            self.pattern_dict[p.name]=dict(verts=p.verts[:], color=p.color, layer=p.layer, plot_sep=p.plot_sep)
+
+        for key in self.pattern_dict:
+            if self.pattern_dict[key]["plot_sep"]:
+                self.plot.set_data(key, self.pattern_dict[key]["verts"], self.pattern_dict[key]["color"])
+    
+        xmin=min(b.xmin for b in self.agents)
+        xmax=max(b.xmax for b in self.agents)
+        ymin=min(b.ymin for b in self.agents)
+        ymax=max(b.ymax for b in self.agents)
+        self.plot.set_xlim(xmin, xmax)
+        self.plot.set_ylim(ymin, ymax)
+        self.plot.draw()        
+
+    @property
+    def show_all(self):
+        return True
+        
+    @property
+    def view_window(self):
+        with imports():
+            from e_Show import EBLView
+        return EBLView(chief=self)
+        
+pc=Polygon_Chief()
+
+class EBL_Polygons(sAgent):
     color=Enum("green", "blue", "red", "purple", "brown", "black").tag(desc="color or datatype of item, could be used for dosing possibly")
     layer=Enum("Al", "Al_35nA", "Au").tag(desc='layer of item')
     #unit_factor=Float(1.0e-6)
+    plot_sep=Bool(True)
     verts=List(default=[]).tag(private=True)
-    children=List().tag(private=True)
-    x_ref=Float(0.0).tag(desc="x coordinate of reference point of pattern.", unit="um")
-    y_ref=Float(0.0).tag(desc="y coordinate of reference point of pattern", unit="um")
-    theta=Float(0.0).tag(desc="angle to rotate in degrees")
-    orient=Enum("TL", "TR", "BL", "BR")
+    #children=List().tag(private=True)
+    #x_ref=Float(0.0).tag(desc="x coordinate of reference point of pattern.", unit="um")
+    #y_ref=Float(0.0).tag(desc="y coordinate of reference point of pattern", unit="um")
+    #theta=Float(0.0).tag(desc="angle to rotate in degrees")
+    #orient=Enum("TL", "TR", "BL", "BR")
     
+    @property
+    def base_name(self):
+        return "EBL_Polygons"
+
+    @property
+    def initial_position(self):
+        return (0,300)
+
+    @property
+    def chief(self):
+        return pc
+
+    def show(self):
+        self.chief.show()
+        
+    def __init__(self, **kwargs):
+        """extends __init__ to set boss, add agent to boss's agent list and give unique default name.
+        does some extra setup for particular types"""
+        super(EBL_Polygons, self).__init__(**kwargs)
+        self.make_polylist()
+        
     @property
     def xmin(self):
         return minx(self.verts)
@@ -228,16 +310,31 @@ class EBL_Polygons(Atom):
     def ymax(self):
         return maxy(self.verts)
         
-    def extend(self, vert_obj):
-        """accepts either a list of vertices or an EBL_Polygons object and adds its vertices to self.verts"""
-        if hasattr(vert_obj, "verts"):
-            vert_obj.make_verts()
-            self.verts.extend(vert_obj.verts)
-        else:
-            self.verts.extend(vert_obj)
+#    def extend(self, vert_obj):
+#        """accepts either a list of vertices or an EBL_Polygons object and adds its vertices to self.verts"""
+#        if hasattr(vert_obj, "verts"):
+#            vert_obj.make_verts()
+#            self.verts.extend(vert_obj.verts)
+#        else:
+#            self.verts.extend(vert_obj)
+
+#    def predraw(self):
+#        if self.add_type=="overwrite":
+#            self.verts=[]
+#        if self.view_type=="angle":
+#            self.make_polylist()
+#            self.offset(x=self.angle_x, y=self.angle_y)
+#            tverts=self.verts[:]
+#            self.make_polylist()
+#            self.extend(tverts)
+#        else:            
+#            self.make_polylist()
+#        self.set_data()
+#        self.make_name_sug()
+#        self.save_file.main_file=self.name_sug+".dxf"
 
     def make_polylist(self):
-        pass
+        pass #a.P([(0,0), (1.5,2), (2,2)])#pass
         #self.P([(0,0)])
     
 #    def make_verts(self):
@@ -275,8 +372,8 @@ class EBL_Polygons(Atom):
         """adds a polygon to the polylist with vertices given as a list of tuples"""
         sP(verts, self.verts) #extend necesary
 
-    def Poly(self, obj):
-        sPoly(obj, self.verts)
+    def Poly(self, obj, x_off=0.0, y_off=0.0, theta=0.0, orient="TL"):
+        sPoly(obj, x_off, y_off, theta, orient, vs=self.verts)
 
     def R(self, xr, yr, wr, hr):
         """creates rectangle EBLpolygon with (x,y) coordinates=(xr,yr), width=wr, height=hr"""
@@ -298,22 +395,22 @@ class EBL_Polygons(Atom):
     def Dig(self, dig_key, xr, yr, wr, hr):
         sDig(dig_key, xr, yr, wr, hr, self.verts)
 
-    def offset(self, x, y):
-        if x!=0.0 and y!=0.0:
-            self.verts=offset(self.verts, x, y)
+#    def offset(self, x, y):
+#        if x!=0.0 and y!=0.0:
+#            self.verts=offset(self.verts, x, y)
+#
+#    def horiz_refl(self):
+#        self.verts=horiz_refl(self.verts)
+#
+#    def vert_refl(self):
+#        self.verts=vert_refl(self.verts)
+#
+#    def rotate(self, theta):
+#        if theta!=0.0:
+#            self.verts=rotate(self.verts, theta)
 
-    def horiz_refl(self):
-        self.verts=horiz_refl(self.verts)
-
-    def vert_refl(self):
-        self.verts=vert_refl(self.verts)
-
-    def rotate(self, theta):
-        if theta!=0.0:
-            self.verts=rotate(self.verts, theta)
-
-    def clear_verts(self):
-        self.verts=[((0,0),)]
+#    def clear_verts(self):
+#        self.verts=[((0,0),)]
     
 
 
@@ -322,10 +419,10 @@ class EBL_Polygons(Atom):
 if __name__=="__main__":
     a=EBL_Polygons()
     print sP([(0,0), (1,0), (0,1)])
-    a.P([(0,0), (1,0), (0,1)])
+    #a.P([(0,0), (1,0), (0,1)])
     
-    a.P([(0,0), (1.5,2), (2,2)])
-    print a.verts
+    #a.P([(0,0), (1.5,2), (2,2)])
+    #print a.verts
     from a_Show import show
     show(a)
 
