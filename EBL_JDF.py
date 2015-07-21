@@ -21,8 +21,8 @@ def tuple_split(tempstr):
     return tempstr.split("(")[1].split(")")[0].split(",")
 
 class JDF_Assign(Atom):
-    assign_type=List() #list of assigns #.tag(inside_type=unicode)
-    pos_assign=List()# list of tuples of position.tag(inside_type=jdf_pos)#inside_labels=["x", "y"])
+    assign_type=List(default=['P(1)']) #list of assigns #.tag(inside_type=unicode)
+    pos_assign=List(default=[(1,1)])# list of tuples of position.tag(inside_type=jdf_pos)#inside_labels=["x", "y"])
     shot_assign=Unicode() # shot mod table name ContainerList(default=[0])
     assign_comment=Unicode()  #comment to assign
 
@@ -31,10 +31,10 @@ class JDF_Array(Atom):
     array_num=0 corresponds to the main array"""
     array_num=Coerced(int) #Int()
     x_start=Coerced(int) #Int()
-    x_num=Coerced(int) #Int(1)
+    x_num=Coerced(int, (1,)) #Int(1)
     x_step=Coerced(int) #Int()
     y_start=Coerced(int) #Int()
-    y_num=Coerced(int) #Int(1)
+    y_num=Coerced(int, (1,)) #Int(1)
     y_step=Coerced(int) #Int()
     assigns=ContainerList().tag(no_spacer=True)# inside_type=jdf_assign)
 
@@ -76,11 +76,11 @@ class JDF_Top(Atom):
     plot=Typed(Plotter, ())
     agents=List()
     pattern_dict=Dict()
-    
+
     def show(self):
         show(*self.agents)
 
-    def do_plot(self):
+    def pre_plot(self):
         for p in self.agents:
             p.verts=[]
             p.make_polylist()
@@ -89,34 +89,34 @@ class JDF_Top(Atom):
         for key in self.pattern_dict:
             if self.pattern_dict[key]["plot_sep"]:
                 self.plot.set_data(key, self.pattern_dict[key]["verts"], self.pattern_dict[key]["color"])
-    
+
         xmin=min(b.xmin for b in self.agents)
         xmax=max(b.xmax for b in self.agents)
         ymin=min(b.ymin for b in self.agents)
         ymax=max(b.ymax for b in self.agents)
         self.plot.set_xlim(xmin, xmax)
         self.plot.set_ylim(ymin, ymax)
-        self.plot.draw()        
+        self.plot.draw()
 
     @property
     def show_all(self):
         return True
-        
+
     text=Unicode()
     output_jdf=Unicode()
     comments=List() #Unicode()
-    Px=Coerced(int)
-    Py=Coerced(int)
-    Qx=Coerced(int)
-    Qy=Coerced(int)
+    Px=Coerced(int, (-40000,))
+    Py=Coerced(int, (4000,))
+    Qx=Coerced(int, (-4000,))
+    Qy=Coerced(int, (40000,))
 
     mgn_name=Unicode()
-    wafer_diameter=Coerced(int)
-    write_diameter=Coerced(float)
+    wafer_diameter=Coerced(int, (4,))
+    write_diameter=Coerced(float, (-4.2,))
 
-    stdcur=Coerced(int)
-    shot=Coerced(int)
-    resist=Coerced(int) #Int(165)
+    stdcur=Coerced(int, (2,))
+    shot=Coerced(int, (8,))
+    resist=Coerced(int, (165,))
     arrays=ContainerList()#.tag(width='max', inside_type=jdf_array)
     patterns=ContainerList()#.tag(width='max', inside_type=jdf_pattern)
     jdis=ContainerList()
@@ -262,6 +262,18 @@ class JDF_Top(Atom):
         jl.append("\nEND 1")
 
         return "\n".join(jl)
+
+def gen_jdf_quarter_wafer(patterns):
+    """guesses at jdf from list of patterns. patterns have a name and a shot_mod"""
+    jdf=JDF_Top()
+    for n,p in enumerate(patterns):
+        jdf.patterns.append(JDF_Pattern(num=n+1, name=p.name))
+        jdf.jdis.append(p.name)
+        jdf.arrays.append(JDF_Array(array_num=n+1,
+                                    assigns=[JDF_Assign(assign_type=['P({0})'.format(n+1)],
+                                                        shot_assign=p.shot_mod,
+                                                        assign_comment=p.name)]))
+    jdf.arrays.insert(0, "main_array")
 
 
 
