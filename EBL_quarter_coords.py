@@ -8,7 +8,7 @@ Created on Mon Jun  1 12:51:22 2015
 def give_GoodCoords(WAFER, BadCoords):
     return [x for x in WAFER if x not in BadCoords]
 
-def get_WaferCoords(qwaf='A'):
+def get_WaferCoords(qwaf):
     A_WAFER=[                                         (7,1), (8,1),
                                        (5,2), (6,2), (7,2), (8,2),
                                 (4,3), (5,3), (6,3), (7,3), (8,3),
@@ -99,8 +99,11 @@ def get_WaferCoords(qwaf='A'):
     
     #D_GoodCoords=give_GoodCoords(D_WAFER, D_BadCoords)
 
-def numCoords(Coords, AssignArray):
+def numCoords2(Coords, AssignArray):
     return int(len(Coords)//len(AssignArray))
+
+def numCoords(Coords, lengthAA):
+    return int(len(Coords)//lengthAA)
 
 #AssignArray=[('A(1)+A(2)+A(15)', 'D32080 with two IDTs and Squid connect'),
 #        ('A(1)+A(3)+A(15)', 'S32080 with two IDTs and Squid connect'),
@@ -120,7 +123,26 @@ def numCoords(Coords, AssignArray):
 
 #print numBadCoords, numGoodCoords
 
-def distr_coords(AssignArray, qwaf='A'):#BadCoords, WAFER):
+def distr_one_coord(i, BadCoords, GoodCoords, numBadCoords, numGoodCoords, numSkip):
+    templist=[BadCoords[n*numSkip+i] for n in range(numBadCoords)]
+    templist.extend([GoodCoords[m*numSkip+i] for m in range(numGoodCoords)])
+    leftover=len(BadCoords)-numBadCoords*numSkip
+    if numBadCoords*numSkip+i<len(BadCoords):
+        templist.append(BadCoords[(numBadCoords)*numSkip+i])
+    elif numGoodCoords*numSkip-leftover+i<len(GoodCoords):
+        templist.append(GoodCoords[numGoodCoords*numSkip-leftover+i])
+    if numGoodCoords*numSkip-leftover+numSkip+i<len(GoodCoords):
+        templist.extend(GoodCoords[(numGoodCoords+1)*numSkip-leftover+i])
+    return templist
+    
+def distribute_coords(lengthAA, qwaf='A'):#BadCoords, WAFER):
+    WAFER, BadCoords, GoodCoords=get_WaferCoords(qwaf=qwaf)
+    numGoodCoords=numCoords(GoodCoords, lengthAA)
+    numBadCoords=numCoords(BadCoords, lengthAA)
+    numSkip=lengthAA
+    return [distr_one_coord(i, BadCoords, GoodCoords, numBadCoords, numGoodCoords, numSkip) for i in range(lengthAA)]
+
+def distr_coords2(AssignArray, qwaf='A'):#BadCoords, WAFER):
     WAFER, BadCoords, GoodCoords=get_WaferCoords(qwaf=qwaf)
     numGoodCoords=numCoords(GoodCoords, AssignArray)
     numBadCoords=numCoords(BadCoords, AssignArray)

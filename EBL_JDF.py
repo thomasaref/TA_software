@@ -8,8 +8,8 @@ Created on Mon Jun  1 10:46:56 2015
 #from a_Base import Base, NoShowBase
 from Plotter import Plotter
 from Atom_Text_Editor import Text_Editor
-from EBL_quarter_coords import distr_coords
-from atom.api import Typed, Dict, Unicode, ContainerList, Int, Float, Atom, List, Coerced
+from EBL_quarter_coords import distribute_coords
+from atom.api import Typed, Dict, Unicode, ContainerList, Int, Float, Atom, List, Coerced, Enum
 #from LOG_functions import log_info, log_debug, make_log_file, log_warning
 from a_Show import show
 from enaml import imports
@@ -53,8 +53,8 @@ class JDF_Array(Atom):
                         shot_assign=shot_assign, assign_comment=comment))
 
 class JDF_Main_Array(JDF_Array):
-    M1x=Coerced(int) #Int()
-    M1y=Coerced(int) #Int()
+    M1x=Coerced(int, (1500,))
+    M1y=Coerced(int, (1500,))
 
 class JDF_Pattern(Atom):
     num=Coerced(int) #Int(1)
@@ -72,11 +72,44 @@ def parse_comment(line):
         tempstr=""
     return tempstr, comment
 
+GLM_dict=dict(A=[(-40000, 4000), (-4000, 40000)],
+              B=[(4000, 40000), (40000, 4000)],
+              C=[(-40000, -4000), (-4000, -40000)],
+              D=[(4000, -40000), (40000, -4000)])
+
+def get_GLM(qw):
+    """returns Px, Py, Qx, Qy" for a given quarter wafer"""
+    glm=GLM_dict[qw]
+    return glm[0][0], glm[0][1], glm[1][0], glm[1][1] 
+
+Array_dict=dict(A=[(7500,8,5000), (-7500,8,5000)],
+                B=[(7500,8,5000), (-7500,8,5000)],
+                C=[(7500,8,5000), (-7500,8,5000)],
+                D=[(7500,8,5000), (-7500,8,5000)])
+
+def get_Array(qw):
+    """returns Px, Py, Qx, Qy" for a given quarter wafer"""
+    ar=Array_dict[qw]
+    return ar[0][0], ar[0][1], ar[0][2], ar[1][0], ar[1][1], ar[1][2]  
+
 class JDF_Top(Atom):
     plot=Typed(Plotter, ())
     agents=List()
     pattern_dict=Dict()
+    quarter_wafer=Enum("A", "B", "C", "D")
 
+    def distribute_coords(self, num=None):
+        self.comments=["distributed main array for quarter wafer {}".format(self.quarter_wafer)]
+        self.Px, self.Py, self.Qx, self.Qy=get_GLM(self.quarter_wafer)
+        
+        if num is None:
+            num=len(self.patterns)
+        coords=distribute_coords(num, self.quarter_wafer)
+        for n, c in enumerate(coords):
+            self.arrays[0].assigns[n].pos_assign=c
+        (self.arrays[0].x_start, self.arrays[0].x_num, self.arrays[0].x_step, 
+                self.arrays[0].y_start, self.arrays[0].y_num, self.arrays[0].y_step)=get_Array(self.quarter_wafer)        
+        
     def show(self):
         show(*self.agents)
 
@@ -110,7 +143,7 @@ class JDF_Top(Atom):
     Qx=Coerced(int, (-4000,))
     Qy=Coerced(int, (40000,))
 
-    mgn_name=Unicode()
+    mgn_name=Unicode("IDT")
     wafer_diameter=Coerced(int, (4,))
     write_diameter=Coerced(float, (-4.2,))
 
@@ -217,7 +250,7 @@ class JDF_Top(Atom):
         jl.append("JOB/W '{name}', {waf_diam}, {write_diam}\n".format(name=self.mgn_name,
                   waf_diam=self.wafer_diameter, write_diam=self.write_diameter))
         jl.append(";{comment}\n".format(comment=self.comments[0]))
-        jl.append("GLMPOS P=({Px}, {Py}), Q=({Qx},{Qx})".format(Px=self.Px, Py=self.Py, Qx=self.Qx, Qy=self.Qy))
+        jl.append("GLMPOS P=({Px}, {Py}), Q=({Qx},{Qy})".format(Px=self.Px, Py=self.Py, Qx=self.Qx, Qy=self.Qy))
         jl.append("PATH")
 
         for n, item in enumerate(self.arrays):
@@ -263,9 +296,10 @@ class JDF_Top(Atom):
 
         return "\n".join(jl)
 
-def gen_jdf_quarter_wafer(patterns):
+def gen_jdf_quarter_wafer(patterns, qw="A"):
     """guesses at jdf from list of patterns. patterns have a name and a shot_mod"""
-    jdf=JDF_Top()
+    jdf=JDF_Top(quarter_wafer=qw)
+    jdf.arrays.append(JDF_Main_Array())                                                        
     for n,p in enumerate(patterns):
         jdf.patterns.append(JDF_Pattern(num=n+1, name=p.name))
         jdf.jdis.append(p.name)
@@ -273,7 +307,11 @@ def gen_jdf_quarter_wafer(patterns):
                                     assigns=[JDF_Assign(assign_type=['P({0})'.format(n+1)],
                                                         shot_assign=p.shot_mod,
                                                         assign_comment=p.name)]))
-    jdf.arrays.insert(0, "main_array")
+        jdf.arrays[0].assigns.append(JDF_Assign(assign_type=['A({0})'.format(n+1)],
+                                             assign_comment=p.name))
+    jdf.distribute_coords()
+    return jdf
+    
 
 
 
@@ -406,8 +444,15 @@ LAYER 1
 
 END 1"""
     #a=Text_Editor(name="Text_Editor", dir_path="/Volumes/aref/jbx9300/job/TA150515B/IDTs", main_file="idt.jdf")
-    b=JDF_Top(text=jdf_data)#_base()
-    b.do_plot()
+    
+    class Pattern(Atom):
+        name=Unicode()
+        shot_mod=Unicode()
+        
+    b=gen_jdf_quarter_wafer([Pattern(name="IDT", shot_mod="IDT1"), Pattern(name="QDT", shot_mod="IDT2")], "B")    
+    print b.jdf_produce()
+    #b=JDF_Top(text=jdf_data)#_base()
+    #b.do_plot()
     #b.jdf_parse(jdf_data)
     #print b.Px, b.Py, b.Qx, b.Qy
     #print b.arrays[0].assigns
@@ -425,7 +470,7 @@ END 1"""
     #print [a.get_tag(aa, 'label', aa) for aa in a.all_params]
     #print a.jdf_list
     #print b.get_member('arrays').item.validate_mode[1]
-    show(b)
+    #show(b)
 #    b.show()
     #print a.data
     #print b.jdf_produce()
