@@ -4,7 +4,7 @@ Created on Sat Nov 15 15:30:27 2014
 
 @author: thomasaref
 """
-from atom.api import Atom, Unicode, Float
+from atom.api import Atom, Unicode, Float, List
 
 class BeamerGen(Atom):
     file_name=Unicode('qdt_df7_ef20_w50_g50')
@@ -18,7 +18,7 @@ class BeamerGen(Atom):
     extentLLy=Float(-50)
     extentURx=Float(50)
     extentURy=Float(50)
-    
+    fl=List().tag(private=True)
     
     def gen_flow(self):
         self.fl=[]

@@ -464,4 +464,7 @@ if __name__=="__main__":
     #tp=EBL_test_pads()
     a=EBL_PADS()#test_pads=tp)
     b=Al_PADS(chip=a)
+    a.chief.do_plot()
+    a.full_EBL_save()
+    
     a.show()

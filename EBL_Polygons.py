@@ -4,12 +4,14 @@ Created on Thu Jun 25 09:52:31 2015
 
 @author: thomasaref
 """
-from atom.api import Atom, Enum, Float, List, Unicode, Typed, Dict, Bool
+from atom.api import Atom, Enum, Float, List, Unicode, Typed, Dict, Bool, observe
 #from Plotter import Plotter
 from numpy import sin, cos, pi
 #from LOG_functions import log_debug
 #from enaml import imports
 from a_Agent import sAgent
+from Atom_Save_File import Save_DXF
+from a_BeamerGen import BeamerGen
 
 def gen_sP(verts):
     """generates a polygon from a list of vert tuples using a list comprehension. 
@@ -236,6 +238,8 @@ class Polygon_Chief(Atom):
             p.verts=[]
             p.make_polylist()
             self.pattern_dict[p.name]=dict(verts=p.verts[:], color=p.color, layer=p.layer, plot_sep=p.plot_sep)
+            p.make_name_sug()
+            p.save_file.main_file=p.name_sug+".dxf"
 
         for key in self.pattern_dict:
             if self.pattern_dict[key]["plot_sep"]:
@@ -265,6 +269,10 @@ class EBL_Polygons(sAgent):
     color=Enum("green", "blue", "red", "purple", "brown", "black").tag(desc="color or datatype of item, could be used for dosing possibly")
     layer=Enum("Al", "Al_35nA", "Au").tag(desc='layer of item')
     #unit_factor=Float(1.0e-6)
+    save_file=Typed(Save_DXF, ()).tag(no_spacer=True)
+    name_sug=Unicode().tag(no_spacer=True)
+    shot_mod_table=Unicode()
+    bmr=Typed(BeamerGen).tag(private=True)
     plot_sep=Bool(True)
     verts=List(default=[]).tag(private=True)
     #children=List().tag(private=True)
@@ -272,7 +280,23 @@ class EBL_Polygons(sAgent):
     #y_ref=Float(0.0).tag(desc="y coordinate of reference point of pattern", unit="um")
     #theta=Float(0.0).tag(desc="angle to rotate in degrees")
     #orient=Enum("TL", "TR", "BL", "BR")
-    
+
+    def make_name_sug(self):
+        name_sug=""
+        self.name_sug=name_sug
+        
+    def full_EBL_save(self, dir_path="""/Users/thomasaref/Dropbox/Current stuff/TA_software/discard/"""):
+        self.save_file.file_path=dir_path+self.name_sug+".dxf"
+        self.save_file.direct_save(self, write_mode='w')
+        self.bmr=BeamerGen(file_name=self.name_sug, mod_table_name = self.shot_mod_table, bias=-0.009, base_path=dir_path, 
+                           extentLLy=-150, extentURy=150)
+        self.bmr.gen_flow()
+        #self.jdf.add_pattern(self.name, self.shot_mod_table)
+
+    @observe('save_file.save_event')
+    def obs_save_event(self, change):
+        self.save_file.direct_save(self, write_mode='w')
+        
     @property
     def base_name(self):
         return "EBL_Polygons"
