@@ -4,7 +4,7 @@ Created on Thu Feb 26 11:08:19 2015
 
 @author: thomasaref
 """
-from a_Agent import Spy
+from a_Agent import sAgent
 from a_Backbone import updater
 from atom.api import Enum, Int, Float, observe, Bool, Property, Str, List
 from scipy.constants import epsilon_0 as eps0
@@ -27,7 +27,7 @@ from LOG_functions import log_debug
 #    return myfunc
     
 
-class IDT(Spy):
+class IDT(sAgent):
     
 #    def __setattr__(self, name, value):
 #        """extends __setattr__ to allow logging and data saving and automatic sending if tag send_now is true.

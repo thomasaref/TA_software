@@ -8,12 +8,12 @@ Created on Thu Jun 25 11:43:01 2015
 from a_Backbone import get_map
 from a_IDT import IDT
 from atom.api import Float, Bool, Enum, Dict, observe, Int
-from EBL_Item import EBL_Item
+from EBL_Polygons import EBL_Polygons
 #from Atom_Plotter import Plotter
 from numpy import  mod
 from LOG_functions import log_debug
 
-class EBL_IDT(EBL_Item, IDT):
+class EBL_IDT(EBL_Polygons, IDT):
     """handles everything related to drawing a IDT. Units are microns (um)"""
     def _default_color(self):
         return "blue"
@@ -62,7 +62,7 @@ class EBL_IDT(EBL_Item, IDT):
         shot_mod+=dict(basic="", stepped="T")[self.idt_type]
         shot_mod+=dict(IDT="I", QDT="Q")[self.qdt_type]
         shot_mod+=dict(single="S", double="D")[self.ft]
-        shot_mod+="{0}{1}{2}".format(self.Np, self.ef, int(self.a*1e9))
+        shot_mod+="{0}".format(len(self.chief.patterns)) #int(self.a*1e9)) #self.Np, self.ef, 
         self.shot_mod_table=shot_mod
                 
     

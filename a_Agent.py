@@ -31,6 +31,9 @@ class sAgent(Atom):
         """do nothing function to allow custom setup extension in subclasses"""
         pass
 
+    def get_map(self, name, item=None, none_map={}):
+        return get_map(self, name=name, item=item, none_map=none_map)
+
     @property
     def base_name(self):
         return "sagent"#, basenum=len(self.chief.agents))

@@ -207,7 +207,7 @@ class BeamerGen(Atom):
         self.fl.append('COLLECTFORLOOP = false')
         self.fl.append('IN_PORT[0] = 4, PEC%20120nm, 0')
         self.fl.append('\n')
-        self.fl.append('FILE_NAME = .%2F{name}.v30'.format(name=self.file_name))
+        self.fl.append('FILE_NAME = .%2Fv30s%2F{name}.v30'.format(name=self.file_name))
         self.fl.append('FILE_TYPE = 9')
         self.fl.append('EXTENT_USER')
         self.fl.append('EXTENT_LOWER_LEFT_X = {0}'.format(self.extentLLx))

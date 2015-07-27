@@ -17,7 +17,7 @@ def gen_sP(verts):
     """generates a polygon from a list of vert tuples using a list comprehension. 
     Returns a tuple of verts divided by function defined unit factor"""
     return tuple([(v[0]/gen_sP.UNIT_FACTOR, v[1]/gen_sP.UNIT_FACTOR) for v in verts])
-gen_sP.UNIT_FACTOR=1.0e-0#6  #microns
+gen_sP.UNIT_FACTOR=1.0e-6  #microns
 
 def sP(verts, vs=None):
     """converts verts to a polygon tuple, appends it to vs and returns vs. 
@@ -228,7 +228,9 @@ class Polygon_Chief(Atom):
     name=Unicode()
     plot=Typed(Plotter, ())
     agents=List()
-    pattern_dict=Dict()
+    pattern_dict=Dict() #for plotting
+    patterns=Dict() #for generating jdf
+    pattern_list=List()
     
     def show(self):
         show(*self.agents)
@@ -281,6 +283,10 @@ class EBL_Polygons(sAgent):
     #theta=Float(0.0).tag(desc="angle to rotate in degrees")
     #orient=Enum("TL", "TR", "BL", "BR")
 
+    def add_to_jdf(self):
+        self.chief.patterns[self.name_sug]={"shot_mod":self.shot_mod_table}
+        self.chief.pattern_list.append(self.name_sug)
+
     def make_name_sug(self):
         name_sug=""
         self.name_sug=name_sug
@@ -291,6 +297,7 @@ class EBL_Polygons(sAgent):
         self.bmr=BeamerGen(file_name=self.name_sug, mod_table_name = self.shot_mod_table, bias=-0.009, base_path=dir_path, 
                            extentLLy=-150, extentURy=150)
         self.bmr.gen_flow()
+        self.add_to_jdf()
         #self.jdf.add_pattern(self.name, self.shot_mod_table)
 
     @observe('save_file.save_event')

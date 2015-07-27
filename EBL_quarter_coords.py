@@ -5,6 +5,26 @@ Created on Mon Jun  1 12:51:22 2015
 @author: thomasaref
 """
 
+GLM_dict=dict(A=[(-40000, 4000), (-4000, 40000)],
+              B=[(4000, 40000), (40000, 4000)],
+              C=[(-40000, -4000), (-4000, -40000)],
+              D=[(4000, -40000), (40000, -4000)])
+
+def get_GLM(qw):
+    """returns Px, Py, Qx, Qy" for a given quarter wafer"""
+    glm=GLM_dict[qw]
+    return glm[0][0], glm[0][1], glm[1][0], glm[1][1] 
+
+Array_dict=dict(A=[(-42500,8,5000), (42500,8,5000)],
+                B=[(7500,8,5000), (42500,8,5000)],
+                C=[(-42500,8,5000), (-7500,8,5000)],
+                D=[(7500,8,5000), (-7500,8,5000)])
+
+def get_Array(qw):
+    """returns Px, Py, Qx, Qy" for a given quarter wafer"""
+    ar=Array_dict[qw]
+    return ar[0][0], ar[0][1], ar[0][2], ar[1][0], ar[1][1], ar[1][2]  
+
 def give_GoodCoords(WAFER, BadCoords):
     return [x for x in WAFER if x not in BadCoords]
 
@@ -132,7 +152,7 @@ def distr_one_coord(i, BadCoords, GoodCoords, numBadCoords, numGoodCoords, numSk
     elif numGoodCoords*numSkip-leftover+i<len(GoodCoords):
         templist.append(GoodCoords[numGoodCoords*numSkip-leftover+i])
     if numGoodCoords*numSkip-leftover+numSkip+i<len(GoodCoords):
-        templist.extend(GoodCoords[(numGoodCoords+1)*numSkip-leftover+i])
+        templist.append(GoodCoords[(numGoodCoords+1)*numSkip-leftover+i])
     return templist
     
 def distribute_coords(lengthAA, qwaf='A'):#BadCoords, WAFER):

@@ -36,11 +36,12 @@ def get_metadata(obj, name):
         if member.metadata is None:
             member.metadata={}
         return member.metadata
-    if not hasattr(obj, "_metadata"):
-        obj._metadata={name:{}}
-    if obj._metadata.get(name, None) is None:
-        obj._metadata[name]={}
-    return obj._metadata[name]
+    return {}
+#    if not hasattr(obj, "_metadata"):
+#        obj._metadata={name:{}}
+#    if obj._metadata.get(name, None) is None:
+#        obj._metadata[name]={}
+#    return obj._metadata[name]
 
 def set_tag(obj, name, **kwargs):
     """sets the tag of a member using Atom's built in tag functionality or

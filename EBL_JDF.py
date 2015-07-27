@@ -8,7 +8,7 @@ Created on Mon Jun  1 10:46:56 2015
 #from a_Base import Base, NoShowBase
 from Plotter import Plotter
 from Atom_Text_Editor import Text_Editor
-from EBL_quarter_coords import distribute_coords
+from EBL_quarter_coords import distribute_coords, get_GLM, get_Array
 from atom.api import Typed, Dict, Unicode, ContainerList, Int, Float, Atom, List, Coerced, Enum
 #from LOG_functions import log_info, log_debug, make_log_file, log_warning
 from a_Show import show
@@ -71,26 +71,6 @@ def parse_comment(line):
     if line.startswith(";"):
         tempstr=""
     return tempstr, comment
-
-GLM_dict=dict(A=[(-40000, 4000), (-4000, 40000)],
-              B=[(4000, 40000), (40000, 4000)],
-              C=[(-40000, -4000), (-4000, -40000)],
-              D=[(4000, -40000), (40000, -4000)])
-
-def get_GLM(qw):
-    """returns Px, Py, Qx, Qy" for a given quarter wafer"""
-    glm=GLM_dict[qw]
-    return glm[0][0], glm[0][1], glm[1][0], glm[1][1] 
-
-Array_dict=dict(A=[(7500,8,5000), (-7500,8,5000)],
-                B=[(7500,8,5000), (-7500,8,5000)],
-                C=[(7500,8,5000), (-7500,8,5000)],
-                D=[(7500,8,5000), (-7500,8,5000)])
-
-def get_Array(qw):
-    """returns Px, Py, Qx, Qy" for a given quarter wafer"""
-    ar=Array_dict[qw]
-    return ar[0][0], ar[0][1], ar[0][2], ar[1][0], ar[1][1], ar[1][2]  
 
 class JDF_Top(Atom):
     plot=Typed(Plotter, ())
@@ -296,19 +276,20 @@ class JDF_Top(Atom):
 
         return "\n".join(jl)
 
-def gen_jdf_quarter_wafer(patterns, qw="A"):
-    """guesses at jdf from list of patterns. patterns have a name and a shot_mod"""
+def gen_jdf_quarter_wafer(patterns, pattern_list, qw="A"):
+    """guesses at jdf from list of patterns. patterns is a dictionary with an optional shot_mod and an optional position list?"""
     jdf=JDF_Top(quarter_wafer=qw)
     jdf.arrays.append(JDF_Main_Array())                                                        
-    for n,p in enumerate(patterns):
-        jdf.patterns.append(JDF_Pattern(num=n+1, name=p.name))
-        jdf.jdis.append(p.name)
+    for n,p in enumerate(pattern_list):
+        jdf.patterns.append(JDF_Pattern(num=n+1, name=p))
+        jdf.jdis.append(p)
         jdf.arrays.append(JDF_Array(array_num=n+1,
                                     assigns=[JDF_Assign(assign_type=['P({0})'.format(n+1)],
-                                                        shot_assign=p.shot_mod,
-                                                        assign_comment=p.name)]))
+                                                        shot_assign=patterns[p].get("shot_mod", ""),
+                                                        #pos_assign=patterns[p].get("pos", [(1,1)])
+                                                        assign_comment=p)]))
         jdf.arrays[0].assigns.append(JDF_Assign(assign_type=['A({0})'.format(n+1)],
-                                             assign_comment=p.name))
+                                             assign_comment=p))
     jdf.distribute_coords()
     return jdf
     
@@ -449,7 +430,7 @@ END 1"""
         name=Unicode()
         shot_mod=Unicode()
         
-    b=gen_jdf_quarter_wafer([Pattern(name="IDT", shot_mod="IDT1"), Pattern(name="QDT", shot_mod="IDT2")], "B")    
+    b=gen_jdf_quarter_wafer(dict(IDT={"shot_mod":"IDT1"}, QDT={}), "B")    
     print b.jdf_produce()
     #b=JDF_Top(text=jdf_data)#_base()
     #b.do_plot()
