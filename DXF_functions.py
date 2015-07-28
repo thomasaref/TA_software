@@ -5,8 +5,9 @@ Created on Thu Mar  5 20:46:23 2015
 @author: thomasaref
 """
 
-def dxfstart(tlist=[]):  
+def dxfstart():  
     """starts dxf file"""
+    tlist=[]
     tlist.append('0\r\n')
     tlist.append('SECTION\r\n')
     tlist.append('2\r\n')
@@ -79,8 +80,8 @@ def EBL_Polygons2dxf(verts, color, layer):
     dlist=dxfend(dlist)
     return dlist
 
-def save_dxf(file_path, data, write_mode="w"):
-    dlist=EBL_Polygons2dxf(data.verts, data.color, data.layer)
+def save_dxf(verts, color, layer, file_path, write_mode="w"):
+    dlist=EBL_Polygons2dxf(verts, color, layer)
     dxfstr=''.join(dlist)
     with open(file_path, write_mode) as g:
         g.write(dxfstr)    

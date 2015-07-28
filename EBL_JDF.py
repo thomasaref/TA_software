@@ -276,11 +276,22 @@ class JDF_Top(Atom):
 
         return "\n".join(jl)
 
-def gen_jdf_quarter_wafer(patterns, pattern_list, qw="A"):
+def jdf_parse(jdf_data):
+    jdf=JDF_Top()
+    jdf.jdf_parse(jdf_data)
+    return jdf
+    
+def jdf_qw_swap(jdf_data, qw="A", num=None):
+    jdf=jdf_parse(jdf_data)
+    jdf.quarter_wafer=qw
+    jdf.distribute_coords(num=num)
+    return jdf.jdf_produce()
+    
+def gen_jdf_quarter_wafer(patterns, qw="A"):
     """guesses at jdf from list of patterns. patterns is a dictionary with an optional shot_mod and an optional position list?"""
     jdf=JDF_Top(quarter_wafer=qw)
     jdf.arrays.append(JDF_Main_Array())                                                        
-    for n,p in enumerate(pattern_list):
+    for n,p in enumerate(patterns):
         jdf.patterns.append(JDF_Pattern(num=n+1, name=p))
         jdf.jdis.append(p)
         jdf.arrays.append(JDF_Array(array_num=n+1,

@@ -217,6 +217,7 @@ def sPoly(obj, x_off=0.0, y_off=0.0, theta=0.0, orient="TL", vs=None):
 from Plotter import Plotter
 from enaml import imports
 from a_Show import show
+from collections import OrderedDict
 
 class Polygon_Chief(Atom):
     angle_x=Float(0.3e-6).tag(desc="shift in x direction when doing angle evaporation", unit="um")
@@ -229,9 +230,12 @@ class Polygon_Chief(Atom):
     plot=Typed(Plotter, ())
     agents=List()
     pattern_dict=Dict() #for plotting
-    patterns=Dict() #for generating jdf
+    patterns=Typed(OrderedDict) #for generating jdf
     pattern_list=List()
     
+    def _default_patterns(self):
+        return OrderedDict()
+        
     def show(self):
         show(*self.agents)
 
@@ -267,6 +271,28 @@ class Polygon_Chief(Atom):
         
 pc=Polygon_Chief()
 
+def make_Beamer(name_sug, dir_path, mod_table_name="IDT", bias=-0.009, extentLLy=-150, extentURy=150):
+    bmr=BeamerGen(file_name=name_sug, mod_table_name = mod_table_name, bias=-0.009, base_path=dir_path, 
+                       extentLLy=extentLLy, extentURy=extentURy)
+    bmr.gen_flow()
+from DXF_functions import save_dxf
+from LOG_functions import log_info
+    
+
+def add_to_jdf(name_sug, shot_mod="", jp=OrderedDict()):
+    #if jp is None:
+    #    jp=OrderedDict()
+    jp[name_sug]={"shot_mod":shot_mod}
+    return jp
+
+def full_EBL_save(name_sug, verts, color="green", layer="Al", shot_mod="",
+                  dir_path="""/Users/thomasaref/Dropbox/Current stuff/TA_software/discard/"""):
+    file_path=dir_path+name_sug+".dxf"                      
+    save_dxf(verts, color, layer, file_path, write_mode="w")
+    make_Beamer(name_sug, dir_path, mod_table_name=shot_mod)
+    log_info("Direct save of data to: {}".format(file_path))
+    return add_to_jdf(name_sug, shot_mod)
+
 class EBL_Polygons(sAgent):
     color=Enum("green", "blue", "red", "purple", "brown", "black").tag(desc="color or datatype of item, could be used for dosing possibly")
     layer=Enum("Al", "Al_35nA", "Au").tag(desc='layer of item')
@@ -285,15 +311,18 @@ class EBL_Polygons(sAgent):
 
     def add_to_jdf(self):
         self.chief.patterns[self.name_sug]={"shot_mod":self.shot_mod_table}
-        self.chief.pattern_list.append(self.name_sug)
+        #self.chief.pattern_list.append(self.name_sug)
 
     def make_name_sug(self):
         name_sug=""
         self.name_sug=name_sug
         
     def full_EBL_save(self, dir_path="""/Users/thomasaref/Dropbox/Current stuff/TA_software/discard/"""):
-        self.save_file.file_path=dir_path+self.name_sug+".dxf"
-        self.save_file.direct_save(self, write_mode='w')
+        self.verts=[]
+        self.make_polylist()
+        self.make_name_sug()
+        file_path=dir_path+self.name_sug+".dxf"
+        self.save_file.direct_save(self.verts[:], self.color, self.layer, file_path=file_path, write_mode='w')
         self.bmr=BeamerGen(file_name=self.name_sug, mod_table_name = self.shot_mod_table, bias=-0.009, base_path=dir_path, 
                            extentLLy=-150, extentURy=150)
         self.bmr.gen_flow()
@@ -302,7 +331,7 @@ class EBL_Polygons(sAgent):
 
     @observe('save_file.save_event')
     def obs_save_event(self, change):
-        self.save_file.direct_save(self, write_mode='w')
+        self.save_file.direct_save(self.verts[:], self.color, self.layer, write_mode='w')
         
     @property
     def base_name(self):
@@ -365,7 +394,8 @@ class EBL_Polygons(sAgent):
 #        self.save_file.main_file=self.name_sug+".dxf"
 
     def make_polylist(self):
-        pass #a.P([(0,0), (1.5,2), (2,2)])#pass
+        return []
+        #pass #a.P([(0,0), (1.5,2), (2,2)])#pass
         #self.P([(0,0)])
     
 #    def make_verts(self):

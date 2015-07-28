@@ -6,9 +6,8 @@ Created on Mon Dec  8 10:19:24 2014
 """
 
 from atom.api import Float, Typed
-from EBL_Item import EBL_Item
 from EBL_Polygons import horiz_refl, vert_refl, horizvert_refl, rotate, sC, sP, sT, EBL_Polygons
-from EBL_IDT import EBL_IDT
+
 #from EBL_Combiner import EBL_Combiner
 
 class EBL_test_pads(EBL_Polygons):
@@ -209,7 +208,7 @@ class Al_PADS(EBL_Polygons):
 
 
     idt_conn_w=Float(300.0e-6).tag(unit="um")
-    idt_conn_h=Float(25.0e-6).tag(unit="um")
+    idt_conn_h=Float(15.0e-6).tag(unit="um")
     
     @property
     def _s_CPW_strip_L(self):
@@ -417,13 +416,13 @@ class EBL_PADS(EBL_Polygons):
         self.verts.extend(self._s_markbox_BL)
         self.verts.extend(horiz_refl(self._s_markbox_BL))
         self.verts.extend(horizvert_refl(self._s_markbox_BL))
-        self.Cross(self.mb_x, self.mb_y, self.M1_size-50.0e-6, 20.0e-6)
-        self.Cross(self.mb_x, -self.mb_y, self.M1_size-50.0e-6, 20.0e-6)
-        self.Cross(-self.mb_x, self.mb_y, self.M1_size-50.0e-6, 20.0e-6)
-        self.Cross(-self.mb_x, -self.mb_y, self.M1_size-50.0e-6, 20.0e-6)
+        #self.Cross(self.mb_x, self.mb_y, self.M1_size-50.0e-6, 20.0e-6)
+        #self.Cross(self.mb_x, -self.mb_y, self.M1_size-50.0e-6, 20.0e-6)
+        #self.Cross(-self.mb_x, self.mb_y, self.M1_size-50.0e-6, 20.0e-6)
+        #self.Cross(-self.mb_x, -self.mb_y, self.M1_size-50.0e-6, 20.0e-6)
         #self.Dig(3, -self.mb_x, self.mb_y+self.M1_size/2+self.lbl_height/2, self.lbl_height/2-100e-6, 20e-6)
-        self.Dig("B", -self.mb_x, self.mb_y+self.M1_size/2+self.lbl_height/2, self.lbl_height/2-100e-6, 20e-6)
-        self.Dig("8", -self.mb_x+200e-6, self.mb_y+self.M1_size/2+self.lbl_height/2, self.lbl_height/2-100e-6, 20e-6)
+        #self.Dig("B", -self.mb_x, self.mb_y+self.M1_size/2+self.lbl_height/2, self.lbl_height/2-100e-6, 20e-6)
+        #self.Dig("8", -self.mb_x+200e-6, self.mb_y+self.M1_size/2+self.lbl_height/2, self.lbl_height/2-100e-6, 20e-6)
         #self.extend(
         self.Poly(self.test_pads, x_off=-self.testx, y_off=self.testy)
         self.Poly(self.test_pads, x_off=self.testx, y_off=self.testy)

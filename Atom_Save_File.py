@@ -183,9 +183,11 @@ class Save_DXF(Save_File):
     #def _default_base_dir(self):
     #    return self.base_dir+self.divider+"OutputPatterns"
 
-    def direct_save(self, data, write_mode='w'):
-        save_dxf(file_path=self.file_path, data=data, write_mode=write_mode)
-        log_info("Direct save of data to: {}".format(self.file_path))
+    def direct_save(self, verts, color, layer, file_path=None, write_mode='w'):
+        if file_path is None:
+            file_path=self.file_path
+        save_dxf(verts, color, layer, file_path, write_mode)
+        log_info("Direct save of data to: {}".format(file_path))
 
 if __name__=="__main__":
 

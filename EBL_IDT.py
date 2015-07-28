@@ -56,7 +56,10 @@ class EBL_IDT(EBL_Polygons, IDT):
         name_sug+=dict(basic="", stepped="stp")[self.idt_type]
         name_sug+=self.qdt_type
         name_sug+=dict(single="s", double="d")[self.ft]
-        name_sug+="{0}ef{1}a{2}b{3}".format(self.Np, self.ef, int(self.a*1e9), int(self.wbox))
+        if self.idt_type=="stepped":
+            name_sug+="{0}s{1}a{2}e{3}".format(self.Np, self.step_num, int(self.a*1e9), int(self.eta*100))
+        else:
+            name_sug+="{0}e{1}a{2}h{3}".format(self.Np, self.ef, int(self.a*1e9), int(self.hbox))            
         self.name_sug=name_sug
         shot_mod=""
         shot_mod+=dict(basic="", stepped="T")[self.idt_type]
