@@ -28,7 +28,7 @@ def members(obj):
     if hasattr(obj, "members"):
         return obj.members()
     return dict([mem for mem in getmembers(obj) if mem[0][0]!="_"])
-    
+
 def get_metadata(obj, name):
     """returns the metadata of a member if it exists and generates an appropriately indexed empty dictionary if it does not"""
     if isinstance(obj, Atom):
@@ -49,9 +49,9 @@ def set_tag(obj, name, **kwargs):
     if isinstance(obj, Atom):
         member=obj.get_member(name)
         member.tag(**kwargs)
-    else:
-        metadata=get_metadata(obj, name)
-        metadata.update(**kwargs)
+    #else:
+    #    metadata=get_metadata(obj, name)
+    #    metadata.update(**kwargs)
 
 def set_all_tags(obj, **kwargs):
     """set all parameters tags using keyword arguments"""
@@ -86,10 +86,10 @@ def get_map(obj, name, item=None, none_map={}):
 #    targets=(o.name for o in target_items)
 #    overlap=list(set(targets).intersection(names))
 #    return overlap
-    
+
 def get_mapping(obj, name, none_map={}):
     mapping=get_tag(obj, name, 'mapping')
-    if isinstance(mapping, dict): 
+    if isinstance(mapping, dict):
         #if mapping is already defined, just return it
         return mapping
     if isinstance(mapping, list):
@@ -102,7 +102,7 @@ def get_mapping(obj, name, none_map={}):
     items=obj.get_member(name).items
     if sorted(items)==sorted(set(items).intersection(members(obj))):
         #if every name in items maps to a member, update to a list mapping to the members
-        mapping=list(items) 
+        mapping=list(items)
         set_tag(obj, name, mapping=mapping, map_type="attribute")
         return {}
     #if nothing else, set mapping to none_map and return
@@ -129,7 +129,7 @@ def get_type(obj, name):
 def get_reserved_names(obj):
     """reserved names not to perform standard logging and display operations on,
            i.e. members that are tagged as private and will behave as usual Atom members"""
-    return get_all_tags(obj, "private", True)    
+    return get_all_tags(obj, "private", True)
 
 def get_all_params(obj):
     """all members that are not tagged as private, i.e. not in reserved_names and will behave as agents"""
@@ -155,13 +155,13 @@ def get_attr(obj, name, none_value=None):
     if hasattr(obj, str(name)):
         return getattr(obj, name)
     return none_value
-    
+
 class fakeboss(object):
     abort=False
     busy=False
     progress=0
     agents=[]
-    
+
     def __init__(self, agent=None):
         self.agents=[agent]
 
@@ -179,7 +179,7 @@ def get_run_params(f, include_self=False):
     if not include_self and "self" in argnames:
         argnames.remove("self")
     return argnames
-    
+
 def code_caller(topdog, code, **kwargs):
     result=code(**kwargs)
     try:
@@ -191,13 +191,13 @@ def code_caller(topdog, code, **kwargs):
         topdog.progress=0
         topdog.abort=False
     return result
- 
+
 def do_it_if_needed(topdog, code, **kwargs):
     if not topdog.busy:
         topdog.busy = True
         thread = Thread(target=code_caller, args=(topdog, code), kwargs=kwargs)
         thread.start()
-            
+
 def run_func(obj, name, **kwargs):
     """runs a function which is an attribute of an object. Auto-includes the obj itself depending on the types of function
     if kwargs are specified, it will set the attribtues of an object to those values (names need to match).
@@ -208,15 +208,15 @@ def run_func(obj, name, **kwargs):
         kwargs["self"]=obj
     for item in run_params:
         #if item=="self":
-        
-        #else:    
+
+        #else:
             if item in kwargs:
                 setattr(obj, item, kwargs[item])
             else:
                 value=getattr(obj, item)
                 value=set_value_map(obj, item, value)
                 kwargs[item]=value
-    do_it_if_needed(get_boss(obj), f, **kwargs)                
+    do_it_if_needed(get_boss(obj), f, **kwargs)
 
 def updater(fn):
     """a decorator to stop infinite recursion. also stores run_params as an attribute"""
@@ -230,7 +230,7 @@ def updater(fn):
             updfunc.callblock=""
     updfunc.run_params=get_run_params(fn)
     return updfunc
-    
+
 def log_func(fn):
     """a decorator that logs when a function is run. also stores run_params as an attribute"""
     @wraps(fn)
@@ -239,7 +239,7 @@ def log_func(fn):
         fn(*args, **kwargs)
     logf.run_params=get_run_params(fn, True)
     return logf
-   
+
 #def get_args(obj, name):
 #    f=getattr(obj, name)
 #    run_params=get_run_params(f, True)
@@ -250,10 +250,10 @@ def log_func(fn):
 #        run_params.remove("self")
 #    arglist.extend([getattr(obj, an) for an in run_params])
 #    return arglist
-    
+
 def get_name(obj, default_name="NO_NAME"):
     return get_attr(obj, "name", default_name)
- 
+
 def lowhigh_check(obj, name, value):
     """can specify low and high tags to keep float or int within a range."""
     if type(value) in (float, int):
@@ -270,13 +270,13 @@ def set_value_map(obj, name, value):
     """checks floats and ints for low/high limits and automaps an Enum when setting. Not working for List?"""
     value=lowhigh_check(obj, name, value)
     if get_type(obj, name)==Enum:
-        return get_map(obj, name, value) 
+        return get_map(obj, name, value)
     return value
 
 def data_save(obj, name, value):
     """data saving. does nothing if data_save is not defined"""
     get_attr(obj, "data_save", passf)(name, value)
-    
+
 def set_log(obj, name, value):
    """called when parameter of given name is set to value i.e. instr.parameter=value. Customized messages for different types. Also saves data"""
    if get_tag(obj, name, 'log', True):
@@ -323,11 +323,11 @@ def set_log(obj, name, value):
 #        return tempbase
 #
 
-unit_dict=dict(u=1.0e-6, m=1.0e-3, c=1.0e-2, 
+unit_dict=dict(u=1.0e-6, m=1.0e-3, c=1.0e-2,
               G=1.0e9, M=1.0e6, k=1.0e3)
 
 
-        
+
 if __name__=="__main__":
     class to(object):
         a=5
@@ -335,12 +335,12 @@ if __name__=="__main__":
         c="hey"
         d=True
 
-        @log_func    
+        @log_func
         def ff(self, a=2):
             print self, a
             print "a f says hello"
-        
-        
+
+
     class tA(Atom):
         a=Int(5)
         b=Float(4.3)
@@ -348,13 +348,13 @@ if __name__=="__main__":
         d=Bool(True)
         f=Enum(1,2,3)
         g=Enum("a", "b")
-        
+
         @Callable
-        @log_func    
+        @log_func
         def ff(self, a=2):
             print self, a
             print "b f says hello"
-        
+
 
     a=to()
     b=tA()
@@ -366,7 +366,7 @@ if __name__=="__main__":
     set_all_tags(b, bob="seven")
     print get_metadata(a, "a"), get_metadata(b, "a")
     print get_tag(a, "a", "bill"), get_tag(b, "a", "bill")
-    print get_all_tags(a, "bill"), get_all_tags(a, "bill", "five"),  get_all_tags(b, "bill", "five")    
+    print get_all_tags(a, "bill"), get_all_tags(a, "bill", "five"),  get_all_tags(b, "bill", "five")
     print b.f, get_map(b, "f"), get_mapping(b, "f"), get_inv(b, "f", 2)
     print b.g, get_map(b, "g"), get_mapping(b, "g"), get_inv(b, "f", 2)
     print get_type(a, "a"), get_type(b, "a")
@@ -375,24 +375,24 @@ if __name__=="__main__":
     print get_all_main_params(a), get_main_params(b)
     print get_main_params(a), get_main_params(b)
     print get_attr(a, "a", "yes"), get_attr(b, "aa", "yes")
-    
-    @log_func    
+
+    @log_func
     def ff(self, a=2):
         print self, a
         print "f says hello"
-    a.gg=ff    
+    a.gg=ff
     a.ff(), b.ff(b), a.gg(a)
     print get_run_params(ff), get_run_params(a.ff), get_run_params(a.gg)
     print b.a, a.a
     run_func(b, "ff", a=1), run_func(a, "ff", a=1), run_func(a, "gg")
     print b.a, a.a
-    
-    
+
+
 
 
     #print ff.func_code.co_argcount
     #print list(ff.func_code.co_varnames[0:ff.func_code.co_argcount])
-    
+
 #def get_args(obj, name):
 #    f=getattr(obj, name)
 #    run_params=get_run_params(f, True)
@@ -401,8 +401,8 @@ if __name__=="__main__":
 #        arglist.append(obj)
 #        run_params.remove("self")
 #    arglist.extend([getattr(obj, an) for an in run_params])
-#    return arglist    
-    #   Enum, Range, FloatRange, Int, Float, Callable, Unicode, Bool, List 
+#    return arglist
+    #   Enum, Range, FloatRange, Int, Float, Callable, Unicode, Bool, List
 
 #
 #
@@ -450,7 +450,7 @@ if __name__=="__main__":
 #    log_it=False
 #    if name in get_all_params(obj) and isinstance(obj, (backbone, SubAgent)):
 #        log_it=True
-#        value=lowhigh_check(obj, name, value)            
+#        value=lowhigh_check(obj, name, value)
 #    setattr(obj, name, value)
 #    if log_it:
 #        set_log(obj, name, value)

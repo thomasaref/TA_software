@@ -25,10 +25,10 @@ from LOG_functions import log_debug
 #            self.set_tag(change["name"], log=templog)
 #            myfunc.callblock=""
 #    return myfunc
-    
+
 
 class IDT(sAgent):
-    
+
 #    def __setattr__(self, name, value):
 #        """extends __setattr__ to allow logging and data saving and automatic sending if tag send_now is true.
 #        This is preferable to observing since it is called everytime the parameter value is set, not just when it changes."""
@@ -38,12 +38,16 @@ class IDT(sAgent):
 #        loglist=self.get_all_tags("log", True, True, self.all_params)
 #        for param in loglist:
 #            self.observe(param, self.log_changes)
-#            
+#
 #    def log_changes(self, change):
 #        self.set_log(change["name"], change["value"])
-#        
-    ft=Enum("double", "single").tag(desc="'double' for double fingered, 'single' for single fingered.",
-                                            mapping={"double" : 2, "single" : 1})
+#
+    ft=Enum("double", "single").tag(desc="'double' for double fingered, 'single' for single fingered.")
+
+    @property
+    def mult(self):
+        return {"double" : 2, "single" : 1}[self.ft]
+
     Np=Int(7).tag(desc="number of finger pairs. this should be at least 1", low=1)
     ef=Int(0).tag(desc="number of extra fingers to compensate for edge effect. Defaults to 0")
     a=Float(0.05e-6).tag(desc="width of fingers (um). same as gap generally.", unit="um")
@@ -83,8 +87,8 @@ class IDT(sAgent):
     def _update_eta(self, change):
         if not self.lock_eta:
             self.eta=self.a/(self.a+self.g)
-            
-    @observe('g', 'eta')            
+
+    @observe('g', 'eta')
     @updater
     def _update_a(self, change):
         """eta=a/(a+g)
@@ -93,7 +97,7 @@ class IDT(sAgent):
            => a=g*eta/(1-eta)"""
         self.a=self.g*self.eta/(1-self.eta)
 
-    @observe('a', 'eta')            
+    @observe('a', 'eta')
     @updater
     def _update_g(self, change):
         """eta=a/(a+g)
@@ -102,24 +106,24 @@ class IDT(sAgent):
            => g=a*(1/eta-1)"""
         self.g= self.a*(1.0/self.eta-1.0)
 
-    @observe('ft', 'W', 'epsinf', 'Np')            
+    @observe('ft', 'W', 'epsinf', 'Np')
     @updater
     def _update_Ct(self, change):
         m={"double": sqrt(2.0), "single": 1.0}[self.ft]
         self.Ct=m*self.W*self.epsinf*self.Np
 
-    @observe('f0', 'v')            
+    @observe('f0', 'v')
     @updater
     def _update_lbda0(self, change):
         self.lbda0=self.v/self.f0
 
-    @observe('ft', 'eta', 'lbda0')            
+    @observe('ft', 'eta', 'lbda0')
     @updater
     def _update_a2(self, change):
         m={"double": 2, "single": 1}[self.ft]
         self.a=self.eta*self.lbda0/(2*m)
 
-    @observe('v', 'lbda0')            
+    @observe('v', 'lbda0')
     @updater
     def _update_f0(self, change):
         self.f0=self.v/self.lbda0
@@ -147,7 +151,7 @@ class IDT(sAgent):
             self.v=3770.0
         else:
             print "Material not listed"
-   
+
     def _default_material(self):
         return 'LiNbYZ' #'GaAs'
 

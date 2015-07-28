@@ -5,18 +5,13 @@ Created on Thu Jun 25 11:43:01 2015
 @author: thomasaref
 """
 
-from a_Backbone import get_map
 from a_IDT import IDT
-from atom.api import Float, Bool, Enum, Dict, observe, Int
+from atom.api import Float, Bool, Enum, Int
 from EBL_Polygons import EBL_Polygons
-#from Atom_Plotter import Plotter
 from numpy import  mod
-from LOG_functions import log_debug
 
 class EBL_IDT(EBL_Polygons, IDT):
     """handles everything related to drawing a IDT. Units are microns (um)"""
-    def _default_color(self):
-        return "blue"
     trconnect_x=Float(9.0e-6).tag(desc="connection length of transmon", unit="um")
     trconnect_y=Float(2.5e-6).tag(desc="connection length of transmon", unit="um")
     trconnect_w=Float(0.5e-6).tag(desc="connection length of transmon", unit="um")
@@ -28,21 +23,19 @@ class EBL_IDT(EBL_Polygons, IDT):
     wbox=Float(0.0e-6).tag(unit="um", desc="width of electrode box. Setting to 0.0 (default) makes it autoscaling so it matches the width of the IDT")
 
     idt_tooth=Float(0.3e-6).tag(unit="um", desc="tooth size on CPW connection to aid contact")
-    
-    idt_type=Enum("basic", "stepped").tag(desc="basic is a regular IDT, stepped uses stepped fingers for harmonic suppression and angle shows how a double angle evaporation would look",
-                                                    mapping={"basic":0, "angle": 0,"stepped": 1})
+
+    idt_type=Enum("basic", "stepped").tag(desc="basic is a regular IDT, stepped uses stepped fingers for harmonic suppression")
     qdt_type=Enum("IDT", "QDT")
-    
-    
+
     conn_h=Float(65.0e-6).tag(unit="um")
     add_gate=Bool(True)
     add_gnd=Bool(True)
     add_teeth=Bool(True)
-    
-
     step_num=Int(3)
 
-    
+    def _default_color(self):
+        return "blue"
+
     def _default_main_params2(self):
         mp=["idt_type", "qdt_type", "ft",
             "add_gate", "add_gnd", "add_teeth", "angle_x", "angle_y", "step_num",
@@ -59,39 +52,34 @@ class EBL_IDT(EBL_Polygons, IDT):
         if self.idt_type=="stepped":
             name_sug+="{0}s{1}a{2}e{3}".format(self.Np, self.step_num, int(self.a*1e9), int(self.eta*100))
         else:
-            name_sug+="{0}e{1}a{2}h{3}".format(self.Np, self.ef, int(self.a*1e9), int(self.hbox))            
+            name_sug+="{0}e{1}a{2}h{3}".format(self.Np, self.ef, int(self.a*1e9), int(self.hbox))
         self.name_sug=name_sug
         shot_mod=""
         shot_mod+=dict(basic="", stepped="T")[self.idt_type]
         shot_mod+=dict(IDT="I", QDT="Q")[self.qdt_type]
         shot_mod+=dict(single="S", double="D")[self.ft]
-        shot_mod+="{0}".format(len(self.chief.patterns)) #int(self.a*1e9)) #self.Np, self.ef, 
+        shot_mod+="{0}".format(len(self.chief.patterns)) #int(self.a*1e9)) #self.Np, self.ef,
         self.shot_mod_table=shot_mod
-                
-    
-    @property    
-    def mult(self):
-        return self.get_map("ft")
-    @property        
-    def m(self):
-        return self.get_map("idt_type") 
+
     @property
-    def xo(self):        
-        return self.a*(1.0-1.0/self.step_num)*self.get_map("idt_type")
-                             
+    def m(self):
+        return {"basic": 0, "stepped": 1}[self.idt_type]
+
+    @property
+    def xo(self):
+        return self.a*(1.0-1.0/self.step_num)*self.m
+
     def make_polylist(self):
-        """Draws IDT depending on object parameters"""
-        self.sdIDT()
-        
-    def sdIDT(self):
-        """Add polygons representing single or double fingered IDT to polylist. If it is for a qubit, it adjusts the bottom box to contain SQUID connections (central fingers connect bottom to top)"""
+        """draws single or double fingered IDT.
+        If it is for a qubit, it adjusts the bottom box to contain SQUID connections
+        (central fingers connect bottom to top)"""
         self._IDTfingers()
-        self._IDTextrafingers()        
+        self._IDTextrafingers()
         self._IDTtopbottombox()
         if self.qdt_type=="QDT":
             self._squid_touch()
             self._left_transmon_connect()
-            self._right_transmon_connect()        
+            self._right_transmon_connect()
             if self.add_teeth:
                 self._add_qubit_idt_teeth()
             if self.add_gate:
@@ -100,12 +88,13 @@ class EBL_IDT(EBL_Polygons, IDT):
                 self._qubitgnd()
 
     def _subfingrect(self, xt, yt, wt, ht, m):
+        """writes part of finger for stepped IDTs"""
         if self.ft=="double":
             self.C(xt-(self.a+self.g)/2.0, yt, wt, ht)
             self.C(xt+(self.a+self.g)/2.0, yt, wt, ht)
         else:
             self.C(xt, yt, wt, ht)
-        if m>1:   
+        if m>1:
             self._subfingrect(xt+self.a/self.step_num, yt+ht, wt, ht, m-1)
         return
 
@@ -123,7 +112,7 @@ class EBL_IDT(EBL_Polygons, IDT):
                 self.C(xt+(self.a+self.g)/2.0, yt, wt, ht)
             else:
                 self.C(xt, yt, wt, ht)
-            
+
     def _IDTfingers(self):
         """writes IDT fingers for single finger IDT with extensions for connections if it is qubit type IDT"""
         for n in range(-(self.Np-1), self.Np, 2):
@@ -158,7 +147,7 @@ class EBL_IDT(EBL_Polygons, IDT):
                 (self.trc_wbox/2.0, -self.o/2.0-self.W/2.0-self.trc_hbox),
                 (self.trc_wbox/2.0, -self.conn_h),
                 (-self.trc_wbox/2.0, -self.conn_h)])
-        
+
     def _qubitgate(self):
         """writes ground for a qubit IDT"""
         self.P([(-self.trc_wbox/2.0, self.o/2.0+self.W/2.0+self.hbox+10.0e-6),#-0.25e-6),
@@ -196,6 +185,7 @@ class EBL_IDT(EBL_Polygons, IDT):
         self.R(self.trc_wbox/2.0, -self.o-self.W/2.0, self.trconnect_w, -self.trc_hbox-self.trconnect_w)
 
     def _add_qubit_idt_teeth(self):
+        """adds teeth to qubit squid connection"""
         idt_numteeth=int(self.trconnect_x/(2*self.idt_tooth))
         idt_conn=self.idt_tooth*(2*idt_numteeth-1)
         sqt_x=-idt_conn/2.0
@@ -203,13 +193,13 @@ class EBL_IDT(EBL_Polygons, IDT):
         sqt_y_top=-self.o/2.0-self.W/2.0-self.trconnect_y-2*self.trconnect_w
 
         for i in range(idt_numteeth):
-            self.R(sqt_x+2*i*self.idt_tooth, sqt_y, self.idt_tooth, self.idt_tooth )                   
-            self.R(sqt_x+2*i*self.idt_tooth, sqt_y_top, self.idt_tooth, -self.idt_tooth ) 
+            self.R(sqt_x+2*i*self.idt_tooth, sqt_y, self.idt_tooth, self.idt_tooth )
+            self.R(sqt_x+2*i*self.idt_tooth, sqt_y_top, self.idt_tooth, -self.idt_tooth )
 
 
 if __name__=="__main__":
     a=EBL_IDT(name="EBL_Item_test")
-    
+
     #a.ft="single"
     a.qdt_type="QDT"
     a.add_gate=False
@@ -220,7 +210,7 @@ if __name__=="__main__":
     #a.makeIDT()
     #print a.polys.get_verts()
     a.show()
-    
+
 
 
     def makeQubitBox(self):
