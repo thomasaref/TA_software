@@ -72,7 +72,7 @@ def show(*agents):
         if hasattr(loc_chief, "view_window"):
             view=loc_chief.view_window
         else:
-            view=showView(title="ShowControl", name="show_control", chief=chief)
+            view=showView(title="ShowControl", name="show_control", chief=loc_chief)
         #view.logw=LogWindow()#log_str=chief.log_str)
         #view.logw.show()
 

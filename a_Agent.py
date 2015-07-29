@@ -23,7 +23,17 @@ class aAtom(Atom):
 
 class sAgent(Atom):
     name=Unicode().tag(private=True, desc="name of agent. A default will be provided if none is given")
+    desc=Unicode().tag(private=True, desc="optional description of agent")
 
+    main_params=List().tag(private=True, desc="main parameters: allows control over what is displayed and in what order")
+
+    def _default_main_params(self):
+        """defaults to all members in all_params that are not tagged as sub.
+        Can be overwritten to allow some minimal custom layout control,
+        e.g. order of presentation and which members are shown. Use self.all_main_params to get a list of
+        all members that could be in main_params"""
+        return self.all_main_params
+        
     def show(self):
         self.chief.show()
 
@@ -60,7 +70,8 @@ class sAgent(Atom):
                 if get_tag(self, param, "unit", False) and get_tag(self, param, "unit_factor", True):
                     unit=get_tag(self, param, "unit", "")[0]
                     if unit in unit_dict:
-                        set_tag(self, param, unit_factor=unit_dict[unit])
+                        unit_factor=get_tag(self, param, "unit_factor", unit_dict[unit])
+                        set_tag(self, param, unit_factor=unit_factor)
             elif typer==Callable:
                 """autosets Callables to be logged"""
                 func=getattr(self, param)
