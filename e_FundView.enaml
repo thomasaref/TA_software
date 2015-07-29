@@ -4,25 +4,23 @@ Created on Mon Jun 29 16:12:32 2015
 
 @author: thomasaref
 
-Defines the Var containers for different types. All have attributes vmodel, vname, vvalue
+Defines the Var containers for different types. All have attributes vmodel, vname, vvalue allowing use of get_tag from a_Backbone
 """
-from enaml.widgets.api import  CheckBox, Label, SpinBox, VGroup, ScrollArea, MultilineField, Field, PushButton, ObjectCombo, Slider, ScrollArea
+from enaml.widgets.api import  CheckBox, Label, SpinBox, ScrollArea, MultilineField, Field, PushButton, ObjectCombo, Slider, ScrollArea
 from enaml.core.api import Conditional
-from a_Backbone import  get_tag
+from a_Backbone import get_tag
 #from atom.api import Atom, Unicode, Str, Float, Int, ContainerList, List, Typed, Instance, Coerced, Bool, Range, Enum, Callable, FloatRange
 from e_FundCore import aContainer, aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField
 
-from LOG_functions import log_debug
-#from e_Instrument import BootClose
-#from Atom_Instrument import Instrument
  
 enamldef Var(aContainer):
-    """the base var class defines model, name and value"""
+    """a Var container has a model, name and value"""
     attr vmodel
     attr vname 
     attr vvalue
 
 enamldef BoolVar(Var):
+    """boolean represented by CheckBox"""
     CheckBox:
         checked := vvalue
 
@@ -107,8 +105,8 @@ enamldef FloatVar(Var):
         unit=get_tag(vmodel, vname, "unit", u"")
         show_uvalue=get_tag(vmodel, vname, "show_value", False)
         unit_factor=float(get_tag(vmodel, vname, "unit_factor", 1.0))
-        minimum=get_tag(vmodel, vname, 'low')
-        maximum=get_tag(vmodel, vname, 'high')
+        minimum=float(get_tag(vmodel, vname, 'low'))
+        maximum=float(get_tag(vmodel, vname, 'high'))
 
 enamldef UnicodeVar(Var):
     """extends Var for string types"""
@@ -125,7 +123,6 @@ enamldef ChoiceStrVar(Var):
         condition= get_tag(vmodel, vname, "spec")=="multiline"
         MultilineField:
             text:=vvalue
- 
     Conditional:
         condition= get_tag(vmodel, vname, "spec")!="multiline"
         Field:
@@ -133,8 +130,27 @@ enamldef ChoiceStrVar(Var):
  
                     
 ###################test code########################
-#from enaml.widgets.api import  Window
-#from atom.api import Atom
+from enaml.widgets.api import  Window, VGroup
+from atom.api import Atom, Int, Float
+
+class test(Atom):
+    a=Int().tag(unit="um", show_value=True, unit_factor=20, low=0, high=5)
+    b=Float().tag(unit="GHz", show_value=True, unit_factor=0.2, low=-1.0, high=1)
+
+t=test()    
+
+enamldef Main(Window):
+    VGroup:
+        IntVar:
+            vmodel=t
+            vname="a"
+            vvalue=getattr(t, "a")
+    
+        FloatVar:
+            vmodel=t
+            vname="b"
+            vvalue=getattr(t, "b")
+    
 #
 #class testmodel(object):
 #    a=4

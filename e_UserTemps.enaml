@@ -3,28 +3,25 @@
 Created on Mon Jun 29 14:41:36 2015
 
 @author: thomasaref
+
+User defined templates
 """
 
 from enaml.widgets.api import  Field, PushButton, MultilineField, VGroup, Window, GroupBox
 from enaml.stdlib.fields import FloatField, IntField
-#from e_FundView import FundView
-#from Atom_Base import myobject
 
-#########################################################
-#Custom User layouts 
 from enaml_Filer import ReadWrap, SaveWrap
-from EBL_enaml import EBContWrap
-
 template UserInstrView(instr_view: "Read_File"):
     """ Displays a read file interface"""
     ReadWrap:
-        filer:= instr #getattr(vmodel, vname)
+        filer:= instr 
 
 template UserInstrView(instr_view: "Save_File"):
     """Displays a save file interface"""
     SaveWrap:
-        filer:=instr #getattr(vmodel, vname)
+        filer:=instr 
 
+from EBL_enaml import EBContWrap
 template UserInstrView(instr_view: "Polyer"):
     """Displays a polyer polygon list interface. very ineffecient. too many notifications"""
     EBContWrap:
@@ -32,14 +29,13 @@ template UserInstrView(instr_view: "Polyer"):
 
 enamldef TextEditorVGroup(VGroup):
     """Text Editor container"""
-    VGroup:
-        ReadWrap:
-            filer:=instr.read_file
-        GroupBox:
-            SaveWrap:
-                filer:=instr.save_file
-        MultilineField:
-            text:=instr.data
+    ReadWrap:
+        filer:=instr.read_file
+    GroupBox:
+        SaveWrap:
+            filer:=instr.save_file
+    MultilineField:
+        text:=instr.data
 
 template UserInstrView(instr_view: "Text_Editor"):
     """ Displays a text editor in a agent"""
@@ -75,9 +71,7 @@ template UserInstrView(instr_view):
     #    visible=True
     Field:
         read_only = True
-    #cont(Main):
-    #    pass #visible=True
-    #    text << unicode((instr, vmodel, vname))
+        text << unicode((instr, vmodel, vname))
 
 
         

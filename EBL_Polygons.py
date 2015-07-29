@@ -9,6 +9,7 @@ from numpy import sin, cos, pi
 from a_Agent import sAgent
 from Atom_Save_File import Save_DXF
 from a_BeamerGen import BeamerGen
+from EBL_Polygon_Chief import polygon_chief
 
 def gen_sP(verts):
     """generates a polygon from a list of vert tuples using a list comprehension.
@@ -263,7 +264,7 @@ class Polygon_Chief(Atom):
             from e_Show import EBLView
         return EBLView(chief=self)
 
-pc=Polygon_Chief()
+#pc=Polygon_Chief()
 
 class EBL_Polygons(sAgent):
     color=Enum("green", "blue", "red", "purple", "brown", "black").tag(desc="color or datatype of item, could be used for dosing possibly")
@@ -307,7 +308,7 @@ class EBL_Polygons(sAgent):
 
     @property
     def chief(self):
-        return pc
+        return polygon_chief
 
     def __init__(self, **kwargs):
         """extends __init__ auto make polylist"""

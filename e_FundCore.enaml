@@ -3,25 +3,35 @@
 Created on Thu Jul  9 16:51:22 2015
 
 @author: thomasaref
+
+A core collection of enamldefs including units for ints and floats and non-padded containers
 """
 
-
-from enaml.widgets.api import  ( HGroup, Container, GroupBox,  Field, Label, SpinBox, MultilineField, PushButton, ObjectCombo, VGroup, ScrollArea)
-from enaml.core.api import Conditional, Looper, DynamicTemplate
+from enaml.widgets.api import  ( HGroup, Container, GroupBox,  Field, Label, SpinBox,
+                                MultilineField, VGroup, ScrollArea, Window)  
+from enaml.core.api import Conditional
 from enaml.validator import IntValidator, FloatValidator
+
+enamldef aWindow(Window):
+    """a Window that is not destroyed on close"""
+    destroy_on_close=False
      
 enamldef aHGroup(HGroup):
+    """a non-padded, non-width-aligning HGroup"""
     padding=0
     align_widths=False
 
 enamldef aVGroup(ScrollArea):
+    """A non-padded VGroup with builtin scroll area"""
     VGroup:
         padding=0
         
 enamldef aContainer(Container):
+    """a non-padded container"""    
     padding=0
-
+    
 enamldef aGroupBox(GroupBox):
+    """a non-padded GroupBox"""
     padding=0
 
             
@@ -102,44 +112,24 @@ enamldef UnitFloatField(aHGroup):
         Label: vl:
             text << unicode("({})".format(uvalue)) #get_tag(instrin, name, 'unit', "no unit")
    
-enamldef ChoiceField(aContainer):
-    """A container that chooses between displaying a string as a Field or a MultilineField"""
-    attr ctext = ""
-    attr vcond : bool = False
-    Conditional:
-        condition=vcond 
-        MultilineField:
-            text := ctext 
-    Conditional:
-        condition= not vcond 
-        Field:
-            text :=  ctext
 
-
-
-from enaml.widgets.api import VGroup, Window    
-    
+################ test window ################### 
 enamldef Main(Window):
+    """test window"""
     VGroup:
-        UnitFloatField: uff:
-            uvalue = 0.1
-            unit_factor=10.0
-            unit="Hz"
-            show_uvalue=True
-        UnitIntField:
-            uvalue=10
-        UnitSpinBox: isb:
-            uvalue=10            
-            unit_factor=10
-            maximum = 100000
-            show_uvalue=True
-        ChoiceField:
-            ctext="blah"
-            vcond=False
-        ChoiceField:
-            ctext="foo\nbar"
-            vcond=True
-        Field: fld:
-            text="blah2"
-        MultilineField:
-            text="foo\nbar2"
+        aHGroup:
+            UnitFloatField: uff:
+                uvalue = 0.1
+                unit_factor=10.0
+                unit="Hz"
+                show_uvalue=True
+            UnitIntField:
+                uvalue=10
+                show_uvalue=True
+            UnitSpinBox: isb:
+                uvalue=10            
+                unit_factor=10
+                maximum = 100000
+                show_uvalue=True
+        
+

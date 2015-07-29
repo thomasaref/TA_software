@@ -4,19 +4,21 @@ Created on Tue Jul  7 21:52:51 2015
 
 @author: thomasaref
 
-A collection of functions for using my dynamic view with both objects and Atoms.
+A collection of functions for using my dynamic view.
 """
 
 from inspect import getmembers
-from atom.api import Atom, Enum, Range, FloatRange, Int, Float, Callable, Unicode, Bool, List
+from atom.api import Atom, Enum, Int, Float, Callable, Unicode, Bool
 from functools import wraps
-from LOG_functions import log_info
+#from LOG_functions import log_info
 from numpy import shape, ndarray
 from enaml.application import deferred_call
 from threading import Thread
 from types import FunctionType
 
-
+def log_info(message):
+    print message
+    
 def get_member(obj, name):
     """returns a member if get_member exists and the attribute itself if it does not"""
     if hasattr(obj, "get_member"):
@@ -156,18 +158,18 @@ def get_attr(obj, name, none_value=None):
         return getattr(obj, name)
     return none_value
 
-class fakeboss(object):
-    abort=False
-    busy=False
-    progress=0
-    agents=[]
-
-    def __init__(self, agent=None):
-        self.agents=[agent]
-
-def get_boss(obj):
-    """link to boss of object and uses base boss if none exists. boss is assumed to have abort and busy attributes"""
-    return get_attr(obj, "boss", fakeboss(agent=obj))
+#class fakeboss(object):
+#    abort=False
+#    busy=False
+#    progress=0
+#    agents=[]
+#
+#    def __init__(self, agent=None):
+#        self.agents=[agent]
+#
+#def get_boss(obj):
+#    """link to boss of object and uses base boss if none exists. boss is assumed to have abort and busy attributes"""
+#    return get_attr(obj, "boss", fakeboss(agent=obj))
 
 def get_run_params(f, include_self=False):
     """returns names of parameters a function will call"""

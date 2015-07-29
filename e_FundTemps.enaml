@@ -9,19 +9,15 @@ Workhorse templates for TypedView. Also adds Var definitions for variables that 
 from enaml.widgets.api import Label, SpinBox, VGroup, ScrollArea, MultilineField, Field, PushButton, ObjectCombo, Slider, ScrollArea
 from enaml.core.api import Conditional, DynamicTemplate, Looper
 from enaml.core.declarative import d_ 
-from enaml.layout.api import spacer#, hbox
+from enaml.layout.api import spacer
 from a_Backbone import get_attr, get_tag, set_tag, get_run_params, get_map, get_map_type, get_type, get_main_params, get_boss, run_func
 from atom.api import Atom, Unicode, Str, Float, Int, ContainerList, List, Typed, Instance, Coerced, Bool, Range, Enum, Callable, FloatRange
 from e_FundView import (aContainer, aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField, Var, BoolVar,
                         IntVar, FloatVar, ChoiceIntVar, RangeVar, FloatRangeVar, ChoiceStrVar)
 
-from LOG_functions import log_debug
-#from e_Instrument import BootClose
-#from Atom_Instrument import Instrument
-
+#from LOG_functions import log_debug
 from e_UserTemps import UserInstrView
- 
-   
+    
 def spacer_eval(vmodel, vname):
      """useful function for modifying spacer of aHGroup"""
      no_spacer = get_tag(vmodel, vname, "no_spacer", False)
@@ -62,27 +58,12 @@ enamldef AutoInstrCont(aContainer):
                 tags = ("instrvalue",)                    
 
 enamldef TypedVar(Var):
-    #PushButton:
-    #    clicked :: vvalue.viewprop.show()
+    """extends Var for Typed"""
     InstrHolder:
         instr:=vvalue
-#    ScrollArea:    
-#        aContainer:
-#            Looper:
-#                iterable<<get_main_params(vvalue)
-#                aHGroup:
-#                    trailing_spacer=spacer_eval(vvalue, loop_item)
-#                    func update_vval():
-#                        setattr(vvalue, loop_item, s.tagged["typedvalue"].vvalue)
-#                    Label:
-#                        text=get_tag(vvalue, loop_item, "label", loop_item)
-#                    DynamicTemplate: s:
-#                        base = TypedView
-#                        args << (get_type(vvalue, loop_item),)
-#                        data << dict(vmodel=vvalue, vname=loop_item, vvalue=getattr(vvalue, loop_item))
-#                        tags=("typedvalue",)
 
 enamldef CoercedVar(Var):
+    """extends Var for Coerced"""
     func update_vval():
         setattr(vmodel, vname, s.tagged["vvalue"].vvalue)
     DynamicTemplate: s:
@@ -97,6 +78,7 @@ def enum_spacer_eval(vmodel, vname, vvalue):
       return spacer_eval(vmodel, vname)
       
 enamldef EnumVar(Var):
+    """extends Var for Enum"""
     aHGroup:
         trailing_spacer=enum_spacer_eval(vmodel, vname, vvalue)
         ObjectCombo: 
@@ -118,6 +100,7 @@ enamldef EnumVar(Var):
                 text <<  unicode(get_map(vmodel, vname, vvalue))  
 
 enamldef CallableVar(Var):
+    """extends Var for Callable"""
     aHGroup:
         PushButton: 
             text = 'Run'
@@ -153,19 +136,14 @@ enamldef CallableVar(Var):
 class aListHGroup(aHGroup): 
     vlist = d_(Coerced(list)) #ContainerList(default=[0]))
 
-
-
 enamldef ListSpinBox(aListHGroup):
     """displays list as a single cell with a spinbox controlling which value is being observed"""
     attr inside_type = int
     func update_vval():
         self.vlist[ind.value]=s.tagged["vvalue"].vvalue
-        
     SpinBox: ind:
         minimum=0
         maximum = max(0, len(vlist)-1)
-    #Label:
-    #    text << unicode((vlist, s.tagged))
     DynamicTemplate: s:
         base = TypedView
         args = (type(vlist[ind.value]),)
@@ -183,8 +161,6 @@ enamldef ListVGroup(aListHGroup): lvg:
     ScrollArea:
         VGroup:
             padding=0
-            #Label:
-            #   text << unicode(vlist)
             Looper: lo:
                 iterable:=vlist
                 aContainer:
@@ -209,15 +185,16 @@ template TypedView(AttrType):
     #        text << unicode((vname, vvalue))
 
 template TypedView(AttrType : Int):
-    """template for int types"""
+    """template for Int types"""
     ChoiceIntVar:
         vvalue :: update_vval()
 
 template TypedView(AttrType: int):
+    """template for int"""
     TypedView(Int): pass
 
 template TypedView(AttrType : Float):
-    """template for float types"""
+    """template for Float"""
     FloatVar:
         vvalue :: update_vval() 
         

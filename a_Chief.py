@@ -18,33 +18,42 @@ from Plotter import Plotter
 
 import sys
 from a_Backbone import get_tag, get_type, get_all_tags, do_it_if_needed, get_attr, get_all_params, get_main_params, get_name
-    
-def chief_show(chief, agent):
+ 
+def show(*agents):
+    """a powerful showing function for any Atom object(s). Checks if object has a view_window property and otherwise uses a default.
+    also provides a show control of the objects"""
+    app = QtApplication()
     with imports():
-            from e_Backbone import ChiefMain
-    app = QtApplication()
-    view = ChiefMain(boss=chief, agent=agent)
+        from e_Chief import agentView, chiefView, basicView#, LogWindow
+    loc_chief=None
+    for n, a in enumerate(agents):
+        if hasattr(a, "view_window"):
+            view=a.view_window
+        else:
+            view=agentView(agent=a)
+        if hasattr(a, "name"):
+            view.name=a.name
+        else:
+            view.name="agent_{0}".format(n)
+        if hasattr(a, "chief"):
+            loc_chief=a.chief
+        view.title=view.name
+        view.show()
+        if loc_chief is not None:
+            if loc_chief.show_all or n==0:
+                view.visible=True
+    if loc_chief is None:
+        view=basicView(title="Show Control", name="show_control")
+    else:
+        if hasattr(loc_chief, "view_window"):
+            view=loc_chief.view_window
+        else:
+            view=chiefView(title="ShowControl", name="show_control", chief=loc_chief)
     view.show()
-    app.start()
-
-def show_alone(agent):
-    app = QtApplication()
-    view=agent.viewprop
-    view.show()
-    app.start()
-    
-def show_old( agent):
-    with imports():
-            from e_Backbone import AtomMain
-    app = QtApplication()
-    #view = AtomMain( agent=agent)
-    #view.show()
-    myview=agent.viewprop
-    myview.title=get_attr(agent, "name", "boog")
-    myview.show()
-    app.start()
+    app.start() 
     
 class StreamCatch(Atom):
+    """a stream catching class use with the log window"""
     log_str=Unicode()
 
     def write(self,str):
@@ -60,12 +69,10 @@ class StreamCatch(Atom):
         else:
             sys.stdout=sys.__stdout__ #old_stdout
             sys.stderr=sys.__stderr__
-
-
             
 class Chief(Atom):
     """Overall control class that runs main code and handles files, saving and plotting"""
-    name=Unicode("Base Control")
+    name=Unicode("Chief")
     run=Callable()
     read_file=Typed(Read_File)
     read_event=Event()
@@ -73,22 +80,23 @@ class Chief(Atom):
     saving=Enum(False, True, "No buffer")
     save_factory=Callable(Save_HDF5)
     agents=ContainerList()
-    visible_agents=ContainerList()
     plot=Typed(Plotter, ())
     plots=ContainerList()
+    
     BASE_DIR=Unicode("/Users/thomasaref/Dropbox/Current stuff/TA_software")
     DIVIDER=Unicode("/")
     LOG_NAME=Unicode("record")
     FILE_NAME=Unicode("meas")
     SETUP_GROUP_NAME=Unicode("SetUp")
     SAVE_GROUP_NAME=Unicode("Measurements")
-    display=Typed(StreamCatch, ())
-
-    busy = Bool(False)
-    abort = Bool(False)
-    progress = Int(0)
     
-    show_agents=Bool(False)
+    display=Typed(StreamCatch, ()).tag(desc="a stream catch for the log window")
+
+    busy = Bool(False).tag(desc="indicates function is running")
+    abort = Bool(False).tag(desc="abort for use by agent functions")
+    progress = Int(0).tag(desc="for progress bar")
+    
+    show_all=Bool(False).tag(desc="shows all agents on start up")
  
     def _observe_abort(self, change):
         if self.abort==True:
@@ -103,7 +111,7 @@ class Chief(Atom):
     def plottables(self):
         tempdict=dict()
         for instr in self.agents:
-            tempdict[get_name(instr)]=get_all_tags(instr, 'plot', True, get_attr(instr, "plot_all", False), get_all_params(instr))
+            tempdict[get_name(instr)]=get_all_tags(instr, 'plot', True, False, get_all_params(instr))
             if tempdict[get_name(instr)]==[]:
                 tempdict[get_name(instr)]=get_main_params(instr) #members().keys()
         return tempdict
@@ -158,11 +166,11 @@ class Chief(Atom):
             else:
                 log_warning("No save format!")
 
-    def show(self, agent=None):
+    def show(self):
         try:
-            chief_show(self, agent)
+            show(*self.agents)
         finally:
-            if self.saving:
+            if self.saving==True:
                 self.save_file.flush_buffers()
 
     def read_data_distribute(self):
@@ -178,7 +186,7 @@ class Chief(Atom):
             else:
                 log_warning("target base not found!")
 
-    def make_boss(self, base_dir="/Users/thomasaref/Dropbox/Current stuff/TA_software", divider="/",
+    def make_chief(self, base_dir="/Users/thomasaref/Dropbox/Current stuff/TA_software", divider="/",
                   log_name="record", file_name="meas", setup_g_name="SetUp", save_g_name="Measurements", save_log=False):
         self.BASE_DIR=base_dir #"/Users/thomasaref/Dropbox/Current stuff/TA_software"
         self.DIVIDER=divider #"/"
@@ -189,19 +197,11 @@ class Chief(Atom):
         if save_log==True:
             make_log_file(log_path=self.BASE_DIR+self.DIVIDER+self.LOG_NAME+".log", display=self.display)  #default log file
 
-boss=Chief()
+chief=Chief()
 
-def show(agent):
-    chief=boss
-    boss.agents.append(agent)
-    chief_show(chief, agent)
-
-#master.save_file=Save_File()
-#master.save_file.test_logger()
-#print master.logger
 if __name__=="__main__":
-    print boss.agents
-    print boss.plottables
-    print boss.saving
-    boss.show()
+    print chief.agents
+    print chief.plottables
+    print chief.saving
+    chief.show()
    

@@ -1,0 +1,230 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jul 13 20:55:47 2015
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import ( Window, Field, PushButton, ToolBar, Action, MainWindow,
+    Container, MultilineField, DockPane, HGroup)
+from enaml.layout.geometry import Pos, Rect, Size
+from enaml.core.api import Looper, Conditional
+from atom.api import List
+from enaml.core.declarative import d_
+from a_Backbone import get_attr
+from e_Plotter import PlotWindow
+
+screen_width=1920
+screen_height=1102
+
+from e_FundTemps import InstrHolder
+
+enamldef agentView(aWindow):
+    """default view for an agent based on dynamic templating"""
+    attr agent
+    initial_size=get_attr(agent, "initial_size", (-1,-1))
+    initial_position=get_attr(agent, "initial_position", (-1,-1))
+    InstrHolder:
+        instr:=agent
+
+class showWindow(MainWindow):
+    """adds a list of other windows to a MainWindow and a property that determines if all are visible"""
+    a_wins=d_(List(default=[]))
+
+    @property
+    def all_showing(self):
+        all_showing=True
+        for w in self.a_wins:
+            if not w.visible:
+                all_showing=False
+        return all_showing
+
+enamldef coreWindow(showWindow): sv:
+    """extends showWindow to initialize a_wins when activated and close all windows when the core is closed"""
+    initial_position=(0,0)
+    activated ::
+        sv.a_wins=[w for w in sv.windows if w!=sv]
+    closed ::
+        for w in sv.a_wins:
+            w.close()
+
+enamldef LogWindow(aWindow):
+    """window for display the log window"""
+    initial_position=(0, screen_height-100)
+    initial_size=(screen_width, 100)
+    title="Log"
+    Container:
+        MultilineField:
+            text := chief.log_str
+
+enamldef LogPane(DockPane): lp:
+    dock_area='bottom'
+    title = "Log"
+    visible= chief is not None
+    Conditional: cd:
+        condition = chief is not None
+        Container:
+            MultilineField: mlf:
+                text << chief.name #.display.log_str
+
+enamldef AgentToolBar(ToolBar):
+    """a toolbar that lists all agent windows and shows and hides them respectively when action is triggered"""
+    attr boss_window
+    dock_area="left"
+    Action:
+        text="Agents:"
+        triggered::
+            all_showing=boss_window.all_showing
+            for w in boss_window.a_wins:
+                if all_showing:
+                    w.hide()
+                else:
+                    w.show()
+                    w.send_to_front()
+        tool_tip = "Show/hide all agents"
+    Action:
+        separator=True
+    Looper: loopy:
+        iterable << boss_window.a_wins
+        Action:
+            text = loop_item.name
+            tool_tip = "Show/hide agent: {0}".format(loop_item.name)
+            triggered::
+                if loop_item.visible:
+                    loop_item.hide()
+                else:
+                    loop_item.show()
+
+enamldef basicView(coreWindow): sv:
+    """the most basic view controller of a collection of Atoms without a chief"""
+    AgentToolBar:
+        boss_window:=sv
+
+from e_FundCore import aHGroup
+enamldef JDFView(Window): sv:
+    attr jdf
+    title="JDF View"
+    initial_size=(800,800)
+    HGroup:
+        MultilineField:
+            text := jdf.text
+        MultilineField:
+            text << jdf.output_jdf
+
+
+
+enamldef EBLView(coreWindow): sv:
+    attr chief
+    title="EBL View"
+    activated::
+        chief.do_plot()
+    Container:
+        PlotWindow: plot_window:
+            visible=True
+            plotr:=chief.plot
+            initial_position=(500, 0)
+
+        #IPythonConsole:
+        #    pass
+    AgentToolBar:
+        boss_window:=sv
+    ToolBar:
+        dock_area="left"
+        Action:
+            separator=True
+        Action:
+            text = "Plot"
+            triggered::
+                plot_window.show()
+
+enamldef chiefView(coreWindow): sv:
+    """a default view of the chief for agents with a chief"""
+    attr chief
+    Container:
+        LogWindow: logw:
+            visible=True
+    #alias logpane
+    #LogPane: logpane:
+    #    pass
+
+    ToolBar:
+        dock_area="left"
+        Action:
+            text="Log"
+            triggered::
+                if logw.visible:
+                    logw.hide()
+                else:
+                    logw.show()
+            tool_tip = "Show/hide log"
+        Action:
+            text="Save"
+            triggered::
+                print sv.windows
+        #        savepane.show()
+            tool_tip = "Show save pane"
+        Action:
+            text = "PlotPane"
+         #   triggered:: plotpane.show() #print dir(bossarea) #show_plot(bossarea, boss.plot) #show_pane(dyn_pages, 'Plot')
+         #   tool_tip = "Show plot controls"
+    Conditional:
+        condition = sv.chief is not None
+        ToolBar:
+            dock_area="left"
+
+            Action:
+                text = "Plot"
+            #    triggered::
+            #         tagent=[b for b in boss.agents if b.name=="EBL_Item_test"][0]
+            #         tagent.plot(tagent)
+                        #print bossarea.dock_items()[0].name
+                        #show_plot(boss.plot.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=boss.plot)
+                tool_tip = "Show plot"
+
+            Action:
+                separator=True
+            Action:
+                separator=True
+
+            Action: run:
+                text = "Run"
+                triggered :: chief.run()
+            Action:
+                separator=True
+            Action:
+                separator=True
+    AgentToolBar:
+        pass
+    ToolBar:
+        dock_area="left"
+        Conditional:
+            condition = sv.chief is not None
+            Action:
+                separator=True
+            Action:
+                separator=True
+            Action:
+                text="Plots"
+                triggered::
+                    all_showing=sv.all_showing
+                    for w in sv.a_wins:
+                        print w.name
+                        if all_showing:
+                            w.hide()
+                        else:
+                            w.show()
+                            w.send_to_front()
+                tool_tip = "Show/hide all agents"
+            Action:
+                separator=True
+
+            Looper: #loopy:
+                iterable << sv.chief.plots #a_wins
+                Action:
+                    text = loop_item
+                    tool_tip = "Show/hide plot: {0}".format(loop_item)
+                    #triggered::
+                    #    if loop_item.visible:
+                    #        loop_item.hide()
+                    #    else:
+                    #        loop_item.show()
