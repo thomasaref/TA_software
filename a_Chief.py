@@ -52,23 +52,7 @@ def show(*agents):
     view.show()
     app.start() 
     
-class StreamCatch(Atom):
-    """a stream catching class use with the log window"""
-    log_str=Unicode()
 
-    def write(self,str):
-        self.log_str=str+self.log_str
-
-    def flush(self):
-        pass
-
-    def redirect_stdout(self, visible):
-        if visible:
-            sys.stdout=self
-            sys.stderr=self
-        else:
-            sys.stdout=sys.__stdout__ #old_stdout
-            sys.stderr=sys.__stderr__
             
 class Chief(Atom):
     """Overall control class that runs main code and handles files, saving and plotting"""

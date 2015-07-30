@@ -1,0 +1,47 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jul 30 17:27:10 2015
+
+@author: thomasaref
+
+displays for log
+"""
+
+from enaml.widgets.api import ( Window, Field, PushButton, ToolBar, Action, MainWindow,
+    Container, MultilineField, DockPane, HGroup)
+
+enamldef LogWindow(Window):
+    """window for display the log window"""
+    title="Log"
+    alias log_str : mlf.text
+    Container:
+        MultilineField: mlf:
+            read_only=True
+        
+enamldef LogPane(DockPane): 
+    """DockPane for displaying log"""
+    dock_area='bottom'
+    title = "Log"
+    alias log_str : mlf.text
+    Container:
+        MultilineField: mlf:
+            read_only=True #text << log_str #.display.log_str
+
+################test window""""""""""""
+from LOG_functions import log_stream, log_info
+enamldef Main(MainWindow):
+    Container:
+        LogWindow:
+            initial_position=log_stream.initial_position
+            initial_size=log_stream.initial_size 
+            visible=True
+            log_str<<log_stream.log_str
+    LogPane:
+        log_str<<log_stream.log_str
+    DockPane:
+        dock_area="right"
+        Container:
+            PushButton:
+                text = "test logging"
+                clicked :: log_info("button pushed")
+        

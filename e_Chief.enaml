@@ -13,9 +13,7 @@ from atom.api import List
 from enaml.core.declarative import d_
 from a_Backbone import get_attr
 from e_Plotter import PlotWindow
-
-screen_width=1920
-screen_height=1102
+from e_Log import LogWindow, log_stream
 
 from e_FundTemps import InstrHolder
 
@@ -47,25 +45,6 @@ enamldef coreWindow(showWindow): sv:
     closed ::
         for w in sv.a_wins:
             w.close()
-
-enamldef LogWindow(aWindow):
-    """window for display the log window"""
-    initial_position=(0, screen_height-100)
-    initial_size=(screen_width, 100)
-    title="Log"
-    Container:
-        MultilineField:
-            text := chief.log_str
-
-enamldef LogPane(DockPane): lp:
-    dock_area='bottom'
-    title = "Log"
-    visible= chief is not None
-    Conditional: cd:
-        condition = chief is not None
-        Container:
-            MultilineField: mlf:
-                text << chief.name #.display.log_str
 
 enamldef AgentToolBar(ToolBar):
     """a toolbar that lists all agent windows and shows and hides them respectively when action is triggered"""
@@ -100,52 +79,54 @@ enamldef basicView(coreWindow): sv:
     AgentToolBar:
         boss_window:=sv
 
-from e_FundCore import aHGroup
-enamldef JDFView(Window): sv:
-    attr jdf
-    title="JDF View"
-    initial_size=(800,800)
-    HGroup:
-        MultilineField:
-            text := jdf.text
-        MultilineField:
-            text << jdf.output_jdf
+#from e_FundCore import aHGroup
+#enamldef JDFView(Window): sv:
+#    attr jdf
+#    title="JDF View"
+#    initial_size=(800,800)
+#    HGroup:
+#        MultilineField:
+#            text := jdf.text
+#        MultilineField:
+#            text << jdf.output_jdf
+#
+#
+#
+#enamldef EBLView(coreWindow): sv:
+#    attr chief
+#    title="EBL View"
+#    activated::
+#        chief.do_plot()
+#    Container:
+#        PlotWindow: plot_window:
+#            visible=True
+#            plotr:=chief.plot
+#            initial_position=(500, 0)
+#
+#        #IPythonConsole:
+#        #    pass
+#    AgentToolBar:
+#        boss_window:=sv
+#    ToolBar:
+#        dock_area="left"
+#        Action:
+#            separator=True
+#        Action:
+#            text = "Plot"
+#            triggered::
+#                plot_window.show()
 
-
-
-enamldef EBLView(coreWindow): sv:
-    attr chief
-    title="EBL View"
-    activated::
-        chief.do_plot()
-    Container:
-        PlotWindow: plot_window:
-            visible=True
-            plotr:=chief.plot
-            initial_position=(500, 0)
-
-        #IPythonConsole:
-        #    pass
-    AgentToolBar:
-        boss_window:=sv
-    ToolBar:
-        dock_area="left"
-        Action:
-            separator=True
-        Action:
-            text = "Plot"
-            triggered::
-                plot_window.show()
-
+    
 enamldef chiefView(coreWindow): sv:
     """a default view of the chief for agents with a chief"""
     attr chief
     Container:
         LogWindow: logw:
+            initial_position=log_stream.initial_position
+            initial_size=log_stream.initial_size 
             visible=True
-    #alias logpane
-    #LogPane: logpane:
-    #    pass
+            log_str<<log_stream.log_str
+
 
     ToolBar:
         dock_area="left"
