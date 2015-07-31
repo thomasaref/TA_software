@@ -11,13 +11,23 @@ import os
 import shutil
 import inspect
 from numpy import ndarray
-from LOG_functions import  log_info, log_warning, move_files_and_log, log_flush, move_log_file
+from LOG_functions import  log_info, log_warning, move_log_file
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
 from Atom_Read_File import Read_HDF5, Read_NP, Read_TXT, Read_DXF
 
 SETUP_GROUP_NAME="SetUp"
 SAVE_GROUP_NAME="Measurements"
+
+
+def move_files_and_log(new_dir_path, divider="/"):
+    """moves the entire directory from old_path to new_path and
+       setups the log file for appended logging"""
+    if memory_handler.target:
+        old_log_dir_path, divider, old_log_name=memory_handler.target.baseFilename.rpartition(divider)
+        remove_log_file()
+    move(old_log_dir_path, new_dir_path)
+    make_log_file(new_dir_path+divider+log_name, mode='a')
 
 class Save_File(Filer):
     data_buffer=Dict()

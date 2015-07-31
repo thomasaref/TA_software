@@ -1,0 +1,27 @@
+2015-07-31 18:55:18,924 - LOG_functions.py (line 179) <<module>> INFO:  yo
+2015-07-31 18:55:18,924 - LOG_functions.py (line 180) <<module>> WARNING:  yay
+2015-07-31 18:57:35,169 - LOG_functions.py (line 78) <<module>> DEBUG:  Started logging
+2015-07-31 18:57:35,169 - LOG_functions.py (line 129) <<module>> INFO:  yoy
+2015-07-31 18:57:35,169 - LOG_functions.py (line 130) <<module>> WARNING:  yay
+2015-07-31 18:57:35,170 - LOG_functions.py (line 95) <make_log_file> DEBUG:  Made log file at /Users/thomasaref/Documents/TA_software/ztestlog.txt
+2015-07-31 18:57:35,170 - LOG_functions.py (line 134) <<module>> INFO:  2
+2015-07-31 18:57:35,170 - LOG_functions.py (line 135) <<module>> INFO:  3
+2015-07-31 18:57:35,170 - LOG_functions.py (line 136) <<module>> INFO:  4
+2015-07-31 18:57:35,170 - LOG_functions.py (line 137) <<module>> INFO:  5
+2015-07-31 18:57:35,171 - LOG_functions.py (line 140) <<module>> INFO:  6
+2015-07-31 18:57:35,171 - LOG_functions.py (line 141) <<module>> INFO:  7
+2015-07-31 18:57:35,171 - LOG_functions.py (line 179) <<module>> INFO:  yo
+2015-07-31 18:57:35,171 - LOG_functions.py (line 180) <<module>> WARNING:  yay
+2015-07-31 18:58:02,779 - LOG_functions.py (line 78) <<module>> DEBUG:  Started logging
+2015-07-31 18:58:02,779 - LOG_functions.py (line 129) <<module>> INFO:  yoy
+2015-07-31 18:58:02,779 - LOG_functions.py (line 130) <<module>> WARNING:  yay
+2015-07-31 18:58:02,779 - LOG_functions.py (line 95) <make_log_file> DEBUG:  Made log file at /Users/thomasaref/Documents/TA_software/ztestlog.txt
+2015-07-31 18:58:02,780 - LOG_functions.py (line 134) <<module>> INFO:  2
+2015-07-31 18:58:02,780 - LOG_functions.py (line 135) <<module>> INFO:  3
+2015-07-31 18:58:02,780 - LOG_functions.py (line 136) <<module>> INFO:  4
+2015-07-31 18:58:02,780 - LOG_functions.py (line 137) <<module>> INFO:  5
+2015-07-31 18:58:02,780 - LOG_functions.py (line 140) <<module>> INFO:  6
+2015-07-31 18:58:02,781 - LOG_functions.py (line 141) <<module>> INFO:  7
+2015-07-31 18:58:02,781 - LOG_functions.py (line 95) <make_log_file> DEBUG:  Made log file at /Users/thomasaref/Documents/TA_software/ztestlog.txt
+2015-07-31 18:58:02,781 - LOG_functions.py (line 179) <<module>> INFO:  yo
+2015-07-31 18:58:02,781 - LOG_functions.py (line 180) <<module>> WARNING:  yay

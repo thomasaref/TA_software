@@ -9,7 +9,8 @@ A collection of logging related functions. Configures logging to output and stre
 
 from logging import debug as log_debug, warning as log_warning, info as log_info
 from logging import getLogger, StreamHandler, FileHandler, basicConfig, DEBUG, Formatter, INFO
-move=None
+from logging.handlers import MemoryHandler
+from shutil import move
 
 
 #configure logging
@@ -65,65 +66,61 @@ logger=getLogger()
 display_handler=StreamHandler(stream=log_stream)
 display_handler.setLevel(LOGLEVEL)
 display_handler.setFormatter(Formatter(LOGFORMATTER))
+display_handler.name="StreamCatch"
 logger.addHandler(display_handler)
+
+memory_handler=MemoryHandler(3)
+memory_handler.setLevel(LOGLEVEL)
+memory_handler.setFormatter(Formatter(LOGFORMATTER))
+memory_handler.name="MemoryLog"
+logger.addHandler(memory_handler)
 
 log_debug("Started logging")
 
+def make_log_file(log_path, overwrite=False):
+    """Points memory handler at a particular file. Overwrites file if overwrite is True"""
+    if overwrite:
+        with open(log_path, mode="w"):
+            pass
+    file_handler = FileHandler(filename=log_path)
+    file_handler.setLevel(LOGLEVEL)
+    file_handler.setFormatter(Formatter(LOGFORMATTER))
+    memory_handler.setTarget(file_handler) 
 
-def get_log_stream():
-    logger=getLogger()
-    return logger.handlers[1].stream.log_str
-#display
-#LOG_NAME="record"
-#BASE_PATH="/Users/thomasaref/Dropbox/Current stuff/TA_enaml"
-#DIVIDER="/"
-#LOG_PATH=BASE_PATH+DIVIDER+LOG_NAME
-#FILE_NAME="meas"
-SETUP_GROUP_NAME="SetUp"
-SAVE_GROUP_NAME="Measurements"
-
-def make_log_file(log_path=None, mode='w', logger=getLogger()):
-    """Adds a file handler if it does not exist"""
-    if len(logger.handlers)<=2:
-        file_handler = FileHandler(filename=log_path, mode=mode)#, delay=True)
-        file_handler.setLevel(LOGLEVEL)
-        file_handler.setFormatter(Formatter(LOGFORMATTER))
-        logger.addHandler(file_handler)
-
-#make_log_file()  #default log file
-
-def move_files_and_log(new_path, old_path, log_name, logger = getLogger()):
-    """moves the entire directory from old_path to new_path and
-       setups the log file for appended logging"""
-    if len(logger.handlers)>1:
-        remove_log_file(logger)
-    if move is None:
-        from shutil import move
-    move(old_path, new_path)
-    make_log_file(new_path+log_name+".log", mode='a')
-
-def log_flush(logger=getLogger()):
-    """flushes the log file"""
-    file_handler=logger.handlers[2]
-    file_handler.flush()
-
-def remove_log_file(logger=getLogger()):
-    """closes the log file and removes it from the file handles"""
-    file_handler=logger.handlers[2]
-    file_handler.flush()
-    file_handler.close()
-    logger.removeHandler(file_handler)
-
-def move_log_file(new_log_file, old_log_file, logger=getLogger()):
-    """closes old_log_file, moves it to new_log_file and begins new appending there"""
-    if len(logger.handlers)>1:
-        remove_log_file(logger)
-    if move is None:
-        from shutil import move
-    move(old_log_file, new_log_file)
-    make_log_file(new_log_file, mode='a')
-
+def remove_log_file():
+    """closes the log file and removes memory_handler from pointing at it"""
+    if memory_handler.target:
+        memory_handler.target.flush()
+        memory_handler.target.close()
+        memory_handler.target=None
+        
+def move_log_file(new_log_file_path):
+    """closes old_log_file, moves it to new_log_file and continues appending there"""
+    old_log_file_path=memory_handler.target.baseFilename
+    remove_log_file()
+    move(old_log_file_path, new_log_file_path)
+    make_log_file(new_log_file_path)
 
 if __name__=="__main__":
+    log_info("yoy")
+    log_warning("yay")
+    make_log_file("/Users/thomasaref/Documents/TA_software/ztestlog2.txt", overwrite=True)
+
+    log_info(2)
+    log_info(3)
+    log_info(4)
+    log_info(5)
+    #remove_log_file()
+    #dir_path, divider, log_name=memory_handler.target.baseFilename.rpartition("/")
+    #print dir_path, divider, log_name #memory_handler.target.baseFilename.split(log_name)
+    log_info(6)
+    log_info(7)
+    log_info(8)
+    log_info(9)
+    log_info(10)
+    #make_log_file("/Users/thomasaref/Documents/TA_software/ztestlog2.txt")
+    
+    move_log_file("/Users/thomasaref/Documents/TA_software/ztestlog3.txt")
+    
     log_info("yo")
     log_warning("yay")

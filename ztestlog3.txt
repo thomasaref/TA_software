@@ -1,0 +1,14 @@
+2015-07-31 19:37:50,035 - LOG_functions.py (line 78) <<module>> DEBUG:  Started logging
+2015-07-31 19:37:50,090 - LOG_functions.py (line 106) <<module>> INFO:  yoy
+2015-07-31 19:37:50,090 - LOG_functions.py (line 107) <<module>> WARNING:  yay
+2015-07-31 19:37:50,091 - LOG_functions.py (line 111) <<module>> INFO:  2
+2015-07-31 19:37:50,091 - LOG_functions.py (line 112) <<module>> INFO:  3
+2015-07-31 19:37:50,091 - LOG_functions.py (line 113) <<module>> INFO:  4
+2015-07-31 19:37:50,091 - LOG_functions.py (line 114) <<module>> INFO:  5
+2015-07-31 19:37:50,092 - LOG_functions.py (line 118) <<module>> INFO:  6
+2015-07-31 19:37:50,092 - LOG_functions.py (line 119) <<module>> INFO:  7
+2015-07-31 19:37:50,092 - LOG_functions.py (line 120) <<module>> INFO:  8
+2015-07-31 19:37:50,092 - LOG_functions.py (line 121) <<module>> INFO:  9
+2015-07-31 19:37:50,092 - LOG_functions.py (line 122) <<module>> INFO:  10
+2015-07-31 19:37:50,126 - LOG_functions.py (line 142) <<module>> INFO:  yo
+2015-07-31 19:37:50,126 - LOG_functions.py (line 143) <<module>> WARNING:  yay
