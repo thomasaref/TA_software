@@ -7,13 +7,10 @@ Created on Tue Mar 24 16:21:06 2015
 
 from Atom_Filer import Filer
 from LOG_functions import log_warning, log_info
-from atom.api import Dict, Event, Enum
+from atom.api import Dict, Event
 from enaml import imports
-from enaml.qt.qt_application import QtApplication
-#from Atom_Save_File import Save_HDF5, Save_NP, Save_TXT, Save_DXF
 
 class Read_File(Filer):
-    view=Enum("Read_File")
     data=Dict()
     read_event=Event()   
 
@@ -25,29 +22,16 @@ class Read_File(Filer):
     def do_read(self):
         log_warning("do_read not implemented!")
 
- #   def _observe_read_event(self, change):
- #       print change
-    def show(self):
+    @property
+    def view(self):
+        return "Read_File"
+
+    @property        
+    def view_window(self):
         """stand alone for showing filer."""
-#        if save_file==None:
-#            if self.file_type=='HDF5':
-#                save_file=Save_HDF5(base_dir=self.base_dir, main_dir=self.main_dir, main_file=self.main_file, divider=self.divider, 
-#                                    log_file=self.log_file, file_path=self.file_path, dir_path=self.dir_path, log_path=self.log_path)
-#            elif self.file_type=='dxf':
-#                save_file=Save_DXF(base_dir=self.base_dir, main_dir=self.main_dir, main_file=self.main_file, divider=self.divider, 
-#                                    log_file=self.log_file, file_path=self.file_path, dir_path=self.dir_path, log_path=self.log_path)
-#            elif self.file_type=='text data':
-#                save_file=Save_NP(base_dir=self.base_dir, main_dir=self.main_dir, main_file=self.main_file, divider=self.divider, 
-#                                    log_file=self.log_file, file_path=self.file_path, dir_path=self.dir_path, log_path=self.log_path)
-#            else:
-#                save_file=Save_TXT(base_dir=self.base_dir, main_dir=self.main_dir, main_file=self.main_file, divider=self.divider, 
-#                                    log_file=self.log_file, file_path=self.file_path, dir_path=self.dir_path, log_path=self.log_path)
         with imports():
             from enaml_Filer import ReadBoxMain
-        app = QtApplication()
-        view = ReadBoxMain(read_file=self)
-        view.show()
-        app.start()
+        return ReadBoxMain(read_file=self)
 
 #from DXF_functions import readdxflayer
 from HDF5_functions import read_hdf5

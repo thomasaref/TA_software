@@ -74,7 +74,7 @@ class Chief(Atom):
     SETUP_GROUP_NAME=Unicode("SetUp")
     SAVE_GROUP_NAME=Unicode("Measurements")
     
-    display=Typed(StreamCatch, ()).tag(desc="a stream catch for the log window")
+    #display=Typed(StreamCatch, ()).tag(desc="a stream catch for the log window")
 
     busy = Bool(False).tag(desc="indicates function is running")
     abort = Bool(False).tag(desc="abort for use by agent functions")

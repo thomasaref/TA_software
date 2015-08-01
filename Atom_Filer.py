@@ -5,12 +5,6 @@ Created on Tue Feb 24 11:23:43 2015
 @author: thomasaref
 """
 
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Apr 27 11:22:03 2014
-
-@author: thomasaref
-"""
 from atom.api import Atom, Unicode, Enum, observe
 from time import strftime, localtime
 #from LOG_functions import log_info, log_warning

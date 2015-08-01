@@ -5,70 +5,63 @@ Created on Thu Mar  5 20:50:49 2015
 @author: thomasaref
 """
 
+from LOG_functions import  log_info, log_warning, make_log_file, remove_log_file
+log_info(1)
 from Atom_Filer import Filer
-from atom.api import Bool, Dict, Unicode, observe, List, Event, Enum
-import os
-import shutil
-import inspect
-from numpy import ndarray
-from LOG_functions import  log_info, log_warning, move_log_file, make_log_file, remove_log_file
+from atom.api import Bool, Dict, Unicode, observe, List, Event, Enum, Typed, Int
+log_info(2)
+from os.path import exists as os_path_exists, splitext as os_path_splitext, split as os_path_split
+from os import makedirs as os_makedirs
+from shutil import move, copyfile
+from inspect import getfile
+log_info(3)
+from numpy import ndarray, size
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
 from Atom_Read_File import Read_HDF5, Read_NP, Read_TXT, Read_DXF
+from collections import OrderedDict
 
-SETUP_GROUP_NAME="SetUp"
-SAVE_GROUP_NAME="Measurements"
-
-
+      
 
 class Save_File(Filer):
-    data_buffer=Dict()
+    data_buffer=Typed(OrderedDict, ())
     buffer_save=Bool(False)
+    buffer_size=Int(100).tag(desc="size of buffer as number of elements in a list/array")
     default_group_name=Unicode()
-    group_names=List()
     save_event=Event()
 
     @property
     def view(self):
         return "Save_File"
 
-    def _default_data_buffer(self):
-        return {SAVE_GROUP_NAME:{}, SETUP_GROUP_NAME:{}}
-
-    def _default_group_names(self):
-        return self.data_buffer.keys()
-
-    def _default_default_group_name(self):
-        return sorted(self.data_buffer.keys())[0]
-
     def _observe_dir_path(self, change):
         """if the file path exists and the file location is changed, this function moves the
         entire directory to the new location and sets up the log file for appended logging"""
         if change['type']!='create':
             old_dir_path=change['oldvalue']
-            if not os.path.exists(self.file_path):
-                if os.path.exists(old_dir_path):
+            if not os_path_exists(self.file_path):
+                if os_path_exists(old_dir_path):
                     remove_log_file()
-                    shutil.move(old_dir_path, self.dir_path)
+                    move(old_dir_path, self.dir_path)
                     make_log_file(self.log_path)
                     log_info("Moved files to: {0}".format(self.dir_path))
 
     def makedir(self):
-        if not os.path.exists(self.dir_path):
-            os.makedirs(self.dir_path)
+        if not os_path_exists(self.dir_path):
+            os_makedirs(self.dir_path)
             log_info("Made directory at: {0}".format(self.dir_path))
-        if not os.path.exists(self.file_path):
+        if not os_path_exists(self.file_path):
             self.create_file()
             make_log_file(self.log_path, overwrite=True)
 
     def save_code(self, obj):
         """saves the code containing the passed in object"""
         if obj is not None:
-            module_path, ext = os.path.splitext(inspect.getfile(obj))
+            module_path, ext = os_path_splitext(getfile(obj))
             code_file_path = module_path + '.py'   # Should get the py file, not the pyc, if compiled.
-            code_file_copy_path = self.dir_path+self.divider+os.path.split(module_path)[1]+".pyb"
-            if not os.path.exists(code_file_copy_path):
-                shutil.copyfile(code_file_path, code_file_copy_path)
+            code_file_copy_path = self.dir_path+self.divider+os_path_split(module_path)[1]+".pyb"
+            if not os_path_exists(code_file_copy_path):
+                copyfile(code_file_path, code_file_copy_path)
                 log_info("Saved code to: {0}".format(code_file_copy_path))
 
     def full_save(self, obj=None):
@@ -85,26 +78,26 @@ class Save_File(Filer):
                 for name, subitem in item.iteritems():
                     for key, arr in subitem.iteritems():
                         self.data_save(arr, name=name, group_name=group_name)
-            self.data_buffer=self._default_data_buffer()
+            self.data_buffer=OrderedDict()
             self.buffer_save=True
-
-    def data_save(self, data, name="Measurement", group_name=None, append=True):
-        if group_name==None:
-            group_name=self.default_group_name
-        if self.buffer_save:
-            if name not in self.data_buffer[group_name].keys():
-                self.data_buffer[group_name][name]=dict()
-                append=False
-            if type(data) not in [list, ndarray]:
-                data=[data]
-            if append==False:
-                namestr="{0}".format(len(self.data_buffer[group_name][name]))
-                self.data_buffer[group_name][name][namestr]=data
-            else:
-                namestr="{0}".format(len(self.data_buffer[group_name][name])-1)
-                self.data_buffer[group_name][name][namestr].extend(data)
+    
+    def data_save(self, data, name="Measurement", group_name="Data", append=True):
+        """grows data_buffer using name and group_name and flushes when length exceeds buffer_size"""
+        if group_name not in self.data_buffer.keys():
+            self.data_buffer[group_name]=OrderedDict()
+        if name not in self.data_buffer[group_name].keys():
+            self.data_buffer[group_name][name]=OrderedDict()
+            append=False
+        if type(data) not in [list, ndarray]:
+            data=[data]
+        if append==False:
+            namestr="{0}".format(len(self.data_buffer[group_name][name]))
+            self.data_buffer[group_name][name][namestr]=data
         else:
-            self.do_data_save(data, name, group_name, append)
+            namestr="{0}".format(len(self.data_buffer[group_name][name])-1)
+            self.data_buffer[group_name][name][namestr].extend(data)
+        if size(self.data_buffer[group_name][name][namestr])>self.buffer_size or size(self.data_buffer[group_name][name].keys())>self.buffer_size:
+            self.flush_buffers() #self.do_data_save(data, name, group_name, append)
 
     def show(self, read_file=None, coder=None):
         """stand alone for showing filer."""
@@ -180,7 +173,7 @@ class Save_DXF(Save_File):
         save_dxf(verts, color, layer, file_path, write_mode)
         log_info("Direct save of data to: {}".format(file_path))
 
-if __name__=="__main__":
+if __name__=="__main__2":
 
     a=Save_HDF5(buffer_save=True)
     print a.log_name

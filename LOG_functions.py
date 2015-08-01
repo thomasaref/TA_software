@@ -10,7 +10,7 @@ A collection of logging related functions. Configures logging to output and stre
 from logging import debug as log_debug, warning as log_warning, info as log_info
 from logging import getLogger, StreamHandler, FileHandler, basicConfig, DEBUG, Formatter, INFO
 from logging.handlers import MemoryHandler
-from shutil import move
+#from shutil import move
 
 
 #configure logging
@@ -69,7 +69,7 @@ display_handler.setFormatter(Formatter(LOGFORMATTER))
 display_handler.name="StreamCatch"
 logger.addHandler(display_handler)
 
-memory_handler=MemoryHandler(30)
+memory_handler=MemoryHandler(3)
 memory_handler.setLevel(LOGLEVEL)
 memory_handler.setFormatter(Formatter(LOGFORMATTER))
 memory_handler.name="MemoryLog"
@@ -96,13 +96,13 @@ def remove_log_file():
         memory_handler.target=None
         return old_log_file_path
 
-def move_log_file(new_log_file_path):
-    """closes old_log_file, moves it to new_log_file and continues appending there.
-       creates log_file if it didn't exist before"""
-    old_log_file_path=remove_log_file()
-    if old_log_file_path:
-        move(old_log_file_path, new_log_file_path)
-    make_log_file(new_log_file_path)
+#def move_log_file(new_log_file_path):
+#    """closes old_log_file, moves it to new_log_file and continues appending there.
+#       creates log_file if it didn't exist before"""
+#    old_log_file_path=remove_log_file()
+#    if old_log_file_path:
+#        move(old_log_file_path, new_log_file_path)
+#    make_log_file(new_log_file_path)
 
 if __name__=="__main__":
     log_info("yoy")
@@ -113,7 +113,7 @@ if __name__=="__main__":
     log_info(3)
     log_info(4)
     log_info(5)
-    #remove_log_file()
+    remove_log_file()
     #dir_path, divider, log_name=memory_handler.target.baseFilename.rpartition("/")
     #print dir_path, divider, log_name #memory_handler.target.baseFilename.split(log_name)
     log_info(6)
@@ -121,9 +121,8 @@ if __name__=="__main__":
     log_info(8)
     log_info(9)
     log_info(10)
-    #make_log_file("/Users/thomasaref/Documents/TA_software/ztestlog2.txt")
-
-    move_log_file("/Users/thomasaref/Documents/TA_software/ztestlog3.txt")
+    #
+    make_log_file("/Users/thomasaref/Documents/TA_software/ztestlog3.txt")
 
     log_info("yo")
     log_warning("yay")
