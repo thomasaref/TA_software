@@ -27,7 +27,7 @@ from atom.api import Atom, Unicode, Int
 
 class StreamCatch(Atom):
     """a stream catching class for use with the log window"""
-    
+
     screen_width=Int(1920)
     screen_height=Int(1102)
     log_height=Int(100)
@@ -43,7 +43,7 @@ class StreamCatch(Atom):
     @property
     def initial_size(self):
         return (self.log_width, self.log_height)
-        
+
     log_str=Unicode()
 
     def write(self,str):
@@ -69,7 +69,7 @@ display_handler.setFormatter(Formatter(LOGFORMATTER))
 display_handler.name="StreamCatch"
 logger.addHandler(display_handler)
 
-memory_handler=MemoryHandler(3)
+memory_handler=MemoryHandler(30)
 memory_handler.setLevel(LOGLEVEL)
 memory_handler.setFormatter(Formatter(LOGFORMATTER))
 memory_handler.name="MemoryLog"
@@ -85,20 +85,23 @@ def make_log_file(log_path, overwrite=False):
     file_handler = FileHandler(filename=log_path)
     file_handler.setLevel(LOGLEVEL)
     file_handler.setFormatter(Formatter(LOGFORMATTER))
-    memory_handler.setTarget(file_handler) 
+    memory_handler.setTarget(file_handler)
 
 def remove_log_file():
     """closes the log file and removes memory_handler from pointing at it"""
     if memory_handler.target:
+        old_log_file_path=memory_handler.target.baseFilename
         memory_handler.target.flush()
         memory_handler.target.close()
         memory_handler.target=None
-        
+        return old_log_file_path
+
 def move_log_file(new_log_file_path):
-    """closes old_log_file, moves it to new_log_file and continues appending there"""
-    old_log_file_path=memory_handler.target.baseFilename
-    remove_log_file()
-    move(old_log_file_path, new_log_file_path)
+    """closes old_log_file, moves it to new_log_file and continues appending there.
+       creates log_file if it didn't exist before"""
+    old_log_file_path=remove_log_file()
+    if old_log_file_path:
+        move(old_log_file_path, new_log_file_path)
     make_log_file(new_log_file_path)
 
 if __name__=="__main__":
@@ -119,8 +122,8 @@ if __name__=="__main__":
     log_info(9)
     log_info(10)
     #make_log_file("/Users/thomasaref/Documents/TA_software/ztestlog2.txt")
-    
+
     move_log_file("/Users/thomasaref/Documents/TA_software/ztestlog3.txt")
-    
+
     log_info("yo")
     log_warning("yay")

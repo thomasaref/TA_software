@@ -11,7 +11,7 @@ import os
 import shutil
 import inspect
 from numpy import ndarray
-from LOG_functions import  log_info, log_warning, move_log_file
+from LOG_functions import  log_info, log_warning, move_log_file, make_log_file, remove_log_file
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
 from Atom_Read_File import Read_HDF5, Read_NP, Read_TXT, Read_DXF
@@ -20,14 +20,6 @@ SETUP_GROUP_NAME="SetUp"
 SAVE_GROUP_NAME="Measurements"
 
 
-def move_files_and_log(new_dir_path, divider="/"):
-    """moves the entire directory from old_path to new_path and
-       setups the log file for appended logging"""
-    if memory_handler.target:
-        old_log_dir_path, divider, old_log_name=memory_handler.target.baseFilename.rpartition(divider)
-        remove_log_file()
-    move(old_log_dir_path, new_dir_path)
-    make_log_file(new_dir_path+divider+log_name, mode='a')
 
 class Save_File(Filer):
     data_buffer=Dict()
@@ -35,8 +27,10 @@ class Save_File(Filer):
     default_group_name=Unicode()
     group_names=List()
     save_event=Event()
-    view=Enum("Save_File", "Auto")
-    #files_exist=Bool(False)
+
+    @property
+    def view(self):
+        return "Save_File"
 
     def _default_data_buffer(self):
         return {SAVE_GROUP_NAME:{}, SETUP_GROUP_NAME:{}}
@@ -46,66 +40,52 @@ class Save_File(Filer):
 
     def _default_default_group_name(self):
         return sorted(self.data_buffer.keys())[0]
-#    def _default_string_buffer(self):
-#        return {SAVE_GROUP_NAME:{}, SETUP_GROUP_NAME:{}}
 
-    #def _observe_buffer_save(self, change):
-    #    print change
-
-    @observe( "dir_path")
-    def filedir_path_changed(self, change):
-        """if the file path exists and the file location is changed, this function moves the entire directory to the new location"""
+    def _observe_dir_path(self, change):
+        """if the file path exists and the file location is changed, this function moves the
+        entire directory to the new location and sets up the log file for appended logging"""
         if change['type']!='create':
             old_dir_path=change['oldvalue']
             if not os.path.exists(self.file_path):
                 if os.path.exists(old_dir_path):
-                    move_files_and_log(self.dir_path+self.divider, old_dir_path+self.divider, self.log_name)
+                    remove_log_file()
+                    shutil.move(old_dir_path, self.dir_path)
+                    make_log_file(self.log_path)
                     log_info("Moved files to: {0}".format(self.dir_path))
 
-    def makedir(self, old_log_path=None):
+    def makedir(self):
         if not os.path.exists(self.dir_path):
             os.makedirs(self.dir_path)
+            log_info("Made directory at: {0}".format(self.dir_path))
         if not os.path.exists(self.file_path):
             self.create_file()
-            if old_log_path==None:
-                pass#make_log_file(self.dir_path+self.divider+self.log_name+".log") #start log file if it doesn't exist
-            else:
-                move_log_file(self.dir_path+self.divider+self.log_name+".log", old_log_path+".log") #move backup log to folder and
+            make_log_file(self.log_path, overwrite=True)
 
     def save_code(self, obj):
         """saves the code containing the passed in object"""
-        module_path, ext = os.path.splitext(inspect.getfile(obj))
-        code_file_path = module_path + '.py'   # Should get the py file, not the pyc, if compiled.
-        code_file_copy_path = self.dir_path+self.divider+os.path.split(module_path)[1]+".pyb"
-        if not os.path.exists(code_file_copy_path):
-            shutil.copyfile(code_file_path, code_file_copy_path)
-            log_info("Saved code to: {0}".format(code_file_copy_path))
+        if obj is not None:
+            module_path, ext = os.path.splitext(inspect.getfile(obj))
+            code_file_path = module_path + '.py'   # Should get the py file, not the pyc, if compiled.
+            code_file_copy_path = self.dir_path+self.divider+os.path.split(module_path)[1]+".pyb"
+            if not os.path.exists(code_file_copy_path):
+                shutil.copyfile(code_file_path, code_file_copy_path)
+                log_info("Saved code to: {0}".format(code_file_copy_path))
 
-    def full_save(self, obj=None, old_log_path=None):
+    def full_save(self, obj=None):
         """does a full save, making files and directories, flushing the buffers, and saving the code"""
-        #if old_log_path==None:
-        #    old_log_path=self.log_name
-        self.makedir(old_log_path)
+        self.makedir()
         self.flush_buffers()
-        if obj!=None:
-            self.save_code(obj)
+        self.save_code(obj)
         self.save_event()
-
 
     def flush_buffers(self):
         if self.buffer_save:
             self.buffer_save=False
-            log_flush()
             for group_name, item in self.data_buffer.iteritems():
                 for name, subitem in item.iteritems():
                     for key, arr in subitem.iteritems():
                         self.data_save(arr, name=name, group_name=group_name)
-            #for group_name, item in self.string_buffer.iteritems():
-            #    for name, subitem in item.iteritems():
-            #        for key, newstr in subitem.iteritems():
-            #            self.string_save(newstr, name=name, group_name=group_name)
             self.data_buffer=self._default_data_buffer()
-            #self.string_buffer=self._default_string_buffer()
             self.buffer_save=True
 
     def data_save(self, data, name="Measurement", group_name=None, append=True):
@@ -154,6 +134,7 @@ from HDF5_functions import create_hdf5, hdf5_data_save
 class Save_HDF5(Save_File):
     def _default_file_type(self):
         return "HDF5"
+
     def create_file(self):
         create_hdf5(self.file_path, self.group_names)
         log_info("Created hdf5 file at: {0}".format(self.file_path))
@@ -172,7 +153,7 @@ class Save_TXT(Save_File):
 
     def do_data_save(self, data, name, group_name, append):
         save_txt_data(self.dir_path+self.divider, data, name)
-        
+
     def direct_save(self, data, write_mode='a'):
         save_txt(file_path=self.file_path, data=data, write_mode=write_mode)
         log_info("Direct save of data to: {}".format(self.file_path))

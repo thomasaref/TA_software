@@ -34,18 +34,18 @@ class Filer(Atom):
 
     file_type=Enum("HDF5", "text", "dxf", "text data")
 
+    @property
+    def file_suffix(self):
+        return {"HDF5":".hdf5", "text":".txt", "dxf":".dxf", "text data":".txt"}.get(self.file_type, "")
+
+    @property
+    def log_suffix(self):
+        return ".log"
+
     comment=Unicode()
-    log_str=Unicode("not implemented")
 
     def _default_main_file(self):
-        if self.file_type=="HDF5":
-            return self.file_name+".hdf5"
-        elif self.file_type in ("text", "text data"):
-            return self.file_name+".txt"
-        elif self.file_type=="dxf":
-            return self.file_name+".dxf"
-        else:
-            return self.file_name
+        return self.file_name+self.file_suffix
 
     def _default_main_dir(self):
         return strftime("S%Y_%m_%d_%H%M%S", localtime())
@@ -54,12 +54,12 @@ class Filer(Atom):
         return self.dir_path+self.divider+self.main_file
 
     def _default_log_path(self):
-        return self.dir_path+self.divider+self.log_name+".log"
+        return self.dir_path+self.divider+self.log_name+self.log_suffix
 
     @observe( "dir_path", "log_name", 'divider')
     def log_path_changed(self, change):
         if change['type']!='create':
-            self.log_path=self.dir_path+self.divider+self.log_name+".log"
+            self.log_path=self.dir_path+self.divider+self.log_name+self.log_suffix
 
     @observe( "dir_path", "main_file", 'divider')
     def file_path_changed(self, change):
@@ -81,8 +81,8 @@ class Filer(Atom):
         with imports():
             from e_Filer import FilerMain
         return FilerMain(filer=self)
-        
+
 if __name__=="__main__":
-    from a_Show import show
+    from a_Chief import show
     f=Filer(file_type="text")
     show(f)
