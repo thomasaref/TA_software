@@ -7,25 +7,47 @@ Created on Thu Mar  5 11:13:08 2015
 
 from h5py import Group, File, special_dtype
 from numpy import ndarray
+from collections import OrderedDict
+
+
 
 class dataset(object):
-    def __init__(self, name, data=[], attrs={}, datatype=None, maxshape=(None,)):
+    def __init__(self, name=None, data=[], attrs=None, datatype=None, maxshape=(None,)):
         self.name=name
         self.data=data
+        if attrs is None:
+            attrs={}
+        attrs["index"]=len(data)-1    
         self.attrs=attrs
         self.maxshape=maxshape
         if datatype is None:
             datatype=type(data[0])
         self.datatype=datatype
         
-class group(object):
-    def __init__(self, name, attrs={}):
+class group(OrderedDict):
+    def __init__(self, name=None, attrs=None, *args, **kwargs):
+        super(group, self).__init__(*args, **kwargs)
         self.name=name
+        if attrs is None:
+            attrs={}
         self.attrs=attrs
         
+#    def __getitem__(self, key):
+#        """returns first child whose name matches key"""
+#        return self.children[key] #[c for c in self.children if c.name==key][0] 
+#
+#    def __setitem__(self, key, value):
+#        """returns first child whose name matches key"""
+#        self.children[child=[n for n,c in enumerate(self.children) if c.name==key][0]         
+#        child=
 def read_hdf5(file_path):
     with File(file_path, 'r') as f:
         data=reread(f)#print key, item.keys(), isinstance(item, Group)
+    return data
+
+def read_hdf52(file_path):
+    with File(file_path, 'r') as f:
+        data=reread2(f)#print key, item.keys(), isinstance(item, Group)
     return data
 
 def reread(g, md=dict()):
@@ -43,38 +65,42 @@ def reread(g, md=dict()):
                 md[key]['attrs'][akey]=aitem
     return md
 
+def reread2(g, md=group(name="f"), store_data=True):
+    """recursively reads all data into a dictionary"""
+    for key, item in g.iteritems():
+        if isinstance(item, Group):
+            myg=group(name=key)
+            myg=reread2(item, myg, store_data)
+        else:
+            if store_data:
+                myg=dataset(name=key, data=item[:])
+            else:
+                myg=dataset(name=key, data=item[0:4])
+        if item.attrs.keys()!=[]:
+            for akey, aitem in item.attrs.iteritems():
+                myg.attrs[akey]=aitem
+        md[key]=myg
+    return md
 
 def write_hdf5(file_path, data_dict, write_mode="a"):
     with File(file_path, write_mode) as f:
         rewrite(f, data_dict)
     
-def rewrite(g, dd, key=None):
+def rewrite(g, dd):
     """recursively writes all data in a dictionary"""
-    print dd
-    if isinstance(dd, dataset): #dataset
-        print dd.name, dd.data, dd.maxshape, dd.datatype
-        g.create_dataset(dd.name, data=dd.data, dtype=dd.datatype, maxshape=dd.maxshape)
-        for attr in dd.attrs:
-            g[dd.name].attrs[attr]=dd.attrs[attr]
-        g[dd.name].attrs["index"]=len(dd.data)-1
-    elif isinstance(dd, dict):    #group
-        if "attrs" in dd: #set attrs
-            for attr in dd["attrs"]:
-                g.attrs[attr]=dd["attrs"][attr]
-        #if "data" in dd: # indicates this is a dataset
-        #    datatype=type(dd["data"][0])
-        #    g.create_dataset(key, data=dd["data"], dtype=datatype, maxshape=(None,))#chunks=True)
-        #    g[key].attrs["index"]=len(dd["data"])-1
-        for key, item in dd.iteritems():
-            if isinstance(item, dict):
-                #if "data" in item:
-                #        rewrite(g, item, key)
-                #    else:
-                if key not in g.keys():
-                    g.create_group(key)
-                    rewrite(g[key], item, key)
-            else:
-                rewrite(g, item, key)
+    for ddkey, dditem in dd.iteritems():
+        if isinstance(dditem, dataset): #dataset
+            g.create_dataset(ddkey, data=dditem.data, dtype=dditem.datatype, maxshape=dditem.maxshape)
+            for attr in dditem.attrs:
+                g[ddkey].attrs[attr]=dditem.attrs[attr]
+            
+        elif isinstance(dd, group):
+            g.create_group(ddkey)
+            for attr in dditem.attrs:
+                g[ddkey].attrs[attr]=dditem.attrs[attr]
+            rewrite(g[ddkey], dditem)
+#            else:
+#                rewrite(g, item, key)
 #    else:
 #        if append==False:
 #            if type(data[0]) in [str, unicode, bool]:
@@ -96,8 +122,8 @@ def rewrite(g, dd, key=None):
 #                    n=n+len(data)
 #                    dset.attrs["index"]=n                     
 #            
-    else:
-        print g, dd
+    #else:
+        #pass #print g, dd
 #        datatype=type(dd[0])
 #        namestr="{0}".format(len(g))
 #        g.create_dataset(namestr, data=dd, dtype=datatype, maxshape=(None,))#chunks=True)
@@ -242,12 +268,13 @@ if __name__=="__main__":
     #hdf5_data_save(file_path, 7, name="yo")
     #hdf5_data_save(file_path, "blah", name="bo", group_name="Measurement", append=True)
     #hdf5_data_save(file_path, ["bobbby", "thomasaass"], name="obo", group_name="Measurement", append=True)
-    from collections import OrderedDict
 
-    a=OrderedDict()
-    #a["fudge"]=dataset("ball", data=[3], attrs={"yo":"mama"})
-    a["tacos"]=OrderedDict( blue=dataset("other", data=[1.2, 1.5, 1.6], attrs={"yay":"man"}))
+    a=group()
+    a["fudge"]=dataset( data=[3], attrs={"yo":"mama"})
+    a["tacos"]=group( blue=dataset(data=[1.2, 1.5, 1.6], attrs={"yay":"man"}), attrs={"dog":"cat"})
     #print isinstance(a["fudge"], dataset)
     write_hdf5(file_path, a, "w")
     #hdf5_dict_save(file_path, data={"Meas": dict(a=[1, 2,3])})
     print read_hdf5(file_path)
+    b=read_hdf52(file_path)
+    print b.name, b.attrs, b#[c.name for c in b.children], b["tacos"]["blue"]["other"].attrs #.children[0].children[0].datatype#, b.children[1].name, b.children[2].name
