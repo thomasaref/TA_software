@@ -10,14 +10,11 @@ A collection of functions for using my dynamic view.
 from inspect import getmembers
 from atom.api import Atom, Enum, Int, Float, Callable, Unicode, Bool
 from functools import wraps
-#from LOG_functions import log_info
+from LOG_functions import log_info
 from numpy import shape, ndarray
 from enaml.application import deferred_call
 from threading import Thread
 from types import FunctionType
-
-def log_info(message):
-    print message
     
 def get_member(obj, name):
     """returns a member if get_member exists and the attribute itself if it does not"""
@@ -46,8 +43,7 @@ def get_metadata(obj, name):
 #    return obj._metadata[name]
 
 def set_tag(obj, name, **kwargs):
-    """sets the tag of a member using Atom's built in tag functionality or
-    the object wide metadata dictionary for non-Atom objects"""
+    """sets the tag of a member using Atom's built in tag functionality"""
     if isinstance(obj, Atom):
         member=obj.get_member(name)
         member.tag(**kwargs)

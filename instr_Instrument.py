@@ -10,10 +10,8 @@ from a_Agent import Agent, set_all_tags, get_tag #Base, log
 
 #import enaml
 #from enaml.qt.qt_application import QtApplication
-#from LOG_functions import log_info, log_warning, make_log_file
+from LOG_functions import log_info, log_warning#, make_log_file
 
-def log_info(message):
-    print message
     
 class InstrumentError(Exception):
     pass

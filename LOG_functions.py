@@ -69,7 +69,7 @@ display_handler.setFormatter(Formatter(LOGFORMATTER))
 display_handler.name="StreamCatch"
 logger.addHandler(display_handler)
 
-memory_handler=MemoryHandler(3)
+memory_handler=MemoryHandler(30)
 memory_handler.setLevel(LOGLEVEL)
 memory_handler.setFormatter(Formatter(LOGFORMATTER))
 memory_handler.name="MemoryLog"

@@ -20,15 +20,18 @@ from enaml import imports
 from enaml.qt.qt_application import QtApplication
 from Atom_Read_File import Read_HDF5, Read_NP, Read_TXT, Read_DXF
 from collections import OrderedDict
-
+from HDF5_functions import group, dataset
       
 
 class Save_File(Filer):
-    data_buffer=Typed(OrderedDict, ())
+    data_buffer=Typed(group)
     buffer_save=Bool(False)
     buffer_size=Int(100).tag(desc="size of buffer as number of elements in a list/array")
     default_group_name=Unicode()
     save_event=Event()
+
+    def _default_data_buffer(self):
+        return group(attrs=dict(comment=""))
 
     @property
     def view(self):
@@ -72,27 +75,31 @@ class Save_File(Filer):
         self.save_event()
 
     def flush_buffers(self):
-        if self.buffer_save:
-            self.buffer_save=False
-            for group_name, item in self.data_buffer.iteritems():
-                for name, subitem in item.iteritems():
-                    for key, arr in subitem.iteritems():
-                        self.data_save(arr, name=name, group_name=group_name)
-            self.data_buffer=OrderedDict()
-            self.buffer_save=True
+        self.do_data_save()
+        self.buffer_save=group()
+        
+#        write_hdf5(self)
+##        if self.buffer_save:
+ #           self.buffer_save=False
+ #           for group_name, item in self.data_buffer.iteritems():
+ #               for name, subitem in item.iteritems():
+ ##                   for key, arr in subitem.iteritems():
+  #                      self.data_save(arr, name=name, group_name=group_name)
+  #          self.data_buffer=OrderedDict()
+  #          self.buffer_save=True
     
     def data_save(self, data, name="Measurement", group_name="Data", append=True):
         """grows data_buffer using name and group_name and flushes when length exceeds buffer_size"""
         if group_name not in self.data_buffer.keys():
-            self.data_buffer[group_name]=OrderedDict()
+            self.data_buffer[group_name]=group()
         if name not in self.data_buffer[group_name].keys():
-            self.data_buffer[group_name][name]=OrderedDict()
+            self.data_buffer[group_name][name]=group(attrs=dict(append=append))
             append=False
         if type(data) not in [list, ndarray]:
             data=[data]
         if append==False:
             namestr="{0}".format(len(self.data_buffer[group_name][name]))
-            self.data_buffer[group_name][name][namestr]=data
+            self.data_buffer[group_name][name][namestr]=dataset(data=data, append=append)
         else:
             namestr="{0}".format(len(self.data_buffer[group_name][name])-1)
             self.data_buffer[group_name][name][namestr].extend(data)
