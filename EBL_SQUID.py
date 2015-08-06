@@ -11,11 +11,11 @@ Created on Sat Apr  4 13:15:45 2015
 
 @author: thomasaref
 """
-from EBL_Item import EBL_Item
+#from EBL_Item import EBL_Item
 from atom.api import Enum, Float, Callable
-from EBL_Polygons import horiz_refl, vert_refl, horizvert_refl
+from EBL_Polygons import horiz_refl, vert_refl, horizvert_refl, EBL_Polygons
     
-class EBL_SQUID(EBL_Item):
+class EBL_SQUID(EBL_Polygons):
     box_height=Float(3.0e-6).tag(desc="height of connecting box", unit="um", good_value=20.0)
     box_width=Float(10.0e-6).tag(desc="width of connecting box", unit="um")
     height=Float(10.0e-6).tag(desc="height of total qubit", unit="um")
@@ -299,10 +299,8 @@ class EBL_SQUID(EBL_Item):
   
     
 if __name__=="__main__":
-    a=EBL_SQUID(name="EBL_Item_test")
+    a=EBL_SQUID()
     #print a.two_finger.run_params
-    from a_Backbone import run_func
-    run_func(a, "plot") #plot(a)
     a.show()
 
 #    def _s_bridge_TL(self):

@@ -6,7 +6,7 @@ Created on Thu Jun 25 09:52:31 2015
 """
 from atom.api import Atom, Enum, Float, List, Unicode, Typed, Dict, Bool, observe
 from numpy import sin, cos, pi
-from a_Agent import sAgent
+from a_Agent import SubAgent
 from Atom_Save_File import Save_DXF
 from a_BeamerGen import BeamerGen
 from EBL_Polygon_Chief import polygon_chief
@@ -215,7 +215,7 @@ def sPoly(obj, x_off=0.0, y_off=0.0, theta=0.0, orient="TL", vs=None):
 
 from Plotter import Plotter
 from enaml import imports
-from a_Show import show
+from a_Chief import show
 from collections import OrderedDict
 
 class Polygon_Chief(Atom):
@@ -266,7 +266,7 @@ class Polygon_Chief(Atom):
 
 #pc=Polygon_Chief()
 
-class EBL_Polygons(sAgent):
+class EBL_Polygons(SubAgent):
     color=Enum("green", "blue", "red", "purple", "brown", "black").tag(desc="color or datatype of item, could be used for dosing possibly")
     layer=Enum("Al", "Al_35nA", "Au").tag(desc='layer of item')
     save_file=Typed(Save_DXF, ()).tag(no_spacer=True)
