@@ -6,16 +6,16 @@ Created on Sat Jul 11 12:26:26 2015
 Workhorse templates for TypedView. Also adds Var definitions for variables that depend on TypedView
 """
 
-from enaml.widgets.api import Label, SpinBox, VGroup, ScrollArea, MultilineField, Field, PushButton, ObjectCombo, Slider, ScrollArea
+from enaml.widgets.api import Label, SpinBox, VGroup, ScrollArea, MultilineField, Field, PushButton, ObjectCombo, Slider, ScrollArea, Window
 from enaml.core.api import Conditional, DynamicTemplate, Looper
 from enaml.core.declarative import d_ 
 from enaml.layout.api import spacer
-from a_Backbone import get_attr, get_tag, set_tag, get_run_params, get_map, get_map_type, get_type, get_main_params, get_boss, run_func
+from a_Backbone import get_attr, get_tag, get_run_params, get_map, get_map_type, get_type, get_main_params, run_func
 from atom.api import Atom, Unicode, Str, Float, Int, ContainerList, List, Typed, Instance, Coerced, Bool, Range, Enum, Callable, FloatRange
 from e_FundView import (aContainer, aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField, Var, BoolVar,
                         IntVar, FloatVar, ChoiceIntVar, RangeVar, FloatRangeVar, ChoiceStrVar)
 
-#from LOG_functions import log_debug
+from LOG_functions import log_debug
 from e_UserTemps import UserInstrView
     
 def spacer_eval(vmodel, vname):
@@ -101,38 +101,43 @@ enamldef EnumVar(Var):
 
 enamldef CallableVar(Var):
     """extends Var for Callable"""
-    aHGroup:
-        PushButton: 
-            text = 'Run'
-            clicked :: 
-                run_func(vmodel, vname)
-            enabled << not get_boss(vmodel).busy
-        aGroupBox: agb:
-            visible = get_tag(vmodel, vname, "run_params", get_run_params(vvalue))!=[]
-            title = get_tag(vmodel, vname, 'label', vname)+" parameters:"
-            aContainer:
-                Looper: lo:
-                    iterable=get_run_params(vvalue)
-                    aHGroup:
-                        trailing_spacer=spacer_eval(vmodel, loop_item)
-                        Label:
-                            text=get_tag(vmodel, loop_item, "label", loop_item)
-                        func update_vval():
-                            setattr(vmodel, loop_item, s.tagged["vvalue"].vvalue)
-                        DynamicTemplate: s:
-                            base = TypedView
-                            args << (type(getattr(vmodel, loop_item)),)
-                            data << dict(vmodel=vmodel, vname=vname, vvalue=getattr(vmodel, loop_item))
-                            tags = ("vvalue",)
-    
-        PushButton: pb2:
-            text = 'Abort'
-            clicked ::
-                print "abort pressed"
-                get_boss(vmodel).abort=True
-            enabled <<  get_boss(vmodel).busy
+    Conditional:
+        condition = hasattr(vmodel, "chief")
+        aHGroup:
+            PushButton: 
+                text = 'Run'
+                clicked :: 
+                    run_func(vmodel, vname)
+                enabled << not vmodel.busy
+            aGroupBox: agb:
+                visible = get_tag(vmodel, vname, "run_params", get_run_params(vvalue))!=[]
+                title = get_tag(vmodel, vname, 'label', vname)+" parameters:"
+                aContainer:
+                    Looper: lo:
+                        iterable=get_run_params(vvalue)
+                        aHGroup:
+                            trailing_spacer=spacer_eval(vmodel, loop_item)
+                            Label:
+                                text=get_tag(vmodel, loop_item, "label", loop_item)
+                            func update_vval():
+                                setattr(vmodel, loop_item, s.tagged["vvalue"].vvalue)
+                            DynamicTemplate: s:
+                                base = TypedView
+                                args << (type(getattr(vmodel, loop_item)),)
+                                data << dict(vmodel=vmodel, vname=vname, vvalue=getattr(vmodel, loop_item))
+                                tags = ("vvalue",)
+        
+            PushButton: pb2:
+                text = 'Abort'
+                clicked ::
+                    log_debug("abort pressed")
+                    vmodel.abort=True
+                enabled <<  vmodel.busy
 
-     
+enamldef Main(Window):
+    CallableVar:
+        pass
+    
 class aListHGroup(aHGroup): 
     vlist = d_(Coerced(list)) #ContainerList(default=[0]))
 

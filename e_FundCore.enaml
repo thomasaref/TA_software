@@ -83,7 +83,7 @@ enamldef UnitSpinBox(aHGroup):
     Conditional:
         condition = show_uvalue
         Label: vl:
-            text << unicode("({})".format(uvalue)) #get_tag(instrin, name, 'unit', "no unit")
+            text << unicode("({})".format(uvalue)) 
             
 enamldef UnitFloatField(aHGroup):
     """a field for floats with units"""
@@ -110,7 +110,7 @@ enamldef UnitFloatField(aHGroup):
     Conditional:
         condition = show_uvalue
         Label: vl:
-            text << unicode("({})".format(uvalue)) #get_tag(instrin, name, 'unit', "no unit")
+            text << unicode("({})".format(uvalue)) 
    
 
 ################ test window ################### 

@@ -32,7 +32,7 @@ enamldef SimpleSave(Container):
     PushButton: save:
         text = "Save"
         clicked ::
-            filer.full_save(obj=coder, old_log_path=olp)
+            filer.full_save(obj=coder)
 
 enamldef SimpleRead(Container):
     padding=0

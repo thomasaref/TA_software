@@ -5,18 +5,11 @@ Created on Sun Jun 28 15:18:25 2015
 @author: thomasaref
 """
 
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Apr  4 13:15:45 2015
-
-@author: thomasaref
-"""
-#from EBL_Item import EBL_Item
 from atom.api import Enum, Float, Callable
 from EBL_Polygons import horiz_refl, vert_refl, horizvert_refl, EBL_Polygons
     
 class EBL_SQUID(EBL_Polygons):
-    box_height=Float(3.0e-6).tag(desc="height of connecting box", unit="um", good_value=20.0)
+    box_height=Float(3.0e-6).tag(desc="height of connecting box", unit="um")
     box_width=Float(10.0e-6).tag(desc="width of connecting box", unit="um")
     height=Float(10.0e-6).tag(desc="height of total qubit", unit="um")
     width=Float(10e-6).tag(desc="width of total qubit", unit="um")
@@ -299,9 +292,11 @@ class EBL_SQUID(EBL_Polygons):
   
     
 if __name__=="__main__":
-    a=EBL_SQUID()
+    a=EBL_SQUID(box_height=1.3e-6, height=4.5e-6, width=9.0e-6)
+    dir_path="""/Users/thomasaref/Dropbox/Current stuff/TA_software/discard/"""
+    a.full_EBL_save(dir_path=dir_path)
     #print a.two_finger.run_params
-    a.show()
+    #a.show()
 
 #    def _s_bridge_TL(self):
 #        return self.sP([(-self.contact_width/2.0, self.contact_height/2.0),

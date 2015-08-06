@@ -1,7 +1,0 @@
-2015-08-01 14:17:28,427 - LOG_functions.py (line 78) <<module>> DEBUG:  Started logging
-2015-08-01 14:17:28,428 - LOG_functions.py (line 108) <<module>> INFO:  yoy
-2015-08-01 14:17:28,428 - LOG_functions.py (line 109) <<module>> WARNING:  yay
-2015-08-01 14:17:28,428 - LOG_functions.py (line 112) <<module>> INFO:  2
-2015-08-01 14:17:28,428 - LOG_functions.py (line 113) <<module>> INFO:  3
-2015-08-01 14:17:28,428 - LOG_functions.py (line 114) <<module>> INFO:  4
-2015-08-01 14:17:28,429 - LOG_functions.py (line 115) <<module>> INFO:  5

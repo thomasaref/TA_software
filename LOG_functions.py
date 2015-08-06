@@ -10,8 +10,7 @@ A collection of logging related functions. Configures logging to output and stre
 from logging import debug as log_debug, warning as log_warning, info as log_info
 from logging import getLogger, StreamHandler, FileHandler, basicConfig, DEBUG, Formatter, INFO
 from logging.handlers import MemoryHandler
-#from shutil import move
-
+from atom.api import Atom, Unicode, Int
 
 #configure logging
 LOGFORMATTER='%(asctime)s - %(filename)s (line %(lineno)d) <%(funcName)s> %(levelname)s:  %(message)s'
@@ -23,7 +22,6 @@ else:
 
 basicConfig(format=LOGFORMATTER, level=LOGLEVEL)
 
-from atom.api import Atom, Unicode, Int
 
 class StreamCatch(Atom):
     """a stream catching class for use with the log window"""

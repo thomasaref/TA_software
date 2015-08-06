@@ -30,39 +30,42 @@ def members(obj):
 
 def get_metadata(obj, name):
     """returns the metadata of a member if it exists and generates an appropriately indexed empty dictionary if it does not"""
+    if hasattr(obj, "get_metadata"):
+        return obj.get_metadata(name)
     if isinstance(obj, Atom):
         member=obj.get_member(name)
         if member.metadata is None:
             member.metadata={}
         return member.metadata
     return {}
-#    if not hasattr(obj, "_metadata"):
-#        obj._metadata={name:{}}
-#    if obj._metadata.get(name, None) is None:
-#        obj._metadata[name]={}
-#    return obj._metadata[name]
 
 def set_tag(obj, name, **kwargs):
     """sets the tag of a member using Atom's built in tag functionality"""
-    if isinstance(obj, Atom):
+    if hasattr(obj, "set_tag"):
+        obj.set_tag(name, **kwargs)
+    elif isinstance(obj, Atom):
         member=obj.get_member(name)
         member.tag(**kwargs)
-    #else:
-    #    metadata=get_metadata(obj, name)
-    #    metadata.update(**kwargs)
 
 def set_all_tags(obj, **kwargs):
     """set all parameters tags using keyword arguments"""
-    for param in get_all_params(obj):
-        set_tag(obj, param, **kwargs)
+    if hasattr(obj, "set_all_tags"):
+        obj.set_all_tags(**kwargs)
+    else:
+        for param in get_all_params(obj):
+            set_tag(obj, param, **kwargs)
 
 def get_tag(obj, name, key, none_value=None):
     """returns the tag key of a member name an returns none_value if it does not exist"""
+    if hasattr(obj, "get_tag"):
+        return obj.get_tag(name, key, none_value)
     metadata=get_metadata(obj, name)
     return metadata.get(key, none_value)
 
 def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
     """returns a list of names of parameters with a certain key_value"""
+    if hasattr(obj, "get_all_tags"):
+        return obj.get_all_tags(key, key_value, none_value, search_list)
     if search_list is None:
         search_list=members(obj)
     if key_value==None:
@@ -121,6 +124,8 @@ def get_inv(obj, name, value):
 
 def get_type(obj, name):
     """returns type of member with given name, with possible override via tag typer"""
+    if hasattr(obj, "get_type"):
+        return obj.get_type(name)
     typer=type(get_member(obj, name))
     return get_tag(obj, name, "typer", typer)
 

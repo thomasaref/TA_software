@@ -17,7 +17,7 @@ from e_Log import LogWindow, log_stream
 
 from e_FundTemps import InstrHolder
 
-enamldef agentView(aWindow):
+enamldef agentView(Window):
     """default view for an agent based on dynamic templating"""
     attr agent
     initial_size=get_attr(agent, "initial_size", (-1,-1))
