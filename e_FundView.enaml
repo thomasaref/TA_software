@@ -97,6 +97,11 @@ enamldef ChoiceIntVar(Var):
             minimum=int(get_tag(vmodel, vname, 'low', -2147483648))
             maximum=int(get_tag(vmodel, vname, 'high', 2147483647))
 
+def floater(value):
+    if value is None:
+        return value
+    return float(value)
+    
 enamldef FloatVar(Var):
     """extends Var for float types"""
     UnitFloatField:
@@ -104,8 +109,8 @@ enamldef FloatVar(Var):
         unit=get_tag(vmodel, vname, "unit", u"")
         show_uvalue=get_tag(vmodel, vname, "show_value", False)
         unit_factor=float(get_tag(vmodel, vname, "unit_factor", 1.0))
-        minimum=float(get_tag(vmodel, vname, 'low'))
-        maximum=float(get_tag(vmodel, vname, 'high'))
+        minimum=floater(get_tag(vmodel, vname, 'low'))
+        maximum=floater(get_tag(vmodel, vname, 'high'))
 
 enamldef UnicodeVar(Var):
     """extends Var for string types"""
@@ -130,11 +135,12 @@ enamldef ChoiceStrVar(Var):
                     
 ###################test code########################
 from enaml.widgets.api import  Window, VGroup
-from atom.api import Atom, Int, Float
+from atom.api import Atom, Int, Float, Bool
 
 class test(Atom):
     a=Int().tag(unit="um", show_value=True, unit_factor=20, low=0, high=5)
     b=Float().tag(unit="GHz", show_value=True, unit_factor=0.2, low=-1.0, high=1)
+    t_bool=Bool()
 
 t=test()    
 

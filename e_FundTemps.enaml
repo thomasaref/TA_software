@@ -6,17 +6,19 @@ Created on Sat Jul 11 12:26:26 2015
 Workhorse templates for TypedView. Also adds Var definitions for variables that depend on TypedView
 """
 
-from enaml.widgets.api import Label, SpinBox, VGroup, ScrollArea, MultilineField, Field, PushButton, ObjectCombo, Slider, ScrollArea, Window
+import enaml.qt #work around for Qdate error. import order
+from enaml.widgets.api import Form, Label, SpinBox, VGroup, HGroup, ScrollArea, MultilineField, Field, PushButton, ObjectCombo, Slider, ScrollArea, Window
 from enaml.core.api import Conditional, DynamicTemplate, Looper
 from enaml.core.declarative import d_ 
 from enaml.layout.api import spacer
-from a_Backbone import get_attr, get_tag, get_run_params, get_map, get_map_type, get_type, get_main_params, run_func
+from a_Backbone import get_attr, get_tag, get_run_params, get_map, get_type, get_main_params, run_func
 from atom.api import Atom, Unicode, Str, Float, Int, ContainerList, List, Typed, Instance, Coerced, Bool, Range, Enum, Callable, FloatRange
 from e_FundView import (aContainer, aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField, Var, BoolVar,
                         IntVar, FloatVar, ChoiceIntVar, RangeVar, FloatRangeVar, ChoiceStrVar)
 
 from LOG_functions import log_debug
 from e_UserTemps import UserInstrView
+from numpy import ndarray
     
 def spacer_eval(vmodel, vname):
      """useful function for modifying spacer of aHGroup"""
@@ -73,7 +75,7 @@ enamldef CoercedVar(Var):
         tags = ("vvalue",)
 
 def enum_spacer_eval(vmodel, vname, vvalue):
-      if get_map_type(vmodel, vname)=="attribute":
+      if get_tag(vmodel, vname, "map_type")=="attribute":
           return spacer_eval(vmodel, vvalue)
       return spacer_eval(vmodel, vname)
       
@@ -85,7 +87,7 @@ enamldef EnumVar(Var):
             items = list(vmodel.get_member(vname).items)
             selected := vvalue
         Conditional:
-            condition = get_map_type(vmodel, vname)=="attribute"
+            condition = get_tag(vmodel, vname, "map_type")=="attribute"
             aContainer:
                 func update_vval():
                     setattr(vmodel, vvalue, s.tagged["vvalue"].vvalue)
@@ -95,48 +97,50 @@ enamldef EnumVar(Var):
                     data << dict(vmodel=vmodel, vname=vvalue, vvalue=getattr(vmodel, vvalue))
                     tags = ("vvalue",)
         Conditional:
-            condition = get_map_type(vmodel, vname)!="attribute"
+            condition = get_tag(vmodel, vname, "map_type")!="attribute"
             Label:
                 text <<  unicode(get_map(vmodel, vname, vvalue))  
 
 enamldef CallableVar(Var):
     """extends Var for Callable"""
-    Conditional:
-        condition = hasattr(vmodel, "chief")
-        aHGroup:
+    aHGroup:
+        Conditional:
+            condition = hasattr(vmodel, "chief")
             PushButton: 
                 text = 'Run'
                 clicked :: 
                     run_func(vmodel, vname)
-                enabled << not vmodel.busy
-            aGroupBox: agb:
-                visible = get_tag(vmodel, vname, "run_params", get_run_params(vvalue))!=[]
-                title = get_tag(vmodel, vname, 'label', vname)+" parameters:"
-                aContainer:
-                    Looper: lo:
-                        iterable=get_run_params(vvalue)
-                        aHGroup:
-                            trailing_spacer=spacer_eval(vmodel, loop_item)
-                            Label:
-                                text=get_tag(vmodel, loop_item, "label", loop_item)
-                            func update_vval():
-                                setattr(vmodel, loop_item, s.tagged["vvalue"].vvalue)
-                            DynamicTemplate: s:
-                                base = TypedView
-                                args << (type(getattr(vmodel, loop_item)),)
-                                data << dict(vmodel=vmodel, vname=vname, vvalue=getattr(vmodel, loop_item))
-                                tags = ("vvalue",)
-        
-            PushButton: pb2:
+                enabled << not vmodel.chief.busy
+        Conditional:
+            condition = not hasattr(vmodel, "chief")
+            PushButton: 
+                text = 'Run'
+                clicked :: vvalue(vmodel)
+        aGroupBox: 
+            visible = get_tag(vmodel, vname, "run_params", get_run_params(vvalue))!=[]
+            title = get_tag(vmodel, vname, 'label', vname)+" parameters:"
+            aContainer:
+                Looper: lo:
+                    iterable=get_run_params(vvalue)
+                    aHGroup:
+                        trailing_spacer=spacer_eval(vmodel, loop_item)
+                        Label:
+                            text=get_tag(vmodel, loop_item, "label", loop_item)
+                        func update_vval():
+                            setattr(vmodel, loop_item, s.tagged["vvalue"].vvalue)
+                        DynamicTemplate: s:
+                            base = TypedView
+                            args << (type(getattr(vmodel, loop_item)),)
+                            data << dict(vmodel=vmodel, vname=vname, vvalue=getattr(vmodel, loop_item))
+                            tags = ("vvalue",)
+        Conditional:
+            condition = hasattr(vmodel, "chief")
+            PushButton: 
                 text = 'Abort'
                 clicked ::
                     log_debug("abort pressed")
-                    vmodel.abort=True
-                enabled <<  vmodel.busy
-
-enamldef Main(Window):
-    CallableVar:
-        pass
+                    vmodel.chief.abort=True
+                enabled <<  vmodel.chief.busy
     
 class aListHGroup(aHGroup): 
     vlist = d_(Coerced(list)) #ContainerList(default=[0]))
@@ -184,10 +188,10 @@ enamldef ListVGVar(Var):
 
 template TypedView(AttrType):
     """default template for unknown type"""
-    TypedView(Typed): pass
-    #Var:
-    #    Label:
-    #        text << unicode((vname, vvalue))
+    #TypedView(Typed): pass
+    Var:
+        Label:
+            text << unicode((vname, vvalue))
 
 template TypedView(AttrType : Int):
     """template for Int types"""
@@ -237,6 +241,9 @@ template TypedView(AttrType: List):
     #ListVGVar: 
     #    vvalue :: update_vval()
 
+template TypedView(AttrType: ndarray):
+    TypedView(ContainerList): pass
+
 template TypedView(AttrType: Typed):
     """interface for a Typed member."""
     TypedVar:
@@ -279,7 +286,20 @@ template TypedView(AttrType: Enum):
     """ A form control template specialization for Enum members using ObjectCombo."""
     EnumVar: 
         vvalue :: update_vval()
-         
+
+enamldef Main(Window):
+    alias instr : ih.instr
+    InstrHolder: ih:
+        pass
+#    VGroup:
+#        CallableVar:
+#            vmodel=a
+#            vname="a"
+#            vvalue=a.a
+#        EnumVar:
+#            vmodel=a
+#            vname="b"
+#            vvalue=a.b         
 #enamldef ListContainer(HGroup):
 #    attr vlist = [0]
 #    attr vval = vlist[0]

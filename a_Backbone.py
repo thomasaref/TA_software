@@ -72,14 +72,13 @@ def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
         return [x for x in search_list if none_value!=get_tag(obj, x, key, none_value)]
     return [x for x in search_list if key_value==get_tag(obj, x, key, none_value)]
 
-def get_map(obj, name, item=None, none_map={}):
+def get_map(obj, name, value=None):
     """gets the mapped value specified by dictionary mapping and uses none_map if it doesn't exist"""
-    if item is None:
-        item=getattr(obj, name)
-    mapping=get_mapping(obj, name, none_map) #get_tag(obj, name, "mapping", none_map)
-    if get_tag(obj, name, "map_type")=="attribute":
-        item=getattr(obj, item)
-    return mapping.get(item, item)
+    if value is None:
+        value=getattr(obj, name)
+    if hasattr(obj, name+"_mapping"):
+        return getattr(obj, name+"_mapping")[value]
+    return value
 
 
 #def find_targets(dock_items, target_items=[]):
@@ -88,39 +87,38 @@ def get_map(obj, name, item=None, none_map={}):
 #    overlap=list(set(targets).intersection(names))
 #    return overlap
 
-def get_mapping(obj, name, none_map={}):
-    mapping=get_tag(obj, name, 'mapping')
-    if isinstance(mapping, dict):
-        #if mapping is already defined, just return it
-        return mapping
-    if isinstance(mapping, list):
-        return {}
-    if isinstance(mapping, basestring):
-        #if mapping is defined as the name of a property, update to a dictionary and return it
-        mapping=getattr(obj, mapping)
-        set_tag(obj, name, mapping=mapping, map_type="property")
-        return mapping
-    items=obj.get_member(name).items
-    if sorted(items)==sorted(set(items).intersection(members(obj))):
-        #if every name in items maps to a member, update to a list mapping to the members
-        mapping=list(items)
-        set_tag(obj, name, mapping=mapping, map_type="attribute")
-        return {}
-    #if nothing else, set mapping to none_map and return
-    set_tag(obj, name, mapping=none_map, map_type="none_map")
-    return none_map
+#def get_mapping(obj, name, none_map={}):
+#    mapping=get_tag(obj, name, 'mapping')
+#    if isinstance(mapping, dict):
+#        #if mapping is already defined, just return it
+#        return mapping
+#    if isinstance(mapping, list):
+#        return {}
+#    if isinstance(mapping, basestring):
+#        #if mapping is defined as the name of a property, update to a dictionary and return it
+#        mapping=getattr(obj, mapping)
+#        set_tag(obj, name, mapping=mapping, map_type="property")
+#        return mapping
+#    items=obj.get_member(name).items
+#    if sorted(items)==sorted(set(items).intersection(members(obj))):
+#        #if every name in items maps to a member, update to a list mapping to the members
+#        mapping=list(items)
+#        set_tag(obj, name, mapping=mapping, map_type="attribute")
+#        return {}
+#    #if nothing else, set mapping to none_map and return
+#    set_tag(obj, name, mapping=none_map, map_type="none_map")
+#    return none_map
 
-def get_map_type(obj, name):
-    """makes sure to get mapping to update map_type before returning it"""
-    get_mapping(obj, name)
-    return get_tag(obj, name, "map_type")
+#def get_map_type(obj, name):
+#    """makes sure to get mapping to update map_type before returning it"""
+#    get_mapping(obj, name)
+#    return get_tag(obj, name, "map_type")
 
 def get_inv(obj, name, value):
     """returns the inverse mapped value (meant for an Enum)"""
-    if get_tag(obj, name, 'inv_map') is None:
-        mapping=get_mapping(obj, name) #self.get_tag(name, 'mapping', {getattr(self, name) : getattr(self, name)})
-        set_tag(obj, name, inv_map={v:k for k, v in mapping.iteritems()})
-    return get_tag(obj, name, 'inv_map').get(value, value)
+    if hasattr(obj, name+"_mapping"):
+        return {v:k for k, v in getattr(obj, name+"_mapping").iteritems()}[value]
+    return value
 
 def get_type(obj, name):
     """returns type of member with given name, with possible override via tag typer"""
@@ -219,7 +217,7 @@ def run_func(obj, name, **kwargs):
                 value=getattr(obj, item)
                 value=set_value_map(obj, item, value)
                 kwargs[item]=value
-    do_it_if_needed(get_boss(obj), f, **kwargs)
+    do_it_if_needed(obj.chief, f, **kwargs)
 
 def updater(fn):
     """a decorator to stop infinite recursion. also stores run_params as an attribute"""

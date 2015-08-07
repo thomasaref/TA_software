@@ -8,7 +8,7 @@ A simple text editor driver allowing one to load, edit and save text files
 """
 
 #from a_Agent import Spy
-from a_Show import show
+from a_Chief import show
 from atom.api import Atom, Str, observe, Unicode, Typed, ContainerList, Int, Float, Bool, List, Coerced, Instance, Enum
 from Atom_Read_File import Read_TXT
 from Atom_Save_File import Save_TXT
