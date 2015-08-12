@@ -10,6 +10,7 @@ from enaml.qt.qt_application import QtApplication
 from atom.api import Atom, Bool, Int, Str, Coerced, Instance, Float, Unicode, Enum, Callable, Typed, Range, FloatRange, ContainerList, List
 from LOG_functions import log_debug
 from numpy import array, ndarray
+
 def show(a):
     app = QtApplication()
     with imports():

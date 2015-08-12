@@ -24,7 +24,7 @@ from HDF5_functions import group, dataset
       
 
 class Save_File(Filer):
-    data_buffer=Typed(group)
+    data_buffer=Typed(OrderedDict)
     buffer_save=Bool(False)
     buffer_size=Int(100).tag(desc="size of buffer as number of elements in a list/array")
     default_group_name=Unicode()
@@ -33,6 +33,12 @@ class Save_File(Filer):
     def _default_data_buffer(self):
         return group(attrs=dict(comment=""))
 
+    #@property
+    #def buffer_flush(self):
+    #    """returns if buffer should be flushed"""
+    #    return size(self.data_buffer[group_name][name][namestr])>self.buffer_size or size(self.data_buffer[group_name][name].keys())>self.buffer_size
+
+        
     @property
     def view(self):
         return "Save_File"
@@ -76,7 +82,6 @@ class Save_File(Filer):
 
     def flush_buffers(self):
         self.do_data_save()
-        self.buffer_save=group()
         
 #        write_hdf5(self)
 ##        if self.buffer_save:
@@ -132,6 +137,11 @@ class Save_File(Filer):
 
 from HDF5_functions import create_hdf5, hdf5_data_save
 class Save_HDF5(Save_File):
+    data_buffer=Typed(group)
+    
+    def _default_data_buffer(self):
+        return group(attrs=dict(comment=self.comment))
+
     def _default_file_type(self):
         return "HDF5"
 
@@ -141,6 +151,25 @@ class Save_HDF5(Save_File):
 
     def do_data_save(self, data, name, group_name, append):
         hdf5_data_save(file_path=self.file_path, data=data, name=name, group_name=group_name, append=append)
+        self.data_buffer=self._default_data_buffer()
+    
+    def data_save(self, data, name="Measurement", group_name="Data", append=True):
+        """grows data_buffer using name and group_name and flushes when length exceeds buffer_size"""
+        if group_name not in self.data_buffer.keys():
+            self.data_buffer[group_name]=group()
+        if name not in self.data_buffer[group_name].keys():
+            self.data_buffer[group_name][name]=group(attrs=dict(append=append))
+            append=False
+        if type(data) not in [list, ndarray]:
+            data=[data]
+        if append==False:
+            namestr="{0}".format(len(self.data_buffer[group_name][name]))
+            self.data_buffer[group_name][name][namestr]=dataset(data=data, append=append)
+        else:
+            namestr="{0}".format(len(self.data_buffer[group_name][name])-1)
+            self.data_buffer[group_name][name][namestr].extend(data)
+        if size(self.data_buffer[group_name][name][namestr])>self.buffer_size or size(self.data_buffer[group_name][name].keys())>self.buffer_size:
+            self.flush_buffers() #self.do_data_save(data, name, group_name, append)
 
 from TXTNP_functions import create_txt,  save_txt_data, save_np_data, save_txt
 class Save_TXT(Save_File):
