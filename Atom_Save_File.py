@@ -27,17 +27,21 @@ class Save_File(Filer):
     data_buffer=Typed(OrderedDict)
     buffer_save=Bool(False)
     buffer_size=Int(100).tag(desc="size of buffer as number of elements in a list/array")
-    default_group_name=Unicode()
+    #default_group_name=Unicode()
     save_event=Event()
+    save_file=Typed()
 
     def _default_data_buffer(self):
-        return group(attrs=dict(comment=""))
+        return OrderedDict()
 
     #@property
     #def buffer_flush(self):
     #    """returns if buffer should be flushed"""
     #    return size(self.data_buffer[group_name][name][namestr])>self.buffer_size or size(self.data_buffer[group_name][name].keys())>self.buffer_size
 
+#    def close(self):
+#        self.save_file.flush()
+#        self.save_file.close()
         
     @property
     def view(self):
@@ -56,6 +60,7 @@ class Save_File(Filer):
                     log_info("Moved files to: {0}".format(self.dir_path))
 
     def makedir(self):
+        """creates the directory and data file and log file"""
         if not os_path_exists(self.dir_path):
             os_makedirs(self.dir_path)
             log_info("Made directory at: {0}".format(self.dir_path))
@@ -82,6 +87,7 @@ class Save_File(Filer):
 
     def flush_buffers(self):
         self.do_data_save()
+        self.data_buffer=self._default_data_buffer()
         
 #        write_hdf5(self)
 ##        if self.buffer_save:
@@ -132,10 +138,10 @@ class Save_File(Filer):
     def create_file(self):
         log_warning("create_file not overwritten")
 
-    def do_data_save(self, data, name, groupname, append):
+    def do_data_save(self):
         log_warning("do_data_save not overwritten")
 
-from HDF5_functions import create_hdf5, hdf5_data_save
+from HDF5_functions import create_hdf5, hdf5_data_save, write_hdf5
 class Save_HDF5(Save_File):
     data_buffer=Typed(group)
     
@@ -146,19 +152,19 @@ class Save_HDF5(Save_File):
         return "HDF5"
 
     def create_file(self):
-        create_hdf5(self.file_path, self.group_names)
+        create_hdf5(self.file_path)
         log_info("Created hdf5 file at: {0}".format(self.file_path))
 
-    def do_data_save(self, data, name, group_name, append):
-        hdf5_data_save(file_path=self.file_path, data=data, name=name, group_name=group_name, append=append)
-        self.data_buffer=self._default_data_buffer()
+    def do_data_save(self):
+        write_hdf5(file_path=self.file_path, data=self.data_buffer)
+        #hdf5_data_save(file_path=self.file_path, data=data, name=name, group_name=group_name, append=append)
     
     def data_save(self, data, name="Measurement", group_name="Data", append=True):
         """grows data_buffer using name and group_name and flushes when length exceeds buffer_size"""
         if group_name not in self.data_buffer.keys():
             self.data_buffer[group_name]=group()
         if name not in self.data_buffer[group_name].keys():
-            self.data_buffer[group_name][name]=group(attrs=dict(append=append))
+            self.data_buffer[group_name][name]=group() #attrs=dict(append=append))
             append=False
         if type(data) not in [list, ndarray]:
             data=[data]

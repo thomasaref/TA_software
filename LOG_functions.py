@@ -13,6 +13,7 @@ from logging.handlers import MemoryHandler
 from atom.api import Atom, Unicode, Int
 
 #configure logging
+MEMBUFFER=30
 LOGFORMATTER='%(asctime)s - %(filename)s (line %(lineno)d) <%(funcName)s> %(levelname)s:  %(message)s'
 
 if 1:
@@ -67,7 +68,7 @@ display_handler.setFormatter(Formatter(LOGFORMATTER))
 display_handler.name="StreamCatch"
 logger.addHandler(display_handler)
 
-memory_handler=MemoryHandler(30)
+memory_handler=MemoryHandler(MEMBUFFER)
 memory_handler.setLevel(LOGLEVEL)
 memory_handler.setFormatter(Formatter(LOGFORMATTER))
 memory_handler.name="MemoryLog"

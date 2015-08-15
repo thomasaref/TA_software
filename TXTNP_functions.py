@@ -7,19 +7,15 @@ Created on Thu Mar  5 20:17:59 2015
 
 from numpy import ndarray, savetxt
 
-def save_np_data(dir_path, data, name, append=True):
-    savetxt(dir_path+name, data)
+def save_np_data(file_path, data):
+    """saves data using numpy savetxt"""
+    savetxt(file_path, data)
     
-def create_txt(dir_path):
-    pass
-    #with open(dir_path+"Full_Log", 'w') as f:
-    #    f.write("Full Log\n\n")
+def create_txt(file_path):
+    """creates txt file by opening it write mode w and doing nothing"""
+    with open(file_path, mode="w"):
+        pass
     
-def save_txt_log(dir_path, new_string, log="Full Log"):      
-    log=log.replace(" ", "_")
-    with open(dir_path+log, 'a') as f:
-       f.write(new_string)
-
 def save_txt_data(dir_path, data, name, append=True):       
     if type(data)==dict:
         print data
