@@ -98,24 +98,26 @@ class Save_File(Filer):
   #                      self.data_save(arr, name=name, group_name=group_name)
   #          self.data_buffer=OrderedDict()
   #          self.buffer_save=True
-    
-    def data_save(self, data, name="Measurement", group_name="Data", append=True):
-        """grows data_buffer using name and group_name and flushes when length exceeds buffer_size"""
-        if group_name not in self.data_buffer.keys():
-            self.data_buffer[group_name]=group()
-        if name not in self.data_buffer[group_name].keys():
-            self.data_buffer[group_name][name]=group(attrs=dict(append=append))
-            append=False
-        if type(data) not in [list, ndarray]:
-            data=[data]
-        if append==False:
-            namestr="{0}".format(len(self.data_buffer[group_name][name]))
-            self.data_buffer[group_name][name][namestr]=dataset(data=data, append=append)
-        else:
-            namestr="{0}".format(len(self.data_buffer[group_name][name])-1)
-            self.data_buffer[group_name][name][namestr].extend(data)
-        if size(self.data_buffer[group_name][name][namestr])>self.buffer_size or size(self.data_buffer[group_name][name].keys())>self.buffer_size:
-            self.flush_buffers() #self.do_data_save(data, name, group_name, append)
+
+    def data_save(self):
+        pass
+#    def data_save(self, data, name="Measurement", group_name="Data", append=True):
+#        """grows data_buffer using name and group_name and flushes when length exceeds buffer_size"""
+#        if group_name not in self.data_buffer.keys():
+#            self.data_buffer[group_name]=group()
+#        if name not in self.data_buffer[group_name].keys():
+#            self.data_buffer[group_name][name]=group(attrs=dict(append=append))
+#            append=False
+#        if type(data) not in [list, ndarray]:
+#            data=[data]
+#        if append==False:
+#            namestr="{0}".format(len(self.data_buffer[group_name][name]))
+#            self.data_buffer[group_name][name][namestr]=dataset(data=data, append=append)
+#        else:
+#            namestr="{0}".format(len(self.data_buffer[group_name][name])-1)
+#            self.data_buffer[group_name][name][namestr].extend(data)
+#        if size(self.data_buffer[group_name][name][namestr])>self.buffer_size or size(self.data_buffer[group_name][name].keys())>self.buffer_size:
+#            self.flush_buffers() #self.do_data_save(data, name, group_name, append)
 
     def show(self, read_file=None, coder=None):
         """stand alone for showing filer."""
@@ -186,9 +188,20 @@ class Save_TXT(Save_File):
         create_txt(self.dir_path)
         log_info("Created txt file at: {0}".format(self.file_path))
 
-    def do_data_save(self, data, name, group_name, append):
-        save_txt_data(self.dir_path+self.divider, data, name)
+    def data_save(self, data, name="Measurement"):
+        name=name.replace(" ", "_")
+        if type(data) not in [list, ndarray]:
+            data=[data]
+        if name not in self.data_buffer.keys():
+            self.data_buffer[name]=data
+        else:
+            self.data_buffer[name].extend(data)
+        if size(self.data_buffer[name])>self.buffer_size:
+            self.flush_buffers()
 
+    def do_data_save(self):
+        save_txt_data(self.dir_path+self.divider, self.data)
+        
     def direct_save(self, data, write_mode='a'):
         save_txt(file_path=self.file_path, data=data, write_mode=write_mode)
         log_info("Direct save of data to: {}".format(self.file_path))
