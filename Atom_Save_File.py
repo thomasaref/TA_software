@@ -29,7 +29,7 @@ class Save_File(Filer):
     buffer_size=Int(100).tag(desc="size of buffer as number of elements in a list/array")
     #default_group_name=Unicode()
     save_event=Event()
-    save_file=Typed()
+    #save_file=Typed()
 
     def _default_data_buffer(self):
         return OrderedDict()
