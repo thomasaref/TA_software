@@ -7,8 +7,9 @@ Created on Tue Mar 24 16:21:06 2015
 
 from Atom_Filer import Filer
 from LOG_functions import log_warning, log_info
-from atom.api import Dict, Event
+from atom.api import Dict, Event, Typed
 from enaml import imports
+
 
 class Read_File(Filer):
     data=Dict()
@@ -34,11 +35,12 @@ class Read_File(Filer):
         return ReadBoxMain(read_file=self)
 
 #from DXF_functions import readdxflayer
-from HDF5_functions import read_hdf5
+from HDF5_functions import read_hdf5, group
 from numpy import loadtxt
 
 class Read_HDF5(Read_File):
     """extends Read_File for HDF5 format files"""
+    data=Typed(group)
     def _default_file_type(self):
         return "HDF5"
 
