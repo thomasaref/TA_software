@@ -6,26 +6,23 @@ Created on Wed Aug 19 10:47:37 2015
 """
 
 from Atom_Read_File import Read_HDF5
+from numpy import squeeze, shape, linspace, mean
 
 a=Read_HDF5(file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/T_testy5_2.hdf5")
 
 a.read()
 
-print a.data["Traces"].keys()
-print a.data
+#print a.data["Traces"].keys()
+#print a.data
 
-#z=a.data["Traces"]["Agilent VNA - S21"].data
+Magvec=a.data["Traces"]["Agilent VNA - S21"].data
+Magvec=squeeze(Magvec[:,0,:])
+Magvec=Magvec-mean(Magvec, axis=1, keepdims=True)
 
-#yoko=a.data["Data"]["Data"].data
-# ['Juliana Yoko - Voltage', 'Yokogawa 7651 DC Source - GPIB: 4, Juliana Yoko at localhost', 'Voltage', 'V', 'V', 1.0, 0.0, 1.0, inf, -inf, 0.0, 0.0, '')], datatype=<type 'numpy.void'>)), (u'Data', group([(u'Channel names', dataset( data=[('Juliana Yoko - Voltage', '')], datatype=<type 'numpy.void'>)), (u'Data', dataset( data=[[[  5.00000000e+00]]
-#
-# [[  4.99900007e+00]]
-#
-# [[  4.99800014e+00]]
-#
-# ..., 
-# [[  2.00000009e-03]]
-#
-# [[  1.00000005e-03]]
-#
-# [[  0.00000000e+00]]], datatype=<type 'numpy.ndarray'>)),
+yoko=a.data["Data"]["Data"].data
+yoko=squeeze(yoko)
+
+f0, fstep=squeeze(a.data["Traces"]['Agilent VNA - S21_t0dt'].data)
+l=shape(Magvec)[0]
+freq=linspace(f0, f0+fstep*(l-1), l)
+
