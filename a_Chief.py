@@ -5,8 +5,6 @@ Created on Tue Jul  7 21:45:30 2015
 @author: thomasaref
 """
 
-from enaml import imports
-from enaml.qt.qt_application import QtApplication
 from atom.api import Atom
 
 from LOG_functions import log_info, log_warning, make_log_file, log_debug#, SAVE_GROUP_NAME, SETUP_GROUP_NAME, log_debug
@@ -14,46 +12,13 @@ from atom.api import Atom, Bool, Typed, ContainerList, Callable, Dict, Float, In
 from Atom_Read_File import Read_File
 from Atom_Save_File import Save_File, Save_HDF5
 from Plotter import Plotter
-
+from SHOW_functions import show
 
 #import sys
 from a_Backbone import get_tag, get_type, get_all_tags, do_it_if_needed, get_attr, get_all_params, get_main_params, get_name
- 
-def show(*agents):
-    """a powerful showing function for any Atom object(s). Checks if object has a view_window property and otherwise uses a default.
-    also provides a show control of the objects"""
-    app = QtApplication()
-    with imports():
-        from e_Chief import agentView, chiefView, basicView#, LogWindow
-    loc_chief=None
-    for n, a in enumerate(agents):
-        if hasattr(a, "view_window"):
-            view=a.view_window
-        else:
-            view=agentView(agent=a)
-        if hasattr(a, "name"):
-            view.name=a.name
-        else:
-            view.name="agent_{0}".format(n)
-        if hasattr(a, "chief"):
-            loc_chief=a.chief
-        view.title=view.name
-        view.show()
-        if loc_chief is not None:
-            if loc_chief.show_all or n==0:
-                view.visible=True
-    if loc_chief is None:
-        view=basicView(title="Show Control", name="show_control")
-    else:
-        if hasattr(loc_chief, "view_window"):
-            view=loc_chief.view_window
-        else:
-            view=chiefView(title="ShowControl", name="show_control", chief=loc_chief)
-    view.show()
-    app.start() 
-    
 
-            
+
+
 class Chief(Atom):
     """Overall control class that runs main code and handles files, saving and plotting"""
     name=Unicode("Chief")
@@ -66,26 +31,26 @@ class Chief(Atom):
     agents=ContainerList()
     plot=Typed(Plotter, ())
     plots=ContainerList()
-    
+
     BASE_DIR=Unicode("/Users/thomasaref/Dropbox/Current stuff/TA_software")
     DIVIDER=Unicode("/")
     LOG_NAME=Unicode("record")
     FILE_NAME=Unicode("meas")
     SETUP_GROUP_NAME=Unicode("SetUp")
     SAVE_GROUP_NAME=Unicode("Measurements")
-    
+
     #display=Typed(StreamCatch, ()).tag(desc="a stream catch for the log window")
 
     busy = Bool(False).tag(desc="indicates function is running")
     abort = Bool(False).tag(desc="abort for use by agent functions")
     progress = Int(0).tag(desc="for progress bar")
-    
+
     show_all=Bool(False).tag(desc="shows all agents on start up")
- 
+
     def _observe_abort(self, change):
         if self.abort==True:
             log_info("abort fired")
-            
+
     def run_measurement(self):
         log_info("Master started")
         do_it_if_needed(self.run)
@@ -188,4 +153,3 @@ if __name__=="__main__":
     print chief.plottables
     print chief.saving
     chief.show()
-   

@@ -5,7 +5,7 @@ Created on Thu Mar  5 20:50:49 2015
 @author: thomasaref
 """
 
-from LOG_functions import  log_info, log_warning, make_log_file, remove_log_file
+from LOG_functions import  log_info, log_warning, make_log_file, remove_log_file, log_debug
 log_info(1)
 from Atom_Filer import Filer
 from atom.api import Bool, Dict, Unicode, observe, List, Event, Enum, Typed, Int
@@ -17,32 +17,26 @@ from inspect import getfile
 log_info(3)
 from numpy import ndarray, size
 from enaml import imports
-from enaml.qt.qt_application import QtApplication
 from Atom_Read_File import Read_HDF5, Read_NP, Read_TXT, Read_DXF
 from collections import OrderedDict
-from HDF5_functions import group, dataset
-      
+from SHOW_functions import show
 
 class Save_File(Filer):
     data_buffer=Typed(OrderedDict)
-    buffer_save=Bool(False)
     buffer_size=Int(100).tag(desc="size of buffer as number of elements in a list/array")
-    #default_group_name=Unicode()
     save_event=Event()
-    #save_file=Typed()
+
+    def show(self):
+        show(self)
 
     def _default_data_buffer(self):
         return OrderedDict()
 
-    #@property
-    #def buffer_flush(self):
-    #    """returns if buffer should be flushed"""
-    #    return size(self.data_buffer[group_name][name][namestr])>self.buffer_size or size(self.data_buffer[group_name][name].keys())>self.buffer_size
+    def close(self):
+        self.flush_buffers()
+        self.save_file.flush()
+        self.save_file.close()
 
-#    def close(self):
-#        self.save_file.flush()
-#        self.save_file.close()
-        
     @property
     def view(self):
         return "Save_File"
@@ -65,8 +59,8 @@ class Save_File(Filer):
             os_makedirs(self.dir_path)
             log_info("Made directory at: {0}".format(self.dir_path))
         if not os_path_exists(self.file_path):
-            self.create_file()
-            make_log_file(self.log_path, overwrite=True)
+            self.save_file=self._default_save_file() #self.create_file()
+            make_log_file(self.log_path, mode="w")
 
     def save_code(self, obj):
         """saves the code containing the passed in object"""
@@ -88,79 +82,48 @@ class Save_File(Filer):
     def flush_buffers(self):
         self.do_data_save()
         self.data_buffer=self._default_data_buffer()
-        
-#        write_hdf5(self)
-##        if self.buffer_save:
- #           self.buffer_save=False
- #           for group_name, item in self.data_buffer.iteritems():
- #               for name, subitem in item.iteritems():
- ##                   for key, arr in subitem.iteritems():
-  #                      self.data_save(arr, name=name, group_name=group_name)
-  #          self.data_buffer=OrderedDict()
-  #          self.buffer_save=True
 
-    def data_save(self):
-        pass
-#    def data_save(self, data, name="Measurement", group_name="Data", append=True):
-#        """grows data_buffer using name and group_name and flushes when length exceeds buffer_size"""
-#        if group_name not in self.data_buffer.keys():
-#            self.data_buffer[group_name]=group()
-#        if name not in self.data_buffer[group_name].keys():
-#            self.data_buffer[group_name][name]=group(attrs=dict(append=append))
-#            append=False
-#        if type(data) not in [list, ndarray]:
-#            data=[data]
-#        if append==False:
-#            namestr="{0}".format(len(self.data_buffer[group_name][name]))
-#            self.data_buffer[group_name][name][namestr]=dataset(data=data, append=append)
-#        else:
-#            namestr="{0}".format(len(self.data_buffer[group_name][name])-1)
-#            self.data_buffer[group_name][name][namestr].extend(data)
-#        if size(self.data_buffer[group_name][name][namestr])>self.buffer_size or size(self.data_buffer[group_name][name].keys())>self.buffer_size:
-#            self.flush_buffers() #self.do_data_save(data, name, group_name, append)
 
-    def show(self, read_file=None, coder=None):
-        """stand alone for showing filer."""
-        if read_file==None:
-            if self.file_type=='HDF5':
-                read_file=Read_HDF5(file_path=self.file_path)
-            elif self.file_type=='dxf':
-                read_file=Read_DXF(file_path=self.file_path)
-            elif self.file_type=='text data':
-                read_file=Read_NP(file_path=self.file_path)
-            else:
-                read_file=Read_TXT(file_path=self.file_path)
-        with imports():
-            from enaml_Filer import SaveMain
-        app = QtApplication()
-        view = SaveMain(save_file=self, read_file=read_file, coder=coder)
-        view.show()
-        app.start()
-
-    def create_file(self):
-        log_warning("create_file not overwritten")
+#    def show(self, read_file=None, coder=None):
+#        """stand alone for showing filer."""
+#        if read_file==None:
+#            if self.file_type=='HDF5':
+#                read_file=Read_HDF5(file_path=self.file_path)
+#            elif self.file_type=='dxf':
+#                read_file=Read_DXF(file_path=self.file_path)
+#            elif self.file_type=='text data':
+#                read_file=Read_NP(file_path=self.file_path)
+#            else:
+#                read_file=Read_TXT(file_path=self.file_path)
+#        with imports():
+#            from enaml_Filer import SaveMain
+#        app = QtApplication()
+#        view = SaveMain(save_file=self, read_file=read_file, coder=coder)
+#        view.show()
+#        app.start()
 
     def do_data_save(self):
         log_warning("do_data_save not overwritten")
 
-from HDF5_functions import create_hdf5, hdf5_data_save, write_hdf5
+from HDF5_functions import rewrite_hdf5, File, group, dataset
 class Save_HDF5(Save_File):
     data_buffer=Typed(group)
-    
+    save_file=Typed(File)
+
+    def _default_save_file(self):
+        log_info("Created hdf5 file at: {0}".format(self.file_path))
+        return File(self.file_path, 'w')
+
     def _default_data_buffer(self):
         return group(attrs=dict(comment=self.comment))
 
     def _default_file_type(self):
         return "HDF5"
 
-    def create_file(self):
-        create_hdf5(self.file_path)
-        log_info("Created hdf5 file at: {0}".format(self.file_path))
-
     def do_data_save(self):
-        write_hdf5(file_path=self.file_path, data=self.data_buffer)
-        #hdf5_data_save(file_path=self.file_path, data=data, name=name, group_name=group_name, append=append)
-    
+        rewrite_hdf5(self.save_file, self.data_buffer)
+        log_debug("Data saved to hdf5 file at: {0}".format(self.file_path))
+
     def data_save(self, data, name="Measurement", group_name="Data", append=True):
         """grows data_buffer using name and group_name and flushes when length exceeds buffer_size"""
         if group_name not in self.data_buffer.keys():
@@ -179,14 +142,23 @@ class Save_HDF5(Save_File):
         if size(self.data_buffer[group_name][name][namestr])>self.buffer_size or size(self.data_buffer[group_name][name].keys())>self.buffer_size:
             self.flush_buffers() #self.do_data_save(data, name, group_name, append)
 
-from TXTNP_functions import create_txt,  save_txt_data, save_np_data, save_txt
+    @property
+    def view_window(self):
+        with imports():
+            from enaml_Filer import SaveMain
+        return SaveMain(save_file=self, read_file=Read_HDF5(file_path=self.file_path))
+
+from TXTNP_functions import  save_txt_data, save_np_data, save_txt
+
 class Save_TXT(Save_File):
+    save_file=Typed(file)
+
+    def _default_save_file(self):
+        log_info("Created txt file at: {0}".format(self.file_path))
+        return open(self.file_path, 'w')
+
     def _default_file_type(self):
         return "text"
-
-    def create_file(self):
-        create_txt(self.dir_path)
-        log_info("Created txt file at: {0}".format(self.file_path))
 
     def data_save(self, data, name="Measurement"):
         name=name.replace(" ", "_")
@@ -201,7 +173,8 @@ class Save_TXT(Save_File):
 
     def do_data_save(self):
         save_txt_data(self.dir_path+self.divider, self.data)
-        
+        log_debug("Data saved to txt file at: {0}".format(self.file_path))
+
     def direct_save(self, data, write_mode='a'):
         save_txt(file_path=self.file_path, data=data, write_mode=write_mode)
         log_info("Direct save of data to: {}".format(self.file_path))

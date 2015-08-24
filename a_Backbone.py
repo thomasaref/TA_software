@@ -15,7 +15,7 @@ from numpy import shape, ndarray
 from enaml.application import deferred_call
 from threading import Thread
 from types import FunctionType
-    
+
 def get_member(obj, name):
     """returns a member if get_member exists and the attribute itself if it does not"""
     if hasattr(obj, "get_member"):
@@ -73,7 +73,7 @@ def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
     return [x for x in search_list if key_value==get_tag(obj, x, key, none_value)]
 
 def get_map(obj, name, value=None):
-    """gets the mapped value specified by dictionary mapping and uses none_map if it doesn't exist"""
+    """gets the mapped value specified by the property mapping and uses none_map if it doesn't exist"""
     if value is None:
         value=getattr(obj, name)
     if hasattr(obj, name+"_mapping"):

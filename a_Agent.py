@@ -5,7 +5,7 @@ Created on Sat Jul  4 13:03:26 2015
 @author: thomasaref
 """
 from atom.api import Atom, Unicode, Bool, Enum, List, Float, Int, ContainerList, Callable, Range, FloatRange
-from a_Backbone import (get_all_params, get_type, get_reserved_names, get_all_main_params, get_map, 
+from a_Backbone import (get_all_params, get_type, get_reserved_names, get_all_main_params, get_map,
                         lowhigh_check, set_log, get_tag, set_tag, unit_dict, log_func)
 from a_Chief import chief
 
@@ -57,7 +57,7 @@ class Backbone(Atom):
     def all_params(self):
         """all members that are not tagged as private, i.e. not in reserved_names and will behave as agents"""
         return self.get_all_tags(key="private", key_value=False, none_value=False)
-    
+
     @property
     def all_main_params(self):
         """all members in all_params that are not tagged as sub.
@@ -71,18 +71,10 @@ class Backbone(Atom):
         all members that could be in main_params"""
         return self.all_main_params
 
-class SubAgent(Atom):
+class SubAgent(Backbone):
     name=Unicode().tag(private=True, desc="name of agent. A default will be provided if none is given")
     desc=Unicode().tag(private=True, desc="optional description of agent")
-    main_params=List().tag(private=True, desc="main parameters: allows control over what is displayed and in what order")
 
-    def _default_main_params(self):
-        """defaults to all members in all_params that are not tagged as sub.
-        Can be overwritten to allow some minimal custom layout control,
-        e.g. order of presentation and which members are shown. Use get_all_main_params to get a list of
-        all members that could be in main_params"""
-        return get_all_main_params(self)
-        
     def show(self):
         self.chief.show()
 
@@ -90,13 +82,13 @@ class SubAgent(Atom):
         """do nothing function to allow custom setup extension in subclasses"""
         pass
 
-    def get_map(self, name, item=None, none_map={}):
-        return get_map(self, name=name, item=item, none_map=none_map)
+    def get_map(self, name, item=None):
+        return get_map(self, name=name, item=item)
 
     @property
     def base_name(self):
         return "subagent"#, basenum=len(self.chief.agents))
-    
+
     @property
     def chief(self):
         """gets chief of agent. can be overwritten in children classes"""
@@ -106,7 +98,7 @@ class SubAgent(Atom):
     def abort(self):
         """shortcut to chief's abort control"""
         return self.chief.abort
-        
+
     def __init__(self, **kwargs):
         """extends __init__ to set boss, add agent to boss's agent list and give unique default name.
         does some extra setup for particular types"""
@@ -132,13 +124,13 @@ class SubAgent(Atom):
                 func=getattr(self, param)
                 setattr(self, param, log_func(func))
             self.extra_setup(param, typer)
- 
+
 class Spy(SubAgent):
     """uses observers to log all changes"""
     def __setattr__(self, name, value):
         """setattr performs low/high check"""
         if name in get_all_params(self):
-            value=lowhigh_check(self, name, value)            
+            value=lowhigh_check(self, name, value)
         super(Spy, self).__setattr__(name, value)
 
     def log_changes(self, change):
@@ -148,7 +140,7 @@ class Spy(SubAgent):
     def extra_setup(self, param, typer):
         """adds log_changes observer to all params"""
         self.observe(param, self.log_changes)
-        
+
 class Agent(Spy):
     """Agents use setattr rather than observers to log all changes"""
     def __setattr__(self, name, value):
@@ -156,7 +148,7 @@ class Agent(Spy):
         log_it=False
         if name in get_all_params(self):
             log_it=True
-            value=lowhigh_check(self, name, value)            
+            value=lowhigh_check(self, name, value)
         super(Agent, self).__setattr__(name, value)
         if log_it:
             set_log(self, name, value)
@@ -171,21 +163,21 @@ class Agent(Spy):
 if __name__=="__main__":
     from a_Backbone import run_func, log_func
     c=SubAgent()
-    print c.view, c.main_params, c.base_name, c.all_params, c.all_main_params, c.reserved_names          
+    print c.view, c.main_params, c.base_name, c.all_params, c.all_main_params, c.reserved_names
 
     class tSpy(Spy):
         a=Float().tag(unit="A", unit_factor=10.0, label="Current", no_spacer=True, show_value=True)
         b=Unicode()
         c=Unicode().tag( no_spacer=True, spec="multiline")
         d=Int().tag(unit="A", unit_factor=10, label="Current",show_value=True)
-        e=Enum("arg")   
-        
-        @Callable      
+        e=Enum("arg")
+
+        @Callable
         def g(self):
             print self
             print "ran g"
-        
-    d=tSpy()  
+
+    d=tSpy()
     d.a=4.3
     d.a=3.2
     #d.g(d)

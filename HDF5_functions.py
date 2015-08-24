@@ -12,13 +12,11 @@ from numpy import ndarray
 from collections import OrderedDict
 
 class dataset(object):
+    """a class that represents a HDF5 dataset"""
     def __init__(self,  data=[], append=True, attrs=None, datatype=None, maxshape=(None,)):
         if attrs is None:
             attrs={}
-        #attrs["index"]=len(data)-1  
         attrs["append"]=append
-        #self.index=len(data)-1
-        #self.append=append
         self.attrs=attrs
         self.maxshape=maxshape
         if datatype in [str, unicode, bool]:
@@ -27,22 +25,21 @@ class dataset(object):
         else:
             if datatype is None:
                 self.datatype=type(data[0])
-            else: 
+            else:
                 self.datatype=datatype
             self.data=data
-        
 
     def __repr__(self):
         return "dataset( data={data}, datatype={datatype})".format(data=self.data, datatype=self.datatype)
 
-        
 class group(OrderedDict):
+    """a class that represents a hdf5 group"""
     def __init__(self, attrs=None, *args, **kwargs):
         super(group, self).__init__(*args, **kwargs)
         if attrs is None:
             attrs={}
         self.attrs=attrs
-        
+
     def __repr__(self):
         dict_str=super(group, self).__repr__()
         dict_str+="[attrs={attrs}]".format(attrs=self.attrs)
@@ -62,7 +59,7 @@ def reread(g, md=dict()):
             for akey, aitem in item.attrs.iteritems():
                 md[key]['attrs'][akey]=aitem
     return md
-        
+
 def read_hdf5_dict(file_path):
     with File(file_path, 'r') as f:
         data=reread(f)#print key, item.keys(), isinstance(item, Group)
@@ -70,7 +67,11 @@ def read_hdf5_dict(file_path):
 
 def reread_group(g, md=group(), gkey=None, store_data=True):
     """recursively reads all data into groups and datasets. If store_data is False only keeps first 5 data entries
-    (i.e. so structure of a large hdf5 file can be seen but data can be extracted selectively."""
+    (i.e. so structure of a large hdf5 file can be seen but data can be extracted selectively directly from file."""
+    if isinstance(g, File):
+        if g.attrs.keys()!=[]:
+            for akey, aitem in g.attrs.iteritems():
+                md.attrs[akey]=aitem
     for key, item in g.iteritems():
         if isinstance(item, Group):
             myg=group()
@@ -85,19 +86,19 @@ def reread_group(g, md=group(), gkey=None, store_data=True):
                 myg.attrs[akey]=aitem
         md[key]=myg
     return md
-    
+
 def read_hdf5(file_path):
     with File(file_path, 'r') as f:
         data=reread_group(f)#print key, item.keys(), isinstance(item, Group)
     return data
 
-def write_hdf5(file_path, data_dict, write_mode="a"):
+def write_hdf5_file_path(file_path, data_dict, write_mode="a"):
     with File(file_path, write_mode) as f:
-        rewrite(f, data_dict)
-    
-def rewrite(g, dd):
+        rewrite_hdf5(f, data_dict)
+
+def rewrite_hdf5(g, data_dict):
     """recursively writes all data in a dictionary. assumes data is grouped using group and dataset defined above"""
-    for ddkey, dditem in dd.iteritems():
+    for ddkey, dditem in data_dict.iteritems():
         if ddkey not in g.keys():
             g.create_group(ddkey)
             for attr in dditem.attrs:
@@ -121,9 +122,9 @@ def rewrite(g, dd):
                 dset.resize(a,axis=0)
                 dset[n:]=dditem.data
                 #n+=len(dditem.data)
-                #dset.attrs["index"]=n                     
-        elif isinstance(dd, group):
-            rewrite(g[ddkey], dditem)
+                #dset.attrs["index"]=n
+        elif isinstance(dditem, group):
+            rewrite_hdf5(g[ddkey], dditem)
 #            else:
 #                rewrite(g, item, key)
 #    else:
@@ -137,7 +138,7 @@ def rewrite(g, dd):
 #                    measurement[name].create_dataset(namestr, data=data, dtype=datatype, maxshape=(None,))#chunks=True)
 #                    measurement[name][namestr].attrs["index"]=len(data)-1
 #                else:
-#                    
+#
     #else:
         #pass #print g, dd
 #        datatype=type(dd[0])
@@ -146,7 +147,7 @@ def rewrite(g, dd):
 #        g[namestr].attrs["index"]=len(dd)-1
 
 
-def create_hdf5(file_path):#, group_names):
+#def create_hdf5(file_path):#, group_names):
         ##Valid modes
         ##r	Readonly, file must exist
         ##r+	Read/write, file must exist
@@ -154,8 +155,8 @@ def create_hdf5(file_path):#, group_names):
         ##w-	Create file, fail if exists
         ##a	Read/write if exists, create otherwise (default)
 
-        with File(file_path, 'w') as f:
-            pass
+#        with File(file_path, 'w') as f:
+#            pass
             #logging=f.create_group("Logging")
             #dt = special_dtype(vlen=unicode)
             #full_log = logging.create_dataset("Full Log", (0,), dtype=dt, maxshape=(None,))#chunks=True)
@@ -204,8 +205,8 @@ def hdf5_dict_save(file_path, data_dict, append=True, write_mode="a"):
                         dset.resize(a,axis=0)
                     dset[n+1:]=data
                     n=n+len(data)
-                    dset.attrs["index"]=n     
-                    
+                    dset.attrs["index"]=n
+
 def hdf5_data_save(file_path, data, name, group_name, append=True):
     if type(data) not in [list, ndarray]:
         data=[data]#    self.data_buffer[group_name][name][namestr]=[data]
