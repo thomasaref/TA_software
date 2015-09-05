@@ -292,11 +292,11 @@ class EBL_SQUID(EBL_Polygons):
   
     
 if __name__=="__main__":
-    a=EBL_SQUID(box_height=1.3e-6, height=4.5e-6, width=9.0e-6)
+    a=EBL_SQUID(box_height=1.3e-6, height=4.5e-6, width=9.0e-6)#, finger_gap=4.5e-6)
     dir_path="""/Users/thomasaref/Dropbox/Current stuff/TA_software/discard/"""
-    a.full_EBL_save(dir_path=dir_path)
+    #a.full_EBL_save(dir_path=dir_path)
     #print a.two_finger.run_params
-    #a.show()
+    a.show()
 
 #    def _s_bridge_TL(self):
 #        return self.sP([(-self.contact_width/2.0, self.contact_height/2.0),
