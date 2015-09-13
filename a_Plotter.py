@@ -58,9 +58,11 @@ colors = [colorConverter.to_rgba(c) for c in ('r','g','b','c','y','m','k')]
 #import  matplotlib.pyplot as plt # import plot
 from h5py import File
 
-file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp.hdf5"
+#file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp_higherpower.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0911/TA_A58_scb_refl_powfluxswp_higherbw.hdf5"
+
+file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0912/TA_A58_scb_trans_powfluxswp_higherbw.hdf5"
 with File(file_path, 'r') as f:
     Magvec=f["Traces"]["Agilent VNA - S21"][:]
     yoko=f["Data"]["Data"][:]
@@ -87,11 +89,12 @@ for n, a in enumerate(pwr):
     MagvecdB=MagvecdB-mean(MagvecdB, axis=1, keepdims=True)
     diffS11.append(amax(MagvecdB)-amin(MagvecdB))
         
-powind=4
+powind=27
 Magvec=Magdict[pwr[powind]]
 print shape(Magvec[509, :]), shape(yoko)
 
-MagvecdB=dB(Magvec)
+#MagvecdB=dB(Magvec)
+MagvecdB=Magvec
 
 import matplotlib.pyplot as plt
 MagvecdB=MagvecdB-mean(MagvecdB, axis=1, keepdims=True)
@@ -104,6 +107,7 @@ l=shape(Magvec)[0]
 freq=linspace(f0, f0+fstep*(l-1), l)
 
 plt.plot(MagvecdB[:, :])
+#plt.plot(MagvecdB[3311, :])
 
 #plt.plot(MagvecdB[887, :])
 
@@ -118,7 +122,7 @@ plt.show()
 #Magvec=Magvec[:,0,:, 9]+1j*Magvec[:,1,:, 9]
 
 #Magvec=Magvec[:,0,-500:]+1j*Magvec[:,1,-500:]
-Magvec=Magvec-mean(Magvec[:, 409:431], axis=1, keepdims=True)
+Magvec=Magvec-mean(Magvec, axis=1, keepdims=True)
 #Magvec=Magvec-mean(Magvec[:, 52:68], axis=1, keepdims=True)
 #Magvec=Magvec-mean(Magvec, axis=1, keepdims=True)
 
