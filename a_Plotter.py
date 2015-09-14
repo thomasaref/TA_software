@@ -62,19 +62,24 @@ from h5py import File
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp_higherpower.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0911/TA_A58_scb_refl_powfluxswp_higherbw.hdf5"
 
-file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0912/TA_A58_scb_trans_powfluxswp_higherbw.hdf5"
+#file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0912/TA_A58_scb_trans_powfluxswp_higherbw.hdf5"
+#file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0913/TA_A58_scb_refl_powfluxswp_higherbw_revV.hdf5"
+
+file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0914/TA_A58_scb_refl_powsat_1.hdf5"
+
 with File(file_path, 'r') as f:
     Magvec=f["Traces"]["Agilent VNA - S21"][:]
     yoko=f["Data"]["Data"][:]
     f0, fstep=squeeze(f["Traces"]['Agilent VNA - S21_t0dt'][:])
-
+Magvec=transpose(Magvec)
 pwr= yoko[0, 1, :]
 yoko=yoko[:,0, 0]
 
 Magdict={}
-
+print shape(pwr)
 m=len(yoko)
 print m
+pwr=yoko
 for n, a in enumerate(pwr):
     Magdict[a]=Magvec[:,0,n*m:(n+1)*m]+1j*Magvec[:,1,n*m:(n+1)*m]
 
@@ -89,12 +94,13 @@ for n, a in enumerate(pwr):
     MagvecdB=MagvecdB-mean(MagvecdB, axis=1, keepdims=True)
     diffS11.append(amax(MagvecdB)-amin(MagvecdB))
         
-powind=27
+powind=3
 Magvec=Magdict[pwr[powind]]
-print shape(Magvec[509, :]), shape(yoko)
+print pwr[powind]
+#print shape(Magvec[509, :]), shape(yoko)
 
-#MagvecdB=dB(Magvec)
-MagvecdB=Magvec
+MagvecdB=dB(Magvec)
+#MagvecdB=Magvec
 
 import matplotlib.pyplot as plt
 MagvecdB=MagvecdB-mean(MagvecdB, axis=1, keepdims=True)
@@ -106,7 +112,7 @@ yoko=squeeze(yoko)
 l=shape(Magvec)[0]
 freq=linspace(f0, f0+fstep*(l-1), l)
 
-plt.plot(MagvecdB[:, :])
+#plt.plot(MagvecdB[:, :])
 #plt.plot(MagvecdB[3311, :])
 
 #plt.plot(MagvecdB[887, :])
@@ -115,7 +121,7 @@ plt.plot(MagvecdB[:, :])
 #ax.set_title("Crosssection of reflection vs flux")
 #ax.set_ylabel("S11 (dB))")
 #ax.set_xlabel("Flux Yoko (V)")
-#plt.plot(pwr, diffS11)
+plt.plot(diffS11)
 plt.show()
 
 #Magvec=reshape(Magvec, (1601, 2, 501, 10))
@@ -425,8 +431,8 @@ if 1:
                  if self.overall_plot_type=="img":
                      if zname not in self.clts:
                          axeimg=self.axe.imshow( Magvec, 
-                                                #vmin=amin(Magvec),
-                                                #vmax=0.001, #amax(Magvec), 
+                                                vmin=amin(Magvec),
+                                                vmax=0.001, #amax(Magvec), 
                                                 aspect="auto", origin="lower",
                                          extent=[amin(yoko),amax(yoko), amin(freq),amax(freq)],
                                          #cmap='RdBu'
