@@ -8,6 +8,8 @@ Created on Mon Sep 14 14:26:51 2015
 from h5py import File
 file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0914/TA_A58_scb_refl_powsat_1.hdf5"
 file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0914/TA_A58_scb_refl_powsat_2.hdf5"
+file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0914/TA_A58_scb_refl_powsat_2_revV.hdf5"
+
 
 from numpy import squeeze, shape, linspace, log10, mean, amax, amin, absolute, reshape, transpose
 
@@ -31,6 +33,9 @@ s=(sm, sy[0], sy[2])
 print s
 Magcom=Magvec[:,0,:]+1j*Magvec[:,1,:]
 Magcom=reshape(Magcom, s, order="F")
+print shape(Magcom)
+Magcom=Magcom[:, ::-1, :] #reverse yoko
+Magcom=Magcom[:, :, ::-1] #reverse power
 
 yoko= data[:, 0, 0]
 pwr=data[0, 1, :]

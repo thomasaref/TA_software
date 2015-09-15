@@ -65,7 +65,7 @@ def read_hdf5_dict(file_path):
         data=reread(f)#print key, item.keys(), isinstance(item, Group)
     return data
 
-def reread_group(g, md=group(), gkey=None, store_data=True):
+def reread_group(g, store_data=True, md=group()):
     """recursively reads all data into groups and datasets. If store_data is False only keeps first 5 data entries
     (i.e. so structure of a large hdf5 file can be seen but data can be extracted selectively directly from file."""
     if isinstance(g, File):
@@ -75,7 +75,7 @@ def reread_group(g, md=group(), gkey=None, store_data=True):
     for key, item in g.iteritems():
         if isinstance(item, Group):
             myg=group()
-            myg=reread_group(item, myg, store_data)
+            myg=reread_group(item, store_data=store_data, md=myg)
         else:
             if store_data:
                 myg=dataset( data=item[:])
@@ -87,9 +87,9 @@ def reread_group(g, md=group(), gkey=None, store_data=True):
         md[key]=myg
     return md
 
-def read_hdf5(file_path):
+def read_hdf5(file_path, store_data=False):
     with File(file_path, 'r') as f:
-        data=reread_group(f)#print key, item.keys(), isinstance(item, Group)
+        data=reread_group(f, store_data=store_data)#print key, item.keys(), isinstance(item, Group)
     return data
 
 def write_hdf5_file_path(file_path, data_dict, write_mode="a"):
