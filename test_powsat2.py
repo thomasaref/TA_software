@@ -7,7 +7,7 @@ Created on Mon Sep 14 14:26:51 2015
 
 from h5py import File
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0914/TA_A58_scb_refl_powsat_1.hdf5"
-from numpy import squeeze, shape, linspace, log10, mean, amax, amin, absolute, reshape, transpose
+from numpy import squeeze, shape, linspace, log10, mean, amax, amin, absolute, reshape, transpose, real, imag, angle
 
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0912/TA_A58_scb_trans_powfluxswp_higherbw.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0913/TA_A58_scb_refl_powfluxswp_higherbw_revV.hdf5"
@@ -15,12 +15,13 @@ from numpy import squeeze, shape, linspace, log10, mean, amax, amin, absolute, r
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp_higherpower.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0911/TA_A58_scb_refl_powfluxswp_higherbw.hdf5"
 file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp.hdf5"
+file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0915/TA_A58_scb_refl_powfluxswp_lowpow.hdf5"
 
 powind=0
 frqind=4
-from HDF5_functions import read_hdf5
+#from HDF5_functions import read_hdf5
 
-print read_hdf5(file_path)
+#print read_hdf5(file_path)
 
 with File(file_path, 'r') as f:
     Magvec=f["Traces"]["Agilent VNA - S21"]#[:]
@@ -69,23 +70,28 @@ import matplotlib.pyplot as plt
 #diffS11=amax(Magcom[frqind, :, 20:], axis=1)-amin(Magcom[frqind, :, 20:], axis=1)
 #diffS11=absolute(Magcom[frqind, :, 57]-Magcom[frqind, :, 16])
 
-if 1:
+if 0:
     Magy=amax(dB(Magcom[:, :, powind]), axis=1)-amin(dB(Magcom[:, :, powind]), axis=1)
-    plt.plot(Magy)
-    #plt.plot(dB(Magcom[:,:,powind]))#-dB(mean(Magcom[:,0:1,powind], axis=1, keepdims=True)))
+    #plt.plot(Magy)
+    ind1=0
+    ind2=250
+    plt.plot(dB(Magcom[:, :, powind]-mean(Magcom[:, :, powind], axis=1, keepdims=True)))
     plt.show()
 #MagcomdB=Magcom[890, :, :]    
-MagcomdB=mean(Magcom[985:995,:, :], axis=0)
+#MagcomdB=mean(Magcom[985:995,:, :], axis=0)
+MagcomdB=mean(Magcom[120:125,:, :], axis=0)
 
 #MagcomdB=mean(Magcom[944:946,:, :], axis=0)
 #MagcomdB=mean(Magcom[419:421,:, :], axis=0)
 MagcomdB=dB(MagcomdB)
+MagcomdB=absolute(Magcom[:, 50:, powind]-mean(Magcom[:, 50:, powind], axis=1, keepdims=True))
 
-print freq[985:995]
+#print freq[985:995]
+print freq[122:123]
 
 #powind=0
 #frqind=4
-if 1:
+if 0:
     file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp_higherpower.hdf5"
     
     with File(file_path, 'r') as f:
@@ -109,17 +115,18 @@ if 1:
     MagcomdB2=mean(Magcom[985:995,:, :], axis=0)
     MagcomdB2=dB(MagcomdB2)
 
+    print freq[985:995]
 
-if 1:
+if 0:
     #plt.plot(MagcomdB[:, powind])
     #plt.plot(MagcomdB[133, :])
     plt.plot(pwr-20-87, mean(MagcomdB[130:136,:]+20, axis=0)-mean(MagcomdB[230:240,:]+20, axis=0))
     plt.plot(pwr-87, mean(MagcomdB2[135:145,:], axis=0)-mean(MagcomdB2[230:240,:], axis=0))
 
-if 0:
-    plt.imshow(  MagcomdB[:, :], 
-                #vmin=amin(Magvec),
-                #vmax=0.001, #amax(Magvec), 
+if 1:
+    plt.imshow( MagcomdB[:, :], 
+                #vmin=amin(MagcomdB),
+                #vmax=-41.4, #amax(Magvec), 
                 aspect="auto", origin="lower",
                 interpolation="none",
                 #extent=[amin(yoko),amax(yoko), amin(freq),amax(freq)],            
