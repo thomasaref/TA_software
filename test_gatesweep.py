@@ -78,8 +78,9 @@ from h5py import File
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0915/TA_A58_scb_refl_powfluxswp_lowpow.hdf5"
 
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0916/TA_A58_scb_refl_powfluxswp_maxpow2.hdf5"
-file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0917/TA_A58_scb_refl_gateswp_n5dBm.hdf5"
+#file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0917/TA_A58_scb_refl_gateswp_n5dBm.hdf5"
 
+file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0920/TA_A58_scb_refl_gateswp_n5dBm _n10Vinto10div.hdf5"
 powind=30
 frqind=234
 #from HDF5_functions import read_hdf5
@@ -129,12 +130,71 @@ def dB(x):
 #diffS11=absolute(Magcom[frqind, :, 57]-Magcom[frqind, :, 16])
 
 if 1:
+
+    
     Magcom=mean(Magcom[:, :, :], axis=0)
-    plt.plot(absolute(transpose(Magcom[:, 2]-Magcom[:,7])),
+
+    yokind=15
+    plt.plot(dB(Magcom[:, yokind]))#-Magcom[:,7])),
+    plt.ylabel("S11 (dB)")
+    plt.xlabel("gate (index)")
+    plt.title("S11 vs gate for flux={}V".format(yoko[yokind]))
+    plt.show()
+    
+    yokind=0
+    plt.plot(dB(Magcom[:, yokind]))#-Magcom[:,7])),
+    plt.ylabel("S11 (dB)")
+    plt.xlabel("gate (index)")
+    plt.title("S11 vs gate for flux={}V".format(yoko[yokind]))
+    plt.show()
+
+    yokind=1
+    plt.plot(dB(Magcom[:, yokind]))#-Magcom[:,7])),
+    plt.ylabel("S11 (dB)")
+    plt.xlabel("gate (index)")
+    plt.title("S11 vs gate for flux={}V".format(yoko[yokind]))
+    plt.show()
+
+    yokind=3
+    plt.plot(dB(Magcom[:, yokind]))#-Magcom[:,7])),
+    plt.ylabel("S11 (dB)")
+    plt.xlabel("gate (index)")
+    plt.title("S11 vs gate for flux={}V".format(yoko[yokind]))
+    plt.show()
+
+    yokind=0
+    plt.plot(dB(Magcom[:, yokind]))#-Magcom[:,7])),
+    plt.ylabel("S11 (dB)")
+    plt.xlabel("gate (index)")
+    plt.title("S11 vs gate for flux={}V".format(yoko[yokind]))
+    plt.show()
+
+
+    plt.imshow(transpose(dB(Magcom[:, :])),#-Magcom[:,7])),
+              aspect="auto", origin="lower",
+                interpolation="none",
+                )
+    plt.xlabel("Gate (index)")
+    plt.ylabel("Flux (index)")
+    plt.title("S11 vs gate and flux")            
+    plt.colorbar() 
+    plt.show()                
+    plt.plot(dB(transpose(Magcom[:, :]))#-Magcom[:,7])),
               #aspect="auto", origin="lower",
                # interpolation="none",
                 )
-    #plt.colorbar()                
+    #plt.colorbar()    
+
+    plt.ylabel("S11 (dB)")
+    plt.xlabel("Flux (index)")
+    plt.title("S11 vs flux for all gate V")
+                    
+    plt.show()
+    plt.plot(dB(Magcom[:, 0]))#-Magcom[:,7])),
+
+
+    for n in range(17):
+        plt.plot(dB(Magcom[:, n])+0.1*n)#-Magcom[:,7])),
     plt.show()
     #Magy=[]
     #for n,p in enumerate(pwr):

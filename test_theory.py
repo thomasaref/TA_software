@@ -18,9 +18,20 @@ W=7.0e-6
 f0=4.48e9
 print 3488.0/(0.096*8)
 
-C=sqrt(2)*W*Np*46*eps0
+#0.8*1j 2 Dvv * Np * sin(X)/X
 
-Ga0=3.11*2*pi*f0*epsinf*7.0e-6*Dvv*Np**2
+Gs=Dvv/epsinf
+#2Ps=(1/4)*2*pi*f*W/Gs*|phi|**2 = Y0 phi|**2
+#  Y0=sqrt(2pifW/2Gs)
+#Pv=Vt**2 Ga/2 = Y0 |phi| **2
+
+#Pv=2Ps
+#1.247 * \epsinf Dvv/epsinf * sqrt(2pif*W/2Gs)
+C=sqrt(2)*W*Np*46*eps0
+print C
+
+Ga0=3.11*2*pi*f0*epsinf*W*Dvv*Np**2
+#Ga0=(sqrt(2)*1.247)**2  Y0 Dvv**2 Np**2
 print 1/Ga0
 
 def X(f):
@@ -39,13 +50,19 @@ def R(f):
     return (1.0/Y(f)-50.0)/(1.0/Y(f)+50.0)
 
 import matplotlib.pyplot as plt
+fzero=4.494e9
 frq=linspace(4.0e9, 5.0e9, 1000)
-plt.plot(frq, Ga(X(frq)))
-plt.plot(frq, Ba(X(frq)))
-plt.plot(frq, 2.0*pi*frq*C)
-plt.plot(frq, Ba(X(frq))+2.0*pi*frq*C)
-plt.plot(frq, absolute(R(frq))/100.0)
-
+plt.plot(frq, Ga(X(frq)), label="Ga")
+plt.plot(frq, Ba(X(frq)), label="Ba")
+plt.plot(frq, 2.0*pi*frq*C, label=("2*pi*f*C"))
+#plt.plot(frq, Ba(X(frq))+2.0*pi*frq*C)
+#plt.plot(frq,0*frq)
+plt.plot(frq, absolute(R(frq))/100.0, label="|S33|/100")
+plt.plot([fzero, fzero], [-0.01, 0.02], label="f=4.494 GHz")
+plt.legend()
+plt.xlabel("Frequency (GHz)")
+plt.ylabel("1/Ohm")
+plt.title("Theory")
 plt.show()
 
 def dB(x):
@@ -56,7 +73,10 @@ with File("/Users/thomasaref/Dropbox/Current stuff/TA_enaml/testwritetrans.h5", 
     trans=f["magcom"][:]
 
 plt.plot(freq, dB(trans))
-plt.plot(frq, 10*log10(Ga(X(frq))/Ga0)-36.45)
+plt.plot(frq, 10*log10(absolute(Ga(X(frq))/Ga0))-36.45)
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Transmission (dB)")
+plt.title("Setting center frequency using transmission")
 plt.show()
 
 freq=array([  4.40000000e+09,   4.40050000e+09,   4.40100000e+09,
@@ -397,13 +417,15 @@ magcom=array([ 0.01309714 -7.25983009e-02j,  0.00214467 -7.35924393e-02j,
        -0.06098697 -1.34227378e-02j])#, dtype=complex64)
 
 
-plt.show()
 
 
 
     
 plt.plot(freq, dB(magcom))
-plt.plot(frq, dB(R(frq))-23)
+plt.plot(frq, 10*log10(absolute(R(frq)))-23)
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Reflection (dB)")
+plt.title("S33 vs frequency")
 plt.show()
 EJmax=0.2*k
 EC=0.04*k
