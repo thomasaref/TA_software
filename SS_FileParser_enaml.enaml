@@ -1,0 +1,93 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Sep 22 22:02:58 2015
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import Form, Window, Field, Label, MultilineField, CheckBox, ObjectCombo, SpinBox
+from enaml.stdlib.fields import FloatField
+from e_FundCore import UnitFloatField
+
+enamldef Main(Window):
+    attr ss
+    Form:
+        Label:
+            text = "User:"
+        Field:
+            text:=ss.user
+        Label:
+            text = "Project:"
+        Field:
+            text:=ss.project
+        Label:
+            text = "Log name:"
+        Field:
+            text:=ss.log_name
+        Label:
+            text = "Comment:"
+        MultilineField:
+            text:=ss.comment
+        Label:
+            text = "Step parallel:"
+        Label:
+            text=str(ss.step_parallel)
+        Label:
+            text = "Log parallel:"
+        Label:
+            text=str(ss.log_parallel)
+        Label:
+            text = "Wait between:"
+        Label:
+            text="{} seconds".format(ss.wait_between)
+        Label:
+            text = "Version:"
+        Label:
+            text=ss.version
+        Label:
+            text = "Creation time:"
+        Label:
+            text="{} seconds".format(ss.creation_time)
+        Label:
+            text = "Time per point:"
+        Label:
+            text="{} seconds".format(ss.time_per_point)
+        Label:
+            text = "Step List:"
+        ObjectCombo: steplist:
+            attr index = 0
+            items=[o[0] for o in ss.step_list]
+            selected::steplist.index= [n for n,o in enumerate(ss.step_list) if steplist.selected==o[0]][0]
+        Label:
+            text = "Step List:"
+        Form:
+            Label:
+                text='step_unit'
+            Label:
+                text<<str(ss.step_list[steplist.index][1])
+            Label:
+                text='wait_after'
+            Label:
+                text<<str(ss.step_list[steplist.index][2])
+            Label:
+                text='after_last'
+            Label:
+                text<<str(ss.step_list[steplist.index][3])
+            Label:
+                text='final_value'
+            Label:
+                text<<str(ss.step_list[steplist.index][4])
+            Label:
+                text='use_relations'
+            Label:
+                text<<str(ss.step_list[steplist.index][5])
+            Label:
+                text='equation'
+            Label:
+                text<<str(ss.step_list[steplist.index][6])
+            Label:
+                text='show_advanced'
+            Label:
+                text<<str(ss.step_list[steplist.index][7])
+
+
