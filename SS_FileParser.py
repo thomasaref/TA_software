@@ -52,6 +52,9 @@ class DataParser(Atom):
     step_list=List()
     #step_list_dtype=List()
 
+    def _observe_user(self, change):
+        print change
+        
     time_stamp=Coerced(ndarray, coercer=array, factory=empty_array)
     #def _default_time_stamp(self):
     #    return []

@@ -8,7 +8,7 @@ Created on Mon Sep 14 14:26:51 2015
 from scipy.constants import k,h,pi
 from numpy import squeeze, shape, linspace, log10, mean, amax, amin, absolute, reshape, transpose, real, imag, angle, cos, sqrt, array, exp, delete
 
-EJmax=0.2*k
+EJmax=0.8*k
 EC=0.04*k
 f0=4.5e9
 hf0=h*f0
@@ -29,15 +29,14 @@ gamma_10 = Gamma_tot/2 + Gamma_Phi
 # Omega_10 in regular frequency units
 def flux_parabola(flux_over_flux0):
     EJ = EJmax*absolute(cos(pi*flux_over_flux0))
-    E0 =  sqrt(8.0*EJ*EC)*0.5# - EC/4
-    E1 =  sqrt(8.0*EJ*EC)*1.5# - (EC/12.0)*(6+6+3)
+    E0 =  sqrt(8.0*EJ*EC)*0.5 - EC/4
+    E1 =  sqrt(8.0*EJ*EC)*1.5 - (EC/12.0)*(6+6+3)
     return (E1-E0)/h;
 
 
 # Per's definition: The detuning is positive for higher qubit frequency.
-def detuning2(flux_over_flux0):
+def detuning(flux_over_flux0):
     return 2.0*pi*(f0 - flux_parabola(flux_over_flux0))
-
 
 # Qubit reflection, for an incoming N_in phonons per second *at the qubit*
 # This is Per's expression, but adjusted for Anton's definition of detuning.
@@ -62,26 +61,10 @@ import matplotlib.pyplot as plt
 
 print 1.0e-3*10**(-170.0/10.0)
 
-xx=linspace(0, 5, 501)
-print xx
-b=[n for n,g in enumerate(flux_parabola(xx)-4.5e9) if abs(g)<40e6]
-c= xx[b[1:]]-xx[b[:-1]]
-d=array([g for g in c if g>0.01])
-print d[1:]/d[:-1]
-
-print shape(xx)
-
-#plt.plot(x, flux_parabola((x+0.5)*0.5))
-plt.plot(xx, detuning2((xx+0.5)*0.5)/(2*pi))
-print amin(detuning2((xx+0.5)*0.5))
-#plt.plot([0,5], [f0, f0])
-#print [n for n,g in enumerate(flux_parabola(x)-4.5e9) if abs(g)<100e7]
+x=linspace(0, 2, 201)
+print shape(x)
 #plt.plot(x, absolute(S11_IDT_no_IDT_ref(r_qubit(detuning(x), array([-1e-10]))) ))
-plt.show()
-
-plt.plot(xx, detuning2((xx+0.5)*0.5)/(2*pi))
-
-plt.show()
+#plt.show()
           
 from h5py import File
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0914/TA_A58_scb_refl_powsat_1.hdf5"
@@ -89,59 +72,42 @@ from h5py import File
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0912/TA_A58_scb_trans_powfluxswp_higherbw.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0913/TA_A58_scb_refl_powfluxswp_higherbw_revV.hdf5"
 
-file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp_higherpower.hdf5"
+#file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp_higherpower.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0911/TA_A58_scb_refl_powfluxswp_higherbw.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0915/TA_A58_scb_refl_powfluxswp_lowpow.hdf5"
 
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0916/TA_A58_scb_refl_powfluxswp_maxpow2.hdf5"
+file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0923/TA_A58_scb_PXI_refl_fluxmap.hdf5"
 
-powind=7
+powind=30
 frqind=234
 #from HDF5_functions import read_hdf5
-print amin(detuning2((xx+0.5)*0.5))
+
 #print read_hdf5(file_path)
 print "start data read"
-print amin(detuning2((xx+0.5)*0.5))
 with File(file_path, 'r') as f:
-    print amin(detuning2((xx+0.5)*0.5))
-    Magvec=f["Traces"]["Agilent VNA - S21"]#[:]
-    print amin(detuning2((xx+0.5)*0.5))
+    #Magvec=f["Traces"]["Agilent VNA - S21"]#[:]
+    print f["Data"].keys()
+    print f["Data"]["Channel names"][:]
     data=f["Data"]["Data"]
-    print amin(detuning2((xx+0.5)*0.5))
-    f0=f["Traces"]['Agilent VNA - S21_t0dt'][0][0]
-    print amin(detuning2((xx+0.5)*0.5))
-    fstep=f["Traces"]['Agilent VNA - S21_t0dt'][0][1]
-    print amin(detuning2((xx+0.5)*0.5))
-    print fstep
-    print shape(Magvec)
+    #f0=f["Traces"]['Agilent VNA - S21_t0dt'][0][0]
+    #fstep=f["Traces"]['Agilent VNA - S21_t0dt'][0][1]
     print shape(data)
-    sm=shape(Magvec)[0]
-    sy=shape(data)
-    s=(sm, sy[0], sy[2]) 
-    print amin(detuning((xx+0.5)*0.5))
-    print s
-    Magcom=Magvec[:,0,:]+1j*Magvec[:,1,:]
-    Magcom=reshape(Magcom, s, order="F")
-    print amin(detuning((xx+0.5)*0.5))
-    #Magcom=delete(Magcom, 73, axis=1)
-    pwr=data[:, 0, 0]
-    #pwr=delete(pwr, 73)
+    pwr=data[:, 0, 0:1]
     yoko= data[0, 1, :]
-    freq=linspace(f0, f0+fstep*(sm-1), sm)
-print amin(detuning((xx+0.5)*0.5))
-print shape(Magcom)
-#print pwr
-print yoko[powind]
+    print shape(pwr)
+    PXIavgpwr=data[:,2,:]
+    PXIIQ=data[:,3,:]+1j*data[:,4,:]
+
+print pwr[powind]
 print "end data read"
 
-print amin(detuning((xx+0.5)*0.5))
 
 def dB(x):
     return 20*log10(absolute(x))
 
 
-print amin(detuning((xx+0.5)*0.5))
 
 #plt.plot(dB(Magcom[:, :, 0]))
 #Magcom=Magcom[:,:, powind]-mean(Magcom[:, :, powind ], axis=1, keepdims=True)
@@ -156,40 +122,28 @@ print amin(detuning((xx+0.5)*0.5))
 
 #diffS11=amax(Magcom[frqind, :, 20:], axis=1)-amin(Magcom[frqind, :, 20:], axis=1)
 #diffS11=absolute(Magcom[frqind, :, 57]-Magcom[frqind, :, 16])
-plt.plot(absolute(Magcom[:, 0, powind]))#-absolute(mean(Magcom[:, :, powind], axis=1, keepdims=True))))
-plt.show()
+Magcom=dB(PXIIQ)-pwr
+if 0:
+    plt.imshow( Magcom, #MagcomdB[:, :], 
+        #            #vmin=amin(Magy),
+        #            #vmax=0.003, #amax(Magvec), 
+                    aspect="auto", origin="lower",
+                    interpolation="none",
+                    #extent=[ amin(freq),amax(freq), 0,91,],            
+                     )
+    plt.colorbar()                 
+    plt.show()
 
-plt.plot(absolute(Magcom[:, :, powind])-absolute(mean(Magcom[:, :, powind], axis=1, keepdims=True)))
-plt.show()
-
-plt.plot(detuning((xx+0.5)*0.5), transpose(absolute(Magcom[:, :, powind])-absolute(mean(Magcom[:, :, powind], axis=1, keepdims=True))))
-#plt.show()
-#plt.plot(xx, detuning((xx+0.5)*0.5))
-print amin(detuning((xx+0.5)*0.5))
-#plt.plot(x, detuning((x+0.5)*0.5))
-#print shape(pwr)
-#print shape(-detuning(array(pwr)*0.8))
-#plt.ylim(-0.0008, 0.0008)
-plt.show()
-
-plt.pcolormesh(pwr, freq, absolute(Magcom[:, :, powind])-absolute(mean(Magcom[:, :, powind], axis=1, keepdims=True)))
-          # aspect="auto", origin="lower",
-          # interpolation="none",
-          #  extent=[ amin(pwr),amax(pwr), amin(freq),amax(freq)], 
-          #      )
-plt.show()
-
-
-if 1:
+if 0:
     #Magy=[]
     #for n,p in enumerate(pwr):
     #    Magy.append(amax(absolute(Magcom[:, n, :]), axis=1)-amin(absolute(Magcom[:, n, :]), axis=1))
-    Magy=amax(absolute(Magcom[:, :, :]), axis=0)-amin(absolute(Magcom[:, :, :]), axis=0)
+    Magy=amax(absolute(Magcom[:, :, :]), axis=2)-amin(absolute(Magcom[:, :, :]), axis=2)
     #plt.plot(Magy)
 #    plt.plot(pwr-87, mean(Magy[:, :], axis=0))
     #plt.plot(dB(Magcom[236, powind, :]))#-mean(Magcom[:, :, powind], axis=1, keepdims=True)))
     #plt.show()
-    plt.plot(Magy[:, powind])
+    plt.plot(freq, Magy[:, powind])
     plt.xlabel("Frequency (Hz)")
     plt.ylabel("max(|S11|)-min(|S11|)")
     plt.title("Cross section maxmin(S11) at -83 dBm")
@@ -204,12 +158,30 @@ if 1:
 #M#agcomdB=dB(MagcomdB)
 #MagcomdB=absolute(Magcom[:, 50:, powind]-mean(Magcom[:, 50:, powind], axis=1, keepdims=True))
 #MagcomdB=absolute(Magcom[220, :, :])#-mean(Magcom[:, powind, 0:1], axis=1, keepdims=True))
-
+#10log10(I^2+Q^2)
 if 1:
-    plt.plot(pwr-87, absolute(mean(Magcom[frqind, :, 310:330], axis=1)-mean(Magcom[frqind, :, 410:430], axis=1)))
+    pwrlin=0.001*10**((pwr-87)/10.0)
+    voltlin=sqrt(50.0*pwrlin)
+    sigpwr=10*log10(absolute(PXIIQ)**2)-70
+    siglin=0.001*10**(sigpwr/10.0)
+    sigvolt=sqrt(50.0*siglin)
+    S11=sigvolt/voltlin
+    th=angle(PXIIQ)
+    S11c=S11*exp(1j*th)  
+    plt.pcolormesh(dB(S11c))  
+    #plt.plot(10*log10(absolute(PXIIQ)**2))
+    #plt.plot(dB(PXIavgpwr/0.001)/2.0)
+    #plt.plot(pwr-87, absolute(mean(PXIIQ[:, 310:330], axis=1)-mean(PXIIQ[:, 410:430], axis=1)))
+    #plt.plot(pwr-87, absolute(mean(S11c[:, 310:330], axis=1)-mean(S11c[:, 410:430], axis=1)))
+    #plt.plot(S11)    
+    #plt.plot( absolute(mean(S11c[:, 300:310], axis=1)))
+    #plt.plot(absolute(mean(S11c[:, 420:430], axis=1)))
+        
+    #plt.plot(pwr-87, absolute(mean(Magcom[:, 310:330], axis=1)-mean(Magcom[:, 410:430], axis=1)))
     plt.ylabel("|\Delta S11|")
     plt.xlabel("Power (dBm)")
-    plt.title("Power saturation at {} GHz".format(freq[frqind]/1.0e9))
+    plt.title("Power saturation at {} GHz".format(4.51))
+    plt.colorbar()
     plt.show()
 #print freq[985:995]
 #print freq[122:123]
