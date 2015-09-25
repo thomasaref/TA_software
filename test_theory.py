@@ -4,7 +4,7 @@ Created on Mon Sep 14 14:26:51 2015
 
 @author: thomasaref
 """
-
+from LOG_functions import log_debug
 from scipy.constants import k,h,pi, epsilon_0 as eps0
 from numpy import (squeeze, shape, linspace, log10, mean, amax, amin, absolute, reshape, transpose, 
                    real, imag, angle, cos, sqrt, array, exp, delete, sin)
