@@ -78,7 +78,8 @@ from h5py import File
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0915/TA_A58_scb_refl_powfluxswp_lowpow.hdf5"
 
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0916/TA_A58_scb_refl_powfluxswp_maxpow2.hdf5"
-file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0923/TA_A58_scb_PXI_refl_fluxmap.hdf5"
+#file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0923/TA_A58_scb_PXI_refl_fluxmap.hdf5"
+file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0925/TA_A58_scb_PXI_refl_map2.hdf5"
 
 powind=30
 frqind=234
@@ -182,6 +183,9 @@ if 1:
     plt.xlabel("Power (dBm)")
     plt.title("Power saturation at {} GHz".format(4.51))
     plt.colorbar()
+    plt.show()
+    #plt.plot(pwr-87, absolute(mean(S11c[:, 325:335])))
+    plt.plot(pwr-87, absolute(mean(S11c[:, 331:333], axis=1, keepdims=True))-absolute(mean(S11c[:, 401:403], axis=1, keepdims=True)))
     plt.show()
 #print freq[985:995]
 #print freq[122:123]
