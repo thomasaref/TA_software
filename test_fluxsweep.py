@@ -7,9 +7,9 @@ Created on Mon Sep 14 14:26:51 2015
 
 from scipy.constants import k,h,pi
 from numpy import (squeeze, shape, linspace, log10, mean, amax, amin, absolute, reshape, transpose,
-                   real, imag, angle, cos, sqrt, array, exp, delete, float64)
+                   real, imag, angle, cos, sqrt, array, exp, delete, float64, sin)
 from LOG_functions import log_debug
-EJmax=0.3*k
+EJmax=0.8*k
 EC=0.04*k
 f0=4.517e9
 hf0=h*f0
@@ -40,7 +40,29 @@ def flux_parabola(flux_over_flux0):
 def detuning(flux_over_flux0):
     return 2.0*pi*(f0 - flux_parabola(flux_over_flux0))
 
+print 0.45*0.05*5*f0
+def lorz(frq):
+    return 1.0/(1.0+1j*(frq-f0)/(0.45*0.05*5*f0))
 
+def lorz2(frq):
+    return 1.0/(1.0+1j*(frq-f0)/(0.45*0.05*5*frq))
+
+Np=5 
+def X(f):
+    return pi*Np*(f-f0)/f0
+
+def sinc(f):
+     return absolute(sin(X(f))/X(f))   
+
+def X2(f):
+    return pi*55*(f-f0)/f0
+
+def sinc2(f):
+     return absolute(sin(X2(f))/X2(f))   
+
+def lorz3(frq):
+    return 1.0/(1.0+1j*(frq-f0)/(0.45*0.05*5*f0*sinc(frq)))
+    
 # Qubit reflection, for an incoming N_in phonons per second *at the qubit*
 # This is Per's expression, but adjusted for Anton's definition of detuning.
 def  r_qubit(d_omega, P_in):
@@ -61,7 +83,12 @@ def S11_IDT_no_IDT_ref(r_qubit):
 
 #zcs_S11_minus_detuned_tot_calc = C.S11_IDT_no_IDT_ref(zcs_S11_qubit_calc, C);
 import matplotlib.pyplot as plt
+x=linspace(0.0001, 10.0e9, 1000)
+#plt.plot(x, absolute(lorz(x)))
+#plt.plot(x, absolute(lorz2(x)))
+#plt.plot(x, absolute(lorz3(x)))
 
+#plt.show()
 print 1.0e-3*10**(-170.0/10.0)
 
 xx=linspace(0, 5, 501)
@@ -78,8 +105,9 @@ print shape(xx)
 #plt.show()
 #plt.plot([0,5], [f0, f0])
 #print [n for n,g in enumerate(flux_parabola(x)-4.5e9) if abs(g)<100e7]
-xxfrq=(xx+1.35)*0.27
-plt.plot(xx, absolute(S11_IDT_no_IDT_ref(r_qubit(detuning(xxfrq), array([-1e-15]))) ))
+xxfrq=(xx+0*1.35)*0.27*2
+
+#plt.plot(xx, absolute(S11_IDT_no_IDT_ref(r_qubit(detuning(xxfrq), array([-1e-15]))) ))
 
 refl=array([  1.94833119e-04,   2.64975621e-04,   2.79606844e-04,
          2.52141646e-04,   5.36696403e-04,   6.45913067e-04,
@@ -248,12 +276,20 @@ refl=array([  1.94833119e-04,   2.64975621e-04,   2.79606844e-04,
          3.56542092e-04,   4.23391466e-04,   5.44444891e-04,
          5.00041700e-04,   6.45613181e-04,   5.34115417e-04,
          4.69197577e-04,   2.99452251e-04,   3.55226890e-04])
-plt.plot(xx, refl)
+plt.plot(xx, refl/amax(refl))
+#plt.plot(xx, absolute(cos(pi*(xx+1.35)*0.27)))
+plt.plot(xx, absolute(cos(pi*(xx-0.5)*0.54)))
+
 plt.xlabel("Flux (V)")
 plt.ylabel("S11 qubit")
 plt.title("very rough S11 qubit fit try at -93 dBm and 4.517 GHz")
 plt.show()
 
+plt.plot(absolute(cos(pi*(xx+1.35)*0.27)), refl/amax(refl))
+plt.show()
+plt.plot(absolute(cos(pi*(xx-0.5)*0.54)), refl/amax(refl))
+
+plt.show()
 #plt.plot(xx, detuning((xx+0.5)*0.5)/(2*pi))
 
 #plt.show()
@@ -265,14 +301,14 @@ from h5py import File
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0913/TA_A58_scb_refl_powfluxswp_higherbw_revV.hdf5"
 
 file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp_higherpower.hdf5"
-#file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0911/TA_A58_scb_refl_powfluxswp_higherbw.hdf5"
+file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0911/TA_A58_scb_refl_powfluxswp_higherbw.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0915/TA_A58_scb_refl_powfluxswp_lowpow.hdf5"
 
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0916/TA_A58_scb_refl_powfluxswp_maxpow2.hdf5"
 
-powind=7
-frqind=939
+powind=4
+frqind=6708
 #from HDF5_functions import read_hdf5
 #print read_hdf5(file_path)
 print "start data read"
@@ -306,8 +342,14 @@ print pwr[410:430]
 def dB(x):
     return 20*log10(absolute(x))
 
+plt.pcolormesh(absolute(Magcom[:, :, powind]-mean(Magcom[:, :, powind], axis=1, keepdims=True)))
+plt.show()
+plt.plot( pwr, absolute(mean(Magcom[6700:6715, :, powind], axis=0)))
 
-
+#plt.plot(absolute(cos(pi*(xx+1.35)*0.27)), absolute(mean(Magcom[930:950, :, powind], axis=0)))
+plt.show()
+plt.plot(absolute(cos(pi*(xx-0.5)*0.54)), absolute(mean(Magcom[930:950, :, powind], axis=0)))#-mean(Magcom[938:940, 410:430, powind], axis=1, keepdims=True), axis=0)))
+plt.show()
 #plt.plot(dB(Magcom[:, :, 0]))
 #Magcom=Magcom[:,:, powind]-mean(Magcom[:, :, powind ], axis=1, keepdims=True)
 
