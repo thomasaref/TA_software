@@ -18,6 +18,7 @@ if 0:
     show()
 
 file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0928/TA_A58_scb_refl_fluxcut2.hdf5"
+file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0928/TA_A58_scb_refl_fluxcut3.hdf5"
 
 with File(file_path, 'r') as f:
     print f["Traces"].keys()
