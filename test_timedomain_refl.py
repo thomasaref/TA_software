@@ -22,6 +22,7 @@ if 0:
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0928/TA_A58_scb_time_test5.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0928/TA_A58_scb_time_test5.hdf5"
 file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0929/TA_A58_scb_time_trans.hdf5"
+file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0929/TA_A58_scb_time_refl_fluxtswp.hdf5"
 
 with File(file_path, 'r') as f:
     #print f["Traces"].keys()
@@ -39,9 +40,8 @@ with File(file_path, 'r') as f:
     Magcom=Magvec[:,0,:]+1j*Magvec[:,1,:]
     Magcom=reshape(Magcom, s, order="F")
     #Magcom=delete(Magcom, 73, axis=1)
-    freq=data[:, 0, 0].astype(float64)
+    yoko=data[:, 0, 0].astype(float64)
     #pwr=delete(pwr, 73)
-    #time= data[0, 1, :].astype(float64)
     time=linspace(tstart, tstart+tstep*(sm-1), sm)
     
     #freq=linspace(4.0e9, 5.0e9, 1001)
@@ -52,7 +52,9 @@ with File(file_path, 'r') as f:
     print shape(Magcom)
     Magcom=squeeze(Magcom)
     print shape(Magcom)
-    print shape(freq)
+    print shape(yoko)
+    print yoko
+    #print freq
     #Magcom=mean(Magcom, axis=1)
     
 #absMag=absolute(Magcom[-200:]) 
@@ -79,15 +81,19 @@ S11c=S11*exp(1j*th)
 #pcolormesh(dB(S11c))
 #show()
 #plot(freq)
-#show()
-#plot(time*1e6, dB(S11c[:, 1872]), label="64 ns from pulse start {}".format(freq[1872]))
-plot(time*1e6, dB(S11c[:, 2040]), label="64 ns from pulse start {}".format(freq[2040]))
+#show() ,
+plot(time*1e6, dB(S11c[:, 315]), label="Max refl, yoko=3.15 V".format(yoko[315]))
+plot(time*1e6, dB(S11c[:, 221]), label="Min refl, yoko=2.21 V".format(yoko[221]))
+
+#==============================================================================
+# plot(time*1e6, dB(S11c[:, 2040]), label="64 ns from pulse start {}".format(freq[2040]))
 xlabel("Time (us)")
-ylabel("Transmission (dB)")
-title("Time domain signal at 4.51 GHz")
-ylim(-100, -40)
-#legend()
+ylabel("Reflection (dB)")
+title("Time domain reflection at 4.51 GHz")
+# ylim(-100, -40)
+legend()
 show()
+#==============================================================================
 
 from scipy.constants import epsilon_0 as eps0
 epsinf=46.0*eps0
@@ -128,24 +134,36 @@ def Y(f):
 def R(f):
     return (1.0/Y(f)-50.0)/(1.0/Y(f)+50.0)
 
-Xf=X(freq)    
-plot(freq, dB(S11c[294, :]), label="56 ns after pulse end".format(time[294]-time[280]))
+#Xf=X(freq)    
+#plot( dB(S11c[32, 0:501]), label="8 ns after start of pulse {}".format(time[32]-time[30]))
+#show()
+plot(yoko[0:501], dB(S11c[32, 0:501]), label="8 ns after start of pulse".format(time[32]-time[30]))
+plot(yoko[0:501], dB(S11c[34, 0:501]), label="16 ns after start of pulse".format(time[34]-time[30]))
+plot(yoko[0:501], dB(S11c[35, 0:501]), label="20 ns after start of pulse".format(time[35]-time[30]))
+plot(yoko[0:501], dB(S11c[46, 0:501]), label="64 ns after start of pulse".format(time[46]-time[30]))
+plot(yoko[0:501], dB(S11c[83, 0:501]), label="212 ns after start of pulse".format(time[83]-time[30]))
+plot(yoko[0:501], dB(S11c[153, 0:501]), label="492 ns after start of pulse".format(time[153]-time[30]))
+plot(yoko[0:501], dB(S11c[230, 0:501]), label="800 ns after start of pulse".format(time[230]-time[30]))
+
+#plot(yoko[0:501], dB(S11c[300, 0:501]), label="{}".format(time[33]-time[30]))
+#plot(yoko[0:501], dB(S11c[338, 0:501]), label="{}".format(time[34]-time[30]))
 #plot(freq, dB((1.0-R(freq))*(sin(Xf)/Xf)**2)-36.45)
-plot(freq, dB(Ga(X(freq))*2*sqrt(50.0)/(50.0+Y(freq)))/1.0+6)
-title("56 ns after pulse end theory compare")
-xlabel("Frequency (Hz)")
-ylabel("Transmission (dB)")
-ylim(-100, -40)
-#legend()
+#plot(freq, dB(Ga(X(freq))*2*sqrt(50.0)/(50.0+Y(freq)))/1.0+6)
+title("Flux modulation at various times at 4.51 GHz")
+xlabel("Flux (V)")
+ylabel("Reflection (dB)")
+ylim(-52.2, -51.2)
+legend()
 #plot(freq, dB(1.0-R(freq))-36.45)
 
 show()
-pcolormesh(freq, time*1e6, dB(S11c), 
-           vmin=-80, vmax=amax(dB(S11c)))
-title("Transmission vs freq and time (1 us pulse)")
-xlabel("Frequency (Hz)")
+pcolormesh(yoko[0:501], time*1e6, dB(S11c[:,0:501]), 
+           vmin=-52.2, vmax= -51.2,
+           ) #amax(dB(S11c)))
+title("Reflection vs flux and time (1 us pulse) at 4.51 GHz")
+xlabel("Flux (V)")
 ylabel("Time (us)")
-ylim(0,3.0)
+ylim(0, 1.5)
 colorbar()
 show()
     
