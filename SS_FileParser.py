@@ -19,7 +19,7 @@ from HDF5_functions import read_hdf5
 #
 #print g["Traces"].attrs
 from atom.api import Atom, Unicode, List, Dict, Typed, Bool, Float, Coerced
-from numpy import shape, array, ndarray, linspace, reshape
+from numpy import shape, array, ndarray, linspace, reshape, dtype
 
 from h5py import File
 
@@ -27,8 +27,6 @@ def empty_array():
     return []
 
 class DataParser(Atom):
-    #f=Typed(File)
-
     user=Unicode()
     project=Unicode()
     log_name=Unicode()
@@ -42,22 +40,20 @@ class DataParser(Atom):
     creation_time=Float()
     time_per_point=Float()
 
-    channels=List()
+    channels=Typed(ndarray)
     data=Dict()
     shaper=List()
     instrument_config=Dict()
-    instruments=List()
-    log_list=List()
+    instruments=Typed(ndarray)
+    log_list=Typed(ndarray).tag(desc="names of traces")
     step_config=Dict()
-    step_list=List()
-    #step_list_dtype=List()
+    step_list=Typed(ndarray)
+    trace_list=List()
 
     def _observe_user(self, change):
         print change
         
     time_stamp=Coerced(ndarray, coercer=array, factory=empty_array)
-    #def _default_time_stamp(self):
-    #    return []
 
     #specific variables
     f0=Coerced(float)
@@ -81,19 +77,15 @@ class DataParser(Atom):
         self.creation_time=f.attrs["creation_time"]
         self.time_per_point=f.attrs["time_per_point"]
 
-        self.step_list=list(f["Step list"][:])
-        print f["Step list"].dtype
+        self.step_list=f["Step list"][:]
 
         for akey in f["Step config"]:
             self.step_config[akey]=dict(relation_parameters=f["Step config"][akey]["Relation parameters"][:],
                                         step_items=f["Step config"][akey]["Step items"][:])
 
-        #print f["Log list"].dtype
-        self.log_list=list(f["Log list"])
-        #print f["Instruments"].dtype
-        self.instruments=list(f["Instruments"])
-        #print f["Channels"].dtype
-        self.channels=list(f["Channels"])
+        self.log_list=f["Log list"][:]
+        self.instruments=f["Instruments"][:]
+        self.channels=f["Channels"][:]
 
         for akey in f["Instrument config"]:
             self.instrument_config[akey]=dict()
@@ -104,16 +96,27 @@ class DataParser(Atom):
             self.data[akey]=f["Data"][akey][:]
         for akey, aitem in f["Data"].attrs.iteritems():
             self.data[akey]=aitem
+                    
         self.shaper=list(shape(f["Data"]["Data"]))
 
-        key="Channels"
-        for akey, aitem in f[key].attrs.iteritems():
-            print akey, aitem
+        #key="Channels"
+        #for akey, aitem in f[key].attrs.iteritems():
+        #    print akey, aitem
         #for akey in f[key]:
         #    print akey, f[key][akey].keys()
         #print f[key]['Agilent VNA - Output power'].keys()
         #print f["Channels"][:] #.keys()
-        print f.keys()
+        #print f["Traces"].keys()
+        for key in f["Traces"].keys():
+            if key=="Time stamp":
+                #if len(self.time_stamp)==0:
+                self.time_stamp=f["Traces"]["Time stamp"][:]
+
+#            else:
+#                if key[-2:]!="_N" and key[-5:]!="_t0dt":
+#                    self.trace_list.append(key)
+                    
+        #self.trace_extract(f, trace_name=self.trace_list[0])
         #print f[key]["Channel names"].attrs.keys()
         #print key, f[key][:]
         #print shape(f[key]["Time stamp"])
@@ -140,8 +143,6 @@ class DataParser(Atom):
         self.fstep=f["Traces"][trace_name+"_t0dt"][0][1]
         if len(self.frequency)==0:
             self.frequency=linspace(self.f0, self.f0+self.fstep*(self.numsteps-1), self.numsteps)
-        if len(self.time_stamp)==0:
-            self.time_stamp=list(f["Traces"]["Time stamp"][:])
         s=(self.numsteps, self.shaper[0], self.shaper[2])
         Magvec=f["Traces"][trace_name]
         Magcom=Magvec[:,0,:]+1j*Magvec[:,1,:]
@@ -161,6 +162,6 @@ dp=DataParser()
 with File(file_path, "r") as f:
     dp.read_ssfile(f)
     #dp.trace_extract(f)
-    dp.print_self()
+    #dp.print_self()
     #print dp.magcom.dtype
 dp.show()

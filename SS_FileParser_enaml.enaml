@@ -5,12 +5,14 @@ Created on Tue Sep 22 22:02:58 2015
 @author: thomasaref
 """
 
-from enaml.widgets.api import Form, Window, Field, Label, MultilineField, CheckBox, ObjectCombo, SpinBox
+from enaml.widgets.api import Form, Window, Field, Label, MultilineField, CheckBox, ObjectCombo, SpinBox, Notebook, Page, Container, ComboBox
 from enaml.stdlib.fields import FloatField
+from enaml.core.api import Looper
 from e_FundCore import UnitFloatField
 
-enamldef Main(Window):
-    attr ss
+
+enamldef BasicPage(Page):
+    title = "Basic info"
     Form:
         Label:
             text = "User:"
@@ -51,43 +53,141 @@ enamldef Main(Window):
         Label:
             text = "Time per point:"
         Label:
-            text="{} seconds".format(ss.time_per_point)
+            text="{} seconds".format(ss.time_per_point)    
         Label:
-            text = "Step List:"
-        ObjectCombo: steplist:
-            attr index = 0
-            items=[o[0] for o in ss.step_list]
-            selected::steplist.index= [n for n,o in enumerate(ss.step_list) if steplist.selected==o[0]][0]
-        Label:
-            text = "Step List:"
-        Form:
-            Label:
-                text='step_unit'
-            Label:
-                text<<str(ss.step_list[steplist.index][1])
-            Label:
-                text='wait_after'
-            Label:
-                text<<str(ss.step_list[steplist.index][2])
-            Label:
-                text='after_last'
-            Label:
-                text<<str(ss.step_list[steplist.index][3])
-            Label:
-                text='final_value'
-            Label:
-                text<<str(ss.step_list[steplist.index][4])
-            Label:
-                text='use_relations'
-            Label:
-                text<<str(ss.step_list[steplist.index][5])
-            Label:
-                text='equation'
-            Label:
-                text<<str(ss.step_list[steplist.index][6])
-            Label:
-                text='show_advanced'
-            Label:
-                text<<str(ss.step_list[steplist.index][7])
+            text=str(ss.data)
 
 
+enamldef ObjectComboDict(Form):
+    attr dict_combo
+    alias lbl    
+    alias dc
+    Label: lbl:
+        text = "Name:"
+    ObjectCombo: dc:
+        items=[o for o in dict_combo]
+    Looper: lpr:
+        iterable=dict_combo[dc.selected].keys()
+        Label: lpr_lbl:
+            text=loop_item
+        Form:            
+            Looper:
+                iterable=dict_combo[dc.selected][lpr_lbl.text].dtype.names
+                Label:
+                    text=loop_item
+                Label:
+                    text<<str(dict_combo[dc.selected][lpr_lbl.text][0][loop_index])
+
+enamldef DoubleLayerDict(Form):
+    attr dict_combo
+    alias lbl    
+    alias dc
+    Label: lbl:
+        text = "Name:"
+    ObjectCombo: dc:
+        items=[o for o in dict_combo]
+    Looper: lpr:
+        iterable<<dict_combo[dc.selected].keys()
+        Label: lpr_lbl:
+            text=loop_item
+        Label:
+            text=str(dict_combo[dc.selected][loop_item])
+
+enamldef SingleLayerDict(Form):
+    attr dict_combo
+    alias lbl    
+    alias dc
+    Label: lbl:
+        text = "Name:"
+    ObjectCombo: dc:
+        items=[o for o in dict_combo]
+    Label: lpr_lbl:
+        text<<dc.selected
+    Label:
+        text<<str(dict_combo[dc.selected])
+
+enamldef StepConfigPage(Page):
+    title="Step Config"
+    ObjectComboDict:
+        dict_combo=ss.step_config
+
+enamldef InstrumentConfigPage(Page):
+    title="Instrument Config"
+    DoubleLayerDict:
+        dict_combo=ss.instrument_config
+
+enamldef DataPage(Page):
+    title="Data"
+    SingleLayerDict:
+        dict_combo=ss.data
+        
+enamldef ComboBoxArray(Form):
+    attr arr_combo
+    attr name_index : int =0
+    alias lbl    
+    alias ac
+    alias lpr
+    Label: lbl:
+        text = "Name:"
+    ComboBox: ac:
+        index = 0
+        items=[o[name_index] for o in arr_combo]
+    Looper: lpr:
+        iterable=arr_combo[ac.index].dtype.names# list(inlist[cb.index])
+        Label:
+            text=loop_item
+        Label:
+            text<<str(arr_combo[ac.index][loop_index]) #str(loop_item)            
+
+enamldef TracesPage(Page):
+    title="Traces"
+    ComboBoxArray:
+        arr_combo=ss.log_list
+        lbl.text="Trace:"
+#    Form:
+#        Label:
+#            text = "Log list:"
+#        ObjectCombo: loglist:
+#            attr index = 0
+#            items=[o[0] for o in ss.log_list]
+#            selected::loglist.index= [n for n,o in enumerate(ss.log_list) if loglist.selected==o[0]][0]
+
+enamldef StepListPage(Page):
+    title="Step list"
+    ComboBoxArray:
+        arr_combo<<ss.step_list
+        lbl.text="Step List:"
+    
+enamldef InstrumentsPage(Page):
+    title="Instruments"
+    ComboBoxArray: cba:
+        arr_combo<<ss.instruments
+        name_index=4
+        lbl.text="Instrument:"        
+
+enamldef ChannelsPage(Page):
+    title="Channels"
+    ComboBoxArray:
+        arr_combo<<ss.channels
+        lbl.text="Channel" 
+        
+enamldef Main(Window):
+    attr ss
+    Container:
+        Notebook:
+            BasicPage:
+                pass
+            StepListPage:
+                pass
+            TracesPage:
+                pass
+            InstrumentsPage:
+                pass
+            ChannelsPage:
+                pass
+            StepConfigPage:
+                pass
+            InstrumentConfigPage:
+                pass
+            DataPage:
+                pass
