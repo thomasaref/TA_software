@@ -98,7 +98,7 @@ class DataParser(Atom):
             self.data[akey]=aitem
                     
         self.shaper=list(shape(f["Data"]["Data"]))
-
+        print f["Traces"].keys()
         #key="Channels"
         #for akey, aitem in f[key].attrs.iteritems():
         #    print akey, aitem
@@ -137,7 +137,7 @@ class DataParser(Atom):
         #sm=shape(Magvec)[0]
         #sy=shape(data)
         #print s
-        self.step_config["Traces"]=f["Log list"][:]
+        #self.step_config["Traces"]=f["Log list"][:]
         self.numsteps=f["Traces"][trace_name+"_N"][0]
         self.f0=f["Traces"][trace_name+"_t0dt"][0][0]
         self.fstep=f["Traces"][trace_name+"_t0dt"][0][1]

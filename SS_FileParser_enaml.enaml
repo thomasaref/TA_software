@@ -139,6 +139,17 @@ enamldef ComboBoxArray(Form):
         Label:
             text<<str(arr_combo[ac.index][loop_index]) #str(loop_item)            
 
+enamldef Traces(Form):
+    attr arr_combo
+    attr name_index : int =0
+    alias lbl    
+    alias ac
+    Label: lbl:
+        text = "Name:"
+    ComboBox: ac:
+        index = 0
+        items=[o[name_index] for o in arr_combo]
+    Label        
 enamldef TracesPage(Page):
     title="Traces"
     ComboBoxArray:
