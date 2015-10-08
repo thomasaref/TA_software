@@ -18,7 +18,7 @@ print C, 1.414*46*eps0*25.0e-6*36
 Tc=1.3
 Delta=3.528/2.0*k*Tc
 print Delta/e*1e6
-Rn=9.0e3
+Rn=9.1e3
 
 Ic=pi *Delta/(2.0*e)/Rn
 print Ic
@@ -27,13 +27,13 @@ Ejmax=hbar*Ic/(2.0*e)
 Ec=e**2/(2.0*C)
 print Ejmax/k, Ec/k, Ejmax/Ec
 
-EJmax=0.82*k
+EJmax=Ejmax #0.82*k
 print EJmax/h/1e9, Ec/h/1e9
 print (sqrt(8.0*EJmax*Ec)+Ec/4-(Ec/12.0)*(6+6+3))/h/1e9
-EC=0.007*k
+EC=Ec #0.007*k
 print (sqrt(8.0*EJmax*EC)+EC/4-(EC/12.0)*(6+6+3))/h/1e9
 
-f0=4.453e9
+f0=4.306e9
 hf0=h*f0
 print "coupling {}".format(0.45*Np*0.046*f0/1.0e9)
 S11_0 = 0.5094
@@ -85,17 +85,18 @@ import matplotlib.pyplot as plt
 print 1.0e-3*10**(-170.0/10.0)
 
 x=linspace(-10, 10, 401)
-plt.plot(x, flux_parabola(x*0.195))
-plt.show()
+#plt.plot(x, flux_parabola(x*0.195))
+#plt.show()
 phi=linspace(-pi, pi, 101)
 f=linspace(4e9, 6e9, 101)
 #plt.plot(phi, (1-cos(Np*phi))/(1-cos(phi))/81.0)
 fo0=5.45e9
-plt.plot(f, 0.45*Np*0.046*fo0/1.0e9*(sin(Np*pi*(f-fo0)/fo0/2.0)/(Np*pi*(f-fo0)/fo0/2.0))**2)
-plt.plot(f, 0.45*Np*0.046*fo0/1.0e9*(sin(Np*pi*(f-fo0)/fo0)/(Np*pi*(f-fo0)/fo0))**2)
-
-plt.plot([f0, f0], [0, 0.45*Np*0.046*fo0/1.0e9])
-plt.show()
+if 0:
+    plt.plot(f, 0.45*Np*0.046*fo0/1.0e9*(sin(Np*pi*(f-fo0)/fo0/2.0)/(Np*pi*(f-fo0)/fo0/2.0))**2)
+    plt.plot(f, 0.45*Np*0.046*fo0/1.0e9*(sin(Np*pi*(f-fo0)/fo0)/(Np*pi*(f-fo0)/fo0))**2)
+    
+    plt.plot([f0, f0], [0, 0.45*Np*0.046*fo0/1.0e9])
+    plt.show()
 print shape(x)
 #plt.plot(x, absolute(S11_IDT_no_IDT_ref(r_qubit(detuning(x), array([-1e-10]))) ))
 #plt.show()
@@ -111,7 +112,7 @@ from h5py import File
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp.hdf5"
 #file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/Data_0915/TA_A58_scb_refl_powfluxswp_lowpow.hdf5"
 
-file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/Data_1005/TA_A46_refl_fluxmap_andpower.hdf5"
+file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/Data_1006/TA46_gate_flux_swp_4p2t4p5GHz.hdf5"
 
 #from HDF5_functions import read_hdf5
 from numpy import float64
@@ -147,12 +148,12 @@ print "end data read"
 def dB(x):
     return 20*log10(absolute(x))
 
-powind=0
+powind=4
 frqind=234
 print pwr[powind]
 
 if 0:
-    plt.pcolormesh( dB(Magcom[:, 0, :]))
+    plt.pcolormesh( dB(Magcom[:, 5, :]))
     plt.show()
     
     plt.pcolormesh(yoko, freq, dB(Magcom[:, 0, :]))
@@ -161,15 +162,26 @@ if 0:
     plt.title("Reflection fluxmap at -117 dBm")
     plt.colorbar()
     plt.show()
-Magcom=Magcom[:,powind, :]-mean(Magcom[:, powind, 184:188 ], axis=1, keepdims=True)
+Magcom=Magcom[:,powind, :]-mean(Magcom[:, powind, 149:152 ], axis=1, keepdims=True)
 
+plt.pcolormesh(yoko, freq, absolute(Magcom))
+#plt.pcolormesh(yoko, freq, dB(Magcom[:, powind, :]))
+
+plt.plot(yoko, flux_parabola((yoko-0.09)*0.193), "w", linewidth=3, alpha=0.5, )
+plt.ylim(amin(freq), amax(freq))
+plt.xlabel("Flux (V)")
+plt.ylabel("Frequency (Hz)")
+plt.title("Gate fluxmap at {} dBm".format(-87-18-20))
+plt.colorbar()
+ 
+plt.show()
 print freq[106]
 
 #plt.plot(flux_parabola((yoko-2.5)*0.195), absolute(Magcom[106, :]))
 #plt.show()
 #plt.plot(amax(absolute(Magcom), axis=0))
 #plt.plot(absolute(Magcom[105, :]))
-plt.plot(yoko, absolute(Magcom[106, :])/amax(absolute(Magcom[106, :])))
+plt.plot(yoko, absolute(Magcom[103, :])/amax(absolute(Magcom[103, :])))
 #plt.plot(yoko, absolute(Magcom[106, :]))
 
 #plt.plot(yoko, absolute(cos(pi*(yoko-2.5)*0.195))) #flux_parabola(yoko)/amax(flux_parabola(yoko)))
@@ -185,29 +197,31 @@ def couple2(f):
 #det=detuning(yoko*0.195)
 #f=flux_parabola(yoko*0.195)
 #RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*couple(f)))
-#plt.plot(yoko, absolute(RR)/amax(absolute(RR)), label="50 MHz")
+#plt.plot(yoko, absolute(RR)/amax(absolute(RR)), label="10 MHz")
 #
 #RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*couple2(f)))
 #plt.plot(yoko, absolute(RR)/amax(absolute(RR)), label="50 MHz")
 
-RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*50.0e6))
+RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*10.0e6))
 plt.plot(yoko, absolute(RR)/amax(absolute(RR)), label="50 MHz")
 #RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*100.0e6))
 #plt.plot(yoko, absolute(RR)/amax(absolute(RR)))
 #RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*50.0e6))
 #plt.plot(yoko, absolute(RR)/amax(absolute(RR)))
-RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*200.0e6))
-plt.plot(yoko, absolute(RR)/amax(absolute(RR)), label="200 MHz")
+#RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*20.0e6))
+#plt.plot(yoko, absolute(RR)/amax(absolute(RR)), label="200 MHz")
 #RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*300.0e6))
 #plt.plot(yoko, absolute(RR)/amax(absolute(RR)))
-RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*500.0e6))
-plt.plot(yoko, absolute(RR)/amax(absolute(RR)), label="300 MHz")
-RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*800.0e6))
-plt.plot(yoko, absolute(RR)/amax(absolute(RR)), label="800 MHz")
-plt.legend()
+#RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*30.0e6))
+#plt.plot(yoko, absolute(RR)/amax(absolute(RR)), label="300 MHz")
+#RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*80.0e6))
+#plt.plot(yoko, absolute(RR)/amax(absolute(RR)), label="800 MHz")
+#plt.legend()
 
 #plt.plot(yoko, absolute(R)/amax(absolute(R)))
-
+plt.xlabel("Flux (V)")
+plt.ylabel("Gate response normalized")
+plt.title("Gate cross section")
 plt.show()
 print yoko[186]
 plt.pcolormesh(yoko, freq, absolute(Magcom))
