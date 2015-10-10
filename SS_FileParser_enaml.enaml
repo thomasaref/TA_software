@@ -149,7 +149,8 @@ enamldef Traces(Form):
     ComboBox: ac:
         index = 0
         items=[o[name_index] for o in arr_combo]
-    Label        
+    #Label  
+      
 enamldef TracesPage(Page):
     title="Traces"
     ComboBoxArray:

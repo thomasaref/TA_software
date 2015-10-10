@@ -48,10 +48,13 @@ def texwrap(dir_path, file_name, intex):
     with open(dir_path+file_name, "w") as f:
         f.write("\n".join(tex))
         
-def include_figure(graph_gen, tex, dir_path, fig_name, caption, label=""):
-    graph_gen()
+def include_figure(graph_gen, tex, dir_path, fig_name, caption="", label="", **kwargs):
+    graph_gen(**kwargs)
     file_name=graph_gen.func_code.co_filename.split("Documents")[1]
-    caption="{0} \\\\ Analysis: \\verb;{1};".format(caption, file_name)
+    #if capt is None:
+    caption="{0}  Analysis: \\verb;{1};".format(caption, file_name)
+    #else:
+    #caption="{0} \\\\ {1} \\\\ Analysis: \\verb;{2};".format(caption, capt, file_name)
     tex.append(r"\begin{figure}[ht!]")
     tex.append(r"\centering")
     tex.append("\\includegraphics[width=\\textwidth]{{{}}}".format(fig_name))
@@ -98,8 +101,8 @@ class TEX(object):
     def make_tex_file(self):
         texwrap(self.dir_path, self.file_name, self.tex)   
     
-    def include_figure(self, graph_gen, fig_name, caption="", label=""):
-        include_figure(graph_gen, self.tex, self.dir_path, fig_name, caption, label) 
+    def include_figure(self, graph_gen, fig_name, caption="", label="", **kwargs):
+        include_figure(graph_gen, self.tex, self.dir_path, fig_name, caption, label, **kwargs) 
 
     def add(self, inline):
         self.tex.append(inline)

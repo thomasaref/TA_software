@@ -11,7 +11,6 @@ from TEX_functions import TEX
         
 tx=TEX(dir_path, file_name)
 
-tex=[]
 tx.add(r"\section{Summary}")
 tx.add(r"""This is an attempt at reducing the coupling by changing the spacing of
  the fingers pairs on the qubit IDT, pushing them to a higher frequency.""")
@@ -39,126 +38,70 @@ idt_values=[[r"Talking/Listening IDTs"             ,  r"{}"              ],
 tx.make_table(idt_values, r"|p{5 cm}|p{3 cm}|")
 
 tx.add(r"\subsection{Calculated qubit values}")
-r"|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|}"
 
-calc_qubit=[[r"Calculated values qubit", "Value"      ,  "Expression"        , "Comment"                 ],
-            [r"Center frequency"       , r"5.45 GHz"  ,  r"$v/(8a_q)$"       , "speed over wavelength"   ],
-            [r"Gap $\Delta(0)$"        , r"200e-6 eV" ,  r"$1.764 k_B T_c$"  , "BCS"                     ],
-            [r"Normal resistance, $R_n$", "9.14 kOhms", "mean(DC junction resistances)" , "Tunable"      ],
-            [r"Critical current, $I_c$",  "35 nA",      "$\dfrac{\pi \Delta(0)}{2e}$",  "Ambegaokar Baratoff formula"],
-            [r"Ej\_max"                  ,  r"0.82 K, 17 GHz", r"$\dfrac{\hbar I_c}{2e R_n}$" , r"{}" ],
-             
-tex.append(r"\hline")
-tex.append(r"Capacitance from fingers $C_q$ & 130 fF & $\sqrt{2} W N_{pq} \epsilon_\infty$ & Morgan chp 1 \\")
-tex.append(r"\hline")
-tex.append(r"\(E_c\) & {7.2 mK,} {150 MHz} & $\dfrac{e^2}{2 C}$ & Charging energy \\")
-tex.append(r"\hline")
-tex.append(r"Ejmax/Ec & 115 & Ejmax/Ec & transmon limit \\")
-tex.append(r"\hline")
-tex.append(r"Estimated max frequency of qubit & 4.37 GHz & {} & full transmon expression \\")
-tex.append(r"\hline")
-tex.append(r"\end{tabular}")
+calc_qubit=[[r"Calculated values qubit"         ,  r"Value"                ,  r"Expression"                          , r"Comment"                     ],
+            [r"Center frequency"                ,  r"5.45 GHz"             ,  r"$v/(8a_q)$"                          , r"speed over wavelength"       ],
+            [r"Gap $\Delta(0)$"                 ,  r"200e-6 eV"            ,  r"$1.764 k_B T_c$"                     , r"BCS"                         ],
+            [r"Normal resistance, $R_n$"        ,  r"9.14 kOhms"           ,  r"mean(DC junction resistances)"       , r"Tunable"                     ],
+            [r"Critical current, $I_c$"         ,  r"35 nA"                ,  r"$\dfrac{\pi \Delta(0)}{2e}$"         , r"Ambegaokar Baratoff formula" ],
+            [r"Ej\_max"                         ,  r"0.82 K, 17 GHz"       ,  r"$\dfrac{\hbar I_c}{2e R_n}$"         , r"{}"                          ],
+            [r"Capacitance from fingers $C_q$"  ,  r"130 fF"               ,  r"$\sqrt{2} W N_{pq} \epsilon_\infty$" , r"Morgan chp 1"                ],
+            [r"\(E_c\)"                         ,  r"{7.2 mK,} {150 MHz}"  ,  r"$\dfrac{e^2}{2 C}$"                  , r"Charging energy"             ],
+            [r"Ejmax/Ec"                        ,  r"115"                  ,  r"Ejmax/Ec"                            , r"transmon limit"              ],
+            [r"Estimated max frequency of qubit",  r"4.37 GHz"             ,  r"{}"                                  , r"full transmon expression"    ]]
 
-tex.append(r"\subsection{Calculated IDT values}")
-tex.append(r"\begin{tabular}{|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|}")
-tex.append(r"\hline")
-tex.append(r"Calculated values IDT & Value & Expression & Comment\\")
-tex.append(r"\hline")
-tex.append(r"Center frequency & 4.54 GHz & $v/(8a)$ & speed over wavelength\\")
-tex.append(r"\hline")
-tex.append(r"Capacitance from fingers $C$ & 518 fF & $\sqrt{2} W N_{p} \epsilon_\infty$ & Morgan chp 1 \\")
-tex.append(r"\hline")
-tex.append(r"$Ga0$ & {7.2 mK,} {150 MHz} & $\dfrac{e^2}{2 C}$ & Charging energy \\")
-tex.append(r"\hline")
-tex.append(r"F width at half max & 115 & Ejmax/Ec & transmon limit \\")
-tex.append(r"\hline")
-tex.append(r"\end{tabular}")
+tx.make_table(calc_qubit, r"|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|")
+
+tx.add(r"\subsection{Calculated IDT values}")
+
+
+calc_idt=[[r"Calculated values IDT"          ,  r"Value"               ,  r"Expression"                          , r"Comment"                ],
+          [r"Center frequency"               ,  r"4.54 GHz"            ,  r"$v/(8a)$"                            , r"speed over wavelength"  ],
+          [r"Capacitance from fingers, $C$"  ,  r"518 fF"              ,  r"$\sqrt{2} W N_{p} \epsilon_\infty$"  , r"Morgan chp 1"           ],
+          [r"$Ga0$"                          ,  r"{7.2 mK,} {150 MHz}" ,  r"$\dfrac{e^2}{2 C}$"                  , r"Charging energy"        ],
+          [r"F width at half max"            ,  r"115"                 ,  r"Ejmax/Ec"                            , r"transmon limit"         ]]
+
+tx.make_table(calc_idt, r"|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|")
 
 
 
-#tex.append(r"\begin{tabular}{|p{5 cm}|p{3 cm}|}")
-#tex.append(r"\hline")
-#tex.append(r"Talking/Listening IDTs & {} \\")
-#tex.append(r"\hline")
-#tex.append(r"Finger type & double finger\\")
-#tex.append(r"\hline")
-#tex.append(r"Number of finger pairs, $N_p$ & 36\\")
-#tex.append(r"\hline")
-#tex.append(r"Overlap length, $W$ & 25 $\mu$m\\")
-#tex.append(r"\hline")
-#tex.append(r"finger width, $a$ & 96 nm\\")
-#tex.append(r"\hline")
-#tex.append(r"Metallization ratio & 50\%\\")
-#tex.append(r"\hline")
-#tex.append(r"\end{tabular}")
-#
-#tex.append(r"\subsection{Sample values}")
-#tex.append(r"\begin{tabular}{|p{5 cm}|p{3 cm}|}")
-#tex.append(r"\hline")
-#tex.append(r"Talking/Listening IDTs & {} \\")
-#tex.append(r"\hline")
-#tex.append(r"Distance qubit to reflection IDT & 200 $\mu$m\\")
-#tex.append(r"\hline")
-#tex.append(r"Distance qubit to transmission IDT & 300 $\mu$m\\")
-#tex.append(r"\hline")
-#tex.append(r"Speed of SAW & 3488 m/s\\")
-#tex.append(r"\hline")
-#tex.append(r"Capacitance per finger pair, $\epsilon_\infty$ & $46\epsilon_0$\\")
-#tex.append(r"\hline")
-#tex.append(r"Metallization ratio & 50\%\\")
-#tex.append(r"\hline")
-#tex.append(r"\end{tabular}")
-#tex.append(r"")
-
-#tex.append(r"\subsection{Calculated qubit values}")
-#tex.append(r"\begin{tabular}{|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|}")
-#tex.append(r"\hline")
-#tex.append(r"Calculated values qubit & Value & Expression & Comment\\")
-#tex.append(r"\hline")
-#tex.append(r"Center frequency & 5.45 GHz & $v/(8a_q)$ & speed over wavelength\\")
-#tex.append(r"\hline")
-#tex.append(r"Gap $\Delta(0)$ & 200e-6 eV & $1.764 k_B T_c$ & BCS\\")
-#tex.append(r"\hline")
-#tex.append(r"Normal resistance, $R_n$ & 9.14 kOhms & mean(DC junction resistances) & Tunable \\")
-#tex.append(r"\hline")
-#tex.append(r"Critical current, $I_c$ & 35 nA &  $\dfrac{\pi \Delta(0)}{2e}$ & Ambegaokar Baratoff formula \\")
-#tex.append(r"\hline")
-#tex.append(r"Ej\_max & 0.82 K, 17 GHz & $\dfrac{\hbar I_c}{2e R_n}$ & {} \\")
-#tex.append(r"\hline")
-#tex.append(r"Capacitance from fingers $C_q$ & 130 fF & $\sqrt{2} W N_{pq} \epsilon_\infty$ & Morgan chp 1 \\")
-#tex.append(r"\hline")
-#tex.append(r"\(E_c\) & {7.2 mK,} {150 MHz} & $\dfrac{e^2}{2 C}$ & Charging energy \\")
-#tex.append(r"\hline")
-#tex.append(r"Ejmax/Ec & 115 & Ejmax/Ec & transmon limit \\")
-#tex.append(r"\hline")
-#tex.append(r"Estimated max frequency of qubit & 4.37 GHz & {} & full transmon expression \\")
-#tex.append(r"\hline")
-#tex.append(r"\end{tabular}")
-#
-#tex.append(r"\subsection{Calculated IDT values}")
-#tex.append(r"\begin{tabular}{|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|}")
-#tex.append(r"\hline")
-#tex.append(r"Calculated values IDT & Value & Expression & Comment\\")
-#tex.append(r"\hline")
-#tex.append(r"Center frequency & 4.54 GHz & $v/(8a)$ & speed over wavelength\\")
-#tex.append(r"\hline")
-#tex.append(r"Capacitance from fingers $C$ & 518 fF & $\sqrt{2} W N_{p} \epsilon_\infty$ & Morgan chp 1 \\")
-#tex.append(r"\hline")
-#tex.append(r"$Ga0$ & {7.2 mK,} {150 MHz} & $\dfrac{e^2}{2 C}$ & Charging energy \\")
-#tex.append(r"\hline")
-#tex.append(r"F width at half max & 115 & Ejmax/Ec & transmon limit \\")
-#tex.append(r"\hline")
-#tex.append(r"\end{tabular}")
-
-tex.append(r"\section{Graphs}")
-tex.append(r"\subsection{SEM BDT}")
-
-tx.ext(tex)
 
 from TA210715A46_Fund import print_fundamentals
 print_fundamentals()
 
-#from TA46_refll_fluxmap import refl_fluxmap
-#tx.include_figure(refl_fluxmap, "foo.png", "my foo", "foolabel")
+tx.add(r"\section{Data}")
+tx.add(r"\subsection{Initial reflection fluxmap}")
+
+tx.add(r"This initial data showed there was flux dependence in the reflection from the IDT.")
+
+from D1005_refl_fluxmap_andpower import plotdB_colormap, plotabs_colormap
+tx.include_figure(plotdB_colormap, "refl_dB_fluxmap_0.png", pwi=0)
+
+tx.include_figure(plotdB_colormap, "refl_dB_fluxmap_3.png", pwi=3)
+
+tx.include_figure(plotdB_colormap, "refl_dB_fluxmap_7.png", pwi=7)
+
+tx.include_figure(plotabs_colormap, "refl_abs_fluxmap_0.png", pwi=0)
+
+tx.include_figure(plotabs_colormap, "refl_abs_fluxmap_3.png", pwi=3)
+
+tx.include_figure(plotabs_colormap, "refl_abs_fluxmap_7.png", pwi=7)
+
+tx.add(r"\subsection{Reflection time domain flux sweeps}")
+tx.add(r"""This data confirms that the flux dependence is primarily acoustic. The flux dependence 
+does not show up until significant time has passed after the electrical excitation is applied. The pulse should take on the order
+of 115 ns to travel the 400 $\mu$ from the reflection IDT to the qubit and back. It's difficult to see anything
+115 ns after the pulse starts but this is probably due to a combination of noise and the signal needing time to build up, as in the GaAs case.
+After the pulse is switched off, there is a clearly visible step feature that correspond to 115 ns that is different between the max and min graphs.""")
+
+from D1006_refl_time_domain import     maxandmin_intime, time_cuts, plotmapdBtime, plotmaptime
+
+tx.include_figure(plotmaptime, "refl_time_abs_fluxmap.png")
+
+tx.include_figure(plotmapdBtime, "refl_time_dB_fluxmap.png")
+
+tx.include_figure(time_cuts, "refl_time_cuts.png")
+
+tx.include_figure(maxandmin_intime, "refl_maxmin_intime.png")
 
 tx.make_tex_file()
