@@ -42,7 +42,7 @@ with File(file_path, 'r') as f:
 
 def plotmaptime():
     pcolormesh(yoko, time*1e6, absolute(Magcom))
-    title("Reflection vs flux and time (1 us pulse) at 4.46 GHz")
+    title("Reflection vs flux \n and time (1 us pulse) at 4.46 GHz")
     xlabel("Flux (V)")
     ylabel("Time (us)")
     #ylim(0, 1.5)
@@ -64,7 +64,7 @@ S11c=S11*exp(1j*th)
 
 def plotmapdBtime():
     pcolormesh(yoko, time*1e6, dB(S11c), vmin=-65, vmax=-30)
-    title("Reflection (dB) vs flux and time (1 us pulse) at 4.46 GHz")
+    title("Reflection (dB) vs flux \n and time (1 us pulse) at 4.46 GHz")
     xlabel("Flux (V)")
     ylabel("Time (us)")
     #ylim(0, 1.5)

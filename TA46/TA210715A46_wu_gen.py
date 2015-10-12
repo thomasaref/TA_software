@@ -72,21 +72,21 @@ print_fundamentals()
 tx.add(r"\section{Data}")
 tx.add(r"\subsection{Initial reflection fluxmap}")
 
-tx.add(r"This initial data showed there was flux dependence in the reflection from the IDT.")
+tx.add(r"""This data showed there was flux dependence in the reflection data from the IDT.
+ Subtracting the background off resonance at flux=-2.56V and plotting the absolute yields the clearer representation. 
+ Interference fringes are clearly visible in the response.""")
 
 from D1005_refl_fluxmap_andpower import plotdB_colormap, plotabs_colormap
-tx.include_figure(plotdB_colormap, "refl_dB_fluxmap_0.png", pwi=0)
+tx.mult_fig_start()
+tx.add_mult_fig(plotdB_colormap, "refl_dB_fluxmap_0.png", pwi=0)
+tx.add_mult_fig(plotabs_colormap, "refl_abs_fluxmap_0.png", pwi=0)
+tx.add_mult_fig(plotdB_colormap, "refl_dB_fluxmap_3.png", pwi=3)
+tx.add_mult_fig(plotabs_colormap, "refl_abs_fluxmap_3.png", pwi=3)
+tx.add_mult_fig(plotdB_colormap, "refl_dB_fluxmap_7.png", pwi=7)
+caption=tx.add_mult_fig(plotabs_colormap, "refl_abs_fluxmap_7.png", pwi=7)
+tx.mult_fig_end(caption)
 
-tx.include_figure(plotdB_colormap, "refl_dB_fluxmap_3.png", pwi=3)
-
-tx.include_figure(plotdB_colormap, "refl_dB_fluxmap_7.png", pwi=7)
-
-tx.include_figure(plotabs_colormap, "refl_abs_fluxmap_0.png", pwi=0)
-
-tx.include_figure(plotabs_colormap, "refl_abs_fluxmap_3.png", pwi=3)
-
-tx.include_figure(plotabs_colormap, "refl_abs_fluxmap_7.png", pwi=7)
-
+tx.add("\pagebreak")
 tx.add(r"\subsection{Reflection time domain flux sweeps}")
 tx.add(r"""This data confirms that the flux dependence is primarily acoustic. The flux dependence 
 does not show up until significant time has passed after the electrical excitation is applied. The pulse should take on the order
@@ -94,14 +94,40 @@ of 115 ns to travel the 400 $\mu$ from the reflection IDT to the qubit and back.
 115 ns after the pulse starts but this is probably due to a combination of noise and the signal needing time to build up, as in the GaAs case.
 After the pulse is switched off, there is a clearly visible step feature that correspond to 115 ns that is different between the max and min graphs.""")
 
-from D1006_refl_time_domain import     maxandmin_intime, time_cuts, plotmapdBtime, plotmaptime
+from D1006_refl_time_domain import maxandmin_intime, time_cuts, plotmapdBtime, plotmaptime
 
-tx.include_figure(plotmaptime, "refl_time_abs_fluxmap.png")
+tx.mult_fig_start()
+tx.add_mult_fig(plotmaptime, "refl_time_abs_fluxmap.png", width=0.49)
+tx.add_mult_fig(plotmapdBtime, "refl_time_dB_fluxmap.png", width=0.49)
+tx.add_mult_fig(time_cuts, "refl_time_cuts.png", width=0.49)
+tx.add_mult_fig(maxandmin_intime, "refl_maxmin_intime.png", width=0.49)
+tx.mult_fig_end(caption)
 
-tx.include_figure(plotmapdBtime, "refl_time_dB_fluxmap.png")
 
-tx.include_figure(time_cuts, "refl_time_cuts.png")
+tx.add("\pagebreak")
+tx.add(r"\subsection{Gate flux sweeps}")
+tx.add(r"""This data is similar to the listening/spike plots we did on the GaAs sample. I dropped the frequency to explore if the frequency parabola of
+the qubit matches experimentally predicted values and it seems to. Unfortunately, the talking/listening IDT very bad at picking up SAW
+in this range.""")
 
-tx.include_figure(maxandmin_intime, "refl_maxmin_intime.png")
+from D1006_gatefluxswp import gate_bgsub_colormesh, gate_bgsub_colormesh_wparabola
+
+tx.mult_fig_start()
+tx.add_mult_fig(gate_bgsub_colormesh, "gate_bgsub_colormesh.png", pwi=5, width=0.49)
+caption=tx.add_mult_fig(gate_bgsub_colormesh_wparabola, "gate_bgsub_colormesh_wparabola.png", pwi=5, width=0.49)
+tx.mult_fig_end(caption)
+
+
+tx.add("\pagebreak")
+tx.add(r"\subsection{Power saturation}")
+tx.add(r"""I tried acquiring a power saturation from reflection data directly at 4.285 GHz which is a frequency where I seem to have signal but should still cross the parabola. 
+This proved impractical since the signal I get from the IDT in the frequency is so weak. What did seem to work eventually 
+was probing at a higher frequency with low power while driving at 4.285 GHz and changing the power. I have included a rough fit assuming 50 MHz coupling.""")
+
+from D1010_refl_powsat import VNA_twotonesat, VNA_twotone_colormesh
+tx.mult_fig_start()
+tx.add_mult_fig(VNA_twotone_colormesh, "VNA_twotone_colormesh.png", width=0.49)
+caption=tx.add_mult_fig(VNA_twotonesat, "VNA_twotonesat.png", width=0.49)
+tx.mult_fig_end(caption)
 
 tx.make_tex_file()

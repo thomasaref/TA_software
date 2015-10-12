@@ -57,27 +57,27 @@ def gate_bgsub_colormesh_wparabola(pwi):
     gate_bgsub_colormesh(pwi) 
     plot(yoko, flux_parabola(flux_rescale(yoko)), "w", linewidth=3, alpha=0.5, )
 
-print freq[106]
+print freq[103]
 
 def cs_gate_bgsub(fqi, pwi):
-    plot(yoko, absolute(Magcom[fqi, pwi, :])/amax(absolute(Magcom[fqi, pwi, :])))
+    plot(yoko, absolute(Magabs[fqi, pwi, :])/amax(absolute(Magabs[fqi, pwi, :])))
     g=10.0e-6
     RR=lorentzian(flux_parabola(flux_rescale(yoko)), freq[fqi], [0.0], g)
     #RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*10.0e6))
-    plot(yoko, absolute(RR)/amax(absolute(RR)), label="50 MHz {}".format(g))
+    #plot(yoko, absolute(RR)/amax(absolute(RR)), label="50 MHz {}".format(g))
     xlabel("Flux (V)")
     ylabel("Gate response normalized")
     title("Gate cross section")
 
 if __name__=="__main__":
-    gatecolormesh_noindex(0)
+    gatecolormesh_noindex(5)
     show()
-    gatecolormesh(0)
+    gatecolormesh(5)
     show()
-    gate_bgsub_colormesh(0)
+    gate_bgsub_colormesh(5)
     show()
-    gate_bgsub_colormesh_wparabola(0)
+    gate_bgsub_colormesh_wparabola(5)
     show()
-    cs_gate_bgsub(0)
+    cs_gate_bgsub(103, 4)
     show()
         

@@ -64,17 +64,28 @@ def include_figure(graph_gen, tex, dir_path, fig_name, caption="", label="", **k
     savefig(dir_path+fig_name, bbox_inches='tight')
     close()
 
-#tex.append(r"%\setcounter{subfigure}{0} % reset figure counter to 0.")
-#tex.append(r"\begin{figure}[ht!]")
-#tex.append(r"\centering")
-#tex.append(r"%\begin{subfigure}[b]{0.32\textwidth}")
-#tex.append("\\includegraphics[width=\\textwidth]{{{}}}".format("foo.png"))
-#tex.append(r"\caption{A32 d1}")
-#tex.append(r"%\end{subfigure}")
-#tex.append(r"\label{fig:setup}")
-#tex.append(r"%\caption{}")
-#tex.append(r"\end{figure}")
+def mult_fig_start(tex):
+    tex.append(r"\setcounter{subfigure}{0} % reset figure counter to 0.")
+    tex.append(r"\begin{figure}[ht!]")
+    tex.append(r"\centering")
 
+def mult_fig_end(tex, caption):
+    tex.append(r"\label{fig:setup}")
+    tex.append("\\cprotect\\caption{{{}}}".format(caption))
+    tex.append(r"\end{figure}")
+
+def add_mult_fig(graph_gen, tex, dir_path, fig_name, caption="", label="", width=0.49, **kwargs):
+    graph_gen(**kwargs)
+    file_name=graph_gen.func_code.co_filename.split("Documents")[1]
+    savefig(dir_path+fig_name, bbox_inches='tight')
+    close()
+
+    tex.append("\\begin{{subfigure}}[b]{{{}\\textwidth}}".format(width))
+    tex.append("\\includegraphics[width=\\textwidth]{{{}}}".format(fig_name))
+    tex.append("\\cprotect\\caption{{{}}}".format(caption))
+    tex.append(r"\end{subfigure}")
+    return "Analysis: \\verb;{0};".format(file_name)
+    
 def make_table(tex, table_values, table_format=None):
     if table_format is None:
         table_format="|"
@@ -112,3 +123,14 @@ class TEX(object):
         
     def make_table(self, table_values, table_format=None):
         make_table(self.tex, table_values, table_format)
+        
+
+    def mult_fig_start(self):
+        mult_fig_start(self.tex)
+
+    def mult_fig_end(self, caption):
+        mult_fig_end(self.tex, caption)
+
+    def add_mult_fig(self, graph_gen, fig_name, caption="", label="", **kwargs):
+        return add_mult_fig(graph_gen, self.tex, self.dir_path, fig_name, caption, label, **kwargs)
+        

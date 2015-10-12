@@ -62,7 +62,7 @@ def plotabs_colormap(pwi):
     pcolormesh(yoko, freq, absolute(Magabs[:,pwi,:]))
     xlabel("Flux (V)")
     ylabel("Frequency (Hz)")
-    caption="{0} dBm with bgsub at {1:.2f} V".format(pwr[pwi]-fridge_attn, yoko[186])
+    caption="{0} dBm with \n bgsub at {1:.2f} V".format(pwr[pwi]-fridge_attn, yoko[186])
     title("Reflection fluxmap at {}".format(caption))
     ylim(amin(freq), amax(freq))
     colorbar()
