@@ -81,17 +81,17 @@ def maxandmin_intime():
 
 
 def time_cuts():
-    plot(yoko, dB(S11c[35, :]), label="20 ns after start of pulse".format(time[35]-time[30])) 
-    plot(yoko, dB(S11c[46, :]), label="64 ns after start of pulse".format(time[46]-time[30]))
-    plot(yoko, dB(S11c[83, :]), label="212 ns after start of pulse".format(time[83]-time[30]))
-    plot(yoko, dB(S11c[90, :]), label="240 ns after start of pulse".format(time[90]-time[30]))
-    plot(yoko, dB(S11c[100, :]), label="280 ns after start of pulse".format(time[100]-time[30]))
-    plot(yoko, dB(S11c[110, :]), label="320 ns after start of pulse".format(time[110]-time[30]))
+    plot(yoko, dB(S11c[35, :]), label="20 ns".format(time[35]-time[30])) 
+    plot(yoko, dB(S11c[46, :]), label="64 ns".format(time[46]-time[30]))
+    plot(yoko, dB(S11c[83, :]), label="212 ns".format(time[83]-time[30]))
+    plot(yoko, dB(S11c[90, :]), label="240 ns".format(time[90]-time[30]))
+    plot(yoko, dB(S11c[100, :]), label="280 ns".format(time[100]-time[30]))
+    plot(yoko, dB(S11c[110, :]), label="320 ns".format(time[110]-time[30]))
 
-    plot(yoko, dB(S11c[153, :]), label="492 ns after start of pulse".format(time[153]-time[30]))
-    plot(yoko, dB(S11c[230, :]), label="800 ns after start of pulse".format(time[230]-time[30]))
+    plot(yoko, dB(S11c[153, :]), label="492 ns".format(time[153]-time[30]))
+    plot(yoko, dB(S11c[230, :]), label="800 ns".format(time[230]-time[30]))
 
-    plot(yoko, dB(S11c[294, :]), label="1056 ns after start of pulse".format(time[294]-time[30]))
+    plot(yoko, dB(S11c[294, :]), label="1056 ns".format(time[294]-time[30]))
 
     title("Flux modulation at various times at 4.46 GHz")
     xlabel("Flux (V)")

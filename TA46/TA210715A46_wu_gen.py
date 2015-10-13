@@ -44,7 +44,7 @@ calc_qubit=[[r"Calculated values qubit"         ,  r"Value"                ,  r"
             [r"Gap $\Delta(0)$"                 ,  r"200e-6 eV"            ,  r"$1.764 k_B T_c$"                     , r"BCS"                         ],
             [r"Normal resistance, $R_n$"        ,  r"9.14 kOhms"           ,  r"mean(DC junction resistances)"       , r"Tunable"                     ],
             [r"Critical current, $I_c$"         ,  r"35 nA"                ,  r"$\dfrac{\pi \Delta(0)}{2e}$"         , r"Ambegaokar Baratoff formula" ],
-            [r"Ej\_max"                         ,  r"0.82 K, 17 GHz"       ,  r"$\dfrac{\hbar I_c}{2e R_n}$"         , r"{}"                          ],
+            [r"$E_{Jmax}$"                         ,  r"0.82 K, 17 GHz"       ,  r"$\dfrac{\hbar I_c}{2e R_n}$"         , r"{}"                          ],
             [r"Capacitance from fingers $C_q$"  ,  r"130 fF"               ,  r"$\sqrt{2} W N_{pq} \epsilon_\infty$" , r"Morgan chp 1"                ],
             [r"\(E_c\)"                         ,  r"{7.2 mK,} {150 MHz}"  ,  r"$\dfrac{e^2}{2 C}$"                  , r"Charging energy"             ],
             [r"Ejmax/Ec"                        ,  r"115"                  ,  r"Ejmax/Ec"                            , r"transmon limit"              ],
@@ -64,7 +64,20 @@ calc_idt=[[r"Calculated values IDT"          ,  r"Value"               ,  r"Expr
 tx.make_table(calc_idt, r"|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|")
 
 
+tx.add(r"""The flux parabola shown on the curves is done by assuming $E_J= E_{Jmax} |\cos(\pi \Phi/\Phi_0)|$ 
+where $\Phi/\Phi_0$
+is extracted from the flux voltage by adding a small offset of 0.1V or 
+less (the offset can vary between data sets if there is a flux jump) and multiplying by 0.193 (determined by matching up to flux periodicity).
+ and the resulting frequency is $f=(E_1-E_0)/h$ where $E_0=0.5\sqrt(8 E_J E_C) - E_C/4$ and
+ $E_1 =1.5\sqrt(8 E_J E_C) - (E_C/12)(6+6+3)$.
 
+ The corresponding detuning from a frequency $f_0$ I am talking/listening to is $\Delta \omega = 2 \pi (f-f_0)$. 
+ The qubit reflection is :
+ $$|R| = \left| -\dfrac{G}{2g}\dfrac{1+i \Delta \omega/g}{1 + (\Delta \omega/g)^22 + 2N/g)}\right|$$
+ where $g=G/2$ and $G=2 \pi 50 MHz$, i.e. $g$ is the total coupling which is being assumed dominated entirely by the acoustic coupling
+$G$ of 50 MHz. N is the linear power divided by $hf_0$ which I have assumed to be zero except 
+when plotting the power saturation curve.
+ """)
 
 from TA210715A46_Fund import print_fundamentals
 print_fundamentals()
@@ -117,6 +130,28 @@ tx.add_mult_fig(gate_bgsub_colormesh, "gate_bgsub_colormesh.png", pwi=5, width=0
 caption=tx.add_mult_fig(gate_bgsub_colormesh_wparabola, "gate_bgsub_colormesh_wparabola.png", pwi=5, width=0.49)
 tx.mult_fig_end(caption)
 
+
+tx.add("\pagebreak")
+tx.add(r"\subsection{Low frequency reflection flux sweeps}")
+tx.add(r"""This is what the reflection looks like at lower frequencies where there isn't much signal but one can see the parabola. I have plotted the parabola on the flux map and some 
+rough fits to the crosssections assuming 50 MHz coupling.""")
+
+from D1007_refl_fluxswp_lowfrq import cs_refl_lowfrq, cm_refl_lowfrq, cm_refl_lowfrq_parabola
+
+
+tx.mult_fig_start()
+tx.add_mult_fig(cm_refl_lowfrq, "cm_refl_lowfrq.png", pwi=4)
+caption=tx.add_mult_fig(cm_refl_lowfrq_parabola, "cm_refl_lowfrq_parabola.png", pwi=4)
+tx.mult_fig_end(caption)
+
+tx.mult_fig_start()
+tx.add_mult_fig(cs_refl_lowfrq, "cs_refl_lowfrq_103_4.png", fqi=103, pwi=4)
+tx.add_mult_fig(cs_refl_lowfrq, "cs_refl_lowfrq_85_4.png", fqi=85, pwi=4)
+tx.add_mult_fig(cs_refl_lowfrq, "cs_refl_lowfrq_199_4.png", fqi=199, pwi=4)
+caption=tx.add_mult_fig(cs_refl_lowfrq, "cs_refl_lowfrq_185_4.png", fqi=185, pwi=4)
+#tx.add_mult_fig(cs_refl_lowfrq, "cs_refl_lowfrq_95_4.png", fqi=95, pwi=4)
+#caption=tx.add_mult_fig(cs_refl_lowfrq, "cs_refl_lowfrq_65_4.png", fqi=65, pwi=4)
+tx.mult_fig_end(caption)
 
 tx.add("\pagebreak")
 tx.add(r"\subsection{Power saturation}")

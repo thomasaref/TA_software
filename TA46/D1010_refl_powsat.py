@@ -28,7 +28,7 @@ if 0:
         print PXIIQ.dtype #=PXIIQ.astype(float)
         print shape(PXIIQ)
 
-if 0:
+if 1:
     file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/Data_1010/TA46_pxi_fluxtest.hdf5"
     
     with File(file_path, 'r') as f:
@@ -48,13 +48,13 @@ if 0:
         print shape(PXIIQ)
 
     plot(absolute(absolute(PXIIQ)-0.02760)/0.000319)
-        
+    #plot(lvlcorr)    
     print shape(yoko)
     yoko=squeeze(yoko)
-    fridge_att=87+15
+    fridge_att=87.0+5.0
     pwr=array([-50.0])
     pwrlin=0.001*10.0**((pwr-fridge_att)/10.0)
-    plot(normalize(absolute(lorentzian(flux_parabola(flux_rescale(yoko)), 4.285e9, pwrlin, 80.0e6))))
+    plot(normalize(absolute(lorentzian(flux_parabola(flux_rescale(yoko, offset=0.06)), 4.285e9, pwrlin, 50.0e6))))
     show()
 
 file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/Data_1010/TA46_VNA_refl_twotone_powsat.hdf5"
@@ -143,8 +143,8 @@ def VNA_twotonesat():
 
     xlabel("Control power (dBm)")
     ylabel("Reflection (normalized)")
-    title("Reflection (dB) Probe at 4.403 GHz, -137 dBm, Control at 4.285  GHz")    
-    legend()
+    title("Reflection (normalized) Probe at 4.403 GHz, -137 dBm, \\ Control at 4.285  GHz")    
+    legend(loc=3)
 #    plt.pcolormesh(dB(S11c)) 
 #pcolormesh(yoko, time*1e6, absolute(Magcom))
 

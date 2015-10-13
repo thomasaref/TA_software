@@ -7,7 +7,7 @@ Created on Sat Oct 10 12:39:31 2015
 
 from h5py import File
 from numpy import float64, shape, reshape, linspace, mean, amin, amax, absolute
-from TA210715A46_Fund import dB, fridge_attn
+from TA210715A46_Fund import dB, fridge_attn, normalize, lorentzian, normalize, flux_parabola, flux_rescale
 from matplotlib.pyplot import pcolormesh, show, xlabel, ylabel, title, colorbar, ylim, xlim, plot
 
 file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/Data_1005/TA_A46_refl_fluxmap_andpower.hdf5"
@@ -80,8 +80,37 @@ def plotabs_colormap(pwi):
 
 #plot( pwr-fridge_attn, absolute(Magabs[106, :,  251]))#/amax(absolute(Magcom[106, 0, :])))
 
-show()
+def cs_dB(fqi, pwi):
+    plot(yoko, dB(Magcom[fqi, pwi, :]))
+fridge_att=87.0
+def cs_abs(fqi, pwi):
+    plot(yoko, normalize(absolute(Magabs[fqi, pwi, :])))
+    g=50.0e6
+    fridge_att=87.0+5.0
+    pwrlin=0.001*10.0**((pwr[pwi]-fridge_att)/10.0)
+    RR=lorentzian(flux_parabola(flux_rescale(yoko, offset=-0.01)), freq[fqi], [pwrlin], g)
+        #RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*10.0e6))
+    plot(yoko, normalize(absolute(RR)), label="50 MHz {}".format(g))
+    title("Cross section reflection (normalized) \n at {frq:.3f} GHz and {pwr} dBm".format(frq=freq[fqi]/1.0e9, pwr=pwr[pwi]-fridge_att))
+    xlabel("Flux (V)")
+    ylabel("Reflection (normalized)")
+
+    
 if __name__=="__main__":
+    #plot(amax(absolute(Magcom[:, 0, :]), axis=1)-amin(absolute(Magcom[:, 0, :]), axis=1))
+    #show()
+    #cs_dB(106, 0)
+    #show()
+    cs_abs(106, 7)
+    show()
+
+    cs_abs(106, 3)
+    show()
+
+    cs_abs(106, 0)
+    show()
+
+
     plotdBnoindex()
     show()
     plotdB_colormap(0)

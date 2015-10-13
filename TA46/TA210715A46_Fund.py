@@ -31,7 +31,7 @@ epsinf=46.0*eps0 #Literature value for LiNb YZ
 
 Tc=1.315 #critical temperature of aluminum
 Delta=200.0e-6*e
-Rn=(8.93e3+9.35e3)/2.0
+Rn=9.2e3#(8.93e3+9.35e3)/2.0
 
 #Calculated values
 Ic=pi*Delta/(2.0*e)/Rn #Ambegaokar Baratoff formula
@@ -42,7 +42,7 @@ Ec=e**2/(2.0*Cq)
 
 def flux_rescale(yoko, offset=0.09):
     #return (yoko-0.07)*0.198
-    return (yoko-offset)*0.193
+    return (yoko-offset)*0.195
 
 def flux_parabola(flux_over_flux0):
     Ej = Ejmax*absolute(cos(pi*flux_over_flux0))
