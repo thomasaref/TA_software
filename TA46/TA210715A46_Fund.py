@@ -21,6 +21,8 @@ def normalize_1d(x):
     return (x-amin(x, axis=1, keepdims=True))/(amax(x, axis=1, keepdims=True)-amin(x, axis=1, keepdims=True))
 
 fridge_attn=87.0
+extra_attn=6.0
+g=50.0e6
 #Table values:
 W=25.0e-6
 Npq=9
@@ -38,6 +40,8 @@ Ic=pi*Delta/(2.0*e)/Rn #Ambegaokar Baratoff formula
 Ejmax=hbar*Ic/(2.0*e)
 
 Cq=sqrt(2.0)*W*Npq*epsinf #Morgan
+#Cq=W*Npq*epsinf #Morgan
+
 Ec=e**2/(2.0*Cq)
 
 def flux_rescale(yoko, offset=0.09):
@@ -107,14 +111,16 @@ def print_fundamentals():
     print "Critical current, Ic={}".format(Ic) 
     print "Ejmax={0} K= {1} Hz".format(Ejmax/k, Ejmax/h)
     print "Qubit capacitance = {} F".format(Cq)
-    print "Ec = {0} K = {1} Hz".format(Ec/k, Ec/h)
+    print "Ec = {0} K = {1} GHz".format(Ec/k, Ec/h/1.0e9)
     print "Ejmax/Ec={}".format(Ejmax/Ec)
     print "fq_max=sqrt(8*Ejmax*Ec)={} Hz".format(sqrt(8.0*Ejmax*Ec)/h)
     print "fq_max_full={} Hz".format(flux_parabola(0.0))
     print
     print "Qubit center frequency = {} Hz".format(v/(8*aq))
     
-
+if __name__=="__main__":
+    print_fundamentals()
+    
 #tex.append(r"\begin{tabular}{|p{5 cm}|p{3 cm}|}")
 #tex.append(r"\hline")
 #tex.append(r"Talking/Listening IDTs & {} \\")

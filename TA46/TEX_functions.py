@@ -47,6 +47,14 @@ def texwrap(dir_path, file_name, intex):
     
     with open(dir_path+file_name, "w") as f:
         f.write("\n".join(tex))
+
+def include_image(tex, dir_path, fig_name, caption="", label=""):
+    tex.append(r"\begin{figure}[ht!]")
+    tex.append(r"\centering")
+    tex.append("\\includegraphics[width=\\textwidth]{{{}}}".format(fig_name))
+    tex.append("\\caption{{{}}}".format(caption))
+    tex.append("\\label{{{}}}".format(label))
+    tex.append(r"\end{figure}")
         
 def include_figure(graph_gen, tex, dir_path, fig_name, caption="", label="", **kwargs):
     graph_gen(**kwargs)
@@ -134,3 +142,5 @@ class TEX(object):
     def add_mult_fig(self, graph_gen, fig_name, caption="", label="", **kwargs):
         return add_mult_fig(graph_gen, self.tex, self.dir_path, fig_name, caption, label, **kwargs)
         
+    def include_image(self, fig_name, caption="", label=""):
+        include_image(self.tex, self.dir_path, fig_name, caption, label)        

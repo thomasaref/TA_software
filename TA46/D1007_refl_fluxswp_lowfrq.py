@@ -8,7 +8,7 @@ Created on Sat Oct 10 13:54:41 2015
 
 from h5py import File
 from numpy import float64, shape, reshape, linspace, mean, amin, amax, absolute, squeeze, log10, sqrt, angle, exp, array, transpose
-from TA210715A46_Fund import dB, fridge_attn, lorentzian, flux_rescale, flux_parabola, normalize, lorentzsweep, normalize_1d
+from TA210715A46_Fund import dB, g, fridge_attn, lorentzian, flux_rescale, flux_parabola, normalize, lorentzsweep, normalize_1d
 from matplotlib.pyplot import pcolormesh, show, xlabel, ylabel, title, colorbar, ylim, xlim, plot, legend
 
 
@@ -65,7 +65,7 @@ print pwr[powind]
 Magabs=Magcom[:, :, :]-mean(Magcom[:, 197:200, :], axis=1, keepdims=True)
 
 fridge_att=87.0+20.0+5.0
-pwrlin=0.001*10.0**((pwr[powind]-fridge_att)/10.0)
+pwrlin=0*0.001*10.0**((pwr[powind]-fridge_att)/10.0)
 
 if 0:
     pcolormesh(dB(Magcom[:, :, powind]))   
@@ -73,7 +73,6 @@ if 0:
     
 def cs_refl_lowfrq(fqi, pwi):    
     plot(yoko, normalize(absolute(Magabs[fqi, :, pwi])))
-    g=50.0e6
     RR=lorentzian(flux_parabola(flux_rescale(yoko, offset=-0.02)), freq[fqi], [pwrlin], g)
         #RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*10.0e6))
     plot(yoko, normalize(absolute(RR)), label="50 MHz {}".format(g))
@@ -84,7 +83,6 @@ def cs_refl_lowfrq(fqi, pwi):
 def cs_refl_lowfrq_dB(fqi, pwi):    
     fqi=103
     plot(yoko, normalize(dB(Magabs[fqi, :, pwi])))
-    g=70.0e6
     RR=lorentzian(flux_parabola(flux_rescale(yoko, offset=-0.07)), freq[fqi], [0*pwrlin], g)
         #RR=1/(1-1j*detuning(yoko*0.195)/(2.0*pi*10.0e6))
     plot(yoko, normalize(absolute(RR)), label="50 MHz {}".format(g))
@@ -122,7 +120,7 @@ def cm_refl_lowfrq_dB(pwi):
 
 def cm_refl_lowfrq_parabola(pwi):
     pcolormesh(yoko, freq, absolute(Magabs[:, :, pwi]))   
-    plot(yoko, flux_parabola(flux_rescale(yoko, offset=-0.07)), "w", linewidth=3, alpha=0.5, )
+    plot(yoko, flux_parabola(flux_rescale(yoko, offset=-0.02)), "w", linewidth=3, alpha=0.5, )
     ylim(amin(freq), amax(freq))
     title("Flux map at reflection {pwr} dBm".format(pwr=pwr[pwi]))
     xlabel("Flux (V)")

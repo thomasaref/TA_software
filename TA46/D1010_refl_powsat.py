@@ -28,7 +28,7 @@ if 0:
         print PXIIQ.dtype #=PXIIQ.astype(float)
         print shape(PXIIQ)
 
-if 1:
+if 0:
     file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/Data_1010/TA46_pxi_fluxtest.hdf5"
     
     with File(file_path, 'r') as f:
@@ -143,7 +143,7 @@ def VNA_twotonesat():
 
     xlabel("Control power (dBm)")
     ylabel("Reflection (normalized)")
-    title("Reflection (normalized) Probe at 4.403 GHz, -137 dBm, \\ Control at 4.285  GHz")    
+    title("Reflection (normalized) Probe at 4.403 GHz, -137 dBm, \n Control at 4.285  GHz")    
     legend(loc=3)
 #    plt.pcolormesh(dB(S11c)) 
 #pcolormesh(yoko, time*1e6, absolute(Magcom))
