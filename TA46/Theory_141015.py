@@ -22,7 +22,7 @@ print v/(lbda0q*8)
 
 f0=4.54e9
 fq0=5.45e9
-
+#7.62 kOhms, 7.96 kOhms
 #Table values:
 W=25.0e-6
 epsinf=46.0*eps0 #Literature value for LiNb YZ

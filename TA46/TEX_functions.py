@@ -7,6 +7,25 @@ Created on Fri Oct  9 17:17:26 2015
 
 from matplotlib.pyplot import savefig, close
 
+def read_tex(file_name):
+    str_list=[]
+    with open(file_name, "r") as f:
+        for line in f:
+            str_list.append(line.split("\n")[0].strip())
+    return str_list
+
+def extract_block(name, str_list):
+    extract_list=[]
+    inblock=False
+    for line in str_list:
+        if line.startswith("\pyb".strip()):
+            if line.split("{")[1].split("}")[0].strip()==name:
+                inblock=True
+        if inblock:
+            extract_list.append(line)
+            if line.startswith("\pye"):
+                return extract_list[1:-1]    
+    return extract_list[1:]    
     
 def texwrap(dir_path, file_name, intex):
     tex=[]
@@ -112,10 +131,14 @@ def make_table(tex, table_values, table_format=None):
     tex.append(r"")
     
 class TEX(object):
-    def __init__(self, dir_path, file_name):
+    def __init__(self, dir_path, file_name, tex_source=None):
         self.dir_path=dir_path
         self.file_name=file_name
         self.tex=[]
+        if tex_source is None:
+            self.str_list=None
+        else:
+            self.str_list=read_tex(tex_source)
 
     def make_tex_file(self):
         texwrap(self.dir_path, self.file_name, self.tex)   
@@ -125,8 +148,15 @@ class TEX(object):
 
     def add(self, inline):
         self.tex.append(inline)
-    
-    def ext(self, inlist):
+
+    def extract_block(self, name):
+        return extract_block(name, self.str_list)
+        
+    def ext(self, block_name):
+        temp_list=self.extract_block(block_name)
+        self.extend(temp_list)
+        
+    def extend(self, inlist):
         self.tex.extend(inlist)
         
     def make_table(self, table_values, table_format=None):

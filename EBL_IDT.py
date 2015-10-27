@@ -13,10 +13,10 @@ from numpy import  mod
 class EBL_IDT(EBL_Polygons, IDT):
     """handles everything related to drawing a IDT. Units are microns (um)"""
     trconnect_x=Float(9.0e-6).tag(desc="connection length of transmon", unit="um")
-    trconnect_y=Float(2.5e-6).tag(desc="connection length of transmon", unit="um")
+    trconnect_y=Float(2.0e-6).tag(desc="connection length of transmon", unit="um")
     trconnect_w=Float(0.5e-6).tag(desc="connection length of transmon", unit="um")
     trc_wbox=Float(14.0e-6).tag(desc="width of transmon box", unit="um")
-    trc_hbox=Float(14.0e-6).tag(desc="height of transmon box", unit="um")
+    trc_hbox=Float(12.5e-6).tag(desc="height of transmon box", unit="um")
     o=Float(0.5e-6).tag(unit="um",
                     desc="gap between electrode and end of finger. The vertical offset of the fingers. Setting this to zero produces a shorted reflector")
     hbox=Float(0.5e-6).tag(desc="height of electrode box", unit="um")
@@ -27,11 +27,12 @@ class EBL_IDT(EBL_Polygons, IDT):
     idt_type=Enum("basic", "stepped").tag(desc="basic is a regular IDT, stepped uses stepped fingers for harmonic suppression")
     qdt_type=Enum("IDT", "QDT")
 
-    conn_h=Float(65.0e-6).tag(unit="um")
+    conn_h=Float(165.0e-6).tag(unit="um")
     add_gate=Bool(True)
     add_gnd=Bool(True)
     add_teeth=Bool(True)
     step_num=Int(3)
+    gate_distance=Float(10.0e-6).tag(desc="distance to gate", unit="um")
 
     def _default_color(self):
         return "blue"
@@ -142,16 +143,16 @@ class EBL_IDT(EBL_Polygons, IDT):
             self.C(0, -self.o-self.W/2.0-self.hbox/2.0, wr, self.hbox)
 
     def _qubitgnd(self):
-        """writes qubit gate"""
-        self.P([(-self.trc_wbox/2.0, -self.o/2.0-self.W/2.0-self.trc_hbox),
-                (self.trc_wbox/2.0, -self.o/2.0-self.W/2.0-self.trc_hbox),
+        """writes qubit ground"""
+        self.P([(-self.trc_wbox/2.0, -self.o-self.W/2.0-self.trc_hbox-self.trconnect_w),
+                (self.trc_wbox/2.0, -self.o-self.W/2.0-self.trc_hbox-self.trconnect_w),
                 (self.trc_wbox/2.0, -self.conn_h),
                 (-self.trc_wbox/2.0, -self.conn_h)])
 
     def _qubitgate(self):
-        """writes ground for a qubit IDT"""
-        self.P([(-self.trc_wbox/2.0, self.o/2.0+self.W/2.0+self.hbox+10.0e-6),#-0.25e-6),
-                (self.trc_wbox/2.0, self.o/2.0+self.W/2.0+self.hbox+10.0e-6), #-0.25e-6),
+        """writes gate for a qubit IDT"""
+        self.P([(-self.trc_wbox/2.0, self.o+self.W/2.0+self.hbox+self.gate_distance),#-0.25e-6),
+                (self.trc_wbox/2.0, self.o+self.W/2.0+self.hbox+self.gate_distance), #-0.25e-6),
                 (self.trc_wbox/2.0, self.conn_h),
                    (-self.trc_wbox/2.0, self.conn_h)])
 
@@ -189,8 +190,8 @@ class EBL_IDT(EBL_Polygons, IDT):
         idt_numteeth=int(self.trconnect_x/(2*self.idt_tooth))
         idt_conn=self.idt_tooth*(2*idt_numteeth-1)
         sqt_x=-idt_conn/2.0
-        sqt_y=-self.o/2.0-self.W/2.0-self.trc_hbox+self.trconnect_y+self.trconnect_w
-        sqt_y_top=-self.o/2.0-self.W/2.0-self.trconnect_y-2*self.trconnect_w
+        sqt_y=-self.o-self.W/2.0-self.trc_hbox+self.trconnect_y+self.trconnect_w
+        sqt_y_top=-self.o-self.W/2.0-self.trconnect_y-2*self.trconnect_w
 
         for i in range(idt_numteeth):
             self.R(sqt_x+2*i*self.idt_tooth, sqt_y, self.idt_tooth, self.idt_tooth )
