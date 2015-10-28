@@ -27,7 +27,7 @@ class EBL_IDT(EBL_Polygons, IDT):
     idt_type=Enum("basic", "stepped").tag(desc="basic is a regular IDT, stepped uses stepped fingers for harmonic suppression")
     qdt_type=Enum("IDT", "QDT")
 
-    conn_h=Float(165.0e-6).tag(unit="um")
+    conn_h=Float(150.0e-6).tag(unit="um")
     add_gate=Bool(True)
     add_gnd=Bool(True)
     add_teeth=Bool(True)

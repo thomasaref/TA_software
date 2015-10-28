@@ -15,8 +15,11 @@ idt.a=96.0e-9
 print idt.f0, idt.g
 idt.idt_type="basic"
 idt.Np=37
+idt.hbox=20.0e-6
+#idt.gate_distance=
+#idt.gate
 
-## 3rd harmonic   50%
+## IDT with 37 fingers
 if 0:
     #print idt.a, idt.g, idt.eta, idt.a/(idt.g+idt.a), idt.Dvv, idt.epsinf
     #idt.show()
@@ -26,5 +29,7 @@ if 0:
 if 1:
     idt.Np=7
     idt.qdt_type="QDT"
+    idt.add_gate=False
+    idt.add_gnd=False
     idt.show()
     idt.full_EBL_save(dir_path=dir_path)
