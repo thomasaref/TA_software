@@ -1,0 +1,15 @@
+2015-10-30 20:51:13,727 - log.py (line 71) <<module>> DEBUG:  Started logging
+2015-10-30 20:51:13,741 - test1.py (line 10) <<module>> INFO:  balh
+2015-10-30 20:51:13,743 - test1.py (line 12) <<module>> INFO:  yoy
+2015-10-30 20:51:13,782 - test1.py (line 13) <<module>> WARNING:  yay
+2015-10-30 20:51:13,795 - test1.py (line 16) <<module>> INFO:  2
+2015-10-30 20:51:13,798 - test1.py (line 17) <<module>> INFO:  3
+2015-10-30 20:51:13,804 - test1.py (line 18) <<module>> INFO:  4
+2015-10-30 20:51:13,811 - test1.py (line 19) <<module>> INFO:  5
+2015-10-30 20:51:13,826 - test1.py (line 23) <<module>> INFO:  6
+2015-10-30 20:51:13,829 - test1.py (line 26) <<module>> INFO:  7
+2015-10-30 20:51:13,862 - test1.py (line 27) <<module>> INFO:  8
+2015-10-30 20:51:13,862 - test1.py (line 28) <<module>> INFO:  9
+2015-10-30 20:51:13,862 - test1.py (line 29) <<module>> INFO:  10
+2015-10-30 20:51:13,862 - test1.py (line 33) <<module>> INFO:  yo
+2015-10-30 20:51:13,863 - test1.py (line 34) <<module>> WARNING:  yay

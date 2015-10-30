@@ -4,17 +4,20 @@ Created on Tue Jul  7 21:52:51 2015
 
 @author: thomasaref
 
-A collection of functions for using my dynamic view.
+A collection of functions for using taref's dynamic view. To maintain compatibility with Atom and object 
+derived objects, these are defined as standalone functions. Get functions usually return some none_value even
+if the value did not exist.
 """
 
 from inspect import getmembers
-from atom.api import Atom, Enum, Int, Float, Callable, Unicode, Bool
+from atom.api import Atom, List, Callable, Enum#, Int, Float, Callable, Unicode, Bool, List
 from functools import wraps
-from LOG_functions import log_info
 from numpy import shape, ndarray
 from enaml.application import deferred_call
 from threading import Thread
 from types import FunctionType
+
+from taref.core.log import log_info
 
 def get_member(obj, name):
     """returns a member if get_member exists and the attribute itself if it does not"""
@@ -29,9 +32,7 @@ def members(obj):
     return dict([mem for mem in getmembers(obj) if mem[0][0]!="_"])
 
 def get_metadata(obj, name):
-    """returns the metadata of a member if it exists and generates an appropriately indexed empty dictionary if it does not"""
-    if hasattr(obj, "get_metadata"):
-        return obj.get_metadata(name)
+    """returns the metadata of a member if it exists and generates an empty dictionary if it does not"""
     if isinstance(obj, Atom):
         member=obj.get_member(name)
         if member.metadata is None:
@@ -41,31 +42,21 @@ def get_metadata(obj, name):
 
 def set_tag(obj, name, **kwargs):
     """sets the tag of a member using Atom's built in tag functionality"""
-    if hasattr(obj, "set_tag"):
-        obj.set_tag(name, **kwargs)
-    elif isinstance(obj, Atom):
-        member=obj.get_member(name)
-        member.tag(**kwargs)
+    member=obj.get_member(name)
+    member.tag(**kwargs)
 
 def set_all_tags(obj, **kwargs):
     """set all parameters tags using keyword arguments"""
-    if hasattr(obj, "set_all_tags"):
-        obj.set_all_tags(**kwargs)
-    else:
-        for param in get_all_params(obj):
-            set_tag(obj, param, **kwargs)
+    for param in get_all_params(obj):
+        set_tag(obj, param, **kwargs)
 
 def get_tag(obj, name, key, none_value=None):
     """returns the tag key of a member name an returns none_value if it does not exist"""
-    if hasattr(obj, "get_tag"):
-        return obj.get_tag(name, key, none_value)
     metadata=get_metadata(obj, name)
     return metadata.get(key, none_value)
 
 def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
     """returns a list of names of parameters with a certain key_value"""
-    if hasattr(obj, "get_all_tags"):
-        return obj.get_all_tags(key, key_value, none_value, search_list)
     if search_list is None:
         search_list=members(obj)
     if key_value==None:
@@ -73,46 +64,12 @@ def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
     return [x for x in search_list if key_value==get_tag(obj, x, key, none_value)]
 
 def get_map(obj, name, value=None):
-    """gets the mapped value specified by the property mapping and uses none_map if it doesn't exist"""
+    """gets the mapped value specified by the property mapping and returns the attribute value if it doesn't exist"""
     if value is None:
         value=getattr(obj, name)
     if hasattr(obj, name+"_mapping"):
         return getattr(obj, name+"_mapping")[value]
     return value
-
-
-#def find_targets(dock_items, target_items=[]):
-#    names=(o.name for o in dock_items)
-#    targets=(o.name for o in target_items)
-#    overlap=list(set(targets).intersection(names))
-#    return overlap
-
-#def get_mapping(obj, name, none_map={}):
-#    mapping=get_tag(obj, name, 'mapping')
-#    if isinstance(mapping, dict):
-#        #if mapping is already defined, just return it
-#        return mapping
-#    if isinstance(mapping, list):
-#        return {}
-#    if isinstance(mapping, basestring):
-#        #if mapping is defined as the name of a property, update to a dictionary and return it
-#        mapping=getattr(obj, mapping)
-#        set_tag(obj, name, mapping=mapping, map_type="property")
-#        return mapping
-#    items=obj.get_member(name).items
-#    if sorted(items)==sorted(set(items).intersection(members(obj))):
-#        #if every name in items maps to a member, update to a list mapping to the members
-#        mapping=list(items)
-#        set_tag(obj, name, mapping=mapping, map_type="attribute")
-#        return {}
-#    #if nothing else, set mapping to none_map and return
-#    set_tag(obj, name, mapping=none_map, map_type="none_map")
-#    return none_map
-
-#def get_map_type(obj, name):
-#    """makes sure to get mapping to update map_type before returning it"""
-#    get_mapping(obj, name)
-#    return get_tag(obj, name, "map_type")
 
 def get_inv(obj, name, value):
     """returns the inverse mapped value (meant for an Enum)"""
@@ -122,8 +79,6 @@ def get_inv(obj, name, value):
 
 def get_type(obj, name):
     """returns type of member with given name, with possible override via tag typer"""
-    if hasattr(obj, "get_type"):
-        return obj.get_type(name)
     typer=type(get_member(obj, name))
     return get_tag(obj, name, "typer", typer)
 
@@ -147,15 +102,58 @@ def get_main_params(obj):
         return obj.main_params
     return get_all_main_params(obj)
 
-def passf(*args, **kwargs):
-    """do nothing function for when function does not exist"""
-    pass
-
 def get_attr(obj, name, none_value=None):
     """returns the attribute if the obj has it and the none_value if it does not"""
     if hasattr(obj, str(name)):
         return getattr(obj, name)
     return none_value
+
+
+class Backbone(Atom):
+    """Class combining primary functions for viewer operation"""
+    main_params=List().tag(private=True, desc="main parameters: allows control over what is displayed and in what order")
+
+    def get_metadata(self, name):
+        return get_metadata(self, name)
+
+    def set_tag(self, name, **kwargs):
+        set_tag(self, name, **kwargs)
+
+    def set_all_tags(self, **kwargs):
+        set_all_tags(self, **kwargs)
+
+    def get_tag(self, name, key, none_value=None):
+        return get_tag(self, name, key, none_value)
+
+    def get_all_tags(self, key, key_value=None, none_value=None, search_list=None):
+        return get_all_tags(self, key, key_value, none_value, search_list)
+
+    def get_type(self, name):
+        return get_type(self, name)
+
+    @property
+    def reserved_names(self):
+        return get_reserved_names(self)
+
+    @property
+    def all_params(self):
+        return get_all_params(self)
+        
+    @property
+    def all_main_params(self):
+        return get_all_main_params(self)
+        
+    def _default_main_params(self):
+        """defaults to all members in all_params that are not tagged as sub.
+        Can be overwritten to allow some minimal custom layout control,
+        e.g. order of presentation and which members are shown. Use get_all_main_params to get a list of
+        all members that could be in main_params"""
+        return self.all_main_params
+
+
+def passf(*args, **kwargs):
+    """do nothing function for when function does not exist"""
+    pass
 
 #class fakeboss(object):
 #    abort=False

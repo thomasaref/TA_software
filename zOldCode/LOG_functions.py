@@ -4,7 +4,8 @@ Created on Tue Mar 24 16:09:54 2015
 
 @author: thomasaref
 
-A collection of logging related functions. Configures logging to output and stream and starts it.
+A collection of logging related functions. Configures logging to be output
+points it at a stream and a memory handler and starts logging.
 """
 
 from logging import debug as log_debug, warning as log_warning, info as log_info
@@ -52,6 +53,7 @@ class StreamCatch(Atom):
             sys.stdout=sys.__stdout__ #old_stdout
             sys.stderr=sys.__stderr__
 
+#adds a stream catcher for display and a memory handler for saving
 log_stream=StreamCatch()
 logger=getLogger()
 display_handler=StreamHandler(stream=log_stream)
@@ -69,7 +71,7 @@ logger.addHandler(memory_handler)
 log_debug("Started logging")
 
 def make_log_file(log_path, mode='a'):
-    """Points memory handler at a particular file."""
+    """Points memory handler at a particular file to save the log."""
     file_handler = FileHandler(filename=log_path, mode=mode)
     file_handler.setLevel(LOGLEVEL)
     file_handler.setFormatter(Formatter(LOGFORMATTER))
