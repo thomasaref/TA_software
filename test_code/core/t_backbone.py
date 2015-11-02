@@ -5,14 +5,21 @@ Created on Fri Oct 30 20:56:45 2015
 @author: thomasaref
 """
 
-from taref.core.backbone import get_member, members, get_metadata, set_tag, set_all_tags, get_tag, get_all_tags
+from taref.core.backbone import (get_member, members, get_metadata, set_tag, set_all_tags, get_tag, get_all_tags, get_map, get_inv, get_type,
+        get_reserved_names, get_all_params, get_all_main_params, get_main_params, set_log, lowhigh_check)
 
-from atom.api import Atom, Int, Float
+
+from atom.api import Atom, Int, Float, Enum
 
 class Test(Atom):
-    a=Int().tag(u="p")
-    b=Float()
-    
+    a=Int().tag(u="p", typer=float)
+    b=Float().tag(u=3)
+    c=Enum("a", "b", "c")
+
+    @property
+    def c_mapping(self):
+        return dict(a=1, b=2, c=3)
+        
 class to(object):
     a=5
     b=4.3
@@ -28,7 +35,25 @@ print get_metadata(b, "b")
 set_all_tags(b, d=1)
 print get_metadata(b, "a")
 print get_metadata(b, "b")
+print get_tag(b, "a", "u", "five")
+print get_tag(b, "a", "a", "five")
+print get_all_tags(b, "u")
+print get_all_tags(b, "u", "p")
 
+print get_map(b, "c")
+print get_map(b, "c", "c")
+print get_inv(b, "c", 2)
+print get_type(b, "a")
+print get_type(b, "b")
+
+print get_reserved_names(b)
+print get_all_params(b)
+print get_all_main_params(b)
+print get_main_params(b)
+
+print 
+print lowhigh_check(b, "a", 3)
+print set_log(b, "a", 3)
 c=to()
 print get_member(c, "a")
 print members(c)

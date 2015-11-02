@@ -108,6 +108,61 @@ def get_attr(obj, name, none_value=None):
         return getattr(obj, name)
     return none_value
 
+def lowhigh_check(obj, name, value):
+    """can specify low and high tags to keep float or int within a range."""
+    if type(value) in (float, int):
+        metadata=get_metadata(obj, name)
+        if 'low' in metadata:
+            if value<metadata['low']:
+                return metadata['low']
+        if 'high' in metadata:
+            if value>metadata.get['high']:
+                return metadata['high']
+    return value
+
+def data_save(obj, name, value):
+    """data saving. does nothing if data_save is not defined"""
+    if hasattr(obj, "data_save"):
+        obj.datasave(name, value)
+
+def set_log(obj, name, value):
+   """called when parameter of given name is set to value i.e. instr.parameter=value. Customized messages for different types. Also saves data"""
+   if get_tag(obj, name, 'log', True):
+       label=get_tag(obj, name, 'label', name)
+       unit=get_tag(obj, name, 'unit', "")
+       obj_name=get_attr(obj, "name", "NO_NAME")
+       if get_type(obj, name)==Enum:
+           log_info("Set {instr} {label} to {value} ({map_val})".format(
+                 instr=obj_name, label=label, value=value,
+                 map_val=get_map(obj, name, value)))
+       #elif get_type(obj, name) in (Callable, type(dummyf)):
+       #    log_info("Set {instr} {label} to {length} list".format(
+       #        instr=obj_name, label=label, length=shape(getattr(obj, name))))
+       elif type(value)==list:
+           log_info("Set {instr} {label} to {length} list".format(
+               instr=obj_name, label=label, length=shape(getattr(obj, name))))
+       elif type(value)==ndarray:
+           log_info("Set {instr} {label} to {length} array".format(
+               instr=obj_name, label=label, length=shape(value)))
+       elif type(value)==dict:
+           log_info("Set {instr} {label}".format(instr=obj_name, label=label))
+       elif type(value)==basestring:
+           log_info("Set {instr} {label} to {length} string".format(instr=obj_name, label=label, length=len(value)))
+       elif type(value)==float:
+           unit_factor=get_tag(obj, name, 'unit_factor', 1.0)
+           log_info("Set {instr} {label} to {value} {unit}".format(
+                             instr=obj_name, label=label, value=value/unit_factor, unit=unit))
+       elif type(value)==int:
+           unit_factor=get_tag(obj, name, 'unit_factor', 1)
+           log_info("Set {instr} {label} to {value} {unit}".format(
+                             instr=obj_name, label=label, value=value/unit_factor, unit=unit))
+       else:
+           log_info("Set {instr} {label} to {value}".format(
+                             instr=obj_name, label=label, value=value, unit=unit))
+   data_save(obj, name, value)
+
+unit_dict=dict(u=1.0e-6, m=1.0e-3, c=1.0e-2,
+              G=1.0e9, M=1.0e6, k=1.0e3)
 
 class Backbone(Atom):
     """Class combining primary functions for viewer operation"""
@@ -150,23 +205,18 @@ class Backbone(Atom):
         all members that could be in main_params"""
         return self.all_main_params
 
+    def lowhigh_check(self, name, value):
+        return lowhigh_check(self, name, value)
+        
+    def set_log(self, name, value):
+        set_log(self, name, value)
 
-def passf(*args, **kwargs):
-    """do nothing function for when function does not exist"""
-    pass
+    def get_map(self, name, item=None):
+        return get_map(self, name=name, item=item)
 
-#class fakeboss(object):
-#    abort=False
-#    busy=False
-#    progress=0
-#    agents=[]
-#
-#    def __init__(self, agent=None):
-#        self.agents=[agent]
-#
-#def get_boss(obj):
-#    """link to boss of object and uses base boss if none exists. boss is assumed to have abort and busy attributes"""
-#    return get_attr(obj, "boss", fakeboss(agent=obj))
+    @property
+    def unit_dict(self):
+        return unit_dict
 
 def get_run_params(f, include_self=False):
     """returns names of parameters a function will call"""
@@ -206,15 +256,12 @@ def run_func(obj, name, **kwargs):
     if get_type(obj, name) in (Callable, FunctionType):
         kwargs["self"]=obj
     for item in run_params:
-        #if item=="self":
-
-        #else:
-            if item in kwargs:
-                setattr(obj, item, kwargs[item])
-            else:
-                value=getattr(obj, item)
-                value=set_value_map(obj, item, value)
-                kwargs[item]=value
+        if item in kwargs:
+            setattr(obj, item, kwargs[item])
+        else:
+            value=getattr(obj, item)
+            value=set_value_map(obj, item, value)
+            kwargs[item]=value
     do_it_if_needed(obj.chief, f, **kwargs)
 
 def updater(fn):
@@ -250,21 +297,6 @@ def log_func(fn):
 #    arglist.extend([getattr(obj, an) for an in run_params])
 #    return arglist
 
-def get_name(obj, default_name="NO_NAME"):
-    return get_attr(obj, "name", default_name)
-
-def lowhigh_check(obj, name, value):
-    """can specify low and high tags to keep float or int within a range."""
-    if type(value) in (float, int):
-        metadata=get_metadata(obj, name)
-        if 'low' in metadata:
-            if value<metadata['low']:
-                return metadata['low']
-        if 'high' in metadata:
-            if value>metadata.get['high']:
-                return metadata['high']
-    return value
-
 def set_value_map(obj, name, value):
     """checks floats and ints for low/high limits and automaps an Enum when setting. Not working for List?"""
     value=lowhigh_check(obj, name, value)
@@ -272,45 +304,6 @@ def set_value_map(obj, name, value):
         return get_map(obj, name, value)
     return value
 
-def data_save(obj, name, value):
-    """data saving. does nothing if data_save is not defined"""
-    get_attr(obj, "data_save", passf)(name, value)
-
-def set_log(obj, name, value):
-   """called when parameter of given name is set to value i.e. instr.parameter=value. Customized messages for different types. Also saves data"""
-   if get_tag(obj, name, 'log', True):
-       label=get_tag(obj, name, 'label', name)
-       unit=get_tag(obj, name, 'unit', "")
-       obj_name=get_name(obj)
-       if get_type(obj, name)==Enum:
-           log_info("Set {instr} {label} to {value} ({map_val})".format(
-                 instr=obj_name, label=label, value=value,
-                 map_val=get_map(obj, name, value)))
-       #elif get_type(obj, name) in (Callable, type(dummyf)):
-       #    log_info("Set {instr} {label} to {length} list".format(
-       #        instr=obj_name, label=label, length=shape(getattr(obj, name))))
-       elif type(value)==list:
-           log_info("Set {instr} {label} to {length} list".format(
-               instr=obj_name, label=label, length=shape(getattr(obj, name))))
-       elif type(value)==ndarray:
-           log_info("Set {instr} {label} to {length} array".format(
-               instr=obj_name, label=label, length=shape(value)))
-       elif type(value)==dict:
-           log_info("Set {instr} {label}".format(instr=obj_name, label=label))
-       elif type(value)==basestring:
-           log_info("Set {instr} {label} to {length} string".format(instr=obj_name, label=label, length=len(value)))
-       elif type(value)==float:
-           unit_factor=get_tag(obj, name, 'unit_factor', 1.0)
-           log_info("Set {instr} {label} to {value} {unit}".format(
-                             instr=obj_name, label=label, value=value/unit_factor, unit=unit))
-       elif type(value)==int:
-           unit_factor=get_tag(obj, name, 'unit_factor', 1)
-           log_info("Set {instr} {label} to {value} {unit}".format(
-                             instr=obj_name, label=label, value=value/unit_factor, unit=unit))
-       else:
-           log_info("Set {instr} {label} to {value}".format(
-                             instr=obj_name, label=label, value=value, unit=unit))
-   data_save(obj, name, value)
 
 #
 #    def copy(self):
@@ -322,8 +315,6 @@ def set_log(obj, name, value):
 #        return tempbase
 #
 
-unit_dict=dict(u=1.0e-6, m=1.0e-3, c=1.0e-2,
-              G=1.0e9, M=1.0e6, k=1.0e3)
 
 
 

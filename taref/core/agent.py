@@ -4,11 +4,9 @@ Created on Sat Jul  4 13:03:26 2015
 
 @author: thomasaref
 """
-from atom.api import Atom, Unicode, Bool, Enum, List, Float, Int, ContainerList, Callable, Range, FloatRange
-from a_Backbone import (get_all_params, get_type, get_reserved_names, get_all_main_params, get_map,
-                        lowhigh_check, set_log, get_tag, set_tag, unit_dict, log_func)
+from atom.api import Unicode, Enum, Float, Int, ContainerList, Callable, Range, FloatRange
 from a_Chief import chief
-from backbone import Backbone
+from backbone import Backbone, log_func
 
 class SubAgent(Backbone):
     name=Unicode().tag(private=True, desc="name of agent. A default will be provided if none is given")
@@ -20,9 +18,6 @@ class SubAgent(Backbone):
     def extra_setup(self, param, typer):
         """do nothing function to allow custom setup extension in subclasses"""
         pass
-
-    def get_map(self, name, item=None):
-        return get_map(self, name=name, item=item)
 
     @property
     def base_name(self):
@@ -55,8 +50,8 @@ class SubAgent(Backbone):
                 """autosets units for Ints and Floats"""
                 if self.get_tag(param, "unit", False) and (self.get_tag(param, "unit_factor") is None):
                     unit=self.get_tag(param, "unit", "")[0]
-                    if unit in unit_dict:
-                        unit_factor=self.get_tag(param, "unit_factor", unit_dict[unit])
+                    if unit in self.unit_dict:
+                        unit_factor=self.get_tag(param, "unit_factor", self.unit_dict[unit])
                         self.set_tag(param, unit_factor=unit_factor)
             elif typer==Callable:
                 """autosets Callables to be logged"""
@@ -85,12 +80,12 @@ class Agent(Spy):
     def __setattr__(self, name, value):
         """uses __setattr__ to log changes except for ContainerList"""
         log_it=False
-        if name in get_all_params(self):
+        if name in self.all_params:
             log_it=True
-            value=lowhigh_check(self, name, value)
+            value=self.lowhigh_check(name, value)
         super(Agent, self).__setattr__(name, value)
         if log_it:
-            set_log(self, name, value)
+            self.set_log(name, value)
 
     def extra_setup(self, param, typer):
         """adds observer for ContainerLists to catch changes not covered by setattr"""
