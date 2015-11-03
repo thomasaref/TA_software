@@ -4,11 +4,12 @@ Created on Sat Jul  4 13:03:26 2015
 
 @author: thomasaref
 """
-from atom.api import Unicode, Enum, Float, Int, ContainerList, Callable, Range, FloatRange
-from a_Chief import chief
-from backbone import Backbone, log_func
+from atom.api import Unicode, Enum, Float, Int, ContainerList, Callable
+from taref.core.chief import chief
+from taref.core.backbone import Backbone, log_func
 
 class SubAgent(Backbone):
+    """Adds chief functionality to Backbone"""
     name=Unicode().tag(private=True, desc="name of agent. A default will be provided if none is given")
     desc=Unicode().tag(private=True, desc="optional description of agent")
 
@@ -16,12 +17,18 @@ class SubAgent(Backbone):
         self.chief.show()
 
     def extra_setup(self, param, typer):
-        """do nothing function to allow custom setup extension in subclasses"""
-        pass
+        """Can be overwritten to allow custom setup extension in subclasses"""
+        self.es_log_callables(param, typer)
+
+    def es_log_callables(self, param, typer):
+        """extra setup function that autosets Callables to be logged"""
+        if typer==Callable:
+            func=getattr(self, param)
+            setattr(self, param, log_func(func))
 
     @property
     def base_name(self):
-        return "subagent"#, basenum=len(self.chief.agents))
+        return "subagent"
 
     @property
     def chief(self):
@@ -32,7 +39,7 @@ class SubAgent(Backbone):
     def abort(self):
         """shortcut to chief's abort control"""
         return self.chief.abort
-
+        
     def __init__(self, **kwargs):
         """extends __init__ to set boss, add agent to boss's agent list and give unique default name.
         does some extra setup for particular types"""
@@ -41,23 +48,6 @@ class SubAgent(Backbone):
         if "name" not in kwargs:
             self.name="{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.chief.agents))
         self.chief.agents.append(self)
-        for param in self.all_params:
-            typer=self.get_type(param)
-            if typer in [Range, FloatRange]:
-                """autosets low/high tags for Range and FloatRange"""
-                self.set_tag(param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
-            if typer in [Int, Float, Range, FloatRange]:
-                """autosets units for Ints and Floats"""
-                if self.get_tag(param, "unit", False) and (self.get_tag(param, "unit_factor") is None):
-                    unit=self.get_tag(param, "unit", "")[0]
-                    if unit in self.unit_dict:
-                        unit_factor=self.get_tag(param, "unit_factor", self.unit_dict[unit])
-                        self.set_tag(param, unit_factor=unit_factor)
-            elif typer==Callable:
-                """autosets Callables to be logged"""
-                func=getattr(self, param)
-                setattr(self, param, log_func(func))
-            self.extra_setup(param, typer)
 
 class Spy(SubAgent):
     """Spy uses observers to log all changes"""

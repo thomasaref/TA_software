@@ -6,7 +6,7 @@ Created on Tue Mar 24 16:21:06 2015
 """
 
 from Atom_Filer import Filer
-from LOG_functions import log_warning, log_info
+from taref.core.log import log_warning, log_info
 from atom.api import Dict, Event, Typed
 from enaml import imports
 

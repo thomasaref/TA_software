@@ -5,7 +5,7 @@ Created on Thu Mar  5 20:50:49 2015
 @author: thomasaref
 """
 
-from LOG_functions import  log_info, log_warning, make_log_file, remove_log_file, log_debug
+from taref.core.log import  log_info, log_warning, make_log_file, remove_log_file, log_debug
 log_info(1)
 from Atom_Filer import Filer
 from atom.api import Bool, Dict, Unicode, observe, List, Event, Enum, Typed, Int
@@ -186,7 +186,7 @@ class Save_NP(Save_TXT):
     def do_data_save(self, data, name, group_name, append):
         save_np_data(self.dir_path+self.divider, data, name)
 
-from DXF_functions import save_dxf
+from taref.ebl.DXF_functions import save_dxf
 
 class Save_DXF(Save_File):
     def _default_file_type(self):

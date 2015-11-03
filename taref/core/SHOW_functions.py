@@ -13,7 +13,7 @@ def show(*agents):
     also provides a show control of the objects"""
     app = QtApplication()
     with imports():
-        from e_Chief import agentView, chiefView, basicView#, LogWindow
+        from chief_e import agentView, chiefView, basicView#, LogWindow
     loc_chief=None
     for n, a in enumerate(agents):
         if hasattr(a, "view_window"):

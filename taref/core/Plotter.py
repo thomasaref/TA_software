@@ -5,7 +5,7 @@ Created on Thu Sep 11 09:53:23 2014
 @author: thomasaref
 """
 
-from LOG_functions import log_debug
+from taref.core.log import log_debug
 #from chaco.plot import Plot
 #from chaco.array_plot_data import ArrayPlotData
 #from chaco.default_colormaps import jet

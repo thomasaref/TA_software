@@ -21,7 +21,7 @@ template UserInstrView(instr_view: "Save_File"):
     SaveWrap:
         filer:=instr 
 
-from EBL_enaml import EBContWrap
+from taref.ebl.EBL_enaml import EBContWrap
 template UserInstrView(instr_view: "Polyer"):
     """Displays a polyer polygon list interface. very ineffecient. too many notifications"""
     EBContWrap:

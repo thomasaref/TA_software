@@ -10,7 +10,7 @@ if the value did not exist.
 """
 
 from inspect import getmembers
-from atom.api import Atom, List, Callable, Enum#, Int, Float, Callable, Unicode, Bool, List
+from atom.api import Atom, List, Callable, Enum, Int, Float, Range, FloatRange #Callable, Unicode, Bool, List
 from functools import wraps
 from numpy import shape, ndarray
 from enaml.application import deferred_call
@@ -59,7 +59,7 @@ def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
     """returns a list of names of parameters with a certain key_value"""
     if search_list is None:
         search_list=members(obj)
-    if key_value==None:
+    if key_value is None:
         return [x for x in search_list if none_value!=get_tag(obj, x, key, none_value)]
     return [x for x in search_list if key_value==get_tag(obj, x, key, none_value)]
 
@@ -201,7 +201,7 @@ class Backbone(Atom):
     def _default_main_params(self):
         """defaults to all members in all_params that are not tagged as sub.
         Can be overwritten to allow some minimal custom layout control,
-        e.g. order of presentation and which members are shown. Use get_all_main_params to get a list of
+        e.g. order of presentation and which members are shown. Use all_main_params to get a list of
         all members that could be in main_params"""
         return self.all_main_params
 
@@ -217,6 +217,27 @@ class Backbone(Atom):
     @property
     def unit_dict(self):
         return unit_dict
+
+    def extra_setup(self, param, typer):
+        """do nothing function for __init__ that can be overwritten to allow custom setup extension in child classes"""
+        pass
+
+    def __init__(self, **kwargs):
+        """extends __init__ to autoset low and high tags for Range and FloatRange, autoset units for Ints and Floats and allow extra setup"""
+        super(Backbone, self).__init__(**kwargs)
+        for param in self.all_params:
+            typer=self.get_type(param)
+            if typer in [Range, FloatRange]:
+                """autosets low/high tags for Range and FloatRange"""
+                self.set_tag(param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
+            if typer in [Int, Float, Range, FloatRange]:
+                """autosets units for Ints and Floats"""
+                if self.get_tag(param, "unit", False) and (self.get_tag(param, "unit_factor") is None):
+                    unit=self.get_tag(param, "unit", "")[0]
+                    if unit in self.unit_dict:
+                        unit_factor=self.get_tag(param, "unit_factor", self.unit_dict[unit])
+                        self.set_tag(param, unit_factor=unit_factor)
+            self.extra_setup(param, typer)
 
 def get_run_params(f, include_self=False):
     """returns names of parameters a function will call"""

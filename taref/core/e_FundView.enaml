@@ -8,7 +8,7 @@ Defines the Var containers for different types. All have attributes vmodel, vnam
 """
 from enaml.widgets.api import  CheckBox, Label, SpinBox, ScrollArea, MultilineField, Field, PushButton, ObjectCombo, Slider, ScrollArea
 from enaml.core.api import Conditional
-from a_Backbone import get_tag
+from taref.core.backbone import get_tag
 from e_FundCore import aContainer, aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField
 
  

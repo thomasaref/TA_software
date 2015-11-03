@@ -31,7 +31,7 @@ from enaml.widgets.api import (
 
 from enaml_Plotter import PlotWrap, PlotItem, show_item as show_plot, PlotArea #PlotAreaContainer as PlotContainer
 from enaml_Filer import SaveWrap, ReadWrap, ReadSaveWrap
-from TA_Fundamentals import cap_case
+from taref.core.TA_Fundamentals import cap_case
 from atom.api import Atom, Str, Instance, Event
 
 
