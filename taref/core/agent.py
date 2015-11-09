@@ -65,6 +65,11 @@ class Spy(SubAgent):
         """adds log_changes observer to all params"""
         self.observe(param, self.log_changes)
 
+    @property
+    def base_name(self):
+        return "spy"
+
+
 class Agent(Spy):
     """Agents use setattr rather than observers to log all changes"""
     def __setattr__(self, name, value):
@@ -82,6 +87,10 @@ class Agent(Spy):
         if typer==ContainerList:
             self.observe(param, self.log_changes)
 
+
+    @property
+    def base_name(self):
+        return "agent"
 
 
 if __name__=="__main__":

@@ -19,6 +19,10 @@ from types import FunctionType
 
 from taref.core.log import log_info
 
+def cap_case(name):
+    """Auto captializes name"""
+    return ' '.join(s.capitalize() for s in name.split('-'))
+
 def get_member(obj, name):
     """returns a member if get_member exists and the attribute itself if it does not"""
     if hasattr(obj, "get_member"):
@@ -116,7 +120,7 @@ def lowhigh_check(obj, name, value):
             if value<metadata['low']:
                 return metadata['low']
         if 'high' in metadata:
-            if value>metadata.get['high']:
+            if value>metadata['high']:
                 return metadata['high']
     return value
 
@@ -161,8 +165,9 @@ def set_log(obj, name, value):
                              instr=obj_name, label=label, value=value, unit=unit))
    data_save(obj, name, value)
 
-unit_dict=dict(u=1.0e-6, m=1.0e-3, c=1.0e-2,
-              G=1.0e9, M=1.0e6, k=1.0e3)
+unit_dict={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
+              "G":1.0e9, "M":1.0e6, "k":1.0e3,
+              "%":1.0/100.0}
 
 class Backbone(Atom):
     """Class combining primary functions for viewer operation"""
@@ -211,8 +216,8 @@ class Backbone(Atom):
     def set_log(self, name, value):
         set_log(self, name, value)
 
-    def get_map(self, name, item=None):
-        return get_map(self, name=name, item=item)
+    def get_map(self, name, value=None):
+        return get_map(self, name=name, value=value)
 
     @property
     def unit_dict(self):

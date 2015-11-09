@@ -22,7 +22,7 @@ def test_SubAgent():
     log_info("""SubAgents auto log Callables, have auto naming and a chief and abort access, show option""")
     class Test(SubAgent):
         a=Int()
-        b=Float()
+        b=Float().tag(high=4)
         
         def afunc(self):
             print "ran afunc!"
@@ -45,6 +45,8 @@ def test_SubAgent():
     print t.base_name
     print t.name
     print t.desc
+    t.b=5
+    print t.b
     t.show()
 
 test_SubAgent()
@@ -54,7 +56,7 @@ def test_Spy():
     log_info("""Spy's use observers to log so only changes trigger logging""")
     class Test(Spy):
         a=Int()
-        b=Float()
+        b=Float().tag(high=4)
         c=ContainerList()
     t=Test()
     t.a=1
@@ -62,6 +64,9 @@ def test_Spy():
     t.b=1.0
     t.b=1
     t.c.append(2)
+    t.b=5
+    print t.b
+
 test_Spy()
 log_debug(1)
 

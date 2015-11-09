@@ -38,6 +38,7 @@ epsinf=46.0*eps0 #Literature value for LiNb YZ
 
 Tc=1.315 #critical temperature of aluminum
 Delta=200.0e-6*e
+
 Rn=(7.62e3+7.96e3)/2.0
 
 #Calculated values
@@ -117,7 +118,7 @@ def print_fundamentals():
     print "Calculated values:"
     print "check gap of aluminum, Delta={:.2e}".format(1.764*k*Tc/e)
     print "Critical current, Ic={}".format(Ic) 
-    print "Ejmax={0} K= {1} Hz".format(Ejmax/k, Ejmax/h)
+    print "Ejmax={0} K= {1} Hz".format(Ejmax/k, Ejmax/h/1.0e9)
     print "Qubit capacitance = {} F".format(Cq)
     print "Ec = {0} K = {1} GHz".format(Ec/k, Ec/h/1.0e9)
     print "Ejmax/Ec={}".format(Ejmax/Ec)

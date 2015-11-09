@@ -66,12 +66,13 @@ colors = [colorConverter.to_rgba(c) for c in ('r','g','b','c','y','m','k')]
 #ax.yaxis.set_major_locator(my_locator)
 import  matplotlib.pyplot as plt # import plot
 from matplotlib.axes import Axes
-line2D= plt.plot([0,12])
-#print line2D[0].get_data()
-fig, ax2 = plt.subplots(1,1)
-#print isinstance(ax2, Axes)
-#print dir(fig), dir(ax2)
-# The same data as above, but fill the curves.
+if 0:
+    line2D= plt.plot([0,12])
+    #print line2D[0].get_data()
+    fig, ax2 = plt.subplots(1,1)
+    #print isinstance(ax2, Axes)
+    #print dir(fig), dir(ax2)
+    # The same data as above, but fill the curves.
 from matplotlib import collections, transforms
 from matplotlib.collections import PolyCollection, LineCollection
 
@@ -86,30 +87,32 @@ col.set_verts([((1,1), (1,2), (3,1))])
 
 #trans = transforms.Affine2D().scale(fig.dpi/72.0)
 #col.set_transform(trans)  # the points to pixels transform
-ax2.add_collection(col, autolim=True)
-#col.set_color(colors)
-
-
-ax2.autoscale_view()
-ax2.set_title('PolyCollection using offsets')
-
-#plt.show()
+if 0:
+    ax2.add_collection(col, autolim=True)
+    #col.set_color(colors)
+    
+    
+    ax2.autoscale_view()
+    ax2.set_title('PolyCollection using offsets')
+    
+    #plt.show()
 
 from matplotlib.figure import Figure
-fig1 = Figure()
-ax1 = fig1.add_subplot(111)
-#print type(ax1)
-ax1.plot([1, 2, 3])
-#ax1.axhline(linewidth=4, color="g")
-
-fig2 = Figure()
-ax2 = fig2.add_subplot(111)
-ax2.plot([5, 2, 8, 1])
-
-figures = {
-    'one': fig1,
-    'two': fig2,
-}
+if 0:
+    fig1 = Figure()
+    ax1 = fig1.add_subplot(111)
+    #print type(ax1)
+    ax1.plot([1, 2, 3])
+    #ax1.axhline(linewidth=4, color="g")
+    
+    fig2 = Figure()
+    ax2 = fig2.add_subplot(111)
+    ax2.plot([5, 2, 8, 1])
+    
+    figures = {
+        'one': fig1,
+        'two': fig2,
+    }
 
 def dB(x):
     return 20*log10(absolute(x))
