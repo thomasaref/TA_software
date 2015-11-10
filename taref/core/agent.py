@@ -6,7 +6,7 @@ Created on Sat Jul  4 13:03:26 2015
 """
 from atom.api import Unicode, Enum, Float, Int, ContainerList, Callable
 from taref.core.chief import chief
-from taref.core.backbone import Backbone, log_func
+from taref.core.backbone import Backbone, log_func, updater
 
 class SubAgent(Backbone):
     """Adds chief functionality to Backbone"""
@@ -19,6 +19,19 @@ class SubAgent(Backbone):
     def extra_setup(self, param, typer):
         """Can be overwritten to allow custom setup extension in subclasses"""
         self.es_log_callables(param, typer)
+        if hasattr(self, param+"_func"):
+            f=getattr(self, param+"_func").im_func
+            argcount=f.func_code.co_argcount
+            argnames=list(f.func_code.co_varnames[0:argcount])
+            if "self" in argnames:
+                argnames.remove("self")
+            #@updater
+            def _updat_(change):
+                kwargs={}
+                for arg in argnames:
+                    kwargs[arg]=getattr(self, arg)
+                setattr(self, param, getattr(self, param+"_func")(**kwargs))
+            self.observe(argnames, _updat_)
 
     def es_log_callables(self, param, typer):
         """extra setup function that autosets Callables to be logged"""
@@ -64,6 +77,7 @@ class Spy(SubAgent):
     def extra_setup(self, param, typer):
         """adds log_changes observer to all params"""
         self.observe(param, self.log_changes)
+        self.es_log_callables(param, typer)
 
     @property
     def base_name(self):

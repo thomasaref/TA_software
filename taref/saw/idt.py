@@ -9,7 +9,7 @@ from taref.core.backbone import updater
 from taref.physics.fundamentals import (eps0, sqrt, pi, Delta, hbar, e, h,
                                         sin, sinc_sq, linspace, zeros)
 from taref.core.log import log_debug
-from atom.api import Enum, Int, Float, observe, Bool, Property, Str, List
+from atom.api import Enum, Int, Float, observe, Bool, Property, Str, List, Range
 
 class IDT(SubAgent):
     ft=Enum("double", "single").tag(desc="'double' for double fingered, 'single' for single fingered.")
@@ -146,6 +146,26 @@ class IDT(SubAgent):
     def base_name(self):
         return "idt"
 
+def tomobserve(*pairs):
+    obshandle=observe(*pairs)
+    return TomHandler(obshandle, pairs)
+
+from atom.atom import ObserveHandler
+
+class TomHandler(ObserveHandler):
+    def __init__(self, obshandle, pairs):
+        self.inputpairs=pairs
+        self.pairs = obshandle.pairs
+        self.func = obshandle.func
+        self.funcname = obshandle.funcname
+        
+    def __call__(self, func):
+        """ Called to decorate the function."""
+        func=updater(func)
+        func.pairs=self.inputpairs
+        return super(TomHandler, self).__call__(func)
+
+from numpy import ndarray
 class QDT(IDT):
     Ic=Float().tag(label="Critical current", 
                    desc="critical current of SQUID", unit="nA")
@@ -157,58 +177,86 @@ class QDT(IDT):
     G_f0=Float().tag(desc="""Coupling at IDT center frequency""", unit="GHz")
     f=Float(4.5e9).tag(desc="""Operating frequency of qubit""", unit="GHz")
     G_f=Float().tag(desc="""Coupling adjusted by sinc^2""", unit="GHz")                    
-    
-    @observe('Np', "K2", "f0")
-    @updater
-    def _update_G_f0(self, change):
-        self.G_f0=0.45*self.Np*self.K2*self.f0
+ 
+#    def _validate_f(self, old, new):
+#        if isinstance(new, ndarray):
+#            self.set_tag("f", sweep=new)
+#            test=new[0]
+#        else:
+#            test=new
+#        assert isinstance(test, float)
+#        return test
+        
+    def G_f0_func(self, Np, K2, f0):
+        return 0.45*Np*K2*f0
 
-    @observe("Rn")
-    @updater
-    def _update_Ic(self, change):
+    def Ic_func(self, Rn):
         """Ic*Rn=pi*Delta/(2.0*e) #Ambegaokar Baratoff formula"""
-        self.Ic=pi*Delta/(2.0*e)/self.Rn
+        return pi*Delta/(2.0*e)/Rn
 
-
-    @observe("Ic")
-    @updater
-    def _update_Ejmax(self, change):
+    def Ejmax_func(self, Ic):
         """Josephson energy"""
-        self.Ejmax=hbar*self.Ic/(2.0*e)
+        return hbar*Ic/(2.0*e)
 
-    @observe("Ct")
-    @updater
-    def _update_Ec(self, change):
+    def Ec_func(self, Ct):
         """Charging energy"""
-        self.Ec=e**2/(2.0*self.Ct)
+        print e**2/(2.0*Ct)
+        return e**2/(2.0*Ct)
 
-    def get_names(self, *args, **kwargs):
-        templist=[]        
-        for name in args:
-            item=kwargs.get(name, getattr(self, name))
-            templist.append(item)
-        return templist
+#    def get_names(self, *args, **kwargs):
+#        templist=[]        
+#        for name in args:
+#            item=kwargs.get(name, getattr(self, name))
+#            templist.append(item)
+#        return templist
 
-    def G_f_func(self, **kwargs):
-        G_f0, Np, f, f0=self.get_names("G_f0", "Np", "f", "f0", **kwargs)
+    def G_f_func(self, G_f0, Np, f, f0):
         return G_f0*sinc_sq(Np*pi*(f-f0)/f0)
+    
+    #def test_func(self, G_f0, N_p, f, f0):
+    #    pass
+        
+    #@tomobserve("G_f0", "Np", "f", "f0")
+    #def _update_G_f(self, change):
+    #    self.G_f=self.G_f_func(G_f0=self.G_f0, Np=self.Np, f=self.f, f0=self.f0)
 
-    @observe("G_f0", "Np", "f", "f0")
-    @updater
-    def _update_G_f(self, change):
-        print change
-        self.G_f=self.G_f_func()
-        #    self.G_f=G0*sinc_sq(Np*pi*(f-f0)/f0)
-        #else:
-        #    print "kwargs"
-            
+    def plotty(self, zname, **kwargs):
+         if hasattr(self, zname+"_func"):
+             func=getattr(self, zname+"_func")
+             f=func.im_func
+             argcount=f.func_code.co_argcount
+             argnames=list(f.func_code.co_varnames[0:argcount])
+             if "self" in argnames:
+                 argnames.remove("self")
+            def _updat_(change):
+                kwargs={}
+                for arg in argnames:
+                    kwargs[arg]=getattr(self, arg)
+                setattr(self, param, getattr(self, param+"_func")(**kwargs))
+             zdata=func(**kwargs)
+             xdata=kwargs.values()[0]
+             plot(xdata, zdata)
+
+         
 if __name__=="__main__":
     from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
 
     #a=IDT()
-    a=QDT(Np=9, f0=4.500001e9)
-    a.Rn=(7.62e3+7.96e3)/2.0
-    f=linspace(4.0e9, 11.0e9, 2001)
+    a=QDT()
+    Np=9
+    f0=4.500001e9
+    
+    
+    #a.f=linspace(4.0e9, 11.0e9, 2001)
+    #a.observe(("G_f0", "Np", "f", "f0"), a._update_G_f)
+    #print dir(a.test_func.im_func)
+    
+    #print a.f
+    print a.get_tag("f", "sweep")
+    #a.plotty("G_f", f=linspace(4.0e9, 11.0e9, 2001))
+    #show()
+    #a.Rn=(7.62e3+7.96e3)/2.0
+    #f=
 #    G=zeros(frq.shape)
 #    from numpy import shape
 #    print frq.shape
@@ -217,8 +265,10 @@ if __name__=="__main__":
 #    for n, f in enumerate(frq):
 #        a.f=f
 #        G[n]=a.G_f
-    plot(f/1.0e9, a.G_f_func(f=f))
-    show()
+    #print a._update_Ic.pairs
+    f=a.get_tag("f", "sweep")
+    #plot(f/1.0e9, a.G_f_func(f=f))
+    #show()
 
     a.show()
 
