@@ -243,6 +243,8 @@ class Backbone(Atom):
                         unit_factor=self.get_tag(param, "unit_factor", self.unit_dict[unit])
                         self.set_tag(param, unit_factor=unit_factor)
             self.extra_setup(param, typer)
+        #for param in self.all_params:
+        #    print param, getattr(self, param)
 
 def get_run_params(f, include_self=False):
     """returns names of parameters a function will call"""
@@ -341,7 +343,24 @@ def set_value_map(obj, name, value):
 #        return tempbase
 #
 
-
+#def tomobserve(*pairs):
+#    obshandle=observe(*pairs)
+#    return TomHandler(obshandle, pairs)
+#
+#from atom.atom import ObserveHandler
+#
+#class TomHandler(ObserveHandler):
+#    def __init__(self, obshandle, pairs):
+#        self.inputpairs=pairs
+#        self.pairs = obshandle.pairs
+#        self.func = obshandle.func
+#        self.funcname = obshandle.funcname
+#        
+#    def __call__(self, func):
+#        """ Called to decorate the function."""
+#        func=updater(func)
+#        func.pairs=self.inputpairs
+#        return super(TomHandler, self).__call__(func)
 
 
 if __name__=="__main__":

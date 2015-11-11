@@ -4,14 +4,14 @@ Created on Thu Feb 26 11:08:19 2015
 
 @author: thomasaref
 """
-from taref.core.agent import SubAgent
+from taref.core.agent import SubAgent, Spy
 from taref.core.backbone import updater
 from taref.physics.fundamentals import (eps0, sqrt, pi, Delta, hbar, e, h,
                                         sin, sinc_sq, linspace, zeros)
 from taref.core.log import log_debug
 from atom.api import Enum, Int, Float, observe, Bool, Property, Str, List, Range
 
-class IDT(SubAgent):
+class IDT(Spy):
     ft=Enum("double", "single").tag(desc="'double' for double fingered, 'single' for single fingered.")
 
     @property
@@ -27,7 +27,7 @@ class IDT(SubAgent):
     epsinf=Float(46*eps0)
     Dvv=Float(2.4e-2).tag(desc="coupling strength: K^2/2",
                       unit="%")
-    K2=Float(4.8e-2).tag(desc="coupling strength: K^2/2",
+    K2=Float(4.8e-2).tag(desc="coupling strength: K^2",
                       unit="%")
 
     v=Float(3488.0).tag(desc="speed of SAW", unit=" m/s")
@@ -46,7 +46,7 @@ class IDT(SubAgent):
                 desc="Center wavelength",
                 reference="")
 
-    Ct=Float().tag(label="Ct",
+    Ct=Float(1.0).tag(label="Ct",
                    unit="F",
                    desc="Total capacitance of IDT",
                    reference="Morgan page 16/145")
@@ -56,64 +56,52 @@ class IDT(SubAgent):
         return self.a+self.g
     p.tag(desc="periodicity. this should be twice width for 50% metallization")
 
-    @observe('Dvv')
-    @updater
-    def _update_K2(self, change):
-        self.K2=self.Dvv*2.0
+    def K2_func(self, Dvv):
+        return Dvv*2.0
 
-    @observe('K2')
-    @updater
-    def _update_Dvv(self, change):
-        self.Dvv=self.K2/2.0
+    def Dvv_func(self, K2):
+        return K2/2.0
         
-    @observe('a', 'g')
-    @updater
-    def _update_eta(self, change):
-        if not self.lock_eta:
-            self.eta=self.a/(self.a+self.g)
+#    @observe('a', 'g')
+#    @updater
+#    def _update_eta(self, change):
+#        if not self.lock_eta:
+#            self.eta=self.a/(self.a+self.g)
+#
+#    @observe('g', 'eta')
+#    @updater
+#    def _update_a(self, change):
+#        """eta=a/(a+g)
+#           => a=(a+g)*eta
+#           => (1-eta)*a=g*eta
+#           => a=g*eta/(1-eta)"""
+#        self.a=self.g*self.eta/(1-self.eta)
+#
+        
+    def Ct_func(self, ft, W, epsinf, Np):
+        m={"double" : 1.414213562373, "single" : 1.0}[ft]
+        return m*W*epsinf*Np
 
-    @observe('g', 'eta')
-    @updater
-    def _update_a(self, change):
-        """eta=a/(a+g)
-           => a=(a+g)*eta
-           => (1-eta)*a=g*eta
-           => a=g*eta/(1-eta)"""
-        self.a=self.g*self.eta/(1-self.eta)
+    def lbda0_func(self, v, f0):
+        #print "lbda0", v, f0
+        return v/f0
 
-    @observe('a', 'eta')
-    @updater
-    def _update_g(self, change):
+    def lbda0_func2(self, a, g, ft):
+        return (a+g)*2*self.mult
+
+
+    def g_func(self, a, eta):
         """eta=a/(a+g)
            => a=(a+g)*eta
            => (1-eta)*a=g*eta
            => g=a*(1/eta-1)"""
-        self.g= self.a*(1.0/self.eta-1.0)
+        return a*(1.0/eta-1.0)
 
-    @observe('ft', 'W', 'epsinf', 'Np')
-    @updater
-    def _update_Ct(self, change):
-        self.Ct=sqrt(self.mult)*self.W*self.epsinf*self.Np
+    def a_func(self, eta, lbda0, ft):
+        return eta*lbda0/(2.0*self.mult)
 
-    @observe('f0', 'v')
-    @updater
-    def _update_lbda0(self, change):
-        self.lbda0=self.v/self.f0
-        
-    @observe('a', 'g')
-    @updater
-    def _update_lbda02(self, change):
-        self.lbda0=(self.a+self.g)*2*self.mult
-
-    @observe('ft', 'eta', 'lbda0')
-    @updater
-    def _update_a2(self, change):
-        self.a=self.eta*self.lbda0/(2*self.mult)
-
-    @observe('v', 'lbda0')
-    @updater
-    def _update_f0(self, change):
-        self.f0=self.v/self.lbda0
+    def f0_func(self, v, lbda0):
+        return v/lbda0
 
     def _observe_material(self, change):
         if self.material=="STquartz":
@@ -146,30 +134,10 @@ class IDT(SubAgent):
     def base_name(self):
         return "idt"
 
-def tomobserve(*pairs):
-    obshandle=observe(*pairs)
-    return TomHandler(obshandle, pairs)
-
-from atom.atom import ObserveHandler
-
-class TomHandler(ObserveHandler):
-    def __init__(self, obshandle, pairs):
-        self.inputpairs=pairs
-        self.pairs = obshandle.pairs
-        self.func = obshandle.func
-        self.funcname = obshandle.funcname
-        
-    def __call__(self, func):
-        """ Called to decorate the function."""
-        func=updater(func)
-        func.pairs=self.inputpairs
-        return super(TomHandler, self).__call__(func)
-
-from numpy import ndarray
 class QDT(IDT):
     Ic=Float().tag(label="Critical current", 
                    desc="critical current of SQUID", unit="nA")
-    Rn=Float(1.0e3).tag(desc="Normal resistance of SQUID", unit="kOhm")
+    Rn=Float(10.0e3).tag(desc="Normal resistance of SQUID", unit="kOhm")
     Ejmax=Float().tag(desc="""Max Josephson Energy""",
                        unit="GHz", unit_factor=1.0e9*h)
     Ec=Float().tag(desc="""Charging Energy""", 
@@ -177,15 +145,6 @@ class QDT(IDT):
     G_f0=Float().tag(desc="""Coupling at IDT center frequency""", unit="GHz")
     f=Float(4.5e9).tag(desc="""Operating frequency of qubit""", unit="GHz")
     G_f=Float().tag(desc="""Coupling adjusted by sinc^2""", unit="GHz")                    
- 
-#    def _validate_f(self, old, new):
-#        if isinstance(new, ndarray):
-#            self.set_tag("f", sweep=new)
-#            test=new[0]
-#        else:
-#            test=new
-#        assert isinstance(test, float)
-#        return test
         
     def G_f0_func(self, Np, K2, f0):
         return 0.45*Np*K2*f0
@@ -200,41 +159,25 @@ class QDT(IDT):
 
     def Ec_func(self, Ct):
         """Charging energy"""
-        print e**2/(2.0*Ct)
         return e**2/(2.0*Ct)
-
-#    def get_names(self, *args, **kwargs):
-#        templist=[]        
-#        for name in args:
-#            item=kwargs.get(name, getattr(self, name))
-#            templist.append(item)
-#        return templist
 
     def G_f_func(self, G_f0, Np, f, f0):
         return G_f0*sinc_sq(Np*pi*(f-f0)/f0)
-    
-    #def test_func(self, G_f0, N_p, f, f0):
-    #    pass
-        
-    #@tomobserve("G_f0", "Np", "f", "f0")
-    #def _update_G_f(self, change):
-    #    self.G_f=self.G_f_func(G_f0=self.G_f0, Np=self.Np, f=self.f, f0=self.f0)
 
     def plotty(self, zname, **kwargs):
          if hasattr(self, zname+"_func"):
+             xdata=kwargs.values()[0]
              func=getattr(self, zname+"_func")
              f=func.im_func
              argcount=f.func_code.co_argcount
              argnames=list(f.func_code.co_varnames[0:argcount])
              if "self" in argnames:
                  argnames.remove("self")
-            def _updat_(change):
-                kwargs={}
-                for arg in argnames:
-                    kwargs[arg]=getattr(self, arg)
-                setattr(self, param, getattr(self, param+"_func")(**kwargs))
+             for name in argnames:
+                 if name not in kwargs:
+                     kwargs[name]=getattr(self, name)
+             print kwargs                     
              zdata=func(**kwargs)
-             xdata=kwargs.values()[0]
              plot(xdata, zdata)
 
          
@@ -242,10 +185,12 @@ if __name__=="__main__":
     from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
 
     #a=IDT()
-    a=QDT()
-    Np=9
-    f0=4.500001e9
-    
+    a=QDT(Np=9)
+    #a.Np=9
+    a.f0=4.500001e9
+    #a.G_f0=1.0
+    #a.plotty("G_f", f=linspace(4.0e9, 11.0e9, 2001))
+    #show()
     
     #a.f=linspace(4.0e9, 11.0e9, 2001)
     #a.observe(("G_f0", "Np", "f", "f0"), a._update_G_f)
@@ -266,7 +211,7 @@ if __name__=="__main__":
 #        a.f=f
 #        G[n]=a.G_f
     #print a._update_Ic.pairs
-    f=a.get_tag("f", "sweep")
+    #f=a.get_tag("f", "sweep")
     #plot(f/1.0e9, a.G_f_func(f=f))
     #show()
 

@@ -4,10 +4,28 @@ Created on Sat Jul  4 13:03:26 2015
 
 @author: thomasaref
 """
-from atom.api import Unicode, Enum, Float, Int, ContainerList, Callable
+from atom.api import Unicode, Enum, Float, Int, ContainerList, Callable, Bool, List
 from taref.core.chief import chief
-from taref.core.backbone import Backbone, log_func, updater
+from taref.core.backbone import Backbone, log_func, updater, get_run_params
 
+from functools import wraps
+from taref.core.log import log_debug
+def updates(fn):
+    """a decorator to stop infinite recursion. also stores run_params as an attribute"""
+    @wraps(fn)
+    def updfunc(change):
+        if not hasattr(updfunc, "callblock"):
+            updfunc.callblock=""
+        if change["name"]!=updfunc.callblock: # and change['type']!='create':
+            log_debug(change)
+
+            updfunc.callblock=change["name"]
+            fn(change)
+            updfunc.callblock=""
+    updfunc.run_params=get_run_params(fn)
+    return updfunc
+   
+updated=[]   
 class SubAgent(Backbone):
     """Adds chief functionality to Backbone"""
     name=Unicode().tag(private=True, desc="name of agent. A default will be provided if none is given")
@@ -19,20 +37,46 @@ class SubAgent(Backbone):
     def extra_setup(self, param, typer):
         """Can be overwritten to allow custom setup extension in subclasses"""
         self.es_log_callables(param, typer)
+        self.es_funcs(param, typer)
+        
+    def es_funcs(self, param, typer):
         if hasattr(self, param+"_func"):
             f=getattr(self, param+"_func").im_func
             argcount=f.func_code.co_argcount
             argnames=list(f.func_code.co_varnames[0:argcount])
             if "self" in argnames:
                 argnames.remove("self")
-            #@updater
-            def _updat_(change):
-                kwargs={}
-                for arg in argnames:
-                    kwargs[arg]=getattr(self, arg)
-                setattr(self, param, getattr(self, param+"_func")(**kwargs))
-            self.observe(argnames, _updat_)
+            f.argnames=argnames
+        if hasattr(self, param+"_func2"):
+            f=getattr(self, param+"_func2").im_func
+            argcount=f.func_code.co_argcount
+            argnames=list(f.func_code.co_varnames[0:argcount])
+            if "self" in argnames:
+                argnames.remove("self")
+            f.argnames=argnames
 
+#
+#            #@updates
+#            def _updat_(change):
+#                if param not in updated:
+#                    log_debug(change)
+#                    log_debug(updated)
+#
+#                    kwargs=dict(zip(argnames, [getattr(self, arg) for arg in argnames]))
+#                    #with self.suppress_notifications():
+#                    updated.append(param)
+#                    setattr(self, param, getattr(self, param+"_func")(**kwargs))
+#                    updated.remove(param)
+#                    
+#            #def _param_update(change):
+#                                    
+#            self.observe(argnames, _updat_)
+#            for arg in argnames:
+#                kwargs={}
+#                for arg in argnames:
+#                    kwargs[arg]=getattr(self, arg)
+#            setattr(self, param, getattr(self, param+"_func")(**kwargs))
+        
     def es_log_callables(self, param, typer):
         """extra setup function that autosets Callables to be logged"""
         if typer==Callable:
@@ -61,8 +105,12 @@ class SubAgent(Backbone):
         if "name" not in kwargs:
             self.name="{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.chief.agents))
         self.chief.agents.append(self)
+updating=False
+from inspect import getmembers
 
 class Spy(SubAgent):
+    updating=Bool().tag(private=True)
+    update_list=List().tag(private=True)
     """Spy uses observers to log all changes"""
     def __setattr__(self, name, value):
         """setattr performs low/high check"""
@@ -72,12 +120,34 @@ class Spy(SubAgent):
 
     def log_changes(self, change):
         """a simple logger for all changes"""
+        print self.update_list
         self.set_log(change["name"], change["value"])
+        self.update_list.append(change["name"])
+        #if self.updating is False:
+        #    self.updating=True
+        #funclist=[a[0] for a in getmembers(self)]
+        for param in self.all_params:
+            #templist=[item for item in funclist if item.startswith(param+"_func")]
+            if hasattr(self, param+"_func"):
+                argnames=getattr(self, param+"_func").im_func.argnames
+                if param not in self.update_list and change["name"] in argnames:
+                    kwargs=dict(zip(argnames, [getattr(self, arg) for arg in argnames]))
+                    setattr(self, param, getattr(self, param+"_func")(**kwargs))
+            if hasattr(self, param+"_func2"):
+                argnames=getattr(self, param+"_func2").im_func.argnames
+                if param not in self.update_list and change["name"] in argnames:
+                    kwargs=dict(zip(argnames, [getattr(self, arg) for arg in argnames]))
+                    setattr(self, param, getattr(self, param+"_func2")(**kwargs))
+        self.update_list.remove(change["name"])
+         #   self.updating=False
+
+                
 
     def extra_setup(self, param, typer):
         """adds log_changes observer to all params"""
         self.observe(param, self.log_changes)
         self.es_log_callables(param, typer)
+        self.es_funcs(param, typer)
 
     @property
     def base_name(self):
