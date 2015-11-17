@@ -10,7 +10,7 @@ Gathers all useful constants and functions in one location. Also initiates a def
 from scipy.constants import e, h, hbar, k as kB, epsilon_0 as eps0, pi
 c_eta = 0.8
 
-from numpy import (sin, cos, sqrt, exp, empty, mean, exp, log10,
+from numpy import (sin, cos, sqrt, exp, empty, mean, exp, log10, arange,
                    absolute, dtype, angle, amin, amax, linspace, zeros, shape)
 from numpy.fft import fft, ifft
 

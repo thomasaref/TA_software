@@ -112,6 +112,14 @@ def get_attr(obj, name, none_value=None):
         return getattr(obj, name)
     return none_value
 
+def pass_func(*args, **kwargs):
+    pass
+    
+def run_func(obj, name, none_func=pass_func, *args, **kwargs):
+    if hasattr(obj, str(name)):
+        return getattr(obj, name)(*args, **kwargs)
+    return none_func(*args, **kwargs)
+        
 def lowhigh_check(obj, name, value):
     """can specify low and high tags to keep float or int within a range."""
     if type(value) in (float, int):
