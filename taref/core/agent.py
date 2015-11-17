@@ -6,7 +6,7 @@ Created on Sat Jul  4 13:03:26 2015
 """
 from atom.api import Unicode, Enum, Float, Int, ContainerList, Callable, Bool, List
 from taref.core.chief import chief
-from taref.core.backbone import Backbone, log_func, updater, get_run_params, do_it_if_needed
+from taref.core.backbone import Backbone, log_func, _UPDATE_PREFIX_
 
 from functools import wraps
 from taref.core.log import log_debug
@@ -42,13 +42,15 @@ from collections import OrderedDict
 #    updfunc.run_params=get_run_params(fn)
 #    return updfunc
 
-_UPDATE_PREFIX_="_update_"
    
 class SubAgent(Backbone):
     """Adds chief functionality to Backbone"""
     name=Unicode().tag(private=True, desc="name of agent. A default will be provided if none is given")
     desc=Unicode().tag(private=True, desc="optional description of agent")
     
+#    def get_update_list(self):
+#        return [attr[0] for attr in getmembers(self) if attr[0].startswith(_UPDATE_PREFIX_)]
+        
     def show(self):
         self.chief.show()
 
@@ -136,9 +138,6 @@ class SubAgent(Backbone):
                 if update_func not in upd_list:
                     upd_list.append(update_func)
                     self.set_tag(name, update=upd_list)
-        #for param in self.get_all_tags("default"):    
-        #    setattr(self, param, self.get_default(param))
-                    
       
 class Spy(SubAgent):
     updating=Bool(True).tag(private=True)

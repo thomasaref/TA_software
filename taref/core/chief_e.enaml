@@ -124,7 +124,7 @@ enamldef chiefView(coreWindow): sv:
         LogWindow: logw:
             initial_position=log_stream.initial_position
             initial_size=log_stream.initial_size 
-            visible=True
+            visible=False
             log_str<<log_stream.log_str
 
 

@@ -5,11 +5,14 @@ Created on Thu Feb 26 11:08:19 2015
 @author: thomasaref
 """
 from taref.core.agent import Spy#, Agent
-from taref.physics.fundamentals import (eps0, sqrt, pi, Delta, hbar, e, h,
+from taref.physics.fundamentals import (eps0, sqrt, pi, Delta, hbar, e, h, ndarray, array, eig, delete,
                                         sin, sinc_sq, linspace, zeros, absolute, cos, arange)
 from taref.core.log import log_debug
-from atom.api import Enum, Int, Float, observe, Bool, Property, Str, List, Range
+from atom.api import Enum, Int, Float, observe, Bool, Property, Str, List, Range, Typed, Coerced
 
+def Array():
+    return Coerced(ndarray, args=(1,), coercer=array)
+    
 class IDT(Spy):
     """Theoretical description of IDT"""    
     @property
@@ -165,7 +168,8 @@ class QDT(IDT):
         return ["ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct", 
                 "material", "Dvv", "K2", "vf", "epsinf", 
                 "Rn", "Ic", "Ejmax", "Ej", "Ec", "EjmaxdivEc", "EjdivEc",
-                "fq", "fq_max", "fq_max_full", "flux_over_flux0", "G_f0", "G_f"]
+                "fq", "fq_max", "fq_max_full", "flux_over_flux0", "G_f0", "G_f", 
+                "ng", "Nstates", "EkdivEc"]
 
     @property
     def base_name(self):
@@ -283,10 +287,42 @@ class QDT(IDT):
     def _default_G_f(self):
         return self.get_default("G_f")
 
+    ng=Float().tag(desc="charge on gate line")
+    Nstates=Int(50).tag(desc="number of states to include in mathieu approximation. More states is better approximation")
+
+    EkdivEc=Array().tag(unit=" Ec")
+
+    def _update_EkdivEc(self, ng, Ec, Ej, Nstates):
+        """calculates transmon energy level with N states (more states is better approximation)
+        effectively solves the mathieu equation but for fractional inputs (which doesn't work in scipy.special.mathieu_a)"""
+        d1=[]
+        d2=[]
+        d3=[]
+        Ec=1.0/4.0*
+        for a in ng:
+            NL=2*Nstates+1
+            A=zeros((NL, NL))
+            for b in range(0,NL):
+                A[b, b]=4.0*Ec*(b-Nstates-a)**2
+                if b!=NL-1:
+                    A[b, b+1]= -Ej/2.0
+                if b!=0:
+                    A[b, b-1]= -Ej/2.0
+            w,v=eig(A)
+            d1.append(min(w))#/h*1e-9)
+            w=delete(w, w.argmin())
+            d2.append(min(w))#/h*1e-9)
+            w=delete(w, w.argmin())
+            d3.append(min(w))#/h*1e-9)
+        return array([array(d1), array(d2), array(d3)])
+    
     def get_plot_data(self, zname, **kwargs):
          """pass in an appropriate kwarg to get zdata for the zname variable back"""
+         arg=kwargs.keys()[0]
+         argslist=[upd.split("_update_")[1] for upd in self.get_tag(arg, "update")]
+         param=[a for a in argslist if a==zname][0]
+         print param
          if hasattr(self, zname+"_func"):
-             #xdata=kwargs.values()[0]
              func=getattr(self, zname+"_func")
              f=func.im_func
              #argcount=f.func_code.co_argcount

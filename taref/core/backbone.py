@@ -19,6 +19,8 @@ from types import FunctionType
 
 from taref.core.log import log_info
 
+_UPDATE_PREFIX_="_update_"
+
 def cap_case(name):
     """Auto captializes name"""
     return ' '.join(s.capitalize() for s in name.split('-'))
