@@ -292,13 +292,13 @@ class QDT(IDT):
 
     EkdivEc=Array().tag(unit=" Ec")
 
-    def _update_EkdivEc(self, ng, Ec, Ej, Nstates):
+    def update_EkdivEc(self, ng, Ec, Ej, Nstates):
         """calculates transmon energy level with N states (more states is better approximation)
         effectively solves the mathieu equation but for fractional inputs (which doesn't work in scipy.special.mathieu_a)"""
         d1=[]
         d2=[]
         d3=[]
-        Ec=1.0/4.0*
+        Ec=1.0/4.0
         for a in ng:
             NL=2*Nstates+1
             A=zeros((NL, NL))
@@ -396,6 +396,7 @@ if __name__=="__main__":
     #a=IDT()
     #a=IDT(Np=9)
     a=QDT()
+    a.Rn=5.9e3
     print a.get_metadata("Ct")
     #a.Np=9
     #a.f0=4.500001e9
