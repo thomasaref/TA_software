@@ -10,8 +10,8 @@ from taref.physics.fundamentals import (eps0, sqrt, pi, Delta, hbar, e, h, ndarr
 from taref.core.log import log_debug
 from atom.api import Enum, Int, Float, observe, Bool, Property, Str, List, Range, Typed, Coerced
 
-def Array():
-    return Coerced(ndarray, args=(1,), coercer=array)
+def Array(shape=1):
+    return Coerced(ndarray, args=(shape,), coercer=array)
     
 class IDT(Spy):
     """Theoretical description of IDT"""    
@@ -160,6 +160,7 @@ class IDT(Spy):
 
     def _default_material(self):
         return 'LiNbYZ' #'GaAs'
+from numpy.linalg import eigvalsh, eigvals
 
 class QDT(IDT):
     """Theoretical description of IDT and qubit, called QDT"""    
@@ -287,18 +288,43 @@ class QDT(IDT):
     def _default_G_f(self):
         return self.get_default("G_f")
 
-    ng=Float().tag(desc="charge on gate line")
+    ng=Float(0.5).tag(desc="charge on gate line")
     Nstates=Int(50).tag(desc="number of states to include in mathieu approximation. More states is better approximation")
-
+    order=Int(3)
     EkdivEc=Array().tag(unit=" Ec")
 
-    def update_EkdivEc(self, ng, Ec, Ej, Nstates):
+    def indiv_EkdivEc(self, ng, Ec, Ej, Nstates, order):
+        NL=2*Nstates+1
+        A=zeros((NL, NL))
+        for b in range(0,NL):
+            A[b, b]=4.0*Ec*(b-Nstates-a)**2
+            if b!=NL-1:
+                A[b, b+1]= -Ej/2.0
+            if b!=0:
+                A[b, b-1]= -Ej/2.0
+        w,v=eig(A)
+        print w, v
+        #for n in range(order):
+            
+        
+
+    def _update_EkdivEc(self, ng, Ec, Ej, Nstates, order):
         """calculates transmon energy level with N states (more states is better approximation)
         effectively solves the mathieu equation but for fractional inputs (which doesn't work in scipy.special.mathieu_a)"""
+
+#        if type(ng) not in (int, float):
+#            d=zeros((order, len(ng)))
+#        elif type(Ec) not in (int, float):
+#            d=zeros((order, len(Ec)))
+#        elif type(Ej) not in (int, float):
+#            d=zeros((order, len(Ej)))
+        if type(ng) in (int, float):
+            ng=array([ng])
         d1=[]
         d2=[]
         d3=[]
-        Ec=1.0/4.0
+        Ej=Ej/Ec            
+        Ec=1.0#/4.0
         for a in ng:
             NL=2*Nstates+1
             A=zeros((NL, NL))
@@ -308,33 +334,40 @@ class QDT(IDT):
                     A[b, b+1]= -Ej/2.0
                 if b!=0:
                     A[b, b-1]= -Ej/2.0
-            w,v=eig(A)
-            d1.append(min(w))#/h*1e-9)
-            w=delete(w, w.argmin())
-            d2.append(min(w))#/h*1e-9)
-            w=delete(w, w.argmin())
-            d3.append(min(w))#/h*1e-9)
-        return array([array(d1), array(d2), array(d3)])
-    
+            #w,v=eig(A)
+            w=eigvalsh(A)
+            d=w[0:order]
+#            d1.append(min(w))#/h*1e-9)
+#            w=delete(w, w.argmin())
+#            d2.append(min(w))#/h*1e-9)
+#            w=delete(w, w.argmin())
+#            d3.append(min(w))#/h*1e-9)
+        
+        return array([array(d1), array(d2), array(d3)]).transpose()
+
+    def sweepEc():
+        Ecarr=Ej/EjoverEc
+        E01a=sqrt(8*Ej*Ecarr)-Ecarr
+        data=[]
+        for Ec in Ecarr: 
+            d1, d2, d3= EkdivEc(ng=ng, Ec=Ec, Ej=Ej, N=50)
+            E12=d3[0]-d2[0]
+            E01=d2[0]-d1[0]
+            anharm2=(E12-E01)#/E01
+            data.append(anharm2)
+        Ctr=e**2/(2.0*Ecarr*h*1e9)
+        return E01a, Ctr, data, d1, d2, d3
+        
     def get_plot_data(self, zname, **kwargs):
          """pass in an appropriate kwarg to get zdata for the zname variable back"""
          arg=kwargs.keys()[0]
-         argslist=[upd.split("_update_")[1] for upd in self.get_tag(arg, "update")]
-         param=[a for a in argslist if a==zname][0]
-         print param
-         if hasattr(self, zname+"_func"):
-             func=getattr(self, zname+"_func")
-             f=func.im_func
-             #argcount=f.func_code.co_argcount
-             #argnames=list(f.func_code.co_varnames[0:argcount])
-             #if "self" in argnames:
-             #    argnames.remove("self")
-             for name in f.argnames:
-                 if name not in kwargs:
-                     kwargs[name]=getattr(self, name)
-             print kwargs                     
-             return func(**kwargs)
-             #plot(xdata, zdata)
+         func_name=[upd for upd in self.get_tag(arg, "update") if upd.split("_update_")[1]==zname][0]
+         func=getattr(self, func_name)
+         f=func.im_func
+         for name in f.argnames:
+             if name not in kwargs:
+                 kwargs[name]=getattr(self, name)
+         return func(**kwargs)
 
     def plot_data(self, zname, **kwargs):
          """pass in an appropriate kwarg to get zdata for the zname variable back"""
@@ -384,7 +417,7 @@ class QDT(IDT):
          if title_str is None:
              title_str="{0} vs {1}".format(zname, xname)
          title(title_str)
-
+         print xdata.shape, zdata.shape
          plot(xdata*xunit_factor*xmult, zdata*zunit_factor*zmult, label=label)
          
          if add_legend:
@@ -396,13 +429,24 @@ if __name__=="__main__":
     #a=IDT()
     #a=IDT(Np=9)
     a=QDT()
+    
     a.Rn=5.9e3
+    a.Np=5
+    a.W=7.0e-6
+    a.fq=4.5e9
+    
     print a.get_metadata("Ct")
     #a.Np=9
     #a.f0=4.500001e9
     #print a._update_K2.argnames
     for param in a.all_params:
         print param, a.get_tag(param, "update")
+    print a.get_plot_data("EkdivEc", ng=0.5)
+    a.plot_data("EkdivEc", Ej=linspace(0.0, 1.0*a.Ejmax, 100))
+    show()
+    a.plot_data("EkdivEc", ng=linspace(0.0, 1.0, 100))
+    show()
+    
     #a.f0=4.500001e9
     #a.f0=4.500001e9
 
