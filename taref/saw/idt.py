@@ -308,7 +308,7 @@ class QDT(IDT):
             
         
 
-    def _update_EkdivEc(self, ng, Ec, Ej, Nstates, order):
+    def update_EkdivEc(self, ng, Ec, Ej, Nstates, order):
         """calculates transmon energy level with N states (more states is better approximation)
         effectively solves the mathieu equation but for fractional inputs (which doesn't work in scipy.special.mathieu_a)"""
 
@@ -441,11 +441,12 @@ if __name__=="__main__":
     #print a._update_K2.argnames
     for param in a.all_params:
         print param, a.get_tag(param, "update")
-    print a.get_plot_data("EkdivEc", ng=0.5)
-    a.plot_data("EkdivEc", Ej=linspace(0.0, 1.0*a.Ejmax, 100))
-    show()
-    a.plot_data("EkdivEc", ng=linspace(0.0, 1.0, 100))
-    show()
+    #print a.get_plot_data("EkdivEc", ng=0.5)
+    if 0:
+        a.plot_data("EkdivEc", Ej=linspace(0.0, 1.0*a.Ejmax, 100))
+        show()
+        a.plot_data("EkdivEc", ng=linspace(0.0, 1.0, 100))
+        show()
     
     #a.f0=4.500001e9
     #a.f0=4.500001e9
