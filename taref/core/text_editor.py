@@ -7,16 +7,14 @@ Created on Thu May 14 18:38:47 2015
 A simple text editor driver allowing one to load, edit and save text files
 """
 
-#from a_Agent import Spy
 from taref.core.SHOW_functions import show
 from atom.api import Atom, Str, observe, Unicode, Typed, ContainerList, Int, Float, Bool, List, Coerced, Instance, Enum
-from Atom_Read_File import Read_TXT
-from Atom_Save_File import Save_TXT
+from taref.core.read_file import Read_TXT
+from taref.core.save_file import Save_TXT
 #from LOG_functions import log_info, log_debug, make_log_file, log_warning
 from enaml import imports
 
 class Text_Editor(Atom):
-    view=Enum("Text_Editor")
     name=Unicode("Text_Editor")
     main_file=Unicode("idt.jdf").tag(private=True)
     dir_path=Unicode("/Users/thomasaref/Dropbox/Current stuff/TA_software").tag(private=True)
@@ -40,6 +38,10 @@ class Text_Editor(Atom):
 
     def data_list(self):
         return self.data.split("\n")
+
+    @property
+    def view(self):
+        return "Text_Editor"
  
     @property       
     def view_window(self):
@@ -49,9 +51,9 @@ class Text_Editor(Atom):
 
 
 if __name__=="__main__":
-    class test(Atom):
-        a=Unicode()
-        b=Typed(Text_Editor, ()).tag(no_spacer=True)
+    #class test(Atom):
+    #    a=Unicode()
+    #    b=Typed(Text_Editor, ()).tag(no_spacer=True)
     a=Text_Editor( dir_path="/Volumes/aref/jbx9300/job/TA130715_stp/PADS", main_file="pads.jdf")
-    b=test()    
-    show(a, b)    
+    #b=test()    
+    show(a)    
