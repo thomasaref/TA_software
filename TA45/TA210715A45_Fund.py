@@ -13,14 +13,18 @@ from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, leg
 
 dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/"
 
-def dB(x):
-    return 20*log10(absolute(x))
+from taref.physics.fundamentals import dB, normalize, normalize_1d
+from taref.saw.idt import QDT
+from taref.core.log import log_debug
 
-def normalize(x):
-    return (x-amin(x))/(amax(x)-amin(x))
-
-def normalize_1d(x):
-    return (x-amin(x, axis=1, keepdims=True))/(amax(x, axis=1, keepdims=True)-amin(x, axis=1, keepdims=True))
+qdt=QDT()
+qdt.ft="single" 
+qdt.W=25.0e-6
+qdt.Np=9
+qdt.a=80.0e-9
+qdt.material="LiNbYZ"
+qdt.Rn=(7.62e3+7.96e3)/2.0
+       
 
 finger_type="single"
 fridge_attn=87.0
@@ -52,6 +56,10 @@ else:
 #Cq=W*Npq*epsinf #Morgan
 
 Ec=e**2/(2.0*Cq)
+
+log_debug( (qdt.Ct, Cq))
+
+log_debug( (qdt.Ec, Ec))
 
 def flux_rescale(yoko, offset=0.09):
     #return (yoko-0.07)*0.198
@@ -153,7 +161,7 @@ def couple_theory_zoom():
     xlim(4.4, 4.6)
     ylim(0, 0.2)
         
-if __name__=="__main__":
+if __name__=="__main2__":
     print_fundamentals()
     couple_theory()
     show()

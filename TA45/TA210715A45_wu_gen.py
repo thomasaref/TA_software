@@ -7,7 +7,7 @@ Created on Fri Oct  9 13:51:36 2015
 dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A45_cooldown1/writeup/"
 file_name="TA210715A45_writeup.tex"
 
-from TEX_functions import TEX
+from taref.core.tex import TEX
 
 
 tex_source="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A45_cooldown1/tikztry.tex"
@@ -19,6 +19,7 @@ if 1:
     tx=TEX(dir_path, file_name, tex_source)
     
     tx.ext("summary")
+    print tx.tex
 
 
 if 0:    
@@ -221,4 +222,4 @@ if 0:
     caption=tx.add_mult_fig(VNA_twotonesat, "VNA_twotonesat.png", width=0.49)
     tx.mult_fig_end(caption)
     
-tx.make_tex_file()
+#tx.make_tex_file()

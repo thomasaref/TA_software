@@ -1,0 +1,260 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun 29 16:12:32 2015
+
+@author: thomasaref
+
+Defines the Var containers for different types. All have attributes vmodel, vname, vvalue allowing use of get_tag from a_Backbone
+"""
+from enaml.widgets.api import  Container, CheckBox, Label, SpinBox, ScrollArea, MultilineField, Field, PushButton, ObjectCombo, Slider, ScrollArea
+from enaml.core.api import Conditional
+from taref.core.backbone import get_tag
+from taref.core.fundcore_e import aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField
+
+ 
+enamldef Var(Container):
+    """a Var container has a model, name and value"""
+    attr vmodel
+    attr vname 
+    attr vvalue
+    padding=0
+    
+enamldef BoolVar(Var):
+    """boolean represented by CheckBox"""
+    CheckBox:
+        checked := vvalue
+
+enamldef RangeVar(Var):
+    """a Range control with units"""
+    aHGroup:
+        UnitIntField: uif:
+            uvalue:=vvalue
+            unit=get_tag(vmodel, vname, "unit", u"")
+            show_uvalue=get_tag(vmodel, vname, "show_value", False)
+            unit_factor=int(get_tag(vmodel, vname, "unit_factor", 1))
+            minimum = sel_slider.minimum
+            maximum = sel_slider.maximum
+        Label: min_lbl:
+            text << str(sel_slider.minimum/uif.unit_factor)
+        Slider: sel_slider:
+            minimum = vmodel.get_member(vname).validate_mode[1][0]
+            maximum = vmodel.get_member(vname).validate_mode[1][1]
+            value :=vvalue
+            tracking = False
+        Label: max_lbl:
+            text << str(sel_slider.maximum/uif.unit_factor)
+
+from enaml.stdlib.slider_transform import FloatTransform
+enamldef FloatRangeVar(Var):
+    """ A form control template specialization for Float members"""
+    aHGroup:
+        UnitFloatField: sel:
+            uvalue:=vvalue
+            unit=get_tag(vmodel, vname, "unit", u"")
+            show_uvalue=get_tag(vmodel, vname, "show_value", False)
+            unit_factor=float(get_tag(vmodel, vname, "unit_factor", 1.0))
+            minimum = sel_slider.minimum
+            maximum = sel_slider.maximum
+        Label: min_lbl:
+                text << str(ft.minimum)
+        Slider: sel_slider:
+            tracking = False
+            FloatTransform: ft:
+                minimum = vmodel.get_member(vname).validate_mode[1][0]
+                maximum = vmodel.get_member(vname).validate_mode[1][1]
+                value :=vvalue
+                precision=get_tag(vmodel, vname, 'precision', 100)
+        Label: max_lbl:
+            text << str(ft.maximum)
+        
+enamldef IntVar(Var):
+    """extends Var for integer types"""
+    UnitSpinBox:
+        uvalue:=vvalue
+        unit=get_tag(vmodel, vname, "unit", u"")
+        show_uvalue=get_tag(vmodel, vname, "show_value", False)
+        unit_factor=int(get_tag(vmodel, vname, "unit_factor", 1))
+        minimum=int(get_tag(vmodel, vname, 'low', -2147483648))
+        maximum=int(get_tag(vmodel, vname, 'high', 2147483647))
+
+enamldef ChoiceIntVar(Var):
+    """extends Var for integer types"""
+    Conditional:
+        condition= get_tag(vmodel, vname, "spec")=="intfield"
+        UnitIntField:
+            uvalue:=vvalue
+            unit=get_tag(vmodel, vname, "unit", u"")
+            show_uvalue=get_tag(vmodel, vname, "show_value", False)
+            unit_factor=int(get_tag(vmodel, vname, "unit_factor", 1))
+            minimum=int(get_tag(vmodel, vname, 'low', -2147483648))
+            maximum=int(get_tag(vmodel, vname, 'high', 2147483647))
+    Conditional:
+        condition= get_tag(vmodel, vname, "spec")!="intfield"
+        UnitSpinBox:
+            uvalue:=vvalue
+            unit=get_tag(vmodel, vname, "unit", u"")
+            show_uvalue=get_tag(vmodel, vname, "show_value", False)
+            unit_factor=int(get_tag(vmodel, vname, "unit_factor", 1))
+            minimum=int(get_tag(vmodel, vname, 'low', -2147483648))
+            maximum=int(get_tag(vmodel, vname, 'high', 2147483647))
+
+def floater(value):
+    if value is None:
+        return value
+    return float(value)
+    
+enamldef FloatVar(Var):
+    """extends Var for float types"""
+    UnitFloatField:
+        uvalue:=vvalue
+        unit=get_tag(vmodel, vname, "unit", u"")
+        show_uvalue=get_tag(vmodel, vname, "show_value", False)
+        unit_factor=float(get_tag(vmodel, vname, "unit_factor", 1.0))
+        minimum=floater(get_tag(vmodel, vname, 'low'))
+        maximum=floater(get_tag(vmodel, vname, 'high'))
+
+enamldef UnicodeVar(Var):
+    """extends Var for string types"""
+    Field:
+        text:=vvalue
+
+enamldef StrVar(Var):
+    """extends Var for string types"""
+    MultilineField:
+        text:=vvalue
+
+enamldef ChoiceStrVar(Var):
+    Conditional:
+        condition= get_tag(vmodel, vname, "spec")=="multiline"
+        MultilineField:
+            text:=vvalue
+    Conditional:
+        condition= get_tag(vmodel, vname, "spec")!="multiline"
+        Field:
+            text:=vvalue
+ 
+                    
+###################test code########################
+from enaml.widgets.api import  Window, VGroup
+from atom.api import Atom, Int, Float, Bool
+
+class test(Atom):
+    a=Int().tag(unit="um", show_value=True, unit_factor=20, low=0, high=5)
+    b=Float().tag(unit="GHz", show_value=True, unit_factor=0.2, low=-1.0, high=1)
+    t_bool=Bool()
+
+t=test()    
+
+enamldef Main(Window):
+    VGroup:
+        IntVar:
+            vmodel=t
+            vname="a"
+            vvalue=getattr(t, "a")
+    
+        FloatVar:
+            vmodel=t
+            vname="b"
+            vvalue=getattr(t, "b")
+    
+#
+#class testmodel(object):
+#    a=4
+#    b=3.2
+#    c="blah"
+#    d=[0, 1, 2,3,4,5,5,6,7,7,8,88,4,8,9,5,8,8,8]
+#    g=True
+#    def myfunc(self):
+#        print "ran myfunc"
+#    
+#b=testmodel()
+#set_tag(b, "a",  show_value=True, unit_factor=10, unit="MHz")
+#set_tag(b, "b",  show_value=True, unit_factor=0.1, unit="Hz", label="float test", no_spacer=True)
+#set_tag(b, "d",  show_value=True, unit_factor=2, unit="Hz", label="listy", no_spacer=True)
+##set_tag(b, "c",  spec="multiline")
+#
+#template TypedView(AttrType: testmodel):
+#    TypedView(Typed): pass
+#
+#class testAtom(Atom):
+#    a=Int(4).tag(show_value=True, unit_factor=10, unit="MHz", spec="intfield")
+#    b=Float(3.2).tag(show_value=True, unit_factor=0.1, unit="Hz", label="float test", no_spacer=True)
+#    c=Unicode("blah").tag(spec="multiline")
+#    d=ContainerList(default=[testmodel()])
+#    g=Bool()
+#    h=Enum("a", "b", "c", "m", "k", "n", "p").tag(no_spacer=True)
+#    k=Coerced(int, (234,)).tag(show_value=True, unit_factor=10, unit="MHz", spec="intfield")
+#    m=Instance(testmodel, ())#.tag(no_spacer=True, spec="multiline")
+#    n=Range(-100,100,0).tag(unit_factor=5, unit="MHz")
+#    p=FloatRange(-100.0,100.0,0.0).tag(unit_factor=5, unit="MHz")
+#    
+#    @Callable
+#    def myfunc(self):
+#        print "rang"
+#
+#b=testAtom()  
+#
+#enamldef Main(Window):
+##    attr instr = b
+##    InstrView(None):
+##        pass
+#    VGroup:
+#        ChoiceIntVar: iv:
+#            vmodel=b
+#            vname="a"
+#            vvalue:=b.a
+#        Label:
+#            text << unicode((b.a, iv.vvalue))
+#        FloatVar:
+#            vmodel=b
+#            vname="b"
+#            vvalue:=b.b
+#        Label:
+#            text << unicode((b.b, iv.vvalue))
+#        ChoiceStrVar:
+#            vmodel=b
+#            vname="c"
+#            vvalue:=b.c
+#        ListSBVar:
+#            vmodel=b
+#            vname="d"
+#            vvalue:=b.d
+#        #ListVGVar:
+#        #    vmodel=b
+#        #    vname="d"
+#        #    vvalue:=b.d
+#        BoolVar:
+#            vmodel=b
+#            vname="g"
+#            vvalue:=b.g
+#            
+#        CallableVar:
+#            vmodel=b
+#            vname="myfunc"
+#            vvalue:=b.myfunc
+#        EnumVar:
+#            vmodel=b
+#            vname="h"
+#            vvalue:=b.h
+#        CoercedVar: 
+#            vmodel=b
+#            vname="k"
+#            vvalue:=b.k            
+#        TypedVar: 
+#            vmodel=b
+#            vname="m"
+#            vvalue:=b.m            
+#
+##            
+##            
+##        #unit="MHz"
+##    #UnitFloatField:
+##    #    uvalue=10.0
+##    #    unit_factor=10.0
+##    #    unit="Hz"
+##    #    show_uvalue=True
+##        
+##
+###            
+##            
+#        

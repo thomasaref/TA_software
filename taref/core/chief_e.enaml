@@ -15,7 +15,7 @@ from taref.core.backbone import get_attr
 from e_Plotter import PlotWindow
 from log_e import LogWindow, log_stream
 
-from e_FundTemps import InstrHolder
+from taref.core.fundtemps_e import InstrHolder
 
 enamldef agentView(Window):
     """default view for an agent based on dynamic templating"""

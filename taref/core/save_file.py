@@ -16,7 +16,7 @@ from numpy import ndarray, size
 from enaml import imports
 from taref.core.read_file import Read_HDF5, Read_NP, Read_TXT, Read_DXF
 from collections import OrderedDict
-from taref.core.SHOW_functions import show
+from taref.core.shower import show
 
 class Save_File(Filer):
     data_buffer=Typed(OrderedDict)

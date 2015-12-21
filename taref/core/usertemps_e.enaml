@@ -1,0 +1,103 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun 29 14:41:36 2015
+
+@author: thomasaref
+
+User defined templates
+"""
+
+from enaml.widgets.api import  Field, PushButton, MultilineField, VGroup, Window, GroupBox
+from enaml.stdlib.fields import FloatField, IntField
+
+from taref.core.filer_e import ReadWrap, SaveWrap
+
+template UserInstrView(instr_view: "Read_File"):
+    """ Displays a read file interface"""
+    ReadWrap:
+        filer:= instr 
+
+template UserInstrView(instr_view: "Save_File"):
+    """Displays a save file interface"""
+    SaveWrap:
+        filer:=instr 
+
+from taref.ebl.EBL_enaml import EBContWrap
+template UserInstrView(instr_view: "Polyer"):
+    """Displays a polyer polygon list interface. very ineffecient. too many notifications"""
+    EBContWrap:
+        polyer:= instr #getattr(vmodel, vname)
+
+enamldef TextEditorVGroup(VGroup):
+    """Text Editor container"""
+    ReadWrap:
+        filer:=instr.read_file
+    GroupBox:
+        SaveWrap:
+            filer:=instr.save_file
+    MultilineField:
+        text:=instr.data
+
+template UserInstrView(instr_view: "Text_Editor"):
+    """ Displays a text editor in a agent"""
+    TextEditorVGroup:
+            pass
+    
+enamldef TextEditorWindow(Window):
+    """displays a text editor in a standalone window"""
+    attr instr
+    activated :: self.maximize()
+    destroy_on_close=False
+    TextEditorVGroup:
+        pass
+
+enamldef fieldcont(Field):
+    attr test
+    text := test.a
+    
+enamldef Main(Window):
+    initial_size=(500,500)
+    fieldcont:
+        pass #attr test
+    #Field:
+    #    text:=test.a
+
+template UserInstrView(instr_view : "field"):
+    fieldcont:
+        test:=instr            
+############################################################  
+template UserInstrView(instr_view):
+    """ This default specialization displays read-only text for the value."""
+    #instr_view:
+    #    visible=True
+    Field:
+        read_only = True
+        text << unicode((instr, vmodel, vname))
+
+
+        
+class fake(object):
+    def fff():
+        pass
+
+template FundView(base, name, baseType: type(fake.fff)):
+    """A template specialization for a Callable using a PushButton"""
+    Container:
+        padding = 0
+        #constraints = [hbox(pb1, gb1), align('top', pb1, gb1)]
+        PushButton: pb1:
+            text = 'Run'
+            clicked :: getattr(base, name)() #do_it_if_needed(var, "receive") #receive()
+            #enabled << not instr.busy
+        #GroupBox: gb1:
+        #    padding = 0
+        #    visible = run_params(base, name)!=[]
+        #    title = get_tag(base, name, 'label', name)+" parameters:"
+        #    Looper: get_loop:
+        #            iterable << run_params(base, name)
+        #            DynamicTemplate:
+        #                base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
+        #                args=(loop_item, base, type(base))
+                        
+# isinstance(func, FunctionType):
+        

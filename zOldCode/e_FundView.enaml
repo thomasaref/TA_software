@@ -12,12 +12,13 @@ from taref.core.backbone import get_tag
 from e_FundCore import aContainer, aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField
 
  
-enamldef Var(aContainer):
+enamldef Var(Container):
     """a Var container has a model, name and value"""
     attr vmodel
     attr vname 
     attr vvalue
-
+    padding=0
+    
 enamldef BoolVar(Var):
     """boolean represented by CheckBox"""
     CheckBox:

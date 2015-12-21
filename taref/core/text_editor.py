@@ -7,8 +7,8 @@ Created on Thu May 14 18:38:47 2015
 A simple text editor driver allowing one to load, edit and save text files
 """
 
-from taref.core.SHOW_functions import show
-from atom.api import Atom, Str, observe, Unicode, Typed, ContainerList, Int, Float, Bool, List, Coerced, Instance, Enum
+from taref.core.shower import show
+from atom.api import Atom, Str, observe, Unicode, Typed
 from taref.core.read_file import Read_TXT
 from taref.core.save_file import Save_TXT
 #from LOG_functions import log_info, log_debug, make_log_file, log_warning
