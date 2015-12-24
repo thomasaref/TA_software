@@ -4,83 +4,101 @@ Created on Mon Jun  1 12:51:22 2015
 
 @author: thomasaref
 """
-WAFER_DICT={
-    "4A" : dict(GLM=[(-40000, 4000), (-4000, 40000)],
-                Array=[(-42500,8,5000), (42500,8,5000)],
-                WAFER=       [                                         (7,1), (8,1),
-                                                         (5,2), (6,2), (7,2), (8,2),
-                                                  (4,3), (5,3), (6,3), (7,3), (8,3),
-                                           (3,4), (4,4), (5,4), (6,4), (7,4), (8,4),
-                                    (2,5), (3,5), (4,5), (5,5), (6,5), (7,5), (8,5),
-                                    (2,6), (3,6), (4,6), (5,6), (6,6), (7,6), (8,6),
-                             (1,7), (2,7), (3,7), (4,7), (5,7), (6,7), (7,7), (8,7),
-                             (1,8), (2,8), (3,8), (4,8), (5,8), (6,8), (7,8), (8,8)],
-                BadCoords =     [(7,1), (8,1),
-                                 (5,2), (8,2),
-                                 (4,3), (8,3),
-                                 (3,4), (8,4),
-                                 (2,5), (8,5),
-                                 (2,6), (8,6),
-                                 (1,7), (8,7),
-                                 (1,8), (2,8), (3,8), (4,8), (5,8), (6,8), (7,8), (8,8)]),
-    "4B" : dict(GLM = [(4000, 40000), (40000, 4000)],
-                Array = [(7500,8,5000), (42500,8,5000)],
-                Wafer = [(1, 1), (2, 1),
-                    (1, 2), (2, 2), (3, 2), (4, 2),
-                    (1, 3), (2, 3), (3, 3), (4, 3), (5, 3),
-                    (1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4),
-                    (1, 5), (2, 5), (3, 5), (4, 5), (5, 5), (6, 5), (7, 5),
-                    (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6),
-                    (1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7), (8, 7),
-                    (1, 8), (2, 8), (3, 8), (4, 8), (5, 8), (6, 8), (7, 8), (8, 8)],
-                BadCoords=[(1, 1), (2, 1),
-                      (1, 2), (4, 2),
-                     (1, 3), (5, 3),
-                     (1, 4), (6, 4),
-                     (1, 5), (7, 5),
-                     (1, 6), (7, 6),
-                     (1, 7), (8, 7),
-                     (1, 8), (2, 8), (3, 8), (4, 8), (5, 8), (6, 8), (7, 8), (8, 8)]),
-    "4C" : dict(GLM = [(-40000, -4000), (-4000, -40000)],
-                Array = [(-42500,8,5000), (-7500,8,5000)],
-                Wafer = [(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1),
-                   (1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2),
-                           (2, 3), (3, 3), (4, 3), (5, 3), (6, 3), (7, 3), (8, 3),
-                           (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4), (8, 4),
-                                   (3, 5), (4, 5), (5, 5), (6, 5), (7, 5), (8, 5),
-                                           (4, 6), (5, 6), (6, 6), (7, 6), (8, 6),
-                                                   (5, 7), (6, 7), (7, 7), (8, 7),
-                                                                   (7, 8), (8, 8)],
-        BadCoords = [(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1),
-                                                                     (1, 2), (8, 2),
-                                                                     (2, 3), (8, 3),
-                                                                     (2, 4), (8, 4),
-                                                                     (3, 5), (8, 5),
-                                                                     (4, 6), (8, 6),
-                                                                     (5, 7), (8, 7),
-                                                                     (7, 8), (8, 8)]),
-    "4D" : dict(GLM = [(4000, -40000), (40000, -4000)],
-                Array = [(7500,8,5000), (-7500,8,5000)],
-                Wafer = [(1,1), (2,1), (3,1), (4,1), (5,1), (6,1), (7,1), (8,1),
-                         (1,2), (2,2), (3,2), (4,2), (5,2), (6,2), (7,2), (8,2),
-                    (1,3), (2,3), (3,3), (4,3), (5,3), (6,3), (7,3),
-                    (1,4), (2,4), (3,4), (4,4), (5,4), (6,4), (7,4),
-                    (1,5), (2,5), (3,5), (4,5), (5,5), (6,5),
-                    (1,6), (2,6), (3,6), (4,6), (5,6),
-                    (1,7), (2,7), (3,7), (4,7),
-                    (1,8), (2,8)],
-                BadCoords = [(1,1), (2,1), (3,1), (4,1), (5,1), (6,1), (7,1), (8,1),
-                     (1,2), (8,2),
-                     (1,3), (7,3),
-                     (1,4), (7,4),
-                     (1,5), (6,5),
-                     (1,6), (5,6),
-                     (1,7), (4,7),
-                     (1,8), (2,8)])}
 
-#from numpy import arange
-#print [arange(1, 9)]
+from atom.api import Enum, Int, ContainerList, Unicode
+from taref.core.agent import Agent
+from enaml import imports
+
+ #3print '\033[1;32mGreen like Grass\033[1;m'
+ #4print '\033[1;33mYellow like Yolk\033[1;m'
+ #5print '\033[1;34mBlue like Blood\033[1;m'
+ 
 QUARTER_WAFER_SIGNS={"A" : (-1, 1), "B" : (1, 1), "C" : (-1, -1), "D" : (1, -1)}
+
+class WaferCoords(Agent):
+    diameter=Int(4).tag(unit=" in", desc="wafer diameter in inches")
+    radius=Int().tag(unit=" um", desc="wafer radius in microns")
+    chip_size=Int(5000).tag(desc="size of chip in microns", unit=" um")
+    gap_size=Int(5000).tag(desc="gap from center of wafer", unit=" um")
+
+    wafer_type=Enum("A", "B", "C", "D")
+
+    x_offset=Int()
+    x_mult=Int()    
+    y_offset=Int()
+    y_mult=Int()
+    N_chips=Int()
+    html_text=Unicode()
+    wafer=ContainerList(default=[0])
+    bad_coords=ContainerList(default=[0])
+    good_coords=ContainerList(default=[0])
+    array=Unicode()
+
+    def _update_array(self, x_offset, y_offset, N_chips, chip_size):        
+        return unicode([(x_offset, N_chips, chip_size), (y_offset, N_chips, chip_size)])
+    
+    def _update_x_mult(self, wafer_type):
+        return QUARTER_WAFER_SIGNS[wafer_type][0]    
+
+    def _update_y_mult(self, wafer_type):
+        return QUARTER_WAFER_SIGNS[wafer_type][1]    
+
+    def _update_radius(self, diameter):
+        return diameter*25400/2
+
+    def _update_x_offset(self, x_mult, gap_size, chip_size):  
+        return x_mult*(gap_size+chip_size/2)-7*(1-x_mult)/2*chip_size
+    
+    def _update_y_offset(self, y_mult, gap_size, chip_size):  
+        return y_mult*(gap_size+chip_size/2)+7*(1+y_mult)/2*chip_size
+
+    def _update_N_chips(self, radius, chip_size, gap_size):
+        return (radius-gap_size)/chip_size-1
+
+    def _update_wafer(self, x_offset, y_offset, x_mult, y_mult, chip_size, radius, N_chips):
+        return [(x+1, y+1) for x in range(N_chips) for y in range(N_chips)
+              if ((x+x_mult)*chip_size+x_offset)**2+((y_mult-y)*chip_size+y_offset)**2<=radius**2]
+
+    def _update_bad_coords(self, wafer):
+        return [ item for item in wafer
+                 if (item[0]+1, item[1]) not in wafer or (item[0]-1, item[1]) not in wafer
+                 or (item[0], item[1]+1) not in wafer or (item[0], item[1]-1) not in wafer]
+
+    def _update_good_coords(self, wafer, bad_coords):
+        return [x for x in wafer if x not in bad_coords]
+    
+    def _update_html_text(self, wafer, good_coords, bad_coords, N_chips):
+        tt=['<table border="1">']
+        for y in range(N_chips):
+            tt.append('<tr>')
+            for x in range(N_chips):
+                tt.append('<td>')
+                item=(x+1, y+1)
+                if item in wafer:
+                    if item in bad_coords:
+                        tt.append('<p style="color:red"> {0} </p>'.format(item))
+                    if item in good_coords:
+                        tt.append('<p style="color:green"> {0} </p>'.format(item))
+                tt.append('</td>')
+            tt.append('</tr>')
+        tt.append("</table>")
+        return "\n".join(tt)
+
+                 
+    @property
+    def view_window(self):
+        with imports():
+            from taref.ebl.wafer_coords_e import Main
+        return Main(wc=self)
+
+a=WaferCoords()
+a.wafer_type="B"
+a.diameter=4
+a.chip_size=5000
+a.gap_size=5000
+
+a.show()
+        
 def gen_spots(chipsize=5000, gapsize=5000, waferD=4, qw="D"):
     mydict={}
     mx, my=QUARTER_WAFER_SIGNS[qw]    
@@ -95,7 +113,7 @@ def gen_spots(chipsize=5000, gapsize=5000, waferD=4, qw="D"):
     wafer=[(x+1, y+1) for x in range(N) for y in range(N)
     if (x*chipsize+xo)**2+(-y*chipsize+yo)**2<=R**2]
    
-    print [ item for item in wafer
+    BadCoords = [ item for item in wafer
     if (item[0]+1, item[1]) not in wafer 
     or (item[0]-1, item[1]) not in wafer
     or (item[0], item[1]+1) not in wafer

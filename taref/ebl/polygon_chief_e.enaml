@@ -1,0 +1,40 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Dec 21 18:28:47 2015
+
+@author: thomasaref
+"""
+
+from taref.core.chief_e import coreWindow, AgentToolBar
+from enaml.widgets.api import ToolBar, Container, Action
+from taref.core.e_Plotter import PlotWindow
+
+enamldef EBLView(coreWindow): sv:
+    attr chief
+    title="EBL View"
+    activated::
+        chief.do_plot()
+    Container:
+        PlotWindow: plot_window:
+            visible=True
+            plotr:=chief.plot
+            initial_position=(500, 0)
+
+        #IPythonConsole:
+        #    pass
+    AgentToolBar:
+        boss_window:=sv
+    ToolBar:
+        dock_area="left"
+        Action:
+            separator=True
+        Action:
+            text="Refresh Plot"
+            triggered::
+                chief.do_plot()
+        Action:
+            separator=True
+        Action:
+            text = "Plot"
+            triggered::
+                plot_window.show()

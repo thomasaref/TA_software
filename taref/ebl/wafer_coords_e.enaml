@@ -1,0 +1,85 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Dec 24 01:36:14 2015
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import Window, Html, Container, VGroup, HGroup, Label, Form, Field, ObjectCombo
+from taref.core.fundcore_e import UnitIntField, aHGroup, aWindow
+from enaml.layout.api import spacer
+                  
+
+#template Labelled(Content, item):
+#     alias hg.content : content
+#     HGroup: hg:
+#        trailing_spacer=spacer
+#        Label:
+#            text=wc.get_tag(item, "label", item)
+#        Content: content:
+#            pass
+            
+enamldef Main(aWindow):
+    attr wc
+    VGroup:
+        aHGroup:
+            trailing_spacer=spacer
+            Label:
+                text="Wafer type"
+            ObjectCombo: 
+                items = list(wc.get_member("wafer_type").items)
+                selected := wc.wafer_type
+        Form:
+            aHGroup:
+                trailing_spacer=spacer
+                Label:
+                    text="Diameter"
+                UnitIntField:
+                    uvalue := wc.diameter
+                    minimum = 0
+                    maximum=10
+                    unit="in"
+            aHGroup:
+                trailing_spacer=spacer
+                Label:
+                    text="Radius"
+                UnitIntField:
+                    read_only=True
+                    uvalue << wc.radius
+                    minimum = 0
+                    unit="um"
+            aHGroup:
+                trailing_spacer=spacer
+                Label:
+                    text="Chip size"
+                UnitIntField:
+                    uvalue := wc.chip_size
+                    minimum = 0
+                    unit="um"
+            aHGroup:
+                trailing_spacer=spacer
+                Label:
+                    text="Gap size"
+                UnitIntField:
+                    uvalue := wc.gap_size
+                    minimum = 0
+                    unit="um"
+        aHGroup:
+            #trailing_spacer=spacer
+            
+            Label:
+                text="Array:"
+            Field:
+                read_only=True
+                text << wc.array
+
+#    wafer_type=Enum("A", "B", "C", "D")
+
+#    x_offset=Int()
+#    x_mult=Int()    
+#    y_offset=Int()
+#    y_mult=Int()
+#    N_chips=Int()
+            
+        Html:
+            source << wc.html_text

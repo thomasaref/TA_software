@@ -13,9 +13,9 @@ from enaml.core.declarative import d_
 from enaml.layout.api import spacer
 from taref.core.backbone import get_attr, get_tag, get_run_params, get_map, get_type, get_main_params, run_func
 from atom.api import Atom, Unicode, Str, Float, Int, ContainerList, List, Typed, Instance, Coerced, Bool, Range, Enum, Callable, FloatRange
-from taref.core.fundview_e import (aContainer, aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField, Var, BoolVar,
+from taref.core.fundview_e import ( aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField, Var, BoolVar,
                         IntVar, FloatVar, ChoiceIntVar, RangeVar, FloatRangeVar, ChoiceStrVar)
-
+from taref.core.fundcore_e import aContainer
 from taref.core.log import log_debug
 from taref.core.usertemps_e import UserInstrView
 from numpy import ndarray

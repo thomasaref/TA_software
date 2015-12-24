@@ -37,8 +37,7 @@ class EBL_IDT(EBL_Polygons, IDT):
     def _default_color(self):
         return "blue"
 
-    def _default_main_params(self):
-        return self.all_main_params
+    def _default_main_params2(self):
         mp=["idt_type", "qdt_type", "ft",
             "add_gate", "add_gnd", "add_teeth", "angle_x", "angle_y", "step_num",
             "Np", "a", "g", "W", "o","f0", "eta", "ef", "wbox", "hbox", "material",

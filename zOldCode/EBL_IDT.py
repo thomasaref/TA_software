@@ -5,9 +5,9 @@ Created on Thu Jun 25 11:43:01 2015
 @author: thomasaref
 """
 
-from taref.saw.idt import IDT
+from a_IDT import IDT
 from atom.api import Float, Bool, Enum, Int
-from taref.ebl.polygons import EBL_Polygons
+from EBL_Polygons import EBL_Polygons
 from numpy import  mod
 
 class EBL_IDT(EBL_Polygons, IDT):
@@ -37,8 +37,7 @@ class EBL_IDT(EBL_Polygons, IDT):
     def _default_color(self):
         return "blue"
 
-    def _default_main_params(self):
-        return self.all_main_params
+    def _default_main_params2(self):
         mp=["idt_type", "qdt_type", "ft",
             "add_gate", "add_gnd", "add_teeth", "angle_x", "angle_y", "step_num",
             "Np", "a", "g", "W", "o","f0", "eta", "ef", "wbox", "hbox", "material",
