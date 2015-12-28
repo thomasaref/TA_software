@@ -7,6 +7,7 @@ Created on Mon Aug 24 12:38:54 2015
 
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
+from taref.core.log import log_debug
 
 def show(*agents):
     """a powerful showing function for any Atom object(s). Checks if object has a view_window property and otherwise uses a default.
@@ -16,7 +17,11 @@ def show(*agents):
         from chief_e import agentView, chiefView, basicView#, LogWindow
     loc_chief=None
     for n, a in enumerate(agents):
+        log_debug(a)
+        log_debug(hasattr(a, "view_window"))
+
         if hasattr(a, "view_window"):
+            log_debug("view_window")
             view=a.view_window
         else:
             view=agentView(agent=a)

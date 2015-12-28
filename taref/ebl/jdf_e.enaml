@@ -5,31 +5,86 @@ Created on Tue Dec 22 20:53:05 2015
 @author: thomasaref
 """
 
-from enaml.widgets.api import Window, HGroup, MultilineField
+from enaml.widgets.api import Window, PushButton, HGroup, MultilineField, VGroup, ObjectCombo, Label, Form, Html
+from enaml.layout.api import spacer
+from taref.core.fundcore_e import UnitIntField, aHGroup, aWindow, UnitFloatField
 
-enamldef JDFView(Window): sv:
+enamldef LayoutView(aWindow):
+    initial_size=(800,800)
+
+    VGroup:
+        Html:
+            source << jdf.wafer_coords.html_text
+
+enamldef JDF_View(aWindow): sv:
     attr jdf
     title="JDF View"
     initial_size=(800,800)
     #alias jdf_text: mlf.text
     #alias output_jdf : out_mlf.text
-    HGroup:
-        MultilineField: mlf:
-            text := jdf.text
-        MultilineField: out_mlf:
-            text << jdf.output_jdf
+    VGroup:
+#        aHGroup:
+#            VGroup:
+#                Label:
+#                    text="Wafer type"
+#                ObjectCombo: 
+#                    items = list(jdf.wafer_coords.get_member("wafer_type").items)
+#                    selected := jdf.wafer_coords.wafer_type
+#            VGroup:
+#                Label:
+#                    text="Diameter"
+#                UnitFloatField:
+#                    uvalue := jdf.wafer_coords.diameter
+#                    minimum = 0.0
+#                    maximum=10.0
+#                    unit="in"
+#            VGroup:
+#                Label:
+#                    text="Chip size"
+#                UnitIntField:
+#                    uvalue := jdf.wafer_coords.chip_size
+#                    minimum = 0
+#                    unit="um"
+#            VGroup:
+#                Label:
+#                    text="Gap size"
+#                UnitIntField:
+#                    uvalue := jdf.wafer_coords.gap_size
+#                    minimum = 0
+#                    unit="um"
+#            VGroup:
+#                Label:
+#                    text="Bad Coordinate type:"
+#                ObjectCombo: 
+#                    items = list(jdf.wafer_coords.get_member("bad_coord_type").items)
+#                    selected := jdf.wafer_coords.bad_coord_type
+#            VGroup:
+#                Label:
+#                    text="Redistribute coordinates:"
+#                PushButton:
+#                    text = "Distribute"
+#                    clicked :: 
+#                        jdf.distribute_coords()
+#            
+        HGroup:
+            MultilineField: mlf:
+                text := jdf.text
+            MultilineField: out_mlf:
+                read_only=True
+                text << jdf.output_jdf
 
+       
         
-if __name__=="__main__":
-    from atom.api import Atom, Unicode
-    class tester(Atom):
-        output_jdf=Unicode()
-        text=Unicode()
-        
-        def _observe_text(self, change):
-            self.output_jdf=self.text
-    test=tester()    
-
-enamldef Main(JDFView):
-    jdf = test
-    
+#if __name__=="__main__":
+#    from atom.api import Atom, Unicode
+#    class tester(Atom):
+#        output_jdf=Unicode()
+#        text=Unicode()
+#        
+#        def _observe_text(self, change):
+#            self.output_jdf=self.text
+#    test=tester()    
+#
+#enamldef Main(JDFView):
+#    jdf = test
+#    

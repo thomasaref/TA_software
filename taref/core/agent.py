@@ -6,7 +6,7 @@ Created on Sat Jul  4 13:03:26 2015
 """
 from atom.api import Unicode, Enum, Float, Int, ContainerList, Callable, Bool, List
 from taref.core.chief import chief
-from taref.core.backbone import Backbone, log_func, _UPDATE_PREFIX_
+from taref.core.backbone import Backbone, log_func, _UPDATE_PREFIX_, get_attr
 
 from functools import wraps
 from taref.core.log import log_debug
@@ -116,6 +116,10 @@ class SubAgent(Backbone):
     def abort(self):
         """shortcut to chief's abort control"""
         return self.chief.abort
+
+    @property
+    def default_list(self):
+        return []
         
     def __init__(self, **kwargs):
         """extends Backbone __init__ to add agent to boss's agent list
@@ -133,12 +137,17 @@ class SubAgent(Backbone):
                 argnames.remove("self")
             f.argnames=argnames
             for name in argnames:
-                print name
                 upd_list=self.get_tag(name, "update", [])
                 if update_func not in upd_list:
                     upd_list.append(update_func)
                     self.set_tag(name, update=upd_list)
-      
+        log_debug(self.default_list)                    
+        for param in self.default_list:
+            if param not in kwargs and not hasattr(self, "_default_"+param) and hasattr(self, "_update_"+param):
+                setattr(self, param, self.get_default(param))
+            else:
+                setattr(self, param, getattr(self, param))
+                    
 class Spy(SubAgent):
     updating=Bool(True).tag(private=True)
         
@@ -152,10 +161,12 @@ class Spy(SubAgent):
     def log_changes(self, change):
         """a simple logger for all changes"""
         if change["type"]!="create":
+            log_debug("log changes")
             self.set_log(change["name"], change["value"])
             self.do_update(change["name"])
             
     def do_update(self, name):
+        log_debug(name)
         if self.updating:
             self.updating=False
             results=self.search_update(name)
@@ -171,18 +182,18 @@ class Spy(SubAgent):
         for update_func in self.get_tag(param, "update", []):
             param=update_func.split("_update_")[1]
             if not param in results.keys():
-                argnames=getattr(self, update_func).im_func.argnames
-                argvalues= [results.get(arg, getattr(self, arg)) for arg in argnames]
-                kwargs=dict(zip(argnames,argvalues))
-                result=getattr(self, update_func)(**kwargs)
-                results[param]=result
-                self.search_update(param, results)
+                argnames=get_attr(getattr(self, update_func).im_func, "argnames")
+                if argnames is not None:
+                    argvalues= [results.get(arg, getattr(self, arg)) for arg in argnames]
+                    kwargs=dict(zip(argnames,argvalues))
+                    result=getattr(self, update_func)(**kwargs)
+                    results[param]=result
+                    self.search_update(param, results)
         return results
 
     def get_default(self, name, update_func=None):
         if update_func is None:
             update_func="_update_"+name
-        #update_func=self.get_tag(name, "default", "_update_"+name)
         argnames=getattr(self, update_func).im_func.argnames
         argvalues= [getattr(self, arg) for arg in argnames]
         kwargs=dict(zip(argnames,argvalues))

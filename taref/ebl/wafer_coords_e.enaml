@@ -5,39 +5,90 @@ Created on Thu Dec 24 01:36:14 2015
 @author: thomasaref
 """
 
-from enaml.widgets.api import Window, Html, Container, VGroup, HGroup, Label, Form, Field, ObjectCombo
-from taref.core.fundcore_e import UnitIntField, aHGroup, aWindow
+from enaml.widgets.api import (Window, PushButton, Html, Container, VGroup, HGroup, Label, 
+                               Form, Field, ObjectCombo)
+from taref.core.fundcore_e import UnitIntField, aHGroup, aWindow, UnitFloatField
 from enaml.layout.api import spacer
-                  
 
-#template Labelled(Content, item):
-#     alias hg.content : content
-#     HGroup: hg:
-#        trailing_spacer=spacer
-#        Label:
-#            text=wc.get_tag(item, "label", item)
-#        Content: content:
-#            pass
-            
+enamldef WaferCoordsView(aWindow):
+    attr wc
+    VGroup:        
+        aHGroup:
+            VGroup:
+                Label:
+                    text="Wafer type"
+                ObjectCombo: 
+                    items = list(wc.get_member("wafer_type").items)
+                    selected := wc.wafer_type
+            VGroup:
+                Label:
+                    text="Diameter"
+                UnitFloatField:
+                    uvalue := wc.diameter
+                    minimum = 0.0
+                    maximum=10.0
+                    unit="in"
+            VGroup:
+                Label:
+                    text="Chip size"
+                UnitIntField:
+                    uvalue := wc.chip_size
+                    minimum = 0
+                    unit="um"
+            VGroup:
+                Label:
+                    text="Gap size"
+                UnitIntField:
+                    uvalue := wc.gap_size
+                    minimum = 0
+                    unit="um"
+            VGroup:
+                Label:
+                    text="Bad Coordinate type:"
+                ObjectCombo: 
+                    items = list(wc.get_member("bad_coord_type").items)
+                    selected := wc.bad_coord_type
+            VGroup:
+                Label:
+                    text="Redistribute coordinates:"
+                PushButton:
+                    text = "Distribute"
+                    clicked :: 
+                        wc.distribute_event()
+        Html:
+            source <<  wc.html_text
+        Html:
+            source <<  wc.html_text2
+                                     
 enamldef Main(aWindow):
     attr wc
     VGroup:
-        aHGroup:
-            trailing_spacer=spacer
-            Label:
-                text="Wafer type"
-            ObjectCombo: 
-                items = list(wc.get_member("wafer_type").items)
-                selected := wc.wafer_type
+        Form:
+            aHGroup:
+                trailing_spacer=spacer
+                Label:
+                    text="Wafer type"
+                ObjectCombo: 
+                    items = list(wc.get_member("wafer_type").items)
+                    selected := wc.wafer_type
+            aHGroup:
+                trailing_spacer=spacer
+                Label:
+                    text="N chips"
+                UnitIntField:
+                    read_only=True
+                    uvalue << wc.N_chips
+                    minimum = 0
+
         Form:
             aHGroup:
                 trailing_spacer=spacer
                 Label:
                     text="Diameter"
-                UnitIntField:
+                UnitFloatField:
                     uvalue := wc.diameter
-                    minimum = 0
-                    maximum=10
+                    minimum = 0.0
+                    maximum=10.0
                     unit="in"
             aHGroup:
                 trailing_spacer=spacer
@@ -71,15 +122,78 @@ enamldef Main(aWindow):
                 text="Array:"
             Field:
                 read_only=True
-                text << wc.array
+                text << unicode(wc.array)
 
-#    wafer_type=Enum("A", "B", "C", "D")
+        Form:
+            aHGroup:
+                trailing_spacer=spacer
+                Label:
+                    text="X offset"
+                UnitIntField:
+                    uvalue := wc.x_offset
+                    minimum = 0
+                    unit="um"
+            aHGroup:
+                trailing_spacer=spacer
+                Label:
+                    text="x_mult"
+                UnitIntField:
+                    read_only=True
+                    uvalue << wc.x_mult
+                    minimum = 0
+                    unit="um"
+            aHGroup:
+                trailing_spacer=spacer
+                Label:
+                    text="Y offset"
+                UnitIntField:
+                    uvalue := wc.y_offset
+                    minimum = 0
+                    unit="um"
+            aHGroup:
+                trailing_spacer=spacer
+                Label:
+                    text="y_mult"
+                UnitIntField:
+                    read_only=True
+                    uvalue := wc.y_mult
+                    minimum = 0
+                    unit="um"
 
-#    x_offset=Int()
-#    x_mult=Int()    
-#    y_offset=Int()
-#    y_mult=Int()
-#    N_chips=Int()
+            aHGroup:
+                trailing_spacer=spacer
+                Label:
+                    text="Bad Coordinate type:"
+                ObjectCombo: 
+                    items = list(wc.get_member("bad_coord_type").items)
+                    selected := wc.bad_coord_type
             
         Html:
             source << wc.html_text
+            
+                              
+enamldef FullWaferView(aWindow):
+    attr fw
+    VGroup:
+        Form:
+            aHGroup:
+                trailing_spacer=spacer
+                Label:
+                    text="Diameter"
+                UnitIntField:
+                    uvalue := fw.diameter
+                    minimum = 0
+                    maximum=10
+                    unit="in"
+#            aHGroup:
+#                trailing_spacer=spacer
+#                Label:
+#                    text="Radius"
+#                UnitIntField:
+#                    read_only=True
+#                    uvalue << wc.radius
+#                    minimum = 0
+#                    unit="um"
+            
+        Html:
+            source << fw.html

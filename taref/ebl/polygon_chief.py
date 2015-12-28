@@ -11,8 +11,21 @@ from taref.core.save_file import Save_TXT
 from atom.api import Typed, Float, Enum, Callable, Dict
 from enaml import imports
 from collections import OrderedDict
+from taref.ebl.jdf import JDF_Top, JDF_Pattern, JDF_Assign
 
 class Polygon_Chief(Chief):
+    jdf=Typed(JDF_Top)
+    
+    def _default_jdf(self):
+        jdf=JDF_Top()
+        assign_list=[]
+        for n, p in enumerate(self.agents):
+            jdf.patterns.append(JDF_Pattern(num=n+1, name=p.name))
+            assign_list.append("P({0})".format(n+1))
+            #jdf.arrays[0].assigns.append(JDF_Assign(assign_type=["P({0})".format(n+1)], short_name=p.name))
+        jdf.arrays[0].assigns.append(JDF_Assign(assign_type=assign_list))
+        return jdf
+        
     angle_x=Float(0.3e-6).tag(desc="shift in x direction when doing angle evaporation", unit="um")
     angle_y=Float(0.0e-6).tag(desc="shift in y direction when doing angle evaporation", unit="um")
     view_type=Enum("pattern", "angle")

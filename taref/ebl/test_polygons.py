@@ -37,6 +37,12 @@ class Test_Polygons(EBL_Polygons):
 if __name__=="__main__":
     print letter_A(0.0, 0.0, 10.0e-6, 1.0e-6)
     a=Test_Polygons()
-    a.make_polylist()
-    print a.verts
+    b=Test_Polygons()
+    #a.chief.jdf.distribute_coords()
+    print a.chief.jdf.arrays[0].assigns[0].pos_assign
+    print a.chief.jdf.jdf_produce()
+    print a.chief.jdf.output_jdf
+    
+    #a.make_polylist()
+    #print a.verts
     a.show()

@@ -8,8 +8,9 @@ Created on Mon Jun  1 10:46:56 2015
 #from a_Base import Base, NoShowBase
 #from Plotter import Plotter
 #from taref.core.text_editor import Text_Editor
-from EBL_quarter_coords import distribute_coords, get_GLM, get_Array
-from atom.api import Typed, Dict, Unicode, ContainerList, Int, Float, Atom, List, Coerced, Enum
+from taref.ebl.wafer_coords import WaferCoords
+#from EBL_quarter_coords import distribute_coords, get_GLM, get_Array
+from atom.api import Typed, Dict, Unicode, ContainerList, Int, Float, Atom, List, Coerced, Enum, observe
 from taref.core.log import log_info, log_debug, make_log_file, log_warning
 from taref.core.shower import show
 from taref.core.backbone import set_tag, get_tag
@@ -32,9 +33,16 @@ def tuple_split(tempstr):
 class JDF_Assign(Atom):
     """describes a jdf assign statement. defaults to a single pattern at position 1,1"""
     assign_type=List(default=['P(1)']).tag(desc="list of assigns")
-    pos_assign=List(default=[(1,1)]).tag(desc="list of tuples of position")#.tag(inside_type=jdf_pos)#inside_labels=["x", "y"])
+    pos_assign=List(default=[(1,1),]).tag(desc="list of tuples of position")#.tag(inside_type=jdf_pos)#inside_labels=["x", "y"])
     shot_assign=Unicode().tag(desc="shot mod table name")# ContainerList(default=[0])
     comment=Unicode().tag(desc="comment on assign")
+    short_name=Unicode().tag(desc="short name used for display")
+    
+    def _default_pos_assign(self):
+        return [(1,1)]
+        
+    def _default_short_name(self):
+        return self.comment.split(" ")[0]
     
     @property
     def jdf_output(self):
@@ -50,7 +58,7 @@ class JDF_Assign(Atom):
 
     def __init__(self, **kwargs):
         """Processes kwargs to allow string definition to be passes as well"""
-        tempstr=kwargs.pop("tempstr", "")
+        tempstr=kwargs.pop("tempstr", "ASSIGN -> ((1,1))")
         kwargs["comment"]=kwargs.get("comment", "")
         assign_type=kwargs.get("assign_type", tempstr.split("ASSIGN")[1].split("->")[0].strip().split("+"))
         kwargs["assign_type"]=[unicode(at) for at in assign_type]
@@ -60,7 +68,7 @@ class JDF_Assign(Atom):
             for item in tempstr.split("->")[1].partition("(")[2].rpartition(")")[0].split(")"):
                 if "(" in item:
                     xcor, ycor=item.split("(")[1].split(",")
-                    kwargs["pos_assign"].append((xcor,ycor))
+                    kwargs["pos_assign"].append((int(xcor), int(ycor)))
                 elif "," in item:
                     kwargs["shot_assign"]=unicode(item.split(",")[1].strip())
         super(JDF_Assign, self).__init__(**kwargs)
@@ -78,6 +86,9 @@ class JDF_Array(Atom):
     assigns=ContainerList().tag(no_spacer=True)# inside_type=jdf_assign)
     comment=Unicode()
 
+    def _default_assigns(self):
+        return []
+        
     @property
     def jdf_output(self):
         array_comment=format_comment(self.comment)
@@ -138,7 +149,8 @@ class JDF_Pattern(Atom):
 
     def __init__(self, **kwargs):
         """Processes kwargs to allow string definition to be passed as well"""
-        tempstr=kwargs.pop("tempstr", "")
+        tempstr=kwargs.pop("tempstr", "P(1)''.v30 (0,0)")
+
         kwargs["comment"]=kwargs.get("comment", "")
         kwargs["name"]=kwargs.get("name", tempstr.split("'")[1].split(".")[0])
         kwargs["num"]=kwargs.get("num", tempstr.split("(")[1].split(")")[0])
@@ -157,8 +169,33 @@ def parse_comment(line, sep=";"):
     
 class JDF_Top(Atom):
     """Top class that controls distribution of patterns into JDF"""
-    #pattern_dict=Dict()
-    quarter_wafer=Enum("A", "B", "C", "D")
+    wafer_coords=Typed(WaferCoords)
+    
+    @observe("wafer_coords.distribute_event")
+    def observe_distrib_event(self, change):
+        self.distribute_coords()
+        tt=['\n<table border="1">']
+        for y in range(self.wafer_coords.N_chips): 
+            tt.append('<tr>')
+            for x in range(self.wafer_coords.N_chips):
+                tt.append('<td>')
+                item=(x+1, y+1)
+                for assign in self.arrays[0].assigns:
+                    if item in assign.pos_assign:
+                        tt.append(assign.short_name)
+                tt.append('</td>')
+            tt.append('</tr>')
+        tt.append("</table>")
+        self.wafer_coords.html_text2="\n".join(tt)
+        
+    @property
+    def view_window(self):
+        with imports():
+            from taref.ebl.jdf_e import JDF_View
+        return JDF_View(jdf=self)
+
+    def _default_wafer_coords(self):
+        return WaferCoords()
             
     def set_valcom(self, name, value, comment=""):
         """utility function for setting a comment while setting value"""        
@@ -172,16 +209,21 @@ class JDF_Top(Atom):
             inlist.append(fmt_str.format(value, comment))
 
     def distribute_coords(self, num=None):
-        self.comments=["distributed main array for quarter wafer {}".format(self.quarter_wafer)]
-        self.Px, self.Py, self.Qx, self.Qy=get_GLM(self.quarter_wafer)
-        
+        """distribute coords using wafer_coords object"""
+        self.comments=["distributed main array for quarter wafer {}".format(self.wafer_coords.wafer_type)]
+        self.Px, self.Py, self.Qx, self.Qy=self.wafer_coords.GLM
         if num is None:
             num=len(self.patterns)
-        coords=distribute_coords(num, self.quarter_wafer)
+        coords=self.wafer_coords.distribute_coords(num)
         for n, c in enumerate(coords):
+            #if n<len(self.arrays[0].assigns):
             self.arrays[0].assigns[n].pos_assign=c
+            #else:
+            #self.arrays[0].assigns.append(JDF_Assign())
         (self.arrays[0].x_start, self.arrays[0].x_num, self.arrays[0].x_step, 
-                self.arrays[0].y_start, self.arrays[0].y_num, self.arrays[0].y_step)=get_Array(self.quarter_wafer)        
+         self.arrays[0].y_start, self.arrays[0].y_num, self.arrays[0].y_step)=self.wafer_coords.array
+        self.output_jdf=self.jdf_produce()
+        self.text=self.output_jdf
         
 #    def show(self):
 #        show(*self.agents)
@@ -229,6 +271,8 @@ class JDF_Top(Atom):
     patterns=ContainerList().tag(desc="patterns in JDF")#.tag(width='max', inside_type=jdf_pattern)
     jdis=ContainerList().tag(desc="jdis in JDF")
 
+    def _default_arrays(self):
+        return [JDF_Main_Array()]
 #    def do_plot(self, a=None):
 #        if a==None:
 #            a=self.arrays[0]
@@ -248,12 +292,7 @@ class JDF_Top(Atom):
         self.jdf_parse(self.text)
         self.output_jdf=self.jdf_produce()
             
-    @property
-    def view_window(self):
-        with imports():
-            from taref.ebl.jdf_e import JDFView
-        return JDFView(jdf=self)
-
+    
     def clear_JDF(self):
         self.comments=[]
         self.arrays=[]
@@ -509,7 +548,10 @@ LAYER 1
 
 END 1"""
     a.text=jdf_data
-    show(a)
+    print a.arrays[0].assigns[0].pos_assign
+    show(a, a.wafer_coords)
+    print a.arrays[0].assigns[0].pos_assign
+    
     #a=Text_Editor(name="Text_Editor", dir_path="/Volumes/aref/jbx9300/job/TA150515B/IDTs", main_file="idt.jdf")
     
     #class Pattern(Atom):
