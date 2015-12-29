@@ -5,11 +5,20 @@ Created on Tue Dec 22 16:36:03 2015
 @author: thomasaref
 """
 
-from taref.ebl.polygons import EBL_Polygons, letter_A
+from taref.ebl.polygons import EBL_Polygons#, letter_A
 
 class Test_Polygons(EBL_Polygons):
     def make_polylist(self):
         self.Dig("A", 0.0, 0.0, 10.0e-6, 2.0e-6)
+
+class Test_Polygons2(EBL_Polygons):
+    def make_polylist(self):
+        self.Dig("C", 0.0, 0.0, 10.0e-6, 2.0e-6)
+    
+    def _default_color(self):
+        return "blue"
+
+
 #
 #(xr+wr/2.0-lw/2.0, yr-wr),
 #
@@ -35,9 +44,9 @@ class Test_Polygons(EBL_Polygons):
 #                (xr-wr/2.0+lw/2.0, yr-wr)],        
 #xr+(lw+wr)/2.0-lw/2.0
 if __name__=="__main__":
-    print letter_A(0.0, 0.0, 10.0e-6, 1.0e-6)
+    #print letter_A(0.0, 0.0, 10.0e-6, 1.0e-6)
     a=Test_Polygons()
-    b=Test_Polygons()
+    b=Test_Polygons2()
     #a.chief.jdf.distribute_coords()
     print a.chief.jdf.arrays[0].assigns[0].pos_assign
     print a.chief.jdf.jdf_produce()

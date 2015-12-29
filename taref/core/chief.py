@@ -13,7 +13,7 @@ from taref.core.read_file import Read_File
 from taref.core.save_file import Save_File, Save_HDF5
 from Plotter import Plotter
 from taref.core.shower import show
-
+from collections import OrderedDict
 #import sys
 from taref.core.backbone import do_it_if_needed
 
@@ -28,10 +28,24 @@ class Chief(Atom):
     save_file=Typed(Save_File)
     saving=Enum(False, True, "No buffer")
     save_factory=Callable(Save_HDF5)
-    agents=ContainerList()
+    #agents=ContainerList()
+    agent_dict=Typed(OrderedDict)
     plot=Typed(Plotter, ())
     plots=ContainerList()
 
+    def _default_agent_dict(self):
+        return OrderedDict()
+
+    @property
+    def agents(self):
+        """returns list of agents"""
+        return self.agent_dict.values()
+
+    @property
+    def agent_names(self):
+        """returns list of agent names"""
+        return self.agent_dict.keys()
+        
     BASE_DIR=Unicode("/Users/thomasaref/Dropbox/Current stuff/TA_software")
     DIVIDER=Unicode("/")
     LOG_NAME=Unicode("record")

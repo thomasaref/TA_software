@@ -5,16 +5,21 @@ Created on Mon Jun  1 10:46:56 2015
 @author: thomasaref
 """
 
-#from a_Base import Base, NoShowBase
-#from Plotter import Plotter
-#from taref.core.text_editor import Text_Editor
 from taref.ebl.wafer_coords import WaferCoords
-#from EBL_quarter_coords import distribute_coords, get_GLM, get_Array
 from atom.api import Typed, Dict, Unicode, ContainerList, Int, Float, Atom, List, Coerced, Enum, observe
 from taref.core.log import log_info, log_debug, make_log_file, log_warning
 from taref.core.shower import show
 from taref.core.backbone import set_tag, get_tag
 from enaml import imports
+from re import compile as compiler
+    
+P_FINDER=compiler("P\((\d+)\)")
+def find_P_nums(key):
+    return [int(p) for p in P_FINDER.findall(key)]
+
+A_FINDER=compiler("A\((\d+)\)")
+def find_A_nums(key):
+    return [int(a) for a in A_FINDER.findall(key)]
 
 SEPARATOR=";"
 def format_comment(comment, sep=SEPARATOR, fmt_str=" {0} {1}"):
@@ -38,15 +43,29 @@ class JDF_Assign(Atom):
     comment=Unicode().tag(desc="comment on assign")
     short_name=Unicode().tag(desc="short name used for display")
     
+    @property
+    def A_nums(self):
+        return find_A_nums(self.assign_str)
+
+    @property
+    def P_nums(self):
+        return find_P_nums(self.assign_str)
+
     def _default_pos_assign(self):
         return [(1,1)]
         
     def _default_short_name(self):
         return self.comment.split(" ")[0]
-    
+        
+    def xy_offset(self, x_start, x_step, y_start, y_step):
+        return [(x_start+(p[0]-1)*x_step, y_start+(p[1]-1)*y_step) for p in self.pos_assign]
+
+    @property
+    def assign_str(self):
+        return "+".join(self.assign_type)
+
     @property
     def jdf_output(self):
-        asgn_type="+".join(self.assign_type)
         pos_asgn=""
         for pos in self.pos_assign:
             pos_asgn+="({x},{y}),".format(x=pos[0], y=pos[1])
@@ -54,7 +73,7 @@ class JDF_Assign(Atom):
         shot_asgn=format_comment(self.shot_assign, sep=",", fmt_str="{0} {1}")
         asgn_comment=format_comment(self.comment)
         return "\tASSIGN {asgn_type} -> ({pos_asgn}{shot_asgn}) {asgn_comment}".format(
-                  asgn_type=asgn_type, pos_asgn=pos_asgn, shot_asgn=shot_asgn, asgn_comment=asgn_comment)
+                  asgn_type=self.assign_str, pos_asgn=pos_asgn, shot_asgn=shot_asgn, asgn_comment=asgn_comment)
 
     def __init__(self, **kwargs):
         """Processes kwargs to allow string definition to be passes as well"""
@@ -76,16 +95,19 @@ class JDF_Assign(Atom):
 class JDF_Array(Atom):
     """describes a jdf array. defaults to an array centered at 0,0 with one item.
     array_num=0 corresponds to the main array"""
-    array_num=Coerced(int) #Int()
-    x_start=Coerced(int) #Int()
-    x_num=Coerced(int, (1,)) #Int(1)
-    x_step=Coerced(int) #Int()
-    y_start=Coerced(int) #Int()
-    y_num=Coerced(int, (1,)) #Int(1)
-    y_step=Coerced(int) #Int()
-    assigns=ContainerList().tag(no_spacer=True)# inside_type=jdf_assign)
+    array_num=Coerced(int)
+    x_start=Coerced(int)
+    x_num=Coerced(int, (1,))
+    x_step=Coerced(int)
+    y_start=Coerced(int)
+    y_num=Coerced(int, (1,)) 
+    y_step=Coerced(int) 
+    assigns=ContainerList().tag(no_spacer=True)
     comment=Unicode()
 
+    def xy_offset(self, index=0):
+        return self.assigns[index].xy_offset(self.x_start, self.x_step, self.y_start, self.y_step)
+        
     def _default_assigns(self):
         return []
         

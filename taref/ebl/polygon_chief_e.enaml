@@ -13,7 +13,7 @@ enamldef EBLView(coreWindow): sv:
     attr chief
     title="EBL View"
     activated::
-        chief.do_plot()
+        chief.plot_JDF()
     Container:
         PlotWindow: plot_window:
             visible=True

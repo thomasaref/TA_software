@@ -12,6 +12,7 @@ from atom.api import Typed, Float, Enum, Callable, Dict
 from enaml import imports
 from collections import OrderedDict
 from taref.ebl.jdf import JDF_Top, JDF_Pattern, JDF_Assign
+from taref.ebl.polygon_backbone import sPoly,minx, maxx, miny, maxy
 
 class Polygon_Chief(Chief):
     jdf=Typed(JDF_Top)
@@ -25,6 +26,25 @@ class Polygon_Chief(Chief):
             #jdf.arrays[0].assigns.append(JDF_Assign(assign_type=["P({0})".format(n+1)], short_name=p.name))
         jdf.arrays[0].assigns.append(JDF_Assign(assign_type=assign_list))
         return jdf
+
+    def plot_JDF(self):
+        for p in self.jdf.patterns:
+            a=self.agent_dict[p.name] #[agent for agent in self.agents if agent.name==p.name][0]
+            verts=sPoly(a)
+            self.plot.set_data(a.name, verts, a.color)
+            xmin=minx(verts)
+            xmax=maxx(verts)
+            ymin=miny(verts)
+            ymax=maxy(verts)
+            
+        #xmin=min(b.xmin for b in self.agents)
+        #xmax=max(b.xmax for b in self.agents)
+        #ymin=min(b.ymin for b in self.agents)
+        #ymax=max(b.ymax for b in self.agents)
+        self.plot.set_xlim(xmin, xmax)
+        self.plot.set_ylim(ymin, ymax)
+        self.plot.draw()
+            
         
     angle_x=Float(0.3e-6).tag(desc="shift in x direction when doing angle evaporation", unit="um")
     angle_y=Float(0.0e-6).tag(desc="shift in y direction when doing angle evaporation", unit="um")

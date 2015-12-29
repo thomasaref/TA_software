@@ -125,9 +125,17 @@ class SubAgent(Backbone):
         """extends Backbone __init__ to add agent to boss's agent list
         and give unique default name."""
         super(SubAgent, self).__init__(**kwargs)
-        if "name" not in kwargs:
-            self.name="{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.chief.agents))
-        self.chief.agents.append(self)
+        if self.name=="":
+            name=self.base_name
+        if name in self.chief.agent_dict:
+            name="{name}__{num}".format(name=name, num=len(self.chief.agent_dict))
+        self.name=name
+        self.chief.agent_dict[self.name]=self
+
+        #if "name" not in kwargs:
+        #    self.name="{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.chief.agents))
+        #self.chief.agents.append(self)
+        
         updates=[attr[0] for attr in getmembers(self) if attr[0].startswith(_UPDATE_PREFIX_)]
         for update_func in updates:
             f=getattr(self, update_func).im_func
@@ -141,7 +149,7 @@ class SubAgent(Backbone):
                 if update_func not in upd_list:
                     upd_list.append(update_func)
                     self.set_tag(name, update=upd_list)
-        log_debug(self.default_list)                    
+        #log_debug(self.default_list)                    
         for param in self.default_list:
             if param not in kwargs and not hasattr(self, "_default_"+param) and hasattr(self, "_update_"+param):
                 setattr(self, param, self.get_default(param))
