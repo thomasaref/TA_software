@@ -10,7 +10,8 @@ from taref.core.save_file import Save_DXF
 from taref.ebl.beamer_gen import BeamerGen
 from taref.ebl.polygon_chief import polygon_chief
 from taref.core.log import log_warning
-from taref.ebl.polygon_backbone import minx, maxx, miny, maxy, sP, sPoly, sR, sC, sT, sCT, sCross, sDig
+from taref.ebl.polygon_backbone import (minx, maxx, miny, maxy, sP, sPoly,
+                                        sR, sC, sT, sCT, sCross, sDig, sWaferDig)
 
 class EBL_Polygons(SubAgent):
     color=Enum("green", "blue", "red", "purple", "brown", "black").tag(desc="color or datatype of item, could be used for dosing possibly")
@@ -105,13 +106,17 @@ class EBL_Polygons(SubAgent):
         """adds a centered toothed rectangle to the polylist"""
         sCT(xr, yr, wr, hr, ot=ot, nt=nt, vs=self.verts)
 
-    def Cross(self, xr, yr, wr, lw):
+    def Cross(self, xr, yr, wr, hr, lw):
         """adds a cross to the polylist"""
-        sCross(xr, yr, wr, lw, self.verts)
+        sCross(xr, yr, wr, hr, lw, self.verts)
 
     def Dig(self, dig_key, xr, yr, wr, hr):
         """adds a digit to the polylist"""
         sDig(dig_key, xr, yr, wr, hr, self.verts)
+
+    def WaferDig(self, wafer_type, x_dig, y_dig, xr, yr, wr, hr):
+        sWaferDig(wafer_type, x_dig, y_dig, xr, yr, wr, hr, self.verts)
+
 
 if __name__=="__main__":
     a=EBL_Polygons()

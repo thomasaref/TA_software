@@ -19,6 +19,13 @@ from types import FunctionType
 
 from taref.core.log import log_info
 
+from itertools import chain
+
+def sqze(*args):
+    if len(args)==1:
+        return list(chain.from_iterable(args[0]))
+    return list(chain.from_iterable(args))
+
 _UPDATE_PREFIX_="_update_"
 
 def cap_case(name):
@@ -110,9 +117,13 @@ def get_main_params(obj):
 
 def get_attr(obj, name, none_value=None):
     """returns the attribute if the obj has it and the none_value if it does not"""
-    if hasattr(obj, str(name)):
-        return getattr(obj, name)
-    return none_value
+    return getattr(obj, name, none_value)
+
+def set_attr(self, name, value, **kwargs):
+    """utility function for setting tags while setting value"""        
+    setattr(self, name, value)
+    if kwargs!={}:
+        set_tag(self, name, **kwargs)
 
 def pass_func(*args, **kwargs):
     pass

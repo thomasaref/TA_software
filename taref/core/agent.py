@@ -125,11 +125,12 @@ class SubAgent(Backbone):
         """extends Backbone __init__ to add agent to boss's agent list
         and give unique default name."""
         super(SubAgent, self).__init__(**kwargs)
-        if self.name=="":
-            name=self.base_name
-        if name in self.chief.agent_dict:
-            name="{name}__{num}".format(name=name, num=len(self.chief.agent_dict))
-        self.name=name
+        agent_name=self.name        
+        if agent_name=="":
+            agent_name=self.base_name
+        if agent_name in self.chief.agent_dict:
+            agent_name="{name}__{num}".format(name=agent_name, num=len(self.chief.agent_dict))
+        self.name=agent_name
         self.chief.agent_dict[self.name]=self
 
         #if "name" not in kwargs:

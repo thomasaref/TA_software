@@ -5,27 +5,38 @@ Created on Mon Jun  1 10:46:56 2015
 @author: thomasaref
 """
 
-from taref.ebl.wafer_coords import WaferCoords
-from atom.api import Typed, Dict, Unicode, ContainerList, Int, Float, Atom, List, Coerced, Enum, observe
-from taref.core.log import log_info, log_debug, make_log_file, log_warning
+from taref.ebl.wafer_coords import FullWafer
+from atom.api import Typed, Unicode, Atom, List, Coerced, observe
+from taref.core.log import log_debug
 from taref.core.shower import show
-from taref.core.backbone import set_tag, get_tag
+from taref.core.backbone import set_attr, get_tag, sqze
 from enaml import imports
 from re import compile as compiler
     
 P_FINDER=compiler("P\((\d+)\)")
 def find_P_nums(key):
+    """utility function for extracting all P numbers from key"""
     return [int(p) for p in P_FINDER.findall(key)]
 
 A_FINDER=compiler("A\((\d+)\)")
 def find_A_nums(key):
+    """utility function for extracting all A numbers from key"""
     return [int(a) for a in A_FINDER.findall(key)]
 
 SEPARATOR=";"
 def format_comment(comment, sep=SEPARATOR, fmt_str=" {0} {1}"):
+    """utility function for including or not including a comment"""
     if comment!="":
         return fmt_str.format(sep, comment)
     return comment
+
+def parse_comment(line, sep=SEPARATOR):
+    """utility function that strips a text line of its comment and 
+    returns both the line and comment without padding spaces."""
+    tempstr, sep, comment=line.partition(sep)
+    tempstr=tempstr.strip()
+    comment=comment.strip()
+    return tempstr, comment
 
 def xy_string_split(tempstr):
     """utility function that processes a string list of tuples into a list"""
@@ -36,19 +47,26 @@ def tuple_split(tempstr):
     return tempstr.split("(")[1].split(")")[0].split(",")
 
 class JDF_Assign(Atom):
-    """describes a jdf assign statement. defaults to a single pattern at position 1,1"""
+    """describes a jdf assign statement. defaults to a single pattern P(1) at position 1,1"""
     assign_type=List(default=['P(1)']).tag(desc="list of assigns")
-    pos_assign=List(default=[(1,1),]).tag(desc="list of tuples of position")#.tag(inside_type=jdf_pos)#inside_labels=["x", "y"])
-    shot_assign=Unicode().tag(desc="shot mod table name")# ContainerList(default=[0])
+    pos_assign=List(default=[(1,1),]).tag(desc="list of tuples of position")
+    shot_assign=Unicode().tag(desc="shot mod table name")
     comment=Unicode().tag(desc="comment on assign")
-    short_name=Unicode().tag(desc="short name used for display")
+    short_name=Unicode().tag(desc="short name used for display in html table")
     
+    def dup_assign(self):
+        """duplicates assign as separate object using string parsing functionality"""
+        dup_str, dup_comment=parse_comment(self.jdf_output)
+        return JDF_Assign(tempstr=dup_str, comment=dup_comment)
+        
     @property
     def A_nums(self):
+        """all A numbers in assign_type"""
         return find_A_nums(self.assign_str)
 
     @property
     def P_nums(self):
+        """all P numbers in assign_type"""
         return find_P_nums(self.assign_str)
 
     def _default_pos_assign(self):
@@ -62,10 +80,12 @@ class JDF_Assign(Atom):
 
     @property
     def assign_str(self):
+        """utility combination of assign_type list as string"""
         return "+".join(self.assign_type)
 
     @property
     def jdf_output(self):
+        """produces output string for jdf"""
         pos_asgn=""
         for pos in self.pos_assign:
             pos_asgn+="({x},{y}),".format(x=pos[0], y=pos[1])
@@ -77,7 +97,7 @@ class JDF_Assign(Atom):
 
     def __init__(self, **kwargs):
         """Processes kwargs to allow string definition to be passes as well"""
-        tempstr=kwargs.pop("tempstr", "ASSIGN -> ((1,1))")
+        tempstr=kwargs.pop("tempstr", "ASSIGN P(1) -> ((1,1))")
         kwargs["comment"]=kwargs.get("comment", "")
         assign_type=kwargs.get("assign_type", tempstr.split("ASSIGN")[1].split("->")[0].strip().split("+"))
         kwargs["assign_type"]=[unicode(at) for at in assign_type]
@@ -102,7 +122,7 @@ class JDF_Array(Atom):
     y_start=Coerced(int)
     y_num=Coerced(int, (1,)) 
     y_step=Coerced(int) 
-    assigns=ContainerList().tag(no_spacer=True)
+    assigns=List()
     comment=Unicode()
 
     def xy_offset(self, index=0):
@@ -158,11 +178,15 @@ class JDF_Main_Array(JDF_Array):
 class JDF_Pattern(Atom):
     """describes a jdf pattern. has a number, location and name of file"""
     num=Coerced(int) 
-    x=Coerced(int) 
-    y=Coerced(int) 
+    x=Coerced(float) 
+    y=Coerced(float) 
     name=Unicode()
     comment=Unicode()
     
+    @property
+    def xy_offset(self):
+        return (self.x, self.y)
+
     @property
     def jdf_output(self):
         comment=format_comment(self.comment)
@@ -179,36 +203,42 @@ class JDF_Pattern(Atom):
         kwargs["x"]=kwargs.get("x", tempstr.split("(")[2].split(")")[0].split(",")[0])
         kwargs["y"]=kwargs.get("y", tempstr.split("(")[2].split(")")[0].split(",")[1])
         super(JDF_Pattern, self).__init__(**kwargs)
-
-def parse_comment(line, sep=";"):
-    """utility function that strips a text line of its comment and 
-    returns both the line and comment."""
-    tempstr, sep, comment=line.partition(sep)
-    tempstr=tempstr.strip()
-    comment=comment.strip()
-    return tempstr, comment
-    
-    
+        
 class JDF_Top(Atom):
     """Top class that controls distribution of patterns into JDF"""
-    wafer_coords=Typed(WaferCoords)
-    
+    wafer_coords=Typed(FullWafer)
+
+    @property
+    def xy_offsets(self):
+        """recursive traces down locations of all patterns"""
+        overall_dict={}
+        for pd in [self.p_off_recur(m_arr, p_off={}) for m_arr in self.main_arrays]:
+            for key in pd:
+                overall_dict[key]=overall_dict.get(key, [])+pd[key]
+        return overall_dict
+
+    def p_off_recur(self, p_arr, x_off_in=0, y_off_in=0, p_off={}):
+        """recursive search function for pattern locations"""
+        for a in p_arr.assigns:
+            for pa in a.pos_assign:
+                x_off=x_off_in+p_arr.x_start+(pa[0]-1)*p_arr.x_step
+                y_off=y_off_in+p_arr.y_start-(pa[1]-1)*p_arr.y_step
+                for p in [pattern for pattern in self.patterns if pattern.num in a.P_nums]:
+                    if p.name not in p_off:
+                        p_off[p.name]=[]
+                    p_off[p.name].append((x_off+p.x, y_off+p.y))
+                for arr in [array for array in self.sub_arrays if array.array_num in a.A_nums]:
+                    self.p_off_recur(arr, x_off, y_off, p_off)
+        return p_off
+
+    def assign_condition(self, item, n=0):
+        return [assign.short_name for assign in self.main_arrays[n].assigns if item in assign.pos_assign]
+        
     @observe("wafer_coords.distribute_event")
     def observe_distrib_event(self, change):
-        self.distribute_coords()
-        tt=['\n<table border="1">']
-        for y in range(self.wafer_coords.N_chips): 
-            tt.append('<tr>')
-            for x in range(self.wafer_coords.N_chips):
-                tt.append('<td>')
-                item=(x+1, y+1)
-                for assign in self.arrays[0].assigns:
-                    if item in assign.pos_assign:
-                        tt.append(assign.short_name)
-                tt.append('</td>')
-            tt.append('</tr>')
-        tt.append("</table>")
-        self.wafer_coords.html_text2="\n".join(tt)
+        #self.distribute_coords()
+        #self.wafer_coords.html_text2=self.wafer_coords.html_table_string(self.assign_condition)
+        print self.xy_offsets
         
     @property
     def view_window(self):
@@ -217,62 +247,48 @@ class JDF_Top(Atom):
         return JDF_View(jdf=self)
 
     def _default_wafer_coords(self):
-        return WaferCoords()
+        return FullWafer()
             
     def set_valcom(self, name, value, comment=""):
         """utility function for setting a comment while setting value"""        
-        setattr(self, name, value)
-        if comment!="":
-            set_tag(self, name, comment=comment)
+        set_attr(self, name, value, comment=comment)
 
     def append_valcom(self, inlist, name, fmt_str="{0}{1}", sep=";"):
             comment=format_comment(get_tag(self, name, "comment", ""))
             value=getattr(self, name)
             inlist.append(fmt_str.format(value, comment))
 
+    @property
+    def arrays(self):
+        return sqze(self.main_arrays, self.sub_arrays)
+        
     def distribute_coords(self, num=None):
         """distribute coords using wafer_coords object"""
         self.comments=["distributed main array for quarter wafer {}".format(self.wafer_coords.wafer_type)]
         self.Px, self.Py, self.Qx, self.Qy=self.wafer_coords.GLM
+        
+        assigns=[assign.dup_assign() for assign in self.main_arrays[0].assigns]
+        self.main_arrays=self._default_main_arrays()
+        for arr in self.main_arrays:
+            arr.assigns=[assign.dup_assign() for assign in assigns]
+            
         if num is None:
             num=len(self.patterns)
-        coords=self.wafer_coords.distribute_coords(num)
-        for n, c in enumerate(coords):
-            #if n<len(self.arrays[0].assigns):
-            self.arrays[0].assigns[n].pos_assign=c
-            #else:
-            #self.arrays[0].assigns.append(JDF_Assign())
-        (self.arrays[0].x_start, self.arrays[0].x_num, self.arrays[0].x_step, 
-         self.arrays[0].y_start, self.arrays[0].y_num, self.arrays[0].y_step)=self.wafer_coords.array
-        self.output_jdf=self.jdf_produce()
-        self.text=self.output_jdf
-        
-#    def show(self):
-#        show(*self.agents)
-#
-#    def pre_plot(self):
-#        for p in self.agents:
-#            p.verts=[]
-#            p.make_polylist()
-#            self.pattern_dict[p.name]=dict(verts=p.verts[:], color=p.color, layer=p.layer, plot_sep=p.plot_sep)
-#
-#        for key in self.pattern_dict:
-#            if self.pattern_dict[key]["plot_sep"]:
-#                self.plot.set_data(key, self.pattern_dict[key]["verts"], self.pattern_dict[key]["color"])
-#
-#        xmin=min(b.xmin for b in self.agents)
-#        xmax=max(b.xmax for b in self.agents)
-#        ymin=min(b.ymin for b in self.agents)
-#        ymax=max(b.ymax for b in self.agents)
-#        self.plot.set_xlim(xmin, xmax)
-#        self.plot.set_ylim(ymin, ymax)
-#        self.plot.draw()
-#
-#    @property
-#    def show_all(self):
-#        return True
+        for m, qw in enumerate(self.wafer_coords.quarter_wafers):
+            for n, c in enumerate(qw.distribute_coords(num)):
+                self.main_arrays[m].assigns[n].pos_assign=c[:]
+            self.main_arrays[m].x_start=qw.x_offset
+            self.main_arrays[m].x_num=qw.N_chips
+            self.main_arrays[m].x_step=qw.step_size
+    
+            self.main_arrays[m].y_start=qw.y_offset
+            self.main_arrays[m].y_num=qw.N_chips
+            self.main_arrays[m].y_step=qw.step_size
 
-    text=Unicode()
+        self.output_jdf=self.jdf_produce()
+        self.input_jdf=self.output_jdf
+
+    input_jdf=Unicode()
     output_jdf=Unicode()
     comments=List() 
 
@@ -289,35 +305,24 @@ class JDF_Top(Atom):
     shot=Coerced(int, (8,)).tag(desc="Shot size in nm. should divide 4 um evenly")
     resist=Coerced(int, (165,)).tag(desc="dose")
     resist_comment=Unicode()
-    arrays=ContainerList().tag(desc="arrays in JDF")#.tag(width='max', inside_type=jdf_array)
-    patterns=ContainerList().tag(desc="patterns in JDF")#.tag(width='max', inside_type=jdf_pattern)
-    jdis=ContainerList().tag(desc="jdis in JDF")
+    main_arrays=List().tag(desc="main arrays in JDF")
+    sub_arrays=List().tag(desc="arrays in JDF")#.tag(width='max', inside_type=jdf_array)
+    patterns=List().tag(desc="patterns in JDF")#.tag(width='max', inside_type=jdf_pattern)
+    jdis=List().tag(desc="jdis in JDF")
 
-    def _default_arrays(self):
+    def _default_main_arrays(self):
+        if self.wafer_coords.wafer_type=="Full":
+            return [JDF_Main_Array(), JDF_Main_Array(), JDF_Main_Array(), JDF_Main_Array()]
         return [JDF_Main_Array()]
-#    def do_plot(self, a=None):
-#        if a==None:
-#            a=self.arrays[0]
-#        for s in a.assigns:
-#            for p in s.assign_type:
-#                #generate verts
-#                if p[0]=="P":
-#                    verts=[t.name for t in self.patterns if t.num==int(p[2])][0]
-#                elif p[0]=="A":
-#                    pass #do_plot array given by num
-#            for o in s.pos_assign:
-#                x_ref=a.x_start+(int(o[0])-1)*a.x_step
-#                y_ref=a.y_start+(int(o[1])-1)*a.x_step
-#                print x_ref, y_ref #offset vertices by x_ref, y_ref
 
-    def _observe_text(self, change):
-        self.jdf_parse(self.text)
+    def _observe_input_jdf(self, change):
+        self.jdf_parse(self.input_jdf)
         self.output_jdf=self.jdf_produce()
-            
     
     def clear_JDF(self):
         self.comments=[]
-        self.arrays=[]
+        self.main_arrays=[]
+        self.sub_arrays=[]
         self.patterns=[]
         self.jdis=[]
 
@@ -326,9 +331,12 @@ class JDF_Top(Atom):
 
     def add_array(self, tempstr, comment):
         if ":" in tempstr:
-            self.arrays.append(JDF_Array(tempstr=tempstr, comment=comment))
+            array=JDF_Array(tempstr=tempstr, comment=comment)
+            self.sub_arrays.append(array)
         else:
-            self.arrays.append(JDF_Main_Array(tempstr=tempstr, comment=comment))
+            array=JDF_Main_Array(tempstr=tempstr, comment=comment)
+            self.main_arrays.append(array)
+        return array
             
         
     def jdf_parse(self, jdf_data):
@@ -352,14 +360,14 @@ class JDF_Top(Atom):
                 inside_layer=True
             if inside_path:
                 if 'ARRAY' in tempstr:
-                    self.add_array(tempstr, comment)
+                    array=self.add_array(tempstr, comment)
                 elif 'ASSIGN' in tempstr:
-                    self.arrays[-1].add_assign(tempstr, comment)
+                    array.add_assign(tempstr, comment)
                 elif 'CHMPOS' in tempstr:
                     M1x, M1y=tuple_split(tempstr)
-                    if len(self.arrays)>0:
-                        self.arrays[-1].M1x=M1x
-                        self.arrays[-1].M1y=M1y
+                    if len(self.main_arrays)>0:
+                        self.main_arrays[-1].M1x=M1x
+                        self.main_arrays[-1].M1y=M1y
                 elif "PEND" in tempstr:
                     inside_path=False
             elif inside_layer:
@@ -376,7 +384,7 @@ class JDF_Top(Atom):
                 elif tempstr.startswith('@'):
                     jdi_str=tempstr.split("'")[1].split(".jdi")[0]
                     self.jdis.append(jdi_str)
-
+                        
     def jdf_produce(self):
         """produces a jdf from the data stored in the object"""
         jl=[]
@@ -569,10 +577,37 @@ LAYER 1
 @ 'cQbr3.jdi'
 
 END 1"""
-    a.text=jdf_data
-    print a.arrays[0].assigns[0].pos_assign
+
+    jdf_data="""PATH
+ARRAY (-42500, 8, 5000)/(42500, 8, 5000)
+	CHMPOS M1=(1500, 1500)
+	ASSIGN A(1) -> ((1,1),(1,8),(8,8))  ; D32080 with two IDTs and Squid connect
+AEND
+
+1: ARRAY (-200, 2, 500)/(0, 1, 0)
+	ASSIGN P(1) -> ((1,1), IDT2) 
+	ASSIGN P(1) -> ((2,1), IDT2) 
+AEND
+
+2: ARRAY (0, 1, 0)/(0, 1, 0)
+	ASSIGN P(2) -> ((1,1), D32080) 
+AEND
+
+3: ARRAY (0, 1, 0)/(0, 1, 0)
+	ASSIGN P(3) -> ((1,1), S32080) 
+AEND
+
+PEND
+
+LAYER 1
+P(1) 'cIDT9bd36ef0w96wb0.v30' (0.0,0.0)
+P(2) 'cQDT9bd3ef20w80wb0.v30' (0.0,0.0)
+P(3) 'cQDT9bs3ef20w80wb0.v30' (0,0)
+"""
+    a.input_jdf=jdf_data
+    #print a.arrays[0].assigns[0].pos_assign
     show(a, a.wafer_coords)
-    print a.arrays[0].assigns[0].pos_assign
+    #print a.arrays[0].assigns[0].pos_assign
     
     #a=Text_Editor(name="Text_Editor", dir_path="/Volumes/aref/jbx9300/job/TA150515B/IDTs", main_file="idt.jdf")
     

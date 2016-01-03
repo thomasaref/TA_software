@@ -6,9 +6,10 @@ Created on Mon Dec  8 10:19:24 2014
 """
 
 from atom.api import Float, Typed
-from taref.ebl.polygons import horiz_refl, vert_refl, horizvert_refl, rotate, sC, sP, sT, Polygons
+from taref.ebl.polygon_backbone import horiz_refl, vert_refl, horizvert_refl, rotate, sC, sP, sT
+from taref.ebl.polygons import EBL_Polygons
 
-class Test_Pads(Polygons):
+class Test_Pads(EBL_Polygons):
     """Makes test pad structure for pads"""
     def _default_plot_sep(self):
         return False
@@ -46,7 +47,7 @@ class Test_Pads(Polygons):
                   (-self.bridge_gap_x/2.0, -self.contact_height/2.0),
                   (-self.testpad_width/2.0+self.tp_bond_pad, -self.testpad_height/2.0)])
 
-class Al_PADS(Polygons):
+class Al_PADS(EBL_Polygons):
     """Makes aluminum section of pads"""
     def _default_color(self):
         return "red"
@@ -58,7 +59,7 @@ class Al_PADS(Polygons):
     def base_name(self):
         return "Al_PADS"
 
-    chip=Typed(Polygons)
+    chip=Typed(EBL_Polygons)
     gndplane_side_gap=Float(30.0e-6).tag(unit='um', desc="side gap in ground plane")
     gndplane_gap=Float(80.0e-6).tag(unit='um', desc="gap in ground plane that lets SAW through")
     gndplane_big_gap=Float(60.0e-6).tag(unit='um', desc="gap in ground plane where qubit IDT resides")
@@ -232,7 +233,7 @@ class Al_PADS(Polygons):
         self.verts.extend(self._s_CPW_strip_T)
         self.verts.extend(self._s_CPW_strip_B)
 
-class PADS(Polygons):
+class PADS(EBL_Polygons):
     """creates gold portion of EBL_PADS"""
     chip_height=Float(5000.0e-6).tag(unit='um', desc="the height of the chip (in um though would be more natural in mm) as defined by the dicing saw")
     chip_width=Float(5000.0e-6).tag(unit='um', desc="the width of the chip (in um though would be more natural in mm) as defined by the dicing saw")

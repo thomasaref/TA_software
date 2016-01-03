@@ -8,6 +8,8 @@ Created on Mon Dec 21 18:28:47 2015
 from taref.core.chief_e import coreWindow, AgentToolBar
 from enaml.widgets.api import ToolBar, Container, Action
 from taref.core.e_Plotter import PlotWindow
+from taref.ebl.jdf_e import JDF_View
+from taref.ebl.wafer_coords_e import WaferCoordsView
 
 enamldef EBLView(coreWindow): sv:
     attr chief
@@ -15,11 +17,21 @@ enamldef EBLView(coreWindow): sv:
     activated::
         chief.plot_JDF()
     Container:
-        PlotWindow: plot_window:
-            visible=True
-            plotr:=chief.plot
-            initial_position=(500, 0)
-
+        Container:
+            PlotWindow: plot_window:
+                visible=True
+                plotr:=chief.plot
+                initial_position=(500, 0)
+        Container:
+            JDF_View: 
+                visible=True
+                jdf:=chief.jdf
+        
+        Container:
+            WaferCoordsView: 
+                visible=True
+                wc:=chief.jdf.wafer_coords
+        
         #IPythonConsole:
         #    pass
     AgentToolBar:
@@ -31,7 +43,7 @@ enamldef EBLView(coreWindow): sv:
         Action:
             text="Refresh Plot"
             triggered::
-                chief.do_plot()
+                chief.plot_JDF()
         Action:
             separator=True
         Action:

@@ -4,7 +4,7 @@ Created on Thu Dec 24 01:36:14 2015
 
 @author: thomasaref
 """
-
+#from enaml.core.api import Conditional
 from enaml.widgets.api import (Window, PushButton, Html, Container, VGroup, HGroup, Label, 
                                Form, Field, ObjectCombo)
 from taref.core.fundcore_e import UnitIntField, aHGroup, aWindow, UnitFloatField
@@ -15,6 +15,7 @@ enamldef WaferCoordsView(aWindow):
     VGroup:        
         aHGroup:
             VGroup:
+                
                 Label:
                     text="Wafer type"
                 ObjectCombo: 
@@ -57,6 +58,7 @@ enamldef WaferCoordsView(aWindow):
                         wc.distribute_event()
         Html:
             source <<  wc.html_text
+            #source << wc.update_event
         Html:
             source <<  wc.html_text2
                                      
@@ -180,7 +182,7 @@ enamldef FullWaferView(aWindow):
                 trailing_spacer=spacer
                 Label:
                     text="Diameter"
-                UnitIntField:
+                UnitFloatField:
                     uvalue := fw.diameter
                     minimum = 0
                     maximum=10

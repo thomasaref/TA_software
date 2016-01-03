@@ -196,6 +196,10 @@ def sDig(dig_key, xr, yr, wr, hr, vs=None):
         vs=func(xr, yr, wr, hr, vs)
     return vs
 
+def sWaferDig(wafer_type, x_dig, y_dig, xr, yr, wr, hr, vs=None):
+    vs=sDig(wafer_type, xr-wr-2*hr, yr, wr, hr, vs)
+    vs=sDig(x_dig, xr, yr, wr, hr, vs)
+    return sDig(y_dig, xr+wr+2*hr, yr, wr, hr, vs)   
 
 def sTransform(verts, x_off=0.0, y_off=0.0, theta=0.0, orient="TL", vs=None):
     """Transforms verts by given arguments and extends vs with them"""
