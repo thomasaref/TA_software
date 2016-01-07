@@ -4,7 +4,7 @@ Created on Thu Feb 26 11:08:19 2015
 
 @author: thomasaref
 """
-from taref.core.agent import Spy#, Agent
+from taref.core.agent import Spy, Agent
 from taref.physics.fundamentals import (eps0, sqrt, pi, Delta, hbar, e, h, ndarray, array, eig, delete,
                                         sin, sinc_sq, linspace, zeros, absolute, cos, arange)
 from taref.core.log import log_debug
@@ -13,7 +13,7 @@ from atom.api import Enum, Int, Float, observe, Bool, Property, Str, List, Range
 def Array(shape=1):
     return Coerced(ndarray, args=(shape,), coercer=array)
     
-class IDT(Spy):
+class IDT(Agent):
     """Theoretical description of IDT"""    
     @property
     def base_name(self):

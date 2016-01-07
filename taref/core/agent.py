@@ -6,42 +6,12 @@ Created on Sat Jul  4 13:03:26 2015
 """
 from atom.api import Unicode, Enum, Float, Int, ContainerList, Callable, Bool, List
 from taref.core.chief import chief
-from taref.core.backbone import Backbone, log_func, _UPDATE_PREFIX_, get_attr
+from taref.core.backbone import Backbone, _UPDATE_PREFIX_, get_attr, private_property
 
 from functools import wraps
 from taref.core.log import log_debug
 from inspect import getmembers
 from collections import OrderedDict
-#def func(f):
-#    #f=fn.im_func
-#    argcount=f.func_code.co_argcount
-#    argnames=list(f.func_code.co_varnames[0:argcount])
-#    if "self" in argnames:
-#        argnames.remove("self")
-#    f.argnames=argnames
-#    return f
-#
-#    #    for name in argnames:
-#    #            upd_list=self.get_tag(name, "update", [])
-#    #            if name not in upd_list:
-#    #                upd_list.append(param+"_func")
-#    #                self.set_tag(name, update=upd_list)
-#
-#def updates(fn):
-#    """a decorator to stop infinite recursion. also stores run_params as an attribute"""
-#    @wraps(fn)
-#    def updfunc(change):
-#        if not hasattr(updfunc, "callblock"):
-#            updfunc.callblock=""
-#        if change["name"]!=updfunc.callblock: # and change['type']!='create':
-#            log_debug(change)
-#
-#            updfunc.callblock=change["name"]
-#            fn(change)
-#            updfunc.callblock=""
-#    updfunc.run_params=get_run_params(fn)
-#    return updfunc
-
    
 class SubAgent(Backbone):
     """Adds chief functionality to Backbone"""
@@ -57,45 +27,6 @@ class SubAgent(Backbone):
     def extra_setup(self, param, typer):
         """Can be overwritten to allow custom setup extension in subclasses"""
         self.es_log_callables(param, typer)
-        #self.es_funcs(param, typer)
-        
-#    def es_funcs(self, param, typer):
-#        if hasattr(self, param+"_func"):
-#            f=getattr(self, param+"_func").im_func
-#            argcount=f.func_code.co_argcount
-#            argnames=list(f.func_code.co_varnames[0:argcount])
-#            if "self" in argnames:
-#                argnames.remove("self")
-#            f.argnames=argnames
-#            for name in argnames:
-#                upd_list=self.get_tag(name, "update", [])
-#                if name not in upd_list:
-#                    upd_list.append(param+"_func")
-#                    self.set_tag(name, update=upd_list)
-#                    
-#                    
-
-#
-#            #@updates
-#            def _updat_(change):
-#                if param not in updated:
-#                    log_debug(change)
-#                    log_debug(updated)
-#
-#                    kwargs=dict(zip(argnames, [getattr(self, arg) for arg in argnames]))
-#                    #with self.suppress_notifications():
-#                    updated.append(param)
-#                    setattr(self, param, getattr(self, param+"_func")(**kwargs))
-#                    updated.remove(param)
-#                    
-#            #def _param_update(change):
-#                                    
-#            self.observe(argnames, _updat_)
-#            for arg in argnames:
-#                kwargs={}
-#                for arg in argnames:
-#                    kwargs[arg]=getattr(self, arg)
-#            setattr(self, param, getattr(self, param+"_func")(**kwargs))
         
     def es_log_callables(self, param, typer):
         """extra setup function that autosets Callables to be logged"""
@@ -103,11 +34,11 @@ class SubAgent(Backbone):
             func=getattr(self, param)
             setattr(self, param, log_func(func))
         
-    @property
+    @private_property
     def base_name(self):
         return "subagent"
 
-    @property
+    @private_property
     def chief(self):
         """gets chief of agent. can be overwritten in children classes"""
         return chief
@@ -117,7 +48,7 @@ class SubAgent(Backbone):
         """shortcut to chief's abort control"""
         return self.chief.abort
 
-    @property
+    @property #remove?
     def default_list(self):
         return []
         
@@ -132,10 +63,6 @@ class SubAgent(Backbone):
             agent_name="{name}__{num}".format(name=agent_name, num=len(self.chief.agent_dict))
         self.name=agent_name
         self.chief.agent_dict[self.name]=self
-
-        #if "name" not in kwargs:
-        #    self.name="{basename}__{basenum}".format(basename=self.base_name, basenum=len(self.chief.agents))
-        #self.chief.agents.append(self)
         
         updates=[attr[0] for attr in getmembers(self) if attr[0].startswith(_UPDATE_PREFIX_)]
         for update_func in updates:
@@ -150,7 +77,6 @@ class SubAgent(Backbone):
                 if update_func not in upd_list:
                     upd_list.append(update_func)
                     self.set_tag(name, update=upd_list)
-        #log_debug(self.default_list)                    
         for param in self.default_list:
             if param not in kwargs and not hasattr(self, "_default_"+param) and hasattr(self, "_update_"+param):
                 setattr(self, param, self.get_default(param))
@@ -233,18 +159,6 @@ class Agent(Spy):
         if log_it:
             self.set_log(name, value)
             self.do_update(name)
-
-#    def update_logger(self, name):
-#        self.update_list.append(name)
-#        log_debug((name, self.update_list))
-#        for update_func in self.get_tag(name, "update", []):
-#            param=update_func.split("_")[2]
-#            if param not in self.update_list:
-#                argnames=getattr(self, update_func).im_func.argnames
-#                kwargs=dict(zip(argnames, [getattr(self, arg) for arg in argnames]))
-#                setattr(self, param, getattr(self, update_func)(**kwargs))
-#        self.update_list.remove(name)
-#        log_debug((name, self.update_list))
 
     def extra_setup(self, param, typer):
         """adds observer for ContainerLists to catch changes not covered by setattr"""

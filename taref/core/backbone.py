@@ -10,27 +10,137 @@ if the value did not exist.
 """
 
 from inspect import getmembers
-from atom.api import Atom, List, Callable, Enum, Int, Float, Range, FloatRange #Callable, Unicode, Bool, List
+from atom.api import Atom, List, Callable, Enum, Int, Float, Range, FloatRange, Property #Callable, Unicode, Bool, List
 from functools import wraps
 from numpy import shape, ndarray
 from enaml.application import deferred_call
 from threading import Thread
 from types import FunctionType
 
-from taref.core.log import log_info
+from taref.core.log import log_info, log_debug
 
-from itertools import chain
+#_UPDATE_PREFIX_="_update_"
+_MAPPING_SUFFIX_="_mapping"
 
-def sqze(*args):
-    if len(args)==1:
-        return list(chain.from_iterable(args[0]))
-    return list(chain.from_iterable(args))
+def set_value_map(obj, name, value):
+    """checks floats and ints for low/high limits and automaps an Enum when setting. Not working for List?"""
+    value=lowhigh_check(obj, name, value)
+    if get_type(obj, name)==Enum:
+        return get_map(obj, name, value)
+    return value
 
-_UPDATE_PREFIX_="_update_"
+def get_run_params(f):
+    """returns names of parameters a function will call"""
+    if hasattr(f, "run_params"):
+        return f.run_params
+    argcount=f.func_code.co_argcount
+    return f.func_code.co_varnames[0:argcount]
 
-def cap_case(name):
-    """Auto captializes name"""
-    return ' '.join(s.capitalize() for s in name.split('-'))
+class logging_f(object):
+    """A logging wrapper that is compatible with both functions or Callables.
+    Auto sets self in the function call to self.obj if it has been set
+    for easier use of Callables"""
+    def __init__(self, func):
+        self.func=func
+        self.obj=None
+        self.log=True
+        self.run_params=[param for param in get_run_params(func) if param!="self"]
+
+    def __call__(self, obj=None, *args, **kwargs):
+        """call logs the call if desired and autoinserts kwargs and obj"""
+        log_debug((obj, args, kwargs))
+        if obj is None:
+            obj=self.obj
+        if len(args)==0:
+            for param in self.run_params:
+                if param in kwargs:
+                    if type(kwargs[param])==type(get_attr(obj, param)):
+                        setattr(obj, param, kwargs[param])
+                else:
+                    if param in obj.property_names:
+                        obj.get_member(param).reset(obj)
+                    value=getattr(obj, param)
+                    value=set_value_map(obj, param, value)
+                    kwargs[param]=value
+        if hasattr(obj, "chief"):
+            objargs=(obj,)+args
+            return_value=do_it_if_needed(obj.chief, self.func, *objargs, **kwargs)
+        else:
+            return_value=self.func(obj, *args, **kwargs)
+        if self.log:
+            log_debug(kwargs)
+            log_debug((self.func.func_name, return_value))
+        return return_value
+
+class tagged_callable(object):
+    """disposable decorator class that returns a Callable tagged with kwargs.
+    Logging is initiated if tags private is not True or log is False"""
+    def __init__(self, **kwargs):
+        self.kwargs=kwargs
+        
+    def __call__(self, func):
+        t_func=logging_f(func)
+        if self.kwargs.get("private", False) or not self.kwargs.get("log", True):
+            t_func.log=False
+        return Callable(t_func).tag(**self.kwargs)
+
+class property_f(logging_f):
+    def __init__(self, func):
+        super(property_f, self).__init__(func)
+        name_list=self.func.func_name.split("_get_")
+        if name_list[0]=="":
+            self.name=name_list[1]
+        else:
+            self.name=name_list[0]
+        self.fset_list=[]
+
+    def setter(self, func):
+        s_func=property_f(func)
+        self.fset_list.append(s_func)
+        return s_func
+
+    def fset_maker(self, obj):
+        def setit(obj, value):
+            for fset in self.fset_list:
+                argvalues=[self.param_decider(obj, param, value) 
+                                 for param in fset.run_params]
+                setattr(obj, fset.name, fset(obj, *argvalues))                
+        return setit
+
+    def param_decider(self, obj, param, value):
+        if param==self.name:
+            return value
+        return getattr(obj, param)
+
+class tagged_property(object):
+    """disposable decorator class that returns a cached Property tagged with kwargs"""
+    def __init__(self, **kwargs):
+        self.kwargs=kwargs
+
+    def __call__(self, func):
+        t_func=property_f(func)
+        if self.kwargs.get("private", False) or not self.kwargs.get("log", True):
+            t_func.log=False
+        return Property(t_func, cached=True).tag(**self.kwargs)
+
+class tag_Property(object):
+    """disposable decorator class that returns a cached Property tagged with kwargs"""
+    def __init__(self, **kwargs):
+        self.kwargs=kwargs
+
+    def __call__(self, func):
+        return Property(func, cached=True).tag(**self.kwargs)
+    
+def private_property(fget):
+    """ A decorator which converts a function into a cached Property tagged as private.
+    Improves performance greatly over property!
+    Parameters
+    ----------
+    fget : callable
+        The callable invoked to get the property value. It must accept
+        a single argument which is the owner object.
+    """
+    return Property(fget, cached=True).tag(private=True)
 
 def get_member(obj, name):
     """returns a member if get_member exists and the attribute itself if it does not"""
@@ -86,8 +196,8 @@ def get_map(obj, name, value=None):
 
 def get_inv(obj, name, value):
     """returns the inverse mapped value (meant for an Enum)"""
-    if hasattr(obj, name+"_mapping"):
-        return {v:k for k, v in getattr(obj, name+"_mapping").iteritems()}[value]
+    if hasattr(obj, name+_MAPPING_SUFFIX_):
+        return {v:k for k, v in getattr(obj, name+_MAPPING_SUFFIX_).iteritems()}[value]
     return value
 
 def get_type(obj, name):
@@ -125,6 +235,7 @@ def set_attr(self, name, value, **kwargs):
     if kwargs!={}:
         set_tag(self, name, **kwargs)
 
+#remove?
 def pass_func(*args, **kwargs):
     pass
     
@@ -212,15 +323,15 @@ class Backbone(Atom):
     def get_type(self, name):
         return get_type(self, name)
 
-    @property
+    @private_property
     def reserved_names(self):
         return get_reserved_names(self)
 
-    @property
+    @private_property
     def all_params(self):
         return get_all_params(self)
         
-    @property
+    @private_property
     def all_main_params(self):
         return get_all_main_params(self)
         
@@ -240,23 +351,63 @@ class Backbone(Atom):
     def get_map(self, name, value=None):
         return get_map(self, name=name, value=value)
 
-    @property
+    @private_property
     def unit_dict(self):
         return unit_dict
+
+    @private_property
+    def property_names(self):
+        return [name for name in self.all_params if self.get_type(name) is Property]
+
+    @private_property
+    def property_items(self):
+        return [self.get_member(name) for name in self.property_names]
+
+    @private_property
+    def property_dict(self):
+        return dict(zip(self.property_names, self.property_items))
 
     def extra_setup(self, param, typer):
         """do nothing function for __init__ that can be overwritten to allow custom setup extension in child classes"""
         pass
+    
+    def call_func(self, name, **kwargs):
+        if name in self.property_dict:
+            return self.property_dict[name].fget(self, **kwargs)
+        elif name in self.all_params and hasattr(self, "_get_"+name):
+            return getattr(self, "_get_"+name)(self, **kwargs)
+        return getattr(self, name)(**kwargs)
+
+    def __setattr__(self, name, value):
+        """uses __setattr__ to log changes except for ContainerList"""
+        log_it=False
+        if name in self.all_params:
+            log_it=True
+        super(Backbone, self).__setattr__(name, value)
+        if log_it:
+            log_debug((name, value))
+            for item in self.property_items:
+                item.reset(self)
 
     def __init__(self, **kwargs):
         """extends __init__ to autoset low and high tags for Range and FloatRange, autoset units for Ints and Floats and allow extra setup"""
         super(Backbone, self).__init__(**kwargs)
+        for name in [attr for attr, item in getmembers(self) if isinstance(item, logging_f)]:
+            """sets up logging_f's"""
+            log_debug(name)
+            setattr(getattr(self, name), "obj", self)
         for param in self.all_params:
             typer=self.get_type(param)
+            item =get_attr(self.get_member(param), "fget")
+            if isinstance(item, property_f):
+                """sets up property_f's"""
+                item.obj=self
+                if item.fset_list!=[]:
+                    self.get_member(param).setter(item.fset_maker(self))
             if typer in [Range, FloatRange]:
                 """autosets low/high tags for Range and FloatRange"""
                 self.set_tag(param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
-            if typer in [Int, Float, Range, FloatRange]:
+            if typer in [Int, Float, Range, FloatRange, Property]:
                 """autosets units for Ints and Floats"""
                 if self.get_tag(param, "unit", False) and (self.get_tag(param, "unit_factor") is None):
                     unit=self.get_tag(param, "unit", "")[0]
@@ -264,22 +415,9 @@ class Backbone(Atom):
                         unit_factor=self.get_tag(param, "unit_factor", self.unit_dict[unit])
                         self.set_tag(param, unit_factor=unit_factor)
             self.extra_setup(param, typer)
-        #for param in self.all_params:
-        #    print param, getattr(self, param)
 
-def get_run_params(f, include_self=False):
-    """returns names of parameters a function will call"""
-    if hasattr(f, "run_params"):
-        argnames=f.run_params
-    else:
-        argcount=f.func_code.co_argcount
-        argnames=list(f.func_code.co_varnames[0:argcount])
-    if not include_self and "self" in argnames:
-        argnames.remove("self")
-    return argnames
-
-def code_caller(topdog, code, **kwargs):
-    result=code(**kwargs)
+def code_caller(topdog, code, *args, **kwargs):
+    result=code(*args, **kwargs)
     try:
         deferred_call(setattr, topdog, 'busy', False)
         deferred_call(setattr, topdog, 'progress', 0)
@@ -290,224 +428,9 @@ def code_caller(topdog, code, **kwargs):
         topdog.abort=False
     return result
 
-def do_it_if_needed(topdog, code, **kwargs):
+def do_it_if_needed(topdog, code, *args, **kwargs):
     if not topdog.busy:
         topdog.busy = True
-        thread = Thread(target=code_caller, args=(topdog, code), kwargs=kwargs)
+        thread = Thread(target=code_caller, args=(topdog, code)+args, kwargs=kwargs)
         thread.start()
-
-def run_func(obj, name, **kwargs):
-    """runs a function which is an attribute of an object. Auto-includes the obj itself depending on the types of function
-    if kwargs are specified, it will set the attribtues of an object to those values (names need to match).
-    if the object boss has the GUI threadsafe method do_it_if_needed, it will preferentially call that over the function itself"""
-    f=getattr(obj, name)
-    run_params=get_run_params(f)
-    if get_type(obj, name) in (Callable, FunctionType):
-        kwargs["self"]=obj
-    for item in run_params:
-        if item in kwargs:
-            setattr(obj, item, kwargs[item])
-        else:
-            value=getattr(obj, item)
-            value=set_value_map(obj, item, value)
-            kwargs[item]=value
-    do_it_if_needed(obj.chief, f, **kwargs)
-
-def updater(fn):
-    """a decorator to stop infinite recursion. also stores run_params as an attribute"""
-    @wraps(fn)
-    def updfunc(self, change):
-        if not hasattr(updfunc, "callblock"):
-            updfunc.callblock=""
-        if change["name"]!=updfunc.callblock: # and change['type']!='create':
-            updfunc.callblock=change["name"]
-            fn(self, change)
-            updfunc.callblock=""
-    updfunc.run_params=get_run_params(fn)
-    return updfunc
-
-def log_func(fn):
-    """a decorator that logs when a function is run. also stores run_params as an attribute"""
-    @wraps(fn)
-    def logf(*args, **kwargs):
-        log_info("RAN: {name}".format(name=fn.func_name))
-        fn(*args, **kwargs)
-    logf.run_params=get_run_params(fn, True)
-    return logf
-
-#def get_args(obj, name):
-#    f=getattr(obj, name)
-#    run_params=get_run_params(f, True)
-#    arglist=[]
-#    if "self" in run_params:
-#        if get_type(obj, name) in (Callable, FunctionType):
-#            arglist.append(obj)
-#        run_params.remove("self")
-#    arglist.extend([getattr(obj, an) for an in run_params])
-#    return arglist
-
-def set_value_map(obj, name, value):
-    """checks floats and ints for low/high limits and automaps an Enum when setting. Not working for List?"""
-    value=lowhigh_check(obj, name, value)
-    if get_type(obj, name)==Enum:
-        return get_map(obj, name, value)
-    return value
-
-
-#
-#    def copy(self):
-#        tempbase=type(self)()
-#        for name in self.all_params:
-#            setattr(tempbase, name, getattr(self, name))
-#        for name in self.reserved_names:
-#            setattr(tempbase, name, getattr(self, name))
-#        return tempbase
-#
-
-#def tomobserve(*pairs):
-#    obshandle=observe(*pairs)
-#    return TomHandler(obshandle, pairs)
-#
-#from atom.atom import ObserveHandler
-#
-#class TomHandler(ObserveHandler):
-#    def __init__(self, obshandle, pairs):
-#        self.inputpairs=pairs
-#        self.pairs = obshandle.pairs
-#        self.func = obshandle.func
-#        self.funcname = obshandle.funcname
-#        
-#    def __call__(self, func):
-#        """ Called to decorate the function."""
-#        func=updater(func)
-#        func.pairs=self.inputpairs
-#        return super(TomHandler, self).__call__(func)
-
-
-if __name__=="__main__":
-    class to(object):
-        a=5
-        b=4.3
-        c="hey"
-        d=True
-
-        @log_func
-        def ff(self, a=2):
-            print self, a
-            print "a f says hello"
-
-
-    class tA(Atom):
-        a=Int(5)
-        b=Float(4.3)
-        c=Unicode("hey")
-        d=Bool(True)
-        f=Enum(1,2,3)
-        g=Enum("a", "b")
-
-        @Callable
-        @log_func
-        def ff(self, a=2):
-            print self, a
-            print "b f says hello"
-
-
-    a=to()
-    b=tA()
-    print get_member(a, "a"), get_member(b, "a")
-    print members(a), members(b)
-    set_tag(a,"a", bill=5, private=True)
-    set_tag(b,"a", bill="five", sub=True)
-    set_all_tags(a, bob=7)
-    set_all_tags(b, bob="seven")
-    print get_metadata(a, "a"), get_metadata(b, "a")
-    print get_tag(a, "a", "bill"), get_tag(b, "a", "bill")
-    print get_all_tags(a, "bill"), get_all_tags(a, "bill", "five"),  get_all_tags(b, "bill", "five")
-    print b.f, get_map(b, "f"), get_mapping(b, "f"), get_inv(b, "f", 2)
-    print b.g, get_map(b, "g"), get_mapping(b, "g"), get_inv(b, "f", 2)
-    print get_type(a, "a"), get_type(b, "a")
-    print get_reserved_names(a), get_reserved_names(b)
-    print get_all_params(a), get_all_params(b)
-    print get_all_main_params(a), get_main_params(b)
-    print get_main_params(a), get_main_params(b)
-    print get_attr(a, "a", "yes"), get_attr(b, "aa", "yes")
-
-    @log_func
-    def ff(self, a=2):
-        print self, a
-        print "f says hello"
-    a.gg=ff
-    a.ff(), b.ff(b), a.gg(a)
-    print get_run_params(ff), get_run_params(a.ff), get_run_params(a.gg)
-    print b.a, a.a
-    run_func(b, "ff", a=1), run_func(a, "ff", a=1), run_func(a, "gg")
-    print b.a, a.a
-
-
-
-
-    #print ff.func_code.co_argcount
-    #print list(ff.func_code.co_varnames[0:ff.func_code.co_argcount])
-
-#def get_args(obj, name):
-#    f=getattr(obj, name)
-#    run_params=get_run_params(f, True)
-#    arglist=[]
-#    if "self" in run_params:
-#        arglist.append(obj)
-#        run_params.remove("self")
-#    arglist.extend([getattr(obj, an) for an in run_params])
-#    return arglist
-    #   Enum, Range, FloatRange, Int, Float, Callable, Unicode, Bool, List
-
-#
-#
-#    def add_plot(self, name=''):
-#        if name=="" or name in (p.name for p in self.boss.plots):
-#            name="plot{}".format(len(self.boss.plots))
-#            self.boss.plots.append(Plotter(name=name))
-#
-#    def add_line_plot(self, name):
-#        xname=self.get_tag(name, 'xdata')
-#        if xname==None:
-#            xdata=None
-#        else:
-#            xdata=getattr(self, xname)
-#        self.boss.plots[0].add_plot(name, yname=name, ydata=getattr(self, name), xname=xname, xdata=xdata)
-#        self.boss.plots[0].title=self.name
-#        if xname==None:
-#            self.boss.plots[0].xlabel="# index"
-#        else:
-#            self.boss.plots[0].xlabel=self.get_tag(xname, "plot_label", xname)
-#        self.boss.plots[0].ylabel=self.get_tag(name, "plot_label", name)
-#
-#    def add_img_plot(self, name):
-#        xname=self.get_tag(name, 'xdata')
-#        yname=self.get_tag(name, 'ydata')
-#        if xname!=None and yname!=None:
-#            xdata=getattr(self, xname)
-#            ydata=getattr(self, yname)
-#        else:
-#            xdata=None
-#            ydata=None
-#        self.boss.plot_list[0].add_img_plot(name, zname=name, zdata=getattr(self, name), xname=xname, yname=yname, xdata=xdata, ydata=ydata)
-#        self.boss.plot_list[0].title=self.name
-#        if xname==None:
-#            self.boss.plot_list[0].xlabel="# index"
-#        else:
-#            self.boss.plot_list[0].xlabel=self.get_tag(xname, "plot_label", xname)
-#        if yname==None:
-#            self.boss.plot_list[0].ylabel="# index"
-#        else:
-#            self.boss.plot_list[0].ylabel=self.get_tag(yname, "plot_label", yname)
-
-#def set_attr(obj, name, value):
-#    """a logging lowhigh checker for arbitrary classes. useful?"""
-#    log_it=False
-#    if name in get_all_params(obj) and isinstance(obj, (backbone, SubAgent)):
-#        log_it=True
-#        value=lowhigh_check(obj, name, value)
-#    setattr(obj, name, value)
-#    if log_it:
-#        set_log(obj, name, value)
 
