@@ -28,6 +28,7 @@ enamldef SimpleSave(HGroup):
             filer.full_save(obj=coder)
 
 enamldef SimpleRead(HGroup):
+    event rd_ev
     padding=0
     align_widths=False
     Field: read_file_fld:
@@ -39,10 +40,14 @@ enamldef SimpleRead(HGroup):
             if path:
                 filer.file_path = path
                 filer.read()
-    PushButton: read:
+                rd_ev()
+    alias clicked : rdb.clicked               
+    PushButton: rdb:
         text = "Read"
         clicked ::
             filer.read()
+            rd_ev()
+            #filer.read_event()
 
 enamldef FilerInterface(Container):
     padding=0
@@ -104,12 +109,16 @@ enamldef ReadSaveWrap(Container):
     attr save_file
     attr read_file
     attr runcode
-    GroupBox:
-        SaveWrap:
+    alias save_txt
+    GroupBox: gb:
+        alias save_text : sw.filer
+        SaveWrap: sw:
             filer=save_file
             coder=runcode
-    ReadWrap:
+                
+    ReadWrap: rw:
         filer=read_file
+        rd_ev:: print "read"
     MultilineField:
         text << unicode(read_file.data)
 
@@ -120,8 +129,11 @@ enamldef SaveMain(Window):
     title="SaveBox test"
     VGroup:
         ReadWrap:
+            rd_ev:: print "read"
+
             filer=read_file
-        GroupBox:
+            #clicked :: print "read data"
+        GroupBox: gb:
             SaveWrap:
                 filer=save_file
         MultilineField:

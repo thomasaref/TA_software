@@ -7,7 +7,7 @@ Created on Thu Mar  5 20:50:49 2015
 
 from taref.core.log import  log_info, log_warning, make_log_file, remove_log_file, log_debug
 from taref.core.filer import Filer
-from atom.api import Bool, Dict, Unicode, observe, List, Event, Enum, Typed, Int
+from atom.api import cached_property, Unicode, observe, List, Event, Enum, Typed, Int
 from os.path import exists as os_path_exists, splitext as os_path_splitext, split as os_path_split
 from os import makedirs as os_makedirs
 from shutil import move, copyfile
@@ -80,25 +80,6 @@ class Save_File(Filer):
         self.do_data_save()
         self.data_buffer=self._default_data_buffer()
 
-
-#    def show(self, read_file=None, coder=None):
-#        """stand alone for showing filer."""
-#        if read_file==None:
-#            if self.file_type=='HDF5':
-#                read_file=Read_HDF5(file_path=self.file_path)
-#            elif self.file_type=='dxf':
-#                read_file=Read_DXF(file_path=self.file_path)
-#            elif self.file_type=='text data':
-#                read_file=Read_NP(file_path=self.file_path)
-#            else:
-#                read_file=Read_TXT(file_path=self.file_path)
-#        with imports():
-#            from enaml_Filer import SaveMain
-#        app = QtApplication()
-#        view = SaveMain(save_file=self, read_file=read_file, coder=coder)
-#        view.show()
-#        app.start()
-
     def do_data_save(self):
         log_warning("do_data_save not overwritten")
 
@@ -114,8 +95,8 @@ class Save_HDF5(Save_File):
     def _default_data_buffer(self):
         return group(attrs=dict(comment=self.comment))
 
-    def _default_file_type(self):
-        return "HDF5"
+    def _default_file_suffix(self):
+        return "hdf5"
 
     def do_data_save(self):
         rewrite_hdf5(self.save_file, self.data_buffer)
@@ -149,32 +130,45 @@ from taref.core.TXTNP_functions import  save_txt_data, save_np_data, save_txt
 
 class Save_TXT(Save_File):
     save_file=Typed(file)
-
+    write_mode=Enum("w", "a")
+    data_buffer=Unicode()
+    
+    def _default_data_buffer(self):
+        return ""
+    
     def _default_save_file(self):
         log_info("Created txt file at: {0}".format(self.file_path))
-        return open(self.file_path, 'w')
+        return open(self.file_path, self.write_mode)
 
-    def _default_file_type(self):
-        return "text"
+    #def _default_file_type(self):
+     #   return "text"
+        
+    def default_file_suffix(self):
+        return "txt"
 
-    def data_save(self, data, name="Measurement"):
-        name=name.replace(" ", "_")
-        if type(data) not in [list, ndarray]:
-            data=[data]
-        if name not in self.data_buffer.keys():
-            self.data_buffer[name]=data
-        else:
-            self.data_buffer[name].extend(data)
-        if size(self.data_buffer[name])>self.buffer_size:
-            self.flush_buffers()
+#    def data_save(self, data, name="Measurement"):
+#        name=name.replace(" ", "_")
+#        if type(data) not in [list, ndarray]:
+#            data=[data]
+#        if name not in self.data_buffer.keys():
+#            self.data_buffer[name]=data
+#        else:
+#            self.data_buffer[name].extend(data)
+#        if size(self.data_buffer[name])>self.buffer_size:
+#            self.flush_buffers()
 
-#    def do_data_save(self):
-#        save_txt_data(self.dir_path+self.divider, self.data)
-#        log_debug("Data saved to txt file at: {0}".format(self.file_path))
+    def data_save(self, data, write_mode="a"):
+        self.write_mode=write_mode
+        self.data_buffer=data
+        self.flush_buffers()
+        
+    def do_data_save(self):
+        save_txt(file_path=self.file_path, data=self.data_buffer, write_mode=self.write_mode)        
+        log_debug("Data saved to txt file at: {0}".format(self.file_path))
 
-    def direct_save(self, data, write_mode='a'):
-        save_txt(file_path=self.file_path, data=data, write_mode=write_mode)
-        log_info("Direct save of data to: {}".format(self.file_path))
+    #def direct_save(self, data, write_mode='a'):
+    #    save_txt(file_path=self.file_path, data=data, write_mode=write_mode)
+    #    log_info("Direct save of data to: {}".format(self.file_path))
 
     @property
     def view_window(self):
@@ -183,8 +177,8 @@ class Save_TXT(Save_File):
         return SaveMain(save_file=self, read_file=Read_TXT(file_path=self.file_path))
 
 class Save_NP(Save_TXT):
-    def _default_file_type(self):
-        return "text data"
+    def _default_file_suffix(self):
+        return "txt"
 
     def do_data_save(self, data, name, group_name, append):
         save_np_data(self.dir_path+self.divider, data, name)
@@ -192,7 +186,7 @@ class Save_NP(Save_TXT):
 from taref.ebl.DXF_functions import save_dxf
 
 class Save_DXF(Save_File):
-    def _default_file_type(self):
+    def _default_file_suffix(self):
         return "dxf"
 
     #def _default_base_dir(self):
