@@ -7,7 +7,7 @@ Created on Mon Jun  1 12:51:22 2015
 from atom.api import Enum, Int, Unicode, List, Float, Event, Atom, observe, cached_property
 from enaml import imports
 #from taref.core.log import log_debug
-from taref.core.backbone import sqze
+from taref.core.universal import sqze
 
 QUARTER_WAFER_SIGNS={"A" : (-1, 1), "B" : (1, 1), "C" : (-1, -1), "D" : (1, -1)}
 

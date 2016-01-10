@@ -9,7 +9,8 @@ from taref.ebl.wafer_coords import FullWafer
 from atom.api import Typed, Unicode, Atom, List, Coerced, observe
 from taref.core.log import log_debug
 from taref.core.shower import show
-from taref.core.backbone import set_attr, get_tag, sqze
+from taref.core.backbone import set_attr, get_tag
+from taref.core.universal import sqze
 from enaml import imports
 from re import compile as compiler
     

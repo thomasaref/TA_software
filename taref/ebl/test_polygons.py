@@ -67,22 +67,23 @@ LAYER 1
 P(1) 'PADS.v30' (0.0,0.0)
 P(2) 'WAFER_LABELS.v30' (-1500.0, 2000.0)
 P(3) 'MARKER_CROSS.v30' (0.0, 0.0)
-P(4) 'GLM_CROSS.v30' (0.0, 5000.0)
+P(4) 'GLM_CROSS.v30' (-10000.0, 4000.0)
 P(5) 'GLM_CROSS.v30' (0.0, -5000.0)
+P(6) 'ALIGN_HORIZ.v30' (-25000.0, 4000.0)
 
 """
     pads=PADS()
     wafer_labels=Wafer_Labels()
     liftoff_assist=Rectangle()
 
-    marker_cross=Symmetric_Cross(name="MARKER_CROSS", height=100.0e-6, 
+    marker_cross=Symmetric_Cross(name="MARKER_CROSS", height=400.0e-6, 
                                  linewidth=4.0e-6, color="purple")
     glm_cross=Symmetric_Cross(name="GLM_CROSS", height=1000.0e-6,
                               linewidth=20.0e-6, color="red")
 
-    align_cross_horiz=Cross(name="ALIGN_HORIZ", height=100.0e-6, 
-                            width=1000.0e-6, linewidth=20.0e-6, color="red")
-    align_cross_vert=Cross(name="ALIGN_VERT", height=100.0e-6, width=1000.0e-6,
+    align_cross_horiz=Cross(name="ALIGN_HORIZ", height=450.0e-6, 
+                            width=4000.0e-6, linewidth=50.0e-6, color="red")
+    align_cross_vert=Cross(name="ALIGN_VERT", height=4000.0e-6, width=450.0e-6,
                            linewidth=20.0e-6, color="red")
     
     pads.chief.jdf.input_jdf=jdf_text

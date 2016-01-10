@@ -43,6 +43,8 @@ class Save_File(Filer):
         entire directory to the new location and sets up the log file for appended logging"""
         if change['type']!='create':
             old_dir_path=change['oldvalue']
+            if old_dir_path is None:
+                old_dir_path=""
             if not os_path_exists(self.file_path):
                 if os_path_exists(old_dir_path):
                     remove_log_file()

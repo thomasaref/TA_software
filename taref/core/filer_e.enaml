@@ -109,9 +109,9 @@ enamldef ReadSaveWrap(Container):
     attr save_file
     attr read_file
     attr runcode
-    alias save_txt
+    alias save_txt : sw.filer
     GroupBox: gb:
-        alias save_text : sw.filer
+        #alias save_text : sw.filer
         SaveWrap: sw:
             filer=save_file
             coder=runcode

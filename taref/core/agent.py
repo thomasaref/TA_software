@@ -4,35 +4,18 @@ Created on Sat Jul  4 13:03:26 2015
 
 @author: thomasaref
 """
-from atom.api import Unicode, Enum, Float, Int, ContainerList, Callable, Bool, List
+from atom.api import Unicode, Enum, Float, Int, ContainerList, Callable
 from taref.core.chief import chief
-from taref.core.backbone import Backbone, _UPDATE_PREFIX_, get_attr, private_property
-
-from functools import wraps
+from taref.core.backbone import Backbone, private_property
 from taref.core.log import log_debug
-from inspect import getmembers
-from collections import OrderedDict
    
 class SubAgent(Backbone):
     """Adds chief functionality to Backbone"""
-    name=Unicode().tag(private=True, desc="name of agent. A default will be provided if none is given")
+    name=Unicode().tag(private=True, desc="name of agent. This name will be modified to be unique, if necessary")
     desc=Unicode().tag(private=True, desc="optional description of agent")
-    
-#    def get_update_list(self):
-#        return [attr[0] for attr in getmembers(self) if attr[0].startswith(_UPDATE_PREFIX_)]
         
     def show(self):
         self.chief.show()
-
-    def extra_setup(self, param, typer):
-        """Can be overwritten to allow custom setup extension in subclasses"""
-        self.es_log_callables(param, typer)
-        
-    def es_log_callables(self, param, typer):
-        """extra setup function that autosets Callables to be logged"""
-        if typer==Callable:
-            func=getattr(self, param)
-            setattr(self, param, log_func(func))
         
     @private_property
     def base_name(self):
@@ -63,84 +46,22 @@ class SubAgent(Backbone):
             agent_name="{name}__{num}".format(name=agent_name, num=len(self.chief.agent_dict))
         self.name=agent_name
         self.chief.agent_dict[self.name]=self
-        
-        updates=[attr[0] for attr in getmembers(self) if attr[0].startswith(_UPDATE_PREFIX_)]
-        for update_func in updates:
-            f=getattr(self, update_func).im_func
-            argcount=f.func_code.co_argcount
-            argnames=list(f.func_code.co_varnames[0:argcount])
-            if "self" in argnames:
-                argnames.remove("self")
-            f.argnames=argnames
-            for name in argnames:
-                upd_list=self.get_tag(name, "update", [])
-                if update_func not in upd_list:
-                    upd_list.append(update_func)
-                    self.set_tag(name, update=upd_list)
-        for param in self.default_list:
-            if param not in kwargs and not hasattr(self, "_default_"+param) and hasattr(self, "_update_"+param):
-                setattr(self, param, self.get_default(param))
-            else:
-                setattr(self, param, getattr(self, param))
                     
 class Spy(SubAgent):
-    updating=Bool(True).tag(private=True)
-        
-    """Spy uses observers to log all changes"""
-    def __setattr__(self, name, value):
-        """setattr performs low/high check"""
-        if name in self.all_params:
-            value=self.lowhigh_check(name, value)
-        super(Spy, self).__setattr__(name, value)
-        
+    """Spies uses observers to log all changes to params"""
     def log_changes(self, change):
         """a simple logger for all changes"""
         if change["type"]!="create":
             log_debug("log changes")
             self.set_log(change["name"], change["value"])
-            self.do_update(change["name"])
-            
-    def do_update(self, name):
-        log_debug(name)
-        if self.updating:
-            self.updating=False
-            results=self.search_update(name)
-            for key in results:
-                if key!=name:
-                    setattr(self, key, results[key])
-            self.updating=True
-
-    def search_update(self, param, results=None):
-        if results is None:
-            results=OrderedDict()
-            results[param]=getattr(self, param)
-        for update_func in self.get_tag(param, "update", []):
-            param=update_func.split("_update_")[1]
-            if not param in results.keys():
-                argnames=get_attr(getattr(self, update_func).im_func, "argnames")
-                if argnames is not None:
-                    argvalues= [results.get(arg, getattr(self, arg)) for arg in argnames]
-                    kwargs=dict(zip(argnames,argvalues))
-                    result=getattr(self, update_func)(**kwargs)
-                    results[param]=result
-                    self.search_update(param, results)
-        return results
-
-    def get_default(self, name, update_func=None):
-        if update_func is None:
-            update_func="_update_"+name
-        argnames=getattr(self, update_func).im_func.argnames
-        argvalues= [getattr(self, arg) for arg in argnames]
-        kwargs=dict(zip(argnames,argvalues))
-        return getattr(self, update_func)(**kwargs)
+        if change["type"]=="update":
+            self.reset_properties()
+            #self.do_update(change["name"])
 
     def extra_setup(self, param, typer):
         """adds log_changes observer to all params"""
+        super(Spy, self).extra_setup(param, typer)
         self.observe(param, self.log_changes)
-        self.es_log_callables(param, typer)
-        #if self.get_tag(param, "default", False)==True:
-        #    setattr(self, param, self.get_default(param))
-        #self.es_funcs(param, typer)
 
     @property
     def base_name(self):
@@ -148,20 +69,18 @@ class Spy(SubAgent):
 
 
 class Agent(Spy):
-    """Agents use setattr rather than observers to log all changes"""
+    """Agents use setattr to log changes to params"""
     def __setattr__(self, name, value):
-        """uses __setattr__ to log changes except for ContainerList"""
-        log_it=False
-        if name in self.all_params:
-            log_it=True
-            value=self.lowhigh_check(name, value)
+        """uses __setattr__ to log changes except for observers on ContainerList"""
         super(Agent, self).__setattr__(name, value)
-        if log_it:
+        if name in self.all_params:
             self.set_log(name, value)
-            self.do_update(name)
+            self.reset_properties()
 
     def extra_setup(self, param, typer):
-        """adds observer for ContainerLists to catch changes not covered by setattr"""
+        """adds observer for ContainerLists to catch changes not covered by setattr. 
+        extra_setup goes from Spy, not Agent to not add observers"""
+        super(Spy, self).extra_setup(param, typer)
         if typer==ContainerList:
             self.observe(param, self.log_changes)
 

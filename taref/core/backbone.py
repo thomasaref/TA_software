@@ -62,11 +62,11 @@ class logging_f(object):
                     value=getattr(obj, param)
                     value=set_value_map(obj, param, value)
                     kwargs[param]=value
-        if hasattr(obj, "chief"):
-            objargs=(obj,)+args
-            return_value=do_it_if_needed(obj.chief, self.func, *objargs, **kwargs)
-        else:
-            return_value=self.func(obj, *args, **kwargs)
+        #if hasattr(obj, "chief"): #not working. how to get return value?
+        #    objargs=(obj,)+args
+        #    return_value=do_it_if_needed(obj.chief, self.func, *objargs, **kwargs)
+        #else:
+        return_value=self.func(obj, *args, **kwargs)
         if self.log:
             log_debug(kwargs)
             log_debug((self.func.func_name, return_value))
@@ -235,7 +235,7 @@ def set_attr(self, name, value, **kwargs):
     if kwargs!={}:
         set_tag(self, name, **kwargs)
 
-#remove?
+##remove?
 def pass_func(*args, **kwargs):
     pass
     
@@ -357,21 +357,28 @@ class Backbone(Atom):
 
     @private_property
     def property_names(self):
+        """gets all params that are Properties"""
         return [name for name in self.all_params if self.get_type(name) is Property]
 
     @private_property
     def property_items(self):
+        """get all items corrseponding to self.property_names"""
         return [self.get_member(name) for name in self.property_names]
 
     @private_property
     def property_dict(self):
+        """returns a dict mapping property_names to property_items"""
         return dict(zip(self.property_names, self.property_items))
 
     def extra_setup(self, param, typer):
-        """do nothing function for __init__ that can be overwritten to allow custom setup extension in child classes"""
-        pass
+        """sets up property_fs, ranges, and units"""
+        self._setup_property_fs(param, typer)
+        self._setup_ranges(param, typer)
+        self._setup_units(param, typer)
     
     def call_func(self, name, **kwargs):
+        """calls a func using keyword assignments. If name corresponds to a Property, calls the get func.
+        otherwise, if name_mangled func "_get_"+name exists, calls that. Finally calls just the name if these are not the case"""
         if name in self.property_dict:
             return self.property_dict[name].fget(self, **kwargs)
         elif name in self.all_params and hasattr(self, "_get_"+name):
@@ -380,40 +387,48 @@ class Backbone(Atom):
 
     def __setattr__(self, name, value):
         """uses __setattr__ to log changes except for ContainerList"""
-        log_it=False
         if name in self.all_params:
-            log_it=True
+            value=self.lowhigh_check(name, value)
         super(Backbone, self).__setattr__(name, value)
-        if log_it:
-            log_debug((name, value))
-            for item in self.property_items:
-                item.reset(self)
+
+    def reset_properties(self):
+        """resets all  properties"""
+        for item in self.property_items:
+            item.reset(self)
+
+    def _setup_logging_fs(self):
+        """sets up logging_f's pointing obj to self"""
+        for name in [attr for attr, item in getmembers(self) if isinstance(item, logging_f)]:
+            setattr(getattr(self, name), "obj", self)
+
+    def _setup_property_fs(self, param, typer):
+        """sets up property_f's pointing obj at self and setter at functions decorated with param.fget.setter"""
+        item =get_attr(self.get_member(param), "fget")
+        if isinstance(item, property_f):
+            item.obj=self
+            if item.fset_list!=[]:
+                self.get_member(param).setter(item.fset_maker(self))
+
+    def _setup_ranges(self, param, typer):        
+        """autosets low/high tags for Range and FloatRange"""
+        if typer in [Range, FloatRange]:
+            self.set_tag(param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
+
+    def _setup_units(self, param, typer):
+        """autosets units using unit_dict"""
+        if typer in [Int, Float, Range, FloatRange, Property]:
+            if self.get_tag(param, "unit", False) and (self.get_tag(param, "unit_factor") is None):
+                unit=self.get_tag(param, "unit", "")[0]
+                if unit in self.unit_dict:
+                    unit_factor=self.get_tag(param, "unit_factor", self.unit_dict[unit])
+                    self.set_tag(param, unit_factor=unit_factor)
 
     def __init__(self, **kwargs):
         """extends __init__ to autoset low and high tags for Range and FloatRange, autoset units for Ints and Floats and allow extra setup"""
         super(Backbone, self).__init__(**kwargs)
-        for name in [attr for attr, item in getmembers(self) if isinstance(item, logging_f)]:
-            """sets up logging_f's"""
-            log_debug(name)
-            setattr(getattr(self, name), "obj", self)
+        self._setup_logging_fs()
         for param in self.all_params:
             typer=self.get_type(param)
-            item =get_attr(self.get_member(param), "fget")
-            if isinstance(item, property_f):
-                """sets up property_f's"""
-                item.obj=self
-                if item.fset_list!=[]:
-                    self.get_member(param).setter(item.fset_maker(self))
-            if typer in [Range, FloatRange]:
-                """autosets low/high tags for Range and FloatRange"""
-                self.set_tag(param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
-            if typer in [Int, Float, Range, FloatRange, Property]:
-                """autosets units for Ints and Floats"""
-                if self.get_tag(param, "unit", False) and (self.get_tag(param, "unit_factor") is None):
-                    unit=self.get_tag(param, "unit", "")[0]
-                    if unit in self.unit_dict:
-                        unit_factor=self.get_tag(param, "unit_factor", self.unit_dict[unit])
-                        self.set_tag(param, unit_factor=unit_factor)
             self.extra_setup(param, typer)
 
 def code_caller(topdog, code, *args, **kwargs):
