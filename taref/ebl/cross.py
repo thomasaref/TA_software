@@ -7,6 +7,8 @@ Created on Sun Jan  3 00:51:53 2016
 
 from taref.ebl.polygons import EBL_Polygons
 from atom.api import Float, Property
+from taref.ebl.polygon_backbone import horiz_refl, vert_refl, horizvert_refl, sP
+
 
 class Cross(EBL_Polygons):
     """draws a cross of given height, width and line width)"""
@@ -33,7 +35,41 @@ class Symmetric_Cross(Cross):
     @width.setter
     def set_width(self, value):
         self.height=value
+        
+    def _observe_height(self, change):
+        if change["type"]=="update":
+            self.get_member("width").reset(self)
+        
+class Inverse_Cross(Cross):
+    def make_polylist(self):
+        """makes inverse cross through reflections"""
+        self.verts.extend(self._s_crossbox_TL)
+        self.verts.extend(horiz_refl(self._s_crossbox_TL))
+        self.verts.extend(vert_refl(self._s_crossbox_TL))
+        self.verts.extend(horizvert_refl(self._s_crossbox_TL))
 
+    @property
+    def _s_crossbox_TL(self):
+        """returns top left part of test pad"""
+        return sP([(-self.width/2.0, self.linewidth/2.0),
+                (-self.linewidth/2.0, self.linewidth/2.0),
+                (-self.linewidth/2.0, self.height/2.0),
+                (-self.width/2.0, self.height/2.0)])
+
+class Symmetric_Inverse_Cross(Inverse_Cross):
+    """links width and height together so they are always the same"""
+    @Property
+    def width(self):
+        return self.height
+    
+    @width.setter
+    def set_width(self, value):
+        self.height=value
+        
+    def _observe_height(self, change):
+        if change["type"]=="update":
+            self.get_member("width").reset(self)
+        
 #class Marker_Cross(Symmetric_Cross):
 #    """Draws marker crosses"""
 #    @property
@@ -77,6 +113,9 @@ class Symmetric_Cross(Cross):
 #        return "ALIGNMENT_CROSS_VERT"
 
 if __name__=="__main__":
+    #a=Inverse_Cross()
+    a=Symmetric_Inverse_Cross()
+    a.show()
     a=Cross()
     a.height=4.0e-6
     print a.height, a.width

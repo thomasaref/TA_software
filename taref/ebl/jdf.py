@@ -237,9 +237,8 @@ class JDF_Top(Atom):
         
     @observe("wafer_coords.distribute_event")
     def observe_distrib_event(self, change):
-        #self.distribute_coords()
-        #self.wafer_coords.html_text2=self.wafer_coords.html_table_string(self.assign_condition)
-        print self.xy_offsets
+        self.distribute_coords()
+        self.wafer_coords.html_text2=self.wafer_coords.html_table_string(self.assign_condition)
         
     @property
     def view_window(self):
@@ -579,7 +578,7 @@ LAYER 1
 
 END 1"""
 
-    jdf_data="""PATH
+    jdf_data1="""PATH
 ARRAY (-42500, 8, 5000)/(42500, 8, 5000)
 	CHMPOS M1=(1500, 1500)
 	ASSIGN A(1) -> ((1,1),(1,8),(8,8))  ; D32080 with two IDTs and Squid connect

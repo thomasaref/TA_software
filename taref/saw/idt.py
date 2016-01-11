@@ -205,7 +205,7 @@ a=IDT()
 print a.call_func("eta", a=0.2e-6, g=0.8e-6)#, vf=array([500.0, 600.0]), lbda0=array([0.5e-6, 0.6e-6]))
 a.plot_data("f0", lbda0=linspace(0.1e-6, 1.0e-6, 10000))
 print a.get_tag("lbda0", "unit_factor")
-#show()
+show()
 if 1:
     print a.K2, a.Dvv
     #print dir(a.get_member("K2").fget.fset)

@@ -40,7 +40,7 @@ class Square(Rectangle):
 class Dashed_Line_Horiz(EBL_Polygons):
     num_dashes=Int(10)
     linewidth=Float(100.0e-6).tag(unit="um")
-    length=Float(10000.0e-6).tag(unit="um")
+    length=Float(100000.0e-6).tag(unit="um")
 
     def make_polylist(self):
         rect_width=self.length/(2.0*self.num_dashes)
