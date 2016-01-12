@@ -7,6 +7,7 @@ Created on Tue Dec 22 20:53:05 2015
 
 from enaml.widgets.api import HGroup, MultilineField, VGroup, Label
 from taref.core.fundcore_e import aWindow
+from taref.core.e_Plotter import PlotWindow
 
 enamldef JDF_View(aWindow): 
     """A simple view for observing a process input text as output"""
@@ -14,6 +15,10 @@ enamldef JDF_View(aWindow):
     title="JDF View"
     initial_size=(800,800)
     VGroup:
+        PlotWindow: plot_window:
+                visible=True
+                plotr:=jdf.plot
+                initial_position=(500, 0)
         HGroup:
             MultilineField:
                 text := jdf.input_jdf

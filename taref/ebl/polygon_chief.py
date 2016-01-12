@@ -40,7 +40,7 @@ class Polygon_Chief(Chief):
         xmax=maxx([])
         ymin=miny([])
         ymax=maxy([])
-        
+        self.jdf.get_member("xy_offsets").reset(self.jdf)
         xy_off=self.jdf.xy_offsets
         for p in self.jdf.patterns:
             a=self.agent_dict[p.name] #[agent for agent in self.agents if agent.name==p.name][0]
@@ -53,10 +53,10 @@ class Polygon_Chief(Chief):
             #offset_list=[assign.xy_offset(self.jdf.arrays[0].x_start, self.jdf.arrays[0].x_step, 
             #                            self.jdf.arrays[0].y_start, self.jdf.arrays[0].y_step)
             #             for assign in self.jdf.arrays[0].assigns if p.num in assign.P_nums]
-            if a.plot_sep:
-                verts=[]
-                for chip in xy_off.get(p.name, []):
-                    sPoly(a, x_off=chip[0]*1.0e-6, y_off=chip[1]*1.0e-6, vs=verts)
+            #if a.plot_sep:
+            verts=[]
+            for chip in xy_off.get(p.name, []):
+                sPoly(a, x_off=chip[0]*1.0e-6, y_off=chip[1]*1.0e-6, vs=verts)
                       
             #for chip in self.jdf.wafer_coords.xy_locations:
             #    verts=sWaferDig(wafer_type=chip[0],x_dig=chip[1], y_dig=chip[2], xr=chip[3]*1.0e-6, yr=chip[4]*1.0e-6, wr=10.0e-6, hr=2.0e-6, vs=verts)
@@ -77,6 +77,14 @@ class Polygon_Chief(Chief):
         self.plot.set_ylim(ymin, ymax)
         self.plot.draw()
             
+    def save_JDF_DXF(self):
+        self.jdf.get_member("xy_offsets").reset(self.jdf)
+        xy_off=self.jdf.xy_offsets
+        for p in self.jdf.patterns:
+            a=self.agent_dict[p.name] #[agent for agent in self.agents if agent.name==p.name][0]
+            verts=[]
+            for chip in xy_off.get(p.name, []):
+                sPoly(a, x_off=chip[0]*1.0e-6, y_off=chip[1]*1.0e-6, vs=verts)
         
     angle_x=Float(0.3e-6).tag(desc="shift in x direction when doing angle evaporation", unit="um")
     angle_y=Float(0.0e-6).tag(desc="shift in y direction when doing angle evaporation", unit="um")

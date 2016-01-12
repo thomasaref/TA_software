@@ -351,12 +351,14 @@ class Plotter(Atom):
          #self.plot.request_redraw()
 
      def _observe_xlabel(self, change):
-         self.plot.x_axis.title=self.xlabel
-         self.plot.request_redraw()
+         self.axe.set_xlabel(self.xlabel)
+         #self.plot.x_axis.title=self.xlabel
+         #self.plot.request_redraw()
 
      def _observe_ylabel(self, change):
-         self.plot.y_axis.title=self.ylabel
-         self.plot.request_redraw()
+         self.axe.set_ylabel(self.ylabel)
+         #self.plot.y_axis.title=self.ylabel
+         #self.plot.request_redraw()
 
      def _default_xyfs(self):
          xyf=AllXYFormat(plotter=self)
@@ -385,6 +387,10 @@ class Plotter(Atom):
                 self.axe.add_collection(self.clts[zname], autolim=True)
             else:                
                 self.clts[zname].set_verts(zdata)
+
+     def add_text(self, text, x, y, **kwargs):
+         """adds text at data location x,y"""
+         self.axe.text(x, y, text, **kwargs)
          
      def draw(self):
          if self.fig.canvas!=None:

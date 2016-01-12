@@ -51,6 +51,13 @@ enamldef WaferCoordsView(aWindow):
                     selected := wc.bad_coord_type
             VGroup:
                 Label:
+                    text="Randomize:"
+                ObjectCombo: 
+                    items = list(wc.get_member("randomize").items)
+                    selected := wc.randomize
+
+            VGroup:
+                Label:
                     text="Redistribute coordinates:"
                 PushButton:
                     text = "Distribute"
@@ -58,9 +65,6 @@ enamldef WaferCoordsView(aWindow):
                         wc.distribute_event()
         Html:
             source <<  wc.html_text
-            #source << wc.update_event
-        Html:
-            source <<  wc.html_text2
                                      
 enamldef Main(aWindow):
     attr wc

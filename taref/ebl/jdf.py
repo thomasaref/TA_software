@@ -6,7 +6,7 @@ Created on Mon Jun  1 10:46:56 2015
 """
 
 from taref.ebl.wafer_coords import FullWafer
-from atom.api import Typed, Unicode, Atom, List, Coerced, observe
+from atom.api import Typed, Unicode, Atom, List, Coerced, observe, cached_property
 from taref.core.log import log_debug
 from taref.core.shower import show
 from taref.core.backbone import set_attr, get_tag
@@ -14,6 +14,8 @@ from taref.core.universal import sqze
 from enaml import imports
 from re import compile as compiler
     
+from taref.core.Plotter import Plotter
+
 P_FINDER=compiler("P\((\d+)\)")
 def find_P_nums(key):
     """utility function for extracting all P numbers from key"""
@@ -208,8 +210,9 @@ class JDF_Pattern(Atom):
 class JDF_Top(Atom):
     """Top class that controls distribution of patterns into JDF"""
     wafer_coords=Typed(FullWafer)
-
-    @property
+    plot=Typed(Plotter, ())
+    
+    @cached_property
     def xy_offsets(self):
         """recursive traces down locations of all patterns"""
         overall_dict={}
@@ -238,8 +241,32 @@ class JDF_Top(Atom):
     @observe("wafer_coords.distribute_event")
     def observe_distrib_event(self, change):
         self.distribute_coords()
-        self.wafer_coords.html_text2=self.wafer_coords.html_table_string(self.assign_condition)
-        
+        self.get_member("xy_offsets").reset(self)
+        xmin=-0.05
+        xmax=0.05
+        ymin=-0.05
+        ymax=0.05
+        self.plot.axe.texts=[]
+        for main_arr in self.main_arrays:
+            for asgn in main_arr.assigns:
+                for pos_asgn in asgn.pos_assign:
+                    x_off=main_arr.x_start+(pos_asgn[0]-1)*main_arr.x_step
+                    y_off=main_arr.y_start-(pos_asgn[1]-1)*main_arr.y_step
+                    self.plot.add_text(asgn.short_name, x_off, y_off, size=4.5, alpha=0.8, ha='center')
+                    xmin=min(xmin, x_off)
+                    xmax=max(xmax, x_off)
+                    ymin=min(ymin, y_off)
+                    ymax=max(ymax, y_off)
+        #xymin={"Full":-self.wafer_coords.radius, "A":-self.wafer_coords.radius, "B":0.0, "C":-self.wafer_coords.radius, "D":0.0}[self.wafer_coords.wafer_type]                    
+        #xymax={"Full": self.wafer_coords.radius, "A":0.0, "B": self.wafer_coords.radius, "C":0.0, "D": self.wafer_coords.radius}[self.wafer_coords.wafer_type]                    
+        STRETCH=self.wafer_coords.stretch
+        self.plot.set_xlim(xmin-STRETCH, xmax+STRETCH)
+        self.plot.set_ylim(ymin-STRETCH, ymax+STRETCH)
+        self.plot.xlabel="x (um)"
+        self.plot.ylabel="y (um)"
+        self.plot.title="JDF Pattern Distribution"
+        self.plot.draw()
+       
     @property
     def view_window(self):
         with imports():
@@ -267,15 +294,18 @@ class JDF_Top(Atom):
         self.comments=["distributed main array for quarter wafer {}".format(self.wafer_coords.wafer_type)]
         self.Px, self.Py, self.Qx, self.Qy=self.wafer_coords.GLM
         
-        assigns=[assign.dup_assign() for assign in self.main_arrays[0].assigns]
-        self.main_arrays=self._default_main_arrays()
-        for arr in self.main_arrays:
-            arr.assigns=[assign.dup_assign() for assign in assigns]
+        if self.wafer_coords.wafer_type=="Full" and len(self.main_arrays)<4:
+            assigns=[assign.dup_assign() for assign in self.main_arrays[0].assigns]
+            self.main_arrays=self._default_main_arrays()
+            for arr in self.main_arrays:
+                arr.assigns=[assign.dup_assign() for assign in assigns]
             
-        if num is None:
-            num=len(self.patterns)
         for m, qw in enumerate(self.wafer_coords.quarter_wafers):
-            for n, c in enumerate(qw.distribute_coords(num)):
+            if num is None:
+                our_num=len(self.main_arrays[m].assigns)
+            else:
+                our_num=num
+            for n, c in enumerate(qw.distribute_coords(our_num)):
                 self.main_arrays[m].assigns[n].pos_assign=c[:]
             self.main_arrays[m].x_start=qw.x_offset
             self.main_arrays[m].x_num=qw.N_chips
@@ -337,8 +367,7 @@ class JDF_Top(Atom):
             array=JDF_Main_Array(tempstr=tempstr, comment=comment)
             self.main_arrays.append(array)
         return array
-            
-        
+                    
     def jdf_parse(self, jdf_data):
         """reads a jdf text and puts the data into objects"""
         jdf_list=jdf_data.split("\n")

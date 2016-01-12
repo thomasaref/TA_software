@@ -8,6 +8,7 @@ from atom.api import Enum, Int, Unicode, List, Float, Event, Atom, observe, cach
 from enaml import imports
 #from taref.core.log import log_debug
 from taref.core.universal import sqze
+from random import shuffle
 
 QUARTER_WAFER_SIGNS={"A" : (-1, 1), "B" : (1, 1), "C" : (-1, -1), "D" : (1, -1)}
 
@@ -22,8 +23,8 @@ class SubWaferCoord(Atom):
     gap_size=Int(5000).tag(desc="gap from center of wafer", unit=" um")
     
     bad_coord_type=Enum("quarter wafer", "full wafer", "none")
-
-    html_text2=Unicode().tag(log=False)
+    
+    randomize=Enum(True, False)
 
     distribute_event=Event()
 
@@ -131,18 +132,25 @@ class WaferCoords(SubWaferCoord):
     @cached_property
     def bad_coords(self):
         if self.bad_coord_type=="quarter wafer":
-            return [ item for item in self.wafer
+            bad_coords=[ item for item in self.wafer
                  if (item[0]+1, item[1]) not in self.wafer or (item[0]-1, item[1]) not in self.wafer
                  or (item[0], item[1]+1) not in self.wafer or (item[0], item[1]-1) not in self.wafer]
         elif self.bad_coord_type=="full wafer":
-            return [ item for item in self.wafer
+            bad_coords=[ item for item in self.wafer
                      if (item[0]+self.x_mult, item[1]) not in self.wafer
                      or (item[0], item[1]-self.y_mult) not in self.wafer]
-        return []
+        else:
+            bad_coords=[]
+        if self.randomize:
+            shuffle(bad_coords)
+        return bad_coords
         
     @cached_property
     def good_coords(self):
-        return [x for x in self.wafer if x not in self.bad_coords]
+        good_coords=[x for x in self.wafer if x not in self.bad_coords]
+        if self.randomize:
+            shuffle(good_coords)
+        return good_coords
 
     def html_table_string(self, condition):
         tt=['\n<table border="1">']
@@ -198,7 +206,13 @@ class FullWafer(SubWaferCoord):
         for qw in self.quarter_wafers:
             t_list.extend(qw.xy_locations)
         return t_list    
-        
+    
+    def _observe_distribute_event(self, change):
+        if change["type"]=="event":
+            for qw in self.quarter_wafers:
+                qw.get_member('bad_coords').reset(qw)
+                qw.get_member('good_coords').reset(qw)
+                
     @observe("wafer_type", "diameter", "chip_size", "gap_size", "bad_coord_type")
     def do_update(self, change):
         if change['type'] == 'update':
@@ -216,6 +230,7 @@ class FullWafer(SubWaferCoord):
                     item.gap_size=self.gap_size
                     item.bad_coord_type=self.bad_coord_type
             self.get_member('N_chips').reset(self)
+            self.get_member('radius').reset(self)
             self.get_member('html_text').reset(self)
          
     def _default_quarter_wafers(self):
@@ -228,7 +243,14 @@ class FullWafer(SubWaferCoord):
                 WaferCoords(wafer_type="D", diameter=self.diameter, chip_size=self.chip_size,
                 gap_size=self.gap_size, bad_coord_type=self.bad_coord_type)]
 
+    @cached_property
+    def radius(self):
+        return self.quarter_wafers[0].radius
 
+    @property
+    def stretch(self):
+        return self.gap_size#+self.chip_size/2 
+        
     @cached_property    
     def N_chips(self):
         if self.wafer_type=="Full":
