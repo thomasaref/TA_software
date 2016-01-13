@@ -4,7 +4,7 @@ Created on Tue Jul  7 21:52:51 2015
 
 @author: thomasaref
 
-A collection of functions for using taref's dynamic view. To maintain compatibility with Atom and object 
+A collection of functions for using taref's dynamic view. To maintain compatibility with Atom and object
 derived objects, these are defined as standalone functions. Get functions usually return some none_value even
 if the value did not exist.
 """
@@ -77,7 +77,7 @@ class tagged_callable(object):
     Logging is initiated if tags private is not True or log is False"""
     def __init__(self, **kwargs):
         self.kwargs=kwargs
-        
+
     def __call__(self, func):
         t_func=logging_f(func)
         if self.kwargs.get("private", False) or not self.kwargs.get("log", True):
@@ -102,9 +102,9 @@ class property_f(logging_f):
     def fset_maker(self, obj):
         def setit(obj, value):
             for fset in self.fset_list:
-                argvalues=[self.param_decider(obj, param, value) 
+                argvalues=[self.param_decider(obj, param, value)
                                  for param in fset.run_params]
-                setattr(obj, fset.name, fset(obj, *argvalues))                
+                setattr(obj, fset.name, fset(obj, *argvalues))
         return setit
 
     def param_decider(self, obj, param, value):
@@ -130,7 +130,7 @@ class tag_Property(object):
 
     def __call__(self, func):
         return Property(func, cached=True).tag(**self.kwargs)
-    
+
 def private_property(fget):
     """ A decorator which converts a function into a cached Property tagged as private.
     Improves performance greatly over property!
@@ -230,7 +230,7 @@ def get_attr(obj, name, none_value=None):
     return getattr(obj, name, none_value)
 
 def set_attr(self, name, value, **kwargs):
-    """utility function for setting tags while setting value"""        
+    """utility function for setting tags while setting value"""
     setattr(self, name, value)
     if kwargs!={}:
         set_tag(self, name, **kwargs)
@@ -238,12 +238,12 @@ def set_attr(self, name, value, **kwargs):
 ##remove?
 def pass_func(*args, **kwargs):
     pass
-    
+
 def run_func(obj, name, none_func=pass_func, *args, **kwargs):
     if hasattr(obj, str(name)):
         return getattr(obj, name)(*args, **kwargs)
     return none_func(*args, **kwargs)
-        
+
 def lowhigh_check(obj, name, value):
     """can specify low and high tags to keep float or int within a range."""
     if type(value) in (float, int):
@@ -330,11 +330,11 @@ class Backbone(Atom):
     @private_property
     def all_params(self):
         return get_all_params(self)
-        
+
     @private_property
     def all_main_params(self):
         return get_all_main_params(self)
-        
+
     def _default_main_params(self):
         """defaults to all members in all_params that are not tagged as sub.
         Can be overwritten to allow some minimal custom layout control,
@@ -344,7 +344,7 @@ class Backbone(Atom):
 
     def lowhigh_check(self, name, value):
         return lowhigh_check(self, name, value)
-        
+
     def set_log(self, name, value):
         set_log(self, name, value)
 
@@ -375,7 +375,7 @@ class Backbone(Atom):
         self._setup_property_fs(param, typer)
         self._setup_ranges(param, typer)
         self._setup_units(param, typer)
-    
+
     def call_func(self, name, **kwargs):
         """calls a func using keyword assignments. If name corresponds to a Property, calls the get func.
         otherwise, if name_mangled func "_get_"+name exists, calls that. Finally calls just the name if these are not the case"""
@@ -409,7 +409,7 @@ class Backbone(Atom):
             if item.fset_list!=[]:
                 self.get_member(param).setter(item.fset_maker(self))
 
-    def _setup_ranges(self, param, typer):        
+    def _setup_ranges(self, param, typer):
         """autosets low/high tags for Range and FloatRange"""
         if typer in [Range, FloatRange]:
             self.set_tag(param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])

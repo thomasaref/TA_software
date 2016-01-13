@@ -10,9 +10,9 @@ from atom.api import Float, Enum
 
 class Wafer_Labels(EBL_Polygons):
     """Draws letter number markings on full wafer using ABCD for quarters"""
-    digit_height=Float(300.0e-6).tag(unit="um")
-    lettering_width=Float(40.0e-6).tag(unit="um")
-    
+    digit_height=Float(400.0e-6).tag(unit="um")
+    lettering_width=Float(50.0e-6).tag(unit="um")
+
     def make_polylist(self):
         for chip in self.chief.jdf.wafer_coords.xy_locations:
             self.WaferDig(wafer_type=chip[0],x_dig=chip[1], y_dig=chip[2],
@@ -22,27 +22,27 @@ class Wafer_Labels(EBL_Polygons):
 
     def _default_color(self):
         return "red"
-        
+
     @property
     def base_name(self):
         return "WAFER_LABELS"
-        
+
 class Digit(EBL_Polygons):
     digit_height=Float(300.0e-6).tag(unit="um")
     lettering_width=Float(40.0e-6).tag(unit="um")
-    digit=Enum("A", "B", "C", "D", "1", "2", "3", "4", "5", "6", "7", "8", "9")   
-    
+    digit=Enum("A", "B", "C", "D", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+
     def make_polylist(self):
         self.Dig(dig_key=self.digit, xr=0.0, yr=0.0, wr=self.digit_height/2.0, hr=self.lettering_width)
 
     def _default_color(self):
         return "red"
-        
+
     @property
     def base_name(self):
         return "DIGIT"
-        
+
 if __name__=="__main__":
     #a=Wafer_Labels()
     a=Digit()
-    a.show()        
+    a.show()

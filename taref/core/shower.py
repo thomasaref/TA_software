@@ -9,7 +9,7 @@ from enaml import imports
 from enaml.qt.qt_application import QtApplication
 from taref.core.log import log_debug
 
-def show(*agents):
+def shower(*agents):
     """a powerful showing function for any Atom object(s). Checks if object has a view_window property and otherwise uses a default.
     also provides a show control of the objects"""
     app = QtApplication()

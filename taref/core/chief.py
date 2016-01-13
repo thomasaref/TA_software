@@ -11,8 +11,8 @@ from taref.core.log import log_info, log_warning, make_log_file, log_debug#, SAV
 from atom.api import Atom, Bool, Typed, ContainerList, Callable, Dict, Float, Int, FloatRange, Range, Unicode, Str, List, Enum, Event, Instance
 from taref.core.read_file import Read_File
 from taref.core.save_file import Save_File, Save_HDF5
-from Plotter import Plotter
-from taref.core.shower import show
+from plotter import Plotter
+from taref.core.shower import shower
 from collections import OrderedDict
 #import sys
 from taref.core.backbone import do_it_if_needed
@@ -45,7 +45,7 @@ class Chief(Atom):
     def agent_names(self):
         """returns list of agent names"""
         return self.agent_dict.keys()
-        
+
     BASE_DIR=Unicode("/Users/thomasaref/Dropbox/Current stuff/TA_software")
     DIVIDER=Unicode("/")
     LOG_NAME=Unicode("record")
@@ -76,7 +76,7 @@ class Chief(Atom):
         for instr in self.agents:
             tempdict[instr.name]=instr.get_all_tags('plot', True, False, instr.all_params)
             if tempdict[instr.name]==[]:
-                tempdict[instr.name]=instr.main_params 
+                tempdict[instr.name]=instr.main_params
         return tempdict
 
     def _observe_saving(self, change):
@@ -131,7 +131,7 @@ class Chief(Atom):
 
     def show(self):
         try:
-            show(*self.agents)
+            shower(*self.agents)
         finally:
             if self.saving==True:
                 self.save_file.flush_buffers()

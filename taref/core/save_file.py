@@ -16,7 +16,7 @@ from numpy import ndarray, size
 from enaml import imports
 from taref.core.read_file import Read_HDF5, Read_NP, Read_TXT, Read_DXF
 from collections import OrderedDict
-from taref.core.shower import show
+from taref.core.shower import shower
 
 class Save_File(Filer):
     data_buffer=Typed(OrderedDict)
@@ -134,17 +134,17 @@ class Save_TXT(Save_File):
     save_file=Typed(file)
     write_mode=Enum("w", "a")
     data_buffer=Unicode()
-    
+
     def _default_data_buffer(self):
         return ""
-    
+
     def _default_save_file(self):
         log_info("Created txt file at: {0}".format(self.file_path))
         return open(self.file_path, self.write_mode)
 
     #def _default_file_type(self):
      #   return "text"
-        
+
     def default_file_suffix(self):
         return "txt"
 
@@ -163,9 +163,9 @@ class Save_TXT(Save_File):
         self.write_mode=write_mode
         self.data_buffer=data
         self.flush_buffers()
-        
+
     def do_data_save(self):
-        save_txt(file_path=self.file_path, data=self.data_buffer, write_mode=self.write_mode)        
+        save_txt(file_path=self.file_path, data=self.data_buffer, write_mode=self.write_mode)
         log_debug("Data saved to txt file at: {0}".format(self.file_path))
 
     #def direct_save(self, data, write_mode='a'):
@@ -203,8 +203,8 @@ class Save_DXF(Save_File):
 
 if __name__=="__main__":
     a=Save_TXT()
-    show(a)
-    
+    shower(a)
+
 if __name__=="__main__2":
 
     a=Save_HDF5(buffer_save=True)

@@ -13,10 +13,11 @@ from enaml import imports
 from collections import OrderedDict
 from taref.ebl.jdf import JDF_Top, JDF_Pattern, JDF_Assign, JDF_Array
 from taref.ebl.polygon_backbone import sPoly,minx, maxx, miny, maxy
+from taref.ebl.DXF_functions import save_dxf
 
 class Polygon_Chief(Chief):
     jdf=Typed(JDF_Top)
-    
+
     def _default_jdf(self):
         jdf=JDF_Top()
         #assign_list=[]
@@ -28,11 +29,11 @@ class Polygon_Chief(Chief):
                 #assign_list.append("P({0})".format(n+1))
                 jdf.main_arrays[0].assigns.append(JDF_Assign(assign_type=["A({0})".format(n+1)],
                          short_name=p.name, pos_assign=[(n+1, 1)]))
-        jdf.input_jdf=jdf.jdf_produce()                 
+        jdf.input_jdf=jdf.jdf_produce()
         #jdf.main_arrays[0].assigns.append(JDF_Assign(assign_type=assign_list, pos_assign=[(1,1), (1,2)]))
         #jdf.main_arrays[0].x_step=20
         #jdf.main_arrays[0].y_step=20
-                
+
         return jdf
 
     def plot_JDF(self):
@@ -44,20 +45,20 @@ class Polygon_Chief(Chief):
         xy_off=self.jdf.xy_offsets
         for p in self.jdf.patterns:
             a=self.agent_dict[p.name] #[agent for agent in self.agents if agent.name==p.name][0]
-            
+
             #log_debug(self.jdf.arrays[0].xy_offset())
             #x_start, x_step, y_start, y_step=self.jdf.arrays[0].x_start, self.jdf.arrays[0].x_step, self.jdf.arrays[0].y_start, self.jdf.arrays[0].y_step
-            #log_debug([#assign.xy_offset(self.jdf.arrays[0].x_start, self.jdf.arrays[0].x_step, 
+            #log_debug([#assign.xy_offset(self.jdf.arrays[0].x_start, self.jdf.arrays[0].x_step,
                        #                 self.jdf.arrays[0].y_start, self.jdf.arrays[0].y_step)
             #            assign.pos_assign for assign in self.jdf.arrays[0].assigns if p.num in assign.P_nums])
-            #offset_list=[assign.xy_offset(self.jdf.arrays[0].x_start, self.jdf.arrays[0].x_step, 
+            #offset_list=[assign.xy_offset(self.jdf.arrays[0].x_start, self.jdf.arrays[0].x_step,
             #                            self.jdf.arrays[0].y_start, self.jdf.arrays[0].y_step)
             #             for assign in self.jdf.arrays[0].assigns if p.num in assign.P_nums]
             #if a.plot_sep:
             verts=[]
             for chip in xy_off.get(p.name, []):
                 sPoly(a, x_off=chip[0]*1.0e-6, y_off=chip[1]*1.0e-6, vs=verts)
-                      
+
             #for chip in self.jdf.wafer_coords.xy_locations:
             #    verts=sWaferDig(wafer_type=chip[0],x_dig=chip[1], y_dig=chip[2], xr=chip[3]*1.0e-6, yr=chip[4]*1.0e-6, wr=10.0e-6, hr=2.0e-6, vs=verts)
             #self.plot.set_data("labels", verts, "k")
@@ -72,20 +73,22 @@ class Polygon_Chief(Chief):
             xmax=max([maxx(verts), xmax])
             ymin=min([miny(verts), ymin])
             ymax=max([maxy(verts), ymax])
-        
+
         self.plot.set_xlim(xmin, xmax)
         self.plot.set_ylim(ymin, ymax)
         self.plot.draw()
-            
+        #self.save_JDF_DXF()
+
     def save_JDF_DXF(self):
         self.jdf.get_member("xy_offsets").reset(self.jdf)
         xy_off=self.jdf.xy_offsets
+        verts=[]
         for p in self.jdf.patterns:
             a=self.agent_dict[p.name] #[agent for agent in self.agents if agent.name==p.name][0]
-            verts=[]
             for chip in xy_off.get(p.name, []):
                 sPoly(a, x_off=chip[0]*1.0e-6, y_off=chip[1]*1.0e-6, vs=verts)
-        
+        save_dxf(verts, color="green", layer="Al", file_path="super4inphototest.dxf", write_mode="w")
+
     angle_x=Float(0.3e-6).tag(desc="shift in x direction when doing angle evaporation", unit="um")
     angle_y=Float(0.0e-6).tag(desc="shift in y direction when doing angle evaporation", unit="um")
     view_type=Enum("pattern", "angle")
