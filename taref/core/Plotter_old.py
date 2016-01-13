@@ -6,15 +6,17 @@ Created on Thu Sep 11 09:53:23 2014
 """
 
 from taref.core.log import log_debug
-from taref.core.shower import show
+#from chaco.plot import Plot
+#from chaco.array_plot_data import ArrayPlotData
+#from chaco.default_colormaps import jet
 from numpy import angle, absolute, dtype, log10, meshgrid, arange, linspace, sin
-from numpy import shape, split, squeeze, array, transpose, concatenate, atleast_2d, ndim
+from numpy import split, squeeze, array, transpose, concatenate, atleast_2d, ndim
+#from chaco.tools.api import PanTool, ZoomTool,  LegendTool #, LineInspector
+#import traits_enaml
+#import enaml
 from enaml import imports
+from enaml.qt.qt_application import QtApplication
 from atom.api import Atom, Int, Enum, Float, List, Dict, Typed, Unicode, ForwardTyped
-from matplotlib.axes import Axes
-from matplotlib import collections, transforms
-from matplotlib.collections import PolyCollection, LineCollection
-from matplotlib.figure import Figure
 
 #slow imports
 Plot = None
@@ -27,6 +29,7 @@ PlotGraphicsContext=None
 #matplotlib.use('GTKAgg') 
 
 from matplotlib import rcParams
+#print rcParams
 rcParams['axes.labelsize'] = 14
 rcParams['xtick.labelsize'] = 9
 rcParams['ytick.labelsize'] = 9
@@ -61,7 +64,68 @@ colors = [colorConverter.to_rgba(c) for c in ('r','g','b','c','y','m','k')]
 #my_locator = MaxNLocator(6)
 # Set up axes and plot some awesome science
 #ax.yaxis.set_major_locator(my_locator)
+import  matplotlib.pyplot as plt # import plot
+from matplotlib.axes import Axes
+if 0:
+    line2D= plt.plot([0,12])
+    #print line2D[0].get_data()
+    fig, ax2 = plt.subplots(1,1)
+    #print isinstance(ax2, Axes)
+    #print dir(fig), dir(ax2)
+    # The same data as above, but fill the curves.
+from matplotlib import collections, transforms
+from matplotlib.collections import PolyCollection, LineCollection
 
+col = collections.PolyCollection([((0,0), (0,1), (1,1), (1,0)), ((0,0), (0,1), (1,1), (1,0))])#,
+                                #transOffset=ax2.transData)
+#print dir(col)#.properties()#get_xy()      
+#print [c.to_polygons() for c in col.get_paths()]
+#print help(col.update)
+
+col.set_verts([((1,1), (1,2), (3,1))])
+#print [c.to_polygons() for c in col.get_paths()]
+
+#trans = transforms.Affine2D().scale(fig.dpi/72.0)
+#col.set_transform(trans)  # the points to pixels transform
+if 0:
+    ax2.add_collection(col, autolim=True)
+    #col.set_color(colors)
+    
+    
+    ax2.autoscale_view()
+    ax2.set_title('PolyCollection using offsets')
+    
+    #plt.show()
+
+from matplotlib.figure import Figure
+if 0:
+    fig1 = Figure()
+    ax1 = fig1.add_subplot(111)
+    #print type(ax1)
+    ax1.plot([1, 2, 3])
+    #ax1.axhline(linewidth=4, color="g")
+    
+    fig2 = Figure()
+    ax2 = fig2.add_subplot(111)
+    ax2.plot([5, 2, 8, 1])
+    
+    figures = {
+        'one': fig1,
+        'two': fig2,
+    }
+
+def dB(x):
+    return 20*log10(absolute(x))
+
+def magphase(y, response="Mag"):
+        if dtype("complex128")==y.dtype:
+            if response=="Phase":
+                return angle(y)
+            elif response=="Mag (dB)":
+                return dB(y)
+            else:
+                return absolute(y)
+        return y
 mycolors=[ 'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan', 'magenta', 'orange']
 
 class XYFormat(Atom):
@@ -72,7 +136,7 @@ class XYFormat(Atom):
     zname=Unicode()
     colormap=Enum("jet")
 
-    line_color=Enum(*mycolors)
+    line_color=Enum(*mycolors) #'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan', 'magenta', 'orange')
     plot_type=Enum('line', 'scatter', 'line+scatter')
     line_width=Float(1.0)
     marker = Enum('square', 'circle', 'triangle', 'inverted_triangle', 'plus', 'cross', 'diamond', 'dot', 'pixel')
@@ -90,11 +154,12 @@ class XYFormat(Atom):
 
     def set_param(self, param, change, index=-1):
         if change['type']!='create':
-            setattr(self.rend_list[index], param, change['value'])
+          #  if self.rend_list[index]!=None:
+                setattr(self.rend_list[index], param, change['value'])
+                #print self.rend_list
 
     def set_line_param(self, param, change):
         self.set_param(param, change, index=0)
-        
     def set_scatter_param(self, param, change):
         self.set_param(param, change, index=1)
 
@@ -244,17 +309,22 @@ class Plotter(Atom):
      ylabel=Unicode()
 
      xyfs=Dict()
-     #plot= ForwardTyped(lambda: Plot)
+     #pd=Typed(ArrayPlotData, ())
+     plot= ForwardTyped(lambda: Plot)
      color_index=Int()
      clts=Dict()
      fig=Typed(Figure)
      axe=Typed(Axes)
+     #clt=Typed(PolyCollection)
      plottables=Dict()
 
      overall_plot_type=Enum("XY plot", "img plot")
      value_scale=Enum('linear', 'log')
      index_scale=Enum('linear', 'log')
 
+     #def _default_clt(self):
+     #    return PolyCollection([((0,0), (0,0))], alpha=0.6, antialiased=True)#, rasterized=False, antialiased=False)
+     
      def _default_axe(self):
          axe=self.fig.add_subplot(111)
          axe.autoscale_view(True)
@@ -308,7 +378,7 @@ class Plotter(Atom):
          plot_gc.render_component(self.plot)
          plot_gc.save("image_test.png")
 
-     def set_data(self, zname=None, zdata=None, zcolor=None):
+     def set_data(self, zname, zdata, zcolor):
          if zdata!=None:
             if zname not in self.clts: #plottables['plotted']:#self.pd.list_data():
                 clt=PolyCollection(zdata, alpha=0.5, antialiased=True)#, rasterized=False, antialiased=False)
@@ -317,37 +387,6 @@ class Plotter(Atom):
                 self.axe.add_collection(self.clts[zname], autolim=True)
             else:                
                 self.clts[zname].set_verts(zdata)
-            if zname not in self.clts:
-                clt=LineCollection([list(zip(x, y)) for y in ys],
-                               linewidths=(0.5, 1, 1.5, 2),
-                               linestyles='solid', colors=("red", "blue", "green"))
-         x = arange(3)
-         ys = array([x + i for i in arange(5)])
-         #xdata=arange(len(getattr(self, zname)))
-
-         data=[list(zip(x, y)) for y in ys]
-         line_segments = LineCollection(data,
-                               linewidths=1,
-                               linestyles='solid',
-                               colors=mycolors)
-         print data
-         print len(data)  
-         
-         print dir(line_segments)
-         print [p.vertices for p in line_segments.get_paths()]#)
-         print line_segments.get_segments()
-         line_segments.set_array(arange(len(data)))
-         
-         x = arange(3)
-         ys = array([x + i for i in arange(2)])
-         #xdata=arange(len(getattr(self, zname)))
-
-         data=[list(zip(x, y)) for y in ys]
-                  
-         line_segments.set_verts(data)
-         self.axe.add_collection(line_segments, autolim=True)
-         self.set_xlim(x.min(), x.max())
-         self.set_ylim(ys.min(), ys.max())                               
 
      def add_text(self, text, x, y, **kwargs):
          """adds text at data location x,y"""
@@ -355,6 +394,11 @@ class Plotter(Atom):
          
      def draw(self):
          if self.fig.canvas!=None:
+             #trans = transforms.Affine2D().scale(self.fig.dpi/72.0)
+             #self.clt.set_transform(trans)  # the points to pixels transform
+             #self.clt.set_color(colors)
+         
+             #self.axe.autoscale_view(True)
              self.fig.canvas.draw()
 
      def set_xlim(self, xmin, xmax):
@@ -370,7 +414,33 @@ class Plotter(Atom):
         if axis==0:
             return atleast_2d(data)[index, :]
         return atleast_2d(data)[:, index]
-   
+        
+     def add_poly_plot_old(self, n, verts, cn="green", polyname=""):
+         nxarray, nyarray = transpose(verts)
+         xname=polyname+"x" + str(n)
+         yname=polyname+"y" + str(n)
+         self.pd.set_data(xname, nxarray, coord='x') #coord='x' is likely redundant or a metadata tag
+         self.pd.set_data(yname, nyarray, coord='y')
+         self.plot.plot((xname, yname),
+                          type="polygon",
+                          face_color=cn, #colors[nsides],
+                          hittest_type="poly")[0]
+
+     def add_poly_plot(self, n, verts, cn="green", polyname=""):
+        #for n,p in enumerate(self.polylist):
+            log_debug("drawing polygon #: {0}".format(n))
+            #npoints = p.verts #n_gon(center=p, r=2, nsides=nsides)
+            nxarray, nyarray = transpose(verts)
+            self.pd.set_data("x" + str(n), nxarray)
+            self.pd.set_data("y" + str(n), nyarray)
+            log_debug("data set")            
+            self.plot.plot(("x"+str(n), "y"+str(n)),
+                          type="polygon",
+                          face_color=cn, #colors[nsides],
+                          hittest_type="poly"
+                          )[0]
+            log_debug("plot occured")
+
      def add_img_plot(self, zname, zdata, xname=None, xdata=None, yname=None,  ydata=None):
          self.add_data(zname=zname, zdata=zdata, xname=xname, xdata=xdata, yname=yname, ydata=ydata, overwrite=True, concat=False)
          print self.pd.get_data(zname)
@@ -395,6 +465,31 @@ class Plotter(Atom):
         xyf.draw_plot(name=name, zname=zname, xname=xname)
         self.xyfs.update(**{xyf.name: xyf})
         self.overall_plot_type="XY plot"
+
+#     def append_data(self, name, zpoint, xpoint=None):
+#         xyf=self.xyfs[name]
+#         zdata=self.pd.get_data(xyf.zname)
+#         zdata=append(zdata, zpoint)
+#         self.pd.set_data(xyf.zname, zdata)
+#         xdata=self.pd.get_data(xyf.xname)
+#         if xpoint==None:
+#             xpoint=max(xdata)+range(len(zpoint))+1
+#         xdata=append(xdata, xpoint)
+#         self.pd.set_data(xyf.xname, xdata)
+
+#     def _default_plot(self):
+#        global Plot, PanTool, ZoomTool, LegendTool
+#        if Plot==None:
+#            from chaco.plot import Plot
+#        if PanTool==None or ZoomTool==None or LegendTool==None:
+#            from chaco.tools.api import PanTool, ZoomTool,  LegendTool #, LineInspector
+#
+#        plot=Plot(self.pd, padding=50, fill_padding=True,
+#                        bgcolor="white", use_backbuffer=True,  unified_draw=True)#, use_downsampling=True)
+#        plot.tools.append(PanTool(plot, constrain_key="shift"))
+#        plot.overlays.append(ZoomTool(component=plot, tool_mode="box", always_on=False))
+#        plot.legend.tools.append(LegendTool(plot.legend, drag_button="right"))
+#        return plot
 
      def splitMultiD(self, arr, axis=0):
         if arr.ndim<2:
@@ -431,18 +526,17 @@ class Plotter(Atom):
          if yname!=None:
              self.gatherMultiD(yname, ydata, appen=appen, overwrite=overwrite, concat=concat)
          self.gatherMultiD(zname, zdata, appen=appen, overwrite=overwrite, concat=concat)
-     
-     @property
-     def view_window(self):         
+         
+     def show(self):
         with imports():
-            from Plotter_e import PlotMain
-        return PlotMain(plotr=self)
+            from e_Plotter import PlotMain
+        app = QtApplication()
+        view = PlotMain(plotr=self)
+        view.show()
+        app.start()
 
 if __name__=="__main__":
     a=Plotter()
-    a.set_data()
-    a.draw()
-    show(a)
     if not a.fig:
         print "no fig!"
     from numpy import exp, shape

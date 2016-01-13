@@ -21,6 +21,16 @@ def zero_arr(x):
 def dB(x):
     return 20*log10(absolute(x))
 
+def magphase(y, response="Mag"):
+        if dtype("complex128")==y.dtype:
+            if response=="Phase":
+                return angle(y)
+            elif response=="Mag (dB)":
+                return dB(y)
+            else:
+                return absolute(y)
+        return y
+
 def normalize(x):
     return (x-amin(x))/(amax(x)-amin(x))
 
