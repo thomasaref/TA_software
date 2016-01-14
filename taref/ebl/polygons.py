@@ -6,6 +6,7 @@ Created on Thu Jun 25 09:52:31 2015
 """
 from atom.api import Enum, List, Unicode, Typed, Bool, observe
 from taref.core.agent import SubAgent
+from taref.core.backbone import private_property
 from taref.core.save_file import Save_DXF
 from taref.ebl.beamer_gen import BeamerGen
 from taref.ebl.polygon_chief import polygon_chief
@@ -57,10 +58,10 @@ class EBL_Polygons(SubAgent):
     def chief(self):
         return polygon_chief
 
-    def __init__(self, **kwargs):
-        """extends __init__ auto make polylist"""
-        super(EBL_Polygons, self).__init__(**kwargs)
-        self.make_polylist()
+#    def __init__(self, **kwargs):
+#        """extends __init__ auto make polylist"""
+#        super(EBL_Polygons, self).__init__(**kwargs)
+#        self.make_polylist()
 
     @property
     def xmin(self):
@@ -78,9 +79,16 @@ class EBL_Polygons(SubAgent):
     def ymax(self):
         return maxy(self.verts)
 
-    def make_polylist(self):
-        """function that makes polgyons in list. overwritten in children classes"""
-        log_warning("make_polylist not overwritten!")
+    @private_property
+    def polylist(self):
+        self.verts=[]
+        return self.verts
+
+    #@polylist.setter(self, value):
+    #    self.verts=value
+
+    #    """function that makes polgyons in list. overwritten in children classes"""
+    #    log_warning("make_polylist not overwritten!")
 
     def P(self, verts):
         """adds a polygon to the polylist with vertices given as a list of tuples"""

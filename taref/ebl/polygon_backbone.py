@@ -141,8 +141,8 @@ def letter_A(xr, yr, wr, lw, vs=None):
     #(xr+(-wr+lw-lw/2.0)*(wr-lw)/(4.0*wr), yr-lw/2.0),
                 #(xr-lw-(lw+wr/2.0)/2.0+lw/2.0, yr),
                #(xr+(-wr+lw+lw/2.0)*(wr-lw)/(4.0*wr), yr+lw/2.0), #return sP([(xr-wr/2.0+lw/2.0, yr-lw/2.0), (xr-wr/2.0+lw/2.0, yr+lw/2.0),
-               (xr+wr/2.0-lw/2.0, yr+lw/2.0),(xr+wr/2.0-lw/2.0, yr-lw/2.0),], vs) 
-    
+               (xr+wr/2.0-lw/2.0, yr+lw/2.0),(xr+wr/2.0-lw/2.0, yr-lw/2.0),], vs)
+
 def M(xr, yr, wr, lw, vs=None):
     """draws middle of digit"""
     return sHD(xr-wr/2.0, yr, wr, lw, vs)
@@ -199,7 +199,7 @@ def sDig(dig_key, xr, yr, wr, hr, vs=None):
 def sWaferDig(wafer_type, x_dig, y_dig, xr, yr, wr, hr, vs=None):
     vs=sDig(wafer_type, xr-wr-2*hr, yr, wr, hr, vs)
     vs=sDig(x_dig, xr, yr, wr, hr, vs)
-    return sDig(y_dig, xr+wr+2*hr, yr, wr, hr, vs)   
+    return sDig(y_dig, xr+wr+2*hr, yr, wr, hr, vs)
 
 def sTransform(verts, x_off=0.0, y_off=0.0, theta=0.0, orient="TL", vs=None):
     """Transforms verts by given arguments and extends vs with them"""
@@ -220,6 +220,6 @@ def sPoly(obj, x_off=0.0, y_off=0.0, theta=0.0, orient="TL", vs=None):
     """attachs a EBL_Polygons obj verts to a list of verts after transforming them"""
     if vs is None:
         vs=[]
-    obj.verts=[]
-    obj.make_polylist()
-    return sTransform(obj.verts[:], x_off, y_off, theta, orient, vs)
+    #obj.verts=[]
+    #obj.make_polylist()
+    return sTransform(obj.polylist[:], x_off, y_off, theta, orient, vs)

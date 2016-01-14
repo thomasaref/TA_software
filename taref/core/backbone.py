@@ -148,6 +148,9 @@ def get_member(obj, name):
         return obj.get_member(str(name))
     return getattr(obj, str(name))
 
+def reset_property(obj, name):
+    get_member(obj, name).reset(obj)
+
 def members(obj):
     """returns members if defined, e.g. Atom class, or attributes whose names don't start with _"""
     if hasattr(obj, "members"):
@@ -390,6 +393,9 @@ class Backbone(Atom):
         if name in self.all_params:
             value=self.lowhigh_check(name, value)
         super(Backbone, self).__setattr__(name, value)
+
+    def reset_property(self, name):
+        self.get_member(name).reset(self)
 
     def reset_properties(self):
         """resets all  properties"""

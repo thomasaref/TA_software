@@ -5,7 +5,7 @@ Created on Tue Dec 22 16:36:03 2015
 @author: thomasaref
 """
 
-from taref.ebl.pads import PADS
+from taref.ebl.pads_more_Al import PADS
 from taref.ebl.wafer_labels import Wafer_Labels, Digit
 from taref.ebl.cross import Cross, Symmetric_Cross, Symmetric_Inverse_Cross
 from taref.ebl.rectangle import Rectangle#, Dashed_Line_Horiz

@@ -101,10 +101,9 @@ class Polygon_Chief(Chief):
 
     def do_plot(self):
         for p in self.agents:
-            p.verts=[]
-            p.make_polylist()
+            p.reset_property("polylist")
             if p.plot_sep:
-                self.plot.set_data(p.name, p.verts, p.color)
+                self.plot.set_data(p.name, p.polylist, p.color)
             #self.pattern_dict[p.name]=dict(verts=p.verts[:], color=p.color, layer=p.layer, plot_sep=p.plot_sep)
             p.make_name_sug()
             p.save_file.main_file=p.name_sug+".dxf"

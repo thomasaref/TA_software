@@ -9,6 +9,7 @@ from taref.saw.idt import IDT
 from atom.api import Float, Bool, Enum, Int
 from taref.ebl.polygons import EBL_Polygons
 from numpy import  mod
+from taref.core.backbone import private_property
 
 class EBL_IDT(EBL_Polygons, IDT):
     """handles everything related to drawing a IDT. Units are microns (um)"""
@@ -71,10 +72,12 @@ class EBL_IDT(EBL_Polygons, IDT):
     def xo(self):
         return self.a*(1.0-1.0/self.step_num)*self.m
 
-    def make_polylist(self):
+    @private_property
+    def polylist(self):
         """draws single or double fingered IDT.
         If it is for a qubit, it adjusts the bottom box to contain SQUID connections
         (central fingers connect bottom to top)"""
+        self.verts=[]
         self._IDTfingers()
         self._IDTextrafingers()
         self._IDTtopbottombox()
@@ -88,6 +91,7 @@ class EBL_IDT(EBL_Polygons, IDT):
                 self._qubitgate()
             if self.add_gnd:
                 self._qubitgnd()
+        return self.verts
 
     def _subfingrect(self, xt, yt, wt, ht, m):
         """writes part of finger for stepped IDTs"""
