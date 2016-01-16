@@ -74,9 +74,10 @@ class Save_File(Filer):
     def full_save(self, obj=None):
         """does a full save, making files and directories, flushing the buffers, and saving the code"""
         self.makedir()
+        self.save_event()
         self.flush_buffers()
         self.save_code(obj)
-        self.save_event()
+
 
     def flush_buffers(self):
         self.do_data_save()
@@ -162,7 +163,7 @@ class Save_TXT(Save_File):
     def data_save(self, data, write_mode="a"):
         self.write_mode=write_mode
         self.data_buffer=data
-        self.flush_buffers()
+        #self.flush_buffers()
 
     def do_data_save(self):
         save_txt(file_path=self.file_path, data=self.data_buffer, write_mode=self.write_mode)

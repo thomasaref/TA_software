@@ -31,12 +31,10 @@ class EBL_Polygons(SubAgent):
         name_sug=""
         self.name_sug=name_sug
 
-    def full_EBL_save(self, dir_path="""/Users/thomasaref/Dropbox/Current stuff/TA_software/discard/"""):
-        self.verts=[]
-        self.make_polylist()
+    def full_EBL_save(self, dir_path="""/Users/thomasaref/Dropbox/Current stuff/TA_software/discard/S2015_06_22_180739/"""):
         self.make_name_sug()
         file_path=dir_path+self.name_sug+".dxf"
-        self.save_file.direct_save(self.verts[:], self.color, self.layer, file_path=file_path, write_mode='w')
+        self.save_file.direct_save(self.polylist[:], self.color, self.layer, file_path=file_path, write_mode='w')
         self.bmr=BeamerGen(file_name=self.name_sug, mod_table_name = self.shot_mod_table, bias=-0.009, base_path=dir_path,
                            extentLLy=-150, extentURy=150)
         self.bmr.gen_flow()
@@ -46,15 +44,15 @@ class EBL_Polygons(SubAgent):
     def obs_save_event(self, change):
         self.save_file.direct_save(self.verts[:], self.color, self.layer, write_mode='w')
 
-    @property
+    @private_property
     def base_name(self):
         return "EBL_Polygons"
 
-    @property
+    @private_property
     def initial_position(self):
         return (0,300)
 
-    @property
+    @private_property
     def chief(self):
         return polygon_chief
 
