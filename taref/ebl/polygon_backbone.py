@@ -223,3 +223,47 @@ def sPoly(obj, x_off=0.0, y_off=0.0, theta=0.0, orient="TL", vs=None):
     #obj.verts=[]
     #obj.make_polylist()
     return sTransform(obj.polylist[:], x_off, y_off, theta, orient, vs)
+
+from taref.core.universal import read_text     
+def read_dxf(file_path):
+    """reads dxf file in and places polygons in polylist"""
+    str_list=read_text(file_path)
+    data=zip(str_list[0::2], str_list[1::2])#str_list[0:2:-1]#, str_list[1:2:-1])
+    in_polyline=False
+    in_vertex=False
+    layer_names=[]
+    verts=[]
+    for n, line in enumerate(data):
+        if line==("0", "SECTION"):
+            print n*2
+        if line==("0", "POLYLINE"):
+            in_polyline=True
+            xcoords=[]
+            ycoords=[]
+        if in_vertex:
+            if line[0]=="8":
+                layer_names.append(line[1])
+                layer_name=line[1]
+            elif line[0]=="10":
+                xcoords.append(float(line[1]))
+            elif line[0]=="20":
+                ycoords.append(float(line[1]))
+            elif line[0]=="0":
+                in_vertex=False
+        if in_polyline and line==("0", "VERTEX"):
+            in_vertex=True
+        if line==("0", "SEQEND"):
+            in_polyline=False
+            verts.append((layer_name, zip(xcoords, ycoords)))
+    print layer_names
+    #print [item[1] for item in verts if item[0]=="PADS"]
+    def polylister(obj):
+        vs=[]
+        for poly in [item[1] for item in verts if item[0]=="AL"]:
+            sP(poly, vs=vs)
+        return vs
+    return polylister
+if __name__=="__main__":
+    #testblock()
+    file_path="/Users/thomasaref/Downloads/paddxfs/pads_W46.dxf"
+    read_dxf(file_path)
