@@ -106,11 +106,28 @@ class JDF_Assign(Atom):
         kwargs["assign_type"]=[unicode(at) for at in assign_type]
         kwargs["pos_assign"]=kwargs.get("pos_assign", [])
         kwargs["shot_assign"]=kwargs.get("shot_assign", "")
+        x_num=kwargs.pop("x_num", 1)
+        y_num=kwargs.pop("y_num", 1)
         if kwargs["pos_assign"]==[]:
             for item in tempstr.split("->")[1].partition("(")[2].rpartition(")")[0].split(")"):
                 if "(" in item:
                     xcor, ycor=item.split("(")[1].split(",")
-                    kwargs["pos_assign"].append((int(xcor), int(ycor)))
+                    if "-" in xcor:
+                        xcor_start, xcor_end=xcor.split("-")
+                        xcor_list=[int(xcor_start)+num for num in range(int(xcor_end))]
+                    elif "*" in xcor:
+                        xcor_list= [int(1)+num for num in range(int(x_num))]
+                    else:
+                        xcor_list=[int(xcor)]
+                    if "-" in ycor:
+                        ycor_start, ycor_end=ycor.split("-")
+                        ycor_list=[int(ycor_start)+num for num in range(int(ycor_end))]
+                    elif "*" in ycor:
+                        ycor_list= [int(1)+num for num in range(int(y_num))]
+                    else:
+                        ycor_list=[int(ycor)]
+                    kwargs["pos_assign"].extend([(x,y) for y in ycor_list for x in xcor_list])
+                    #kwargs["pos_assign"].append((int(xcor), int(ycor)))
                 elif "," in item:
                     kwargs["shot_assign"]=unicode(item.split(",")[1].strip())
         super(JDF_Assign, self).__init__(**kwargs)
@@ -145,7 +162,7 @@ class JDF_Array(Atom):
         return tl
 
     def add_assign(self, tempstr, comment):
-        self.assigns.append(JDF_Assign(tempstr=tempstr, comment=comment))#
+        self.assigns.append(JDF_Assign(tempstr=tempstr, comment=comment, x_num=self.x_num, y_num=self.y_num))#
 
     def __init__(self, **kwargs):
         """Processes kwargs to allow string definition to be passes as well"""
@@ -633,7 +650,37 @@ P(1) 'cIDT9bd36ef0w96wb0.v30' (0.0,0.0)
 P(2) 'cQDT9bd3ef20w80wb0.v30' (0.0,0.0)
 P(3) 'cQDT9bs3ef20w80wb0.v30' (0,0)
 """
-    a.input_jdf=jdf_data
+
+    jdf_data2="""JOB/W 'R6PADS',4,-4.2
+
+; For exposure on YZ-cut LiNbO3, piece D.
+; Changing Np of transmon and gate distance
+
+GLMPOS P=(10000,-46000),Q=(46000,-10000)
+
+PATH MINI
+ARRAY (7500,8,5000)/(-7500,8,5000)
+	CHMPOS M1=(1500,1500)
+	ASSIGN P(1) -> ((1,1-6),(1,8),(3,1-6),(5,1-6),(7,1-4),P35)
+	ASSIGN P(2) -> ((1,7),(2,*),(3,7),(4,1-7),(6,1-5),(8,1-2),P46)
+	;SKIP ((3,8),(4,8),(5,7-8),(6,6-8), (7,5-8), (8,3-8))
+AEND
+PEND
+
+LAYER 1
+	P(1) 'pads_W35.v30' (0,0)
+	P(2) 'pads_W46.v30' (0,0)
+
+   STDCUR 70
+   SHOT A,100
+   RESIST 30 ;Taken from TA 19 may 2015
+
+@ 'pads_W35.jdi'
+@ 'pads_W46.jdi'
+
+END 1"""
+
+    a.input_jdf=jdf_data2
     #print a.arrays[0].assigns[0].pos_assign
     shower(a, a.wafer_coords)
     #print a.arrays[0].assigns[0].pos_assign

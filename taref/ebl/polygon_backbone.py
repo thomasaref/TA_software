@@ -224,18 +224,32 @@ def sPoly(obj, x_off=0.0, y_off=0.0, theta=0.0, orient="TL", vs=None):
     #obj.make_polylist()
     return sTransform(obj.polylist[:], x_off, y_off, theta, orient, vs)
 
-from taref.core.universal import read_text     
-def read_dxf(file_path):
+from taref.core.universal import read_text
+def read_dxf(file_path, in_layer_name="PADS", in_block_name="entity"):
     """reads dxf file in and places polygons in polylist"""
     str_list=read_text(file_path)
     data=zip(str_list[0::2], str_list[1::2])#str_list[0:2:-1]#, str_list[1:2:-1])
     in_polyline=False
     in_vertex=False
+    #in_block=False
+    block="None"
     layer_names=[]
+
     verts=[]
     for n, line in enumerate(data):
+        #line[0]=line.strip()
+        #print line
         if line==("0", "SECTION"):
-            print n*2
+            if data[n+1]==("2", "ENTITIES"):
+                block="entity"
+
+        if line==("0", "BLOCK"):
+            #in_block=True
+            if data[n+2][0]=="2":
+                block=data[n+2][1]
+            #print data[n+1]
+            print block
+            print data[n+2]
         if line==("0", "POLYLINE"):
             in_polyline=True
             xcoords=[]
@@ -245,24 +259,36 @@ def read_dxf(file_path):
                 layer_names.append(line[1])
                 layer_name=line[1]
             elif line[0]=="10":
-                xcoords.append(float(line[1]))
+                xcoords.append(float(line[1])/1.0e6)
             elif line[0]=="20":
-                ycoords.append(float(line[1]))
+                ycoords.append(float(line[1])/1.0e6)
             elif line[0]=="0":
                 in_vertex=False
         if in_polyline and line==("0", "VERTEX"):
             in_vertex=True
         if line==("0", "SEQEND"):
             in_polyline=False
-            verts.append((layer_name, zip(xcoords, ycoords)))
-    print layer_names
+            verts.append((block, layer_name, zip(xcoords, ycoords)))
+
+        if line==("0", "ENDBLK"):
+            #in_block=False
+            block="None"
+    #print layer_names
+    #print verts
     #print [item[1] for item in verts if item[0]=="PADS"]
     def polylister(obj):
         vs=[]
-        for poly in [item[1] for item in verts if item[0]=="AL"]:
+        for poly in [item[2] for item in verts if item[1]==in_layer_name and item[0]==in_block_name]:
             sP(poly, vs=vs)
         return vs
     return polylister
+#
+#  0
+#BLOCK
+#  8
+#0
+#  2
+#A$C5F6638D0
 if __name__=="__main__":
     #testblock()
     file_path="/Users/thomasaref/Downloads/paddxfs/pads_W46.dxf"

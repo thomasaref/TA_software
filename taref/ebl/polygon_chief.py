@@ -77,7 +77,7 @@ class Polygon_Chief(Chief):
         self.plot.set_xlim(xmin, xmax)
         self.plot.set_ylim(ymin, ymax)
         self.plot.draw()
-        #self.save_JDF_DXF()
+        self.save_JDF_DXF()
 
     def save_JDF_DXF(self):
         self.jdf.get_member("xy_offsets").reset(self.jdf)
@@ -87,7 +87,7 @@ class Polygon_Chief(Chief):
             a=self.agent_dict[p.name] #[agent for agent in self.agents if agent.name==p.name][0]
             for chip in xy_off.get(p.name, []):
                 sPoly(a, x_off=chip[0]*1.0e-6, y_off=chip[1]*1.0e-6, vs=verts)
-        save_dxf(verts, color="green", layer="Al", file_path="super4inphototest.dxf", write_mode="w")
+        save_dxf(verts, color="green", layer="PADS", file_path="marialasertest.dxf", write_mode="w")
 
     angle_x=Float(0.3e-6).tag(desc="shift in x direction when doing angle evaporation", unit="um")
     angle_y=Float(0.0e-6).tag(desc="shift in y direction when doing angle evaporation", unit="um")
