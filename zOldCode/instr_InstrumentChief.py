@@ -7,22 +7,19 @@ Created on Sat Dec 27 19:42:13 2014
 from atom.api import Bool, Callable
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
-from a_Chief import Chief
-#from LOG_functions import log_info, make_log_file#, log_warning
+from taref.core.chief import Chief
+from LOG_functions import log_info, make_log_file#, log_warning
 
 def pass_factory():
     def do_nothing():
         pass
     return do_nothing
 
-def log_info(message):
-    print message
-    
 class InstrumentChief(Chief):
     """Extends Master to accomodate instruments, booting, closing, autosaves data, and adds a prepare and finish functions."""
     prepare=Callable(factory=pass_factory)
     finish=Callable(factory=pass_factory)
-    
+
     def _default_saving(self):
         return False #True
 
@@ -33,7 +30,7 @@ class InstrumentChief(Chief):
     @property
     def view2(self):
         return "Instrument"
-        
+
     def show2(self):
         with imports():
             from enaml_Instrument import InstrMain
@@ -63,7 +60,7 @@ class InstrumentChief(Chief):
         self.run()
         self.finish()
         log_info("Measurement finished")
-        
+
     def make_boss(self, base_dir="C:\\Users\\Speedy\\Documents\\Thomas\\TA_test", divider="\\",
                   log_name="record", file_name="meas", setup_g_name="SetUp", save_g_name="Measurements"):
         self.BASE_DIR=base_dir #"/Users/thomasaref/Dropbox/Current stuff/TA_software"
@@ -77,4 +74,4 @@ class InstrumentChief(Chief):
 
 instrument_chief=InstrumentChief() #singleton creation of boss. imported to other modules so there is only one boss.
 if __name__=="__main__":
-    instrument_chief.show()        
+    instrument_chief.show()

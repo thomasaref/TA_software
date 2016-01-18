@@ -7,14 +7,14 @@ Created on Tue Jan  5 01:07:15 2016
 
 from taref.core.log import log_debug
 from taref.physics.fundamentals import sinc_sq, pi, eps0
-from taref.core.backbone import tagged_property, Backbone, property_f
+from taref.core.backbone import tagged_property, property_f, private_property
 from taref.core.agent import Agent
-from atom.api import Atom, Float, Int, Enum, cached_property
+from atom.api import Float, Int, Enum, cached_property
 from taref.core.shower import show as shower
 from enaml import imports
 from numpy import array, arange, linspace
 from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
-        
+
 
 class IDT(Agent):
     """Theoretical description of IDT"""
@@ -22,9 +22,9 @@ class IDT(Agent):
     def plot_data(self, zname, **kwargs):
          """pass in an appropriate kwarg to get zdata for the zname variable back"""
          xmult=kwargs.pop("xmult", 1.0)
-         zmult=kwargs.pop("zmult", 1.0)  
+         zmult=kwargs.pop("zmult", 1.0)
          label=kwargs.pop("label", "")
-         
+
          if "xlim" in kwargs:
              xlim(kwargs["xlim"])
 
@@ -33,7 +33,7 @@ class IDT(Agent):
 
          zunit=self.get_tag(zname, "unit")
          zunit_factor=self.get_tag(zname, "unit_factor", 1.0)
-         
+
          if zunit is None:
              zlabel_str=zname
          else:
@@ -42,7 +42,7 @@ class IDT(Agent):
          ylabel(kwargs.pop("ylabel", zlabel_str))
 
          add_legend=kwargs.pop("legend", False)
-             
+
          title_str=kwargs.pop("title", None)
          xlabel_str=kwargs.pop("xlabel", None)
 
@@ -56,29 +56,29 @@ class IDT(Agent):
              xdata=arange(len(getattr(self, zname)))
              xunit=None
              xunit_factor=1.0#self.get_tag(xname, "unit_factor", 1.0)
-             
+
          if xlabel_str is None:
              if xunit is None:
                  xlabel_str=xname
              else:
                  xlabel_str="{0} [{1}]".format(xname, xunit)
          xlabel(xlabel_str)
-         
+
          if title_str is None:
              title_str="{0} vs {1}".format(zname, xname)
          title(title_str)
          #print xdata.shape, zdata.shape
          plot(xdata/xunit_factor*xmult, zdata/zunit_factor*zmult, label=label)
-         
+
          if add_legend:
              legend()
 
-    @property
+    @private_property
     def base_name(self):
         return "idt"
-    
+
     def _default_main_params(self):
-        return ["ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct", 
+        return ["ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct",
                 "material", "Dvv", "K2", "vf", "epsinf"]
 
     Ga_0=Float(1)
@@ -91,10 +91,10 @@ class IDT(Agent):
         return {"double" : 2.0, "single" : 1.0}[self.ft]
 
     Np=Int(7).tag(desc="number of finger pairs. this should be at least 1", low=1)
-    
+
     ef=Int(0).tag(desc="number of extra fingers to compensate for edge effect.",
                     label="# of extra fingers")
-    
+
     W=Float(25.0e-6).tag(desc="height of finger.", unit="um")
 
     eta=Float(0.5).tag(desc="metalization ratio")
@@ -108,15 +108,15 @@ class IDT(Agent):
     material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz')
 
     f0=Float(5.0e9).tag(unit="GHz", desc="Center frequency", reference="")
-                
+
     @property_f
     def _get_eta(self, a, g):
          return a/(a+g)
- 
+
     @tagged_property(desc="periodicity. this should be twice width for 50% metallization")
     def p(self, a, g):
         return a+g
-                      
+
     @tagged_property(desc="coupling strength", unit="%")
     def K2(self, Dvv):
         return Dvv*2.0
@@ -124,20 +124,20 @@ class IDT(Agent):
     @K2.fget.setter
     def _get_Dvv(self, K2):
         return K2/2.0
-    
+
     @tagged_property(unit=" F", desc="Total capacitance of IDT", reference="Morgan page 16/145")
     def Ct(self, ft, W, epsinf, Np):
         m={"double" : 1.414213562373, "single" : 1.0}[ft]
         return m*W*epsinf*Np
-    
+
     @tagged_property(unit="um", desc="Center wavelength", reference="")
     def lbda0(self, vf, f0):
         return vf/f0
-        
+
     @lbda0.fget.setter
     def _get_f0(self, vf, lbda0):
         return vf/lbda0
-      
+
     @tagged_property(desc="gap between fingers (um). about 0.096 for double fingers at 4.5 GHz", unit="um")
     def g(self, a, eta):
         """eta=a/(a+g)
@@ -160,9 +160,9 @@ class IDT(Agent):
 
     @a.fget.setter
     def _get_lbda0_get_(self, a, eta, mult):
-        return a/eta*2.0*mult        
-   
-    @tagged_property()    
+        return a/eta*2.0*mult
+
+    @tagged_property()
     def Ga_f(self, Ga_0, Np, f, f0):
         return Ga_0*sinc_sq(Np*pi*(f-f0)/f0)
 
@@ -192,13 +192,13 @@ class IDT(Agent):
 
     def _default_material(self):
         return 'LiNbYZ' #'GaAs'
-        
-    @property
+
+    @private_property
     def view_window(self):
         with imports():
             from taref.saw.idt_e import IDT_View
         return IDT_View(idt=self)
-        
+
 
 a=IDT()
 
@@ -235,9 +235,9 @@ if 0:
     a.a=0.5e-6
     print a.eta, a.a, a.g, a.f0
     a.eta=0.1
-    print a.eta, a.a, a.g 
+    print a.eta, a.a, a.g
     a.g=0.5e-6
-    print a.eta, a.a, a.g 
+    print a.eta, a.a, a.g
     print a.lbda0, a.f0
-    
+
     print a.Ga_f

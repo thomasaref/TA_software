@@ -10,13 +10,10 @@ if the value did not exist.
 """
 
 from inspect import getmembers
-from atom.api import Atom, List, Callable, Enum, Int, Float, Range, FloatRange, Property #Callable, Unicode, Bool, List
-from functools import wraps
+from atom.api import Atom, List, Callable, Enum, Int, Float, Range, FloatRange, Property, ContainerList, Dict, Str, Unicode, Bool, Coerced
 from numpy import shape, ndarray
 from enaml.application import deferred_call
 from threading import Thread
-from types import FunctionType
-
 from taref.core.log import log_info, log_debug
 
 #_UPDATE_PREFIX_="_update_"
@@ -142,23 +139,32 @@ def private_property(fget):
     """
     return Property(fget, cached=True).tag(private=True)
 
+#redundant
 def get_member(obj, name):
-    """returns a member if get_member exists and the attribute itself if it does not"""
+    """returns a member if get_member exists and the attribute itself if it does not.
+    Returns the member of obj specified by name. This allows easy access to member functions and is included in the Atom api"""
     if hasattr(obj, "get_member"):
         return obj.get_member(str(name))
     return getattr(obj, str(name))
 
+#remove?
 def reset_property(obj, name):
     get_member(obj, name).reset(obj)
 
+#redundant
 def members(obj):
-    """returns members if defined, e.g. Atom class, or attributes whose names don't start with _"""
+    """returns members if defined, e.g. Atom class, or attributes whose names don't start with _
+    Returns the member dictionary of obj.
+    This allows easy access to all members and is included in the Atom api"""
     if hasattr(obj, "members"):
         return obj.members()
     return dict([mem for mem in getmembers(obj) if mem[0][0]!="_"])
 
+#remove?
 def get_metadata(obj, name):
-    """returns the metadata of a member if it exists and generates an empty dictionary if it does not"""
+    """returns the metadata of a member if it exists and generates an empty dictionary if it does not
+        Returns the metadata dictionary of member of obj specified by name.
+    This allows easy access to metadata and autogenerates an empty dictionary if metadata is None."""
     if isinstance(obj, Atom):
         member=obj.get_member(name)
         if member.metadata is None:
@@ -166,62 +172,88 @@ def get_metadata(obj, name):
         return member.metadata
     return {}
 
+#remove
 def set_tag(obj, name, **kwargs):
     """sets the tag of a member using Atom's built in tag functionality"""
     member=obj.get_member(name)
     member.tag(**kwargs)
 
+#remove?
 def set_all_tags(obj, **kwargs):
-    """set all parameters tags using keyword arguments"""
+    """set all parameters tags using keyword arguments.
+        Shortcut to use Atom's tag functionality to set metadata on members not marked private, i.e. all_params.
+    This is an easy way to set the same tag on all params"""
     for param in get_all_params(obj):
         set_tag(obj, param, **kwargs)
 
+
 def get_tag(obj, name, key, none_value=None):
-    """returns the tag key of a member name an returns none_value if it does not exist"""
+    """returns the tag key of a member name an returns none_value if it does not exist
+        Shortcut to use Atom's retrive particular metadata which returns a none_value if it does not exist.
+    This is an easy way to get a tag on a particular member and provide a default if it isn't there."""
     metadata=get_metadata(obj, name)
     return metadata.get(key, none_value)
 
+#remove?
 def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
-    """returns a list of names of parameters with a certain key_value"""
+    """returns a list of names of parameters with a certain key_value
+        Shortcut retrieve members with particular metadata. There are several variants based on inputs.
+        With only obj and key specified, returns all member names who have that key
+        with key_value specified, returns all member names that have that key set to key_value
+        with key_value and none_value specified equal, returns all member names that have that key set to key_value or do not have the tag
+        specifying search list limits the members searched
+        Finally, if key_value is none, returns those members not matching none_value"""
     if search_list is None:
         search_list=members(obj)
     if key_value is None:
         return [x for x in search_list if none_value!=get_tag(obj, x, key, none_value)]
     return [x for x in search_list if key_value==get_tag(obj, x, key, none_value)]
 
-def get_map(obj, name, value=None):
-    """gets the mapped value specified by the property mapping and returns the attribute value if it doesn't exist"""
+#remove?
+def get_map(obj, name, value=None, reset=False):
+    """gets the mapped value specified by the property mapping and returns the attribute value if it doesn't exist
+        gets the map of an Enum defined in the property name_mapping.
+        value can be used to get the map for another value besides the Enum's current one."""
     if value is None:
         value=getattr(obj, name)
-    if hasattr(obj, name+"_mapping"):
-        return getattr(obj, name+"_mapping")[value]
+    mapping_name=name+_MAPPING_SUFFIX_
+    if hasattr(obj, mapping_name):
+        if reset:
+            reset_property(obj, mapping_name)
+        return getattr(obj, mapping_name)[value]
     return value
 
+#remove?
 def get_inv(obj, name, value):
     """returns the inverse mapped value (meant for an Enum)"""
     if hasattr(obj, name+_MAPPING_SUFFIX_):
         return {v:k for k, v in getattr(obj, name+_MAPPING_SUFFIX_).iteritems()}[value]
     return value
 
+
 def get_type(obj, name):
     """returns type of member with given name, with possible override via tag typer"""
     typer=type(get_member(obj, name))
     return get_tag(obj, name, "typer", typer)
 
+#remove?
 def get_reserved_names(obj):
     """reserved names not to perform standard logging and display operations on,
            i.e. members that are tagged as private and will behave as usual Atom members"""
     return get_all_tags(obj, "private", True)
 
+#remove?
 def get_all_params(obj):
     """all members that are not tagged as private, i.e. not in reserved_names and will behave as agents"""
     return get_all_tags(obj, key="private", key_value=False, none_value=False)
 
+#remove?
 def get_all_main_params(obj):
     """all members in all_params that are not tagged as sub.
      Convenience function for more easily custom defining main_params in child classes"""
     return get_all_tags(obj, 'sub', False, False, get_all_params(obj))
 
+#remove?
 def get_main_params(obj):
     """returns main_params if it exists and all possible main params if it does not"""
     if hasattr(obj, "main_params"):
@@ -242,11 +274,13 @@ def set_attr(self, name, value, **kwargs):
 def pass_func(*args, **kwargs):
     pass
 
+#remove?
 def run_func(obj, name, none_func=pass_func, *args, **kwargs):
     if hasattr(obj, str(name)):
         return getattr(obj, name)(*args, **kwargs)
     return none_func(*args, **kwargs)
 
+#remove?
 def lowhigh_check(obj, name, value):
     """can specify low and high tags to keep float or int within a range."""
     if type(value) in (float, int):
@@ -259,44 +293,46 @@ def lowhigh_check(obj, name, value):
                 return metadata['high']
     return value
 
+#remove?
 def data_save(obj, name, value):
     """data saving. does nothing if data_save is not defined"""
     if hasattr(obj, "data_save"):
         obj.datasave(name, value)
 
+#remove?
 def set_log(obj, name, value):
    """called when parameter of given name is set to value i.e. instr.parameter=value. Customized messages for different types. Also saves data"""
    if get_tag(obj, name, 'log', True):
        label=get_tag(obj, name, 'label', name)
        unit=get_tag(obj, name, 'unit', "")
        obj_name=get_attr(obj, "name", "NO_NAME")
-       if get_type(obj, name)==Enum:
+       typer=get_type(obj, name)
+       if typer==Coerced:
+           typer=type(getattr(obj, name))
+       if typer==Enum:
            log_info("Set {instr} {label} to {value} ({map_val})".format(
                  instr=obj_name, label=label, value=value,
                  map_val=get_map(obj, name, value)))
-       #elif get_type(obj, name) in (Callable, type(dummyf)):
-       #    log_info("Set {instr} {label} to {length} list".format(
-       #        instr=obj_name, label=label, length=shape(getattr(obj, name))))
-       elif type(value)==list:
+       elif typer in (List, ContainerList):
            log_info("Set {instr} {label} to {length} list".format(
-               instr=obj_name, label=label, length=shape(getattr(obj, name))))
-       elif type(value)==ndarray:
+               instr=obj_name, label=label, length=shape(value)))
+       elif typer==ndarray:
            log_info("Set {instr} {label} to {length} array".format(
                instr=obj_name, label=label, length=shape(value)))
-       elif type(value)==dict:
-           log_info("Set {instr} {label}".format(instr=obj_name, label=label))
-       elif type(value)==basestring:
-           log_info("Set {instr} {label} to {length} string".format(instr=obj_name, label=label, length=len(value)))
-       elif type(value)==float:
+       elif typer==Dict:
+           log_info("Set {instr} {label} dict".format(instr=obj_name, label=label))
+       elif typer in (Unicode, Str):
+           log_info("Set {instr} {label} to {length} length string".format(instr=obj_name, label=label, length=len(value)))
+       elif typer==Float:
            unit_factor=get_tag(obj, name, 'unit_factor', 1.0)
            log_info("Set {instr} {label} to {value} {unit}".format(
-                             instr=obj_name, label=label, value=value/unit_factor, unit=unit))
-       elif type(value)==int:
+                             instr=obj_name, label=label, value=float(value)/unit_factor, unit=unit))
+       elif typer==Int:
            unit_factor=get_tag(obj, name, 'unit_factor', 1)
            log_info("Set {instr} {label} to {value} {unit}".format(
-                             instr=obj_name, label=label, value=value/unit_factor, unit=unit))
+                             instr=obj_name, label=label, value=int(value)/unit_factor, unit=unit))
        else:
-           log_info("Set {instr} {label} to {value}".format(
+           log_info("Set {instr} {label} to {value} {unit}".format(
                              instr=obj_name, label=label, value=value, unit=unit))
    data_save(obj, name, value)
 
@@ -306,7 +342,7 @@ unit_dict={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
 
 class Backbone(Atom):
     """Class combining primary functions for viewer operation"""
-    main_params=List().tag(private=True, desc="main parameters: allows control over what is displayed and in what order")
+    #main_params=List().tag(private=True, desc="main parameters: allows control over what is displayed and in what order")
 
     def get_metadata(self, name):
         return get_metadata(self, name)
@@ -338,7 +374,8 @@ class Backbone(Atom):
     def all_main_params(self):
         return get_all_main_params(self)
 
-    def _default_main_params(self):
+    @private_property
+    def main_params(self):
         """defaults to all members in all_params that are not tagged as sub.
         Can be overwritten to allow some minimal custom layout control,
         e.g. order of presentation and which members are shown. Use all_main_params to get a list of

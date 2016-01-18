@@ -1,0 +1,24 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jan 18 15:27:35 2016
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import Window, Container, HGroup, VGroup, Field
+#from enaml.stdlib import FloatField
+
+enamldef TestCont(Container):
+    attr test
+    Field:
+        text := test.a
+
+template TestTemp(view: "test"):
+    TestCont:
+        test:=boss.agent
+
+enamldef Main(Window):
+    attr boss
+    Container:
+        TestTemp(boss.agent.view):
+            pass

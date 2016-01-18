@@ -34,15 +34,18 @@ def shower(*agents):
         view.title=view.name
         view.show()
         if loc_chief is not None:
-            if loc_chief.show_all or n==0:
-                view.visible=True
+            if not loc_chief.show_all and n!=0:
+                view.hide()
     if loc_chief is None:
         view=basicView(title="Show Control", name="show_control")
     else:
+        if hasattr(loc_chief, "view_log"):
+            if loc_chief.view_log.visible:
+                loc_chief.view_log.show()
         if hasattr(loc_chief, "view_window"):
             view=loc_chief.view_window
         else:
-            view=chiefView(title="ShowControl", name="show_control", chief=loc_chief)
+            view=chiefView(title="Show Control", name="show_control", chief=loc_chief)
     view.show()
     app.start()
 

@@ -11,7 +11,7 @@ points it at a stream and a memory handler and starts logging.
 from logging import debug as log_debug, warning as log_warning, info as log_info
 from logging import getLogger, StreamHandler, FileHandler, basicConfig, DEBUG, Formatter#, INFO
 from logging.handlers import MemoryHandler
-from atom.api import Atom, Unicode, Int
+from atom.api import Atom, Unicode, Int, cached_property
 
 #configure logging
 MEMBUFFER=30
@@ -31,13 +31,20 @@ class StreamCatch(Atom):
     def _default_log_width(self):
         return self.screen_width
 
-    @property
+    @cached_property
     def initial_position(self):
         return (0, self.screen_height-self.log_height)
 
-    @property
+    @cached_property
     def initial_size(self):
         return (self.log_width, self.log_height)
+
+#    @cached_property
+#    def view_window(self):
+#        from enaml import imports()
+#        with imports():
+#            from log_e import LogWindow
+#        return LogWindow()
 
     log_str=Unicode()
 
@@ -81,32 +88,8 @@ def remove_log_file():
     """closes the log file and removes memory_handler from pointing at it"""
     if memory_handler.target:
         old_log_file_path=memory_handler.target.baseFilename
+        memory_handler.flush()
         memory_handler.target.flush()
         memory_handler.target.close()
         memory_handler.target=None
         return old_log_file_path
-
-if __name__=="__main__":
-    log_info("yoy")
-    log_warning("yay")
-    make_log_file("/Users/thomasaref/Documents/TA_software/ztestlog2.txt", mode='w')
-
-    log_info(2)
-    log_info(3)
-    log_info(4)
-    log_info(5)
-    remove_log_file()
-    #dir_path, divider, log_name=memory_handler.target.baseFilename.rpartition("/")
-    #print dir_path, divider, log_name #memory_handler.target.baseFilename.split(log_name)
-    log_info(6)
-    make_log_file("/Users/thomasaref/Documents/TA_software/ztestlog2.txt")
-
-    log_info(7)
-    log_info(8)
-    log_info(9)
-    log_info(10)
-    #
-    #make_log_file("/Users/thomasaref/Documents/TA_software/ztestlog3.txt")
-
-    log_info("yo")
-    log_warning("yay")

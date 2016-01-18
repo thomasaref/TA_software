@@ -15,18 +15,18 @@ from taref.core.filer_e import ReadWrap, SaveWrap
 template UserInstrView(instr_view: "Read_File"):
     """ Displays a read file interface"""
     ReadWrap:
-        filer:= instr 
+        filer:= instr
 
 template UserInstrView(instr_view: "Save_File"):
     """Displays a save file interface"""
     SaveWrap:
-        filer:=instr 
+        filer:=instr
 
-from taref.ebl.EBL_enaml import EBContWrap
-template UserInstrView(instr_view: "Polyer"):
-    """Displays a polyer polygon list interface. very ineffecient. too many notifications"""
-    EBContWrap:
-        polyer:= instr #getattr(vmodel, vname)
+#from taref.ebl.EBL_enaml import EBContWrap
+#template UserInstrView(instr_view: "Polyer"):
+#    """Displays a polyer polygon list interface. very ineffecient. too many notifications"""
+#    EBContWrap:
+#        polyer:= instr #getattr(vmodel, vname)
 
 enamldef TextEditorVGroup(VGroup):
     """Text Editor container"""
@@ -42,7 +42,7 @@ template UserInstrView(instr_view: "Text_Editor"):
     """ Displays a text editor in a agent"""
     TextEditorVGroup:
             pass
-    
+
 enamldef TextEditorWindow(Window):
     """displays a text editor in a standalone window"""
     attr instr
@@ -54,7 +54,7 @@ enamldef TextEditorWindow(Window):
 enamldef fieldcont(Field):
     attr test
     text := test.a
-    
+
 enamldef Main(Window):
     initial_size=(500,500)
     fieldcont:
@@ -64,8 +64,8 @@ enamldef Main(Window):
 
 template UserInstrView(instr_view : "field"):
     fieldcont:
-        test:=instr            
-############################################################  
+        test:=instr
+############################################################
 template UserInstrView(instr_view):
     """ This default specialization displays read-only text for the value."""
     #instr_view:
@@ -75,7 +75,7 @@ template UserInstrView(instr_view):
         text << unicode((instr, vmodel, vname))
 
 
-        
+
 class fake(object):
     def fff():
         pass
@@ -98,6 +98,6 @@ template FundView(base, name, baseType: type(fake.fff)):
         #            DynamicTemplate:
         #                base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
         #                args=(loop_item, base, type(base))
-                        
+
 # isinstance(func, FunctionType):
-        
+

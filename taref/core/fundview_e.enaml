@@ -11,14 +11,14 @@ from enaml.core.api import Conditional
 from taref.core.backbone import get_tag
 from taref.core.fundcore_e import aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField
 
- 
+
 enamldef Var(Container):
     """a Var container has a model, name and value"""
     attr vmodel
-    attr vname 
-    attr vvalue
+    attr vname
+    attr vvalue# : getattr(vmodel, vname)
     padding=0
-    
+
 enamldef BoolVar(Var):
     """boolean represented by CheckBox"""
     CheckBox:
@@ -66,7 +66,7 @@ enamldef FloatRangeVar(Var):
                 precision=get_tag(vmodel, vname, 'precision', 100)
         Label: max_lbl:
             text << str(ft.maximum)
-        
+
 enamldef IntVar(Var):
     """extends Var for integer types"""
     UnitSpinBox:
@@ -102,7 +102,7 @@ def floater(value):
     if value is None:
         return value
     return float(value)
-    
+
 enamldef FloatVar(Var):
     """extends Var for float types"""
     UnitFloatField:
@@ -132,8 +132,8 @@ enamldef ChoiceStrVar(Var):
         condition= get_tag(vmodel, vname, "spec")!="multiline"
         Field:
             text:=vvalue
- 
-                    
+
+
 ###################test code########################
 from enaml.widgets.api import  Window, VGroup
 from atom.api import Atom, Int, Float, Bool
@@ -143,7 +143,7 @@ class test(Atom):
     b=Float().tag(unit="GHz", show_value=True, unit_factor=0.2, low=-1.0, high=1)
     t_bool=Bool()
 
-t=test()    
+t=test()
 
 enamldef Main(Window):
     VGroup:
@@ -151,12 +151,12 @@ enamldef Main(Window):
             vmodel=t
             vname="a"
             vvalue=getattr(t, "a")
-    
+
         FloatVar:
             vmodel=t
             vname="b"
             vvalue=getattr(t, "b")
-    
+
 #
 #class testmodel(object):
 #    a=4
@@ -166,7 +166,7 @@ enamldef Main(Window):
 #    g=True
 #    def myfunc(self):
 #        print "ran myfunc"
-#    
+#
 #b=testmodel()
 #set_tag(b, "a",  show_value=True, unit_factor=10, unit="MHz")
 #set_tag(b, "b",  show_value=True, unit_factor=0.1, unit="Hz", label="float test", no_spacer=True)
@@ -187,12 +187,12 @@ enamldef Main(Window):
 #    m=Instance(testmodel, ())#.tag(no_spacer=True, spec="multiline")
 #    n=Range(-100,100,0).tag(unit_factor=5, unit="MHz")
 #    p=FloatRange(-100.0,100.0,0.0).tag(unit_factor=5, unit="MHz")
-#    
+#
 #    @Callable
 #    def myfunc(self):
 #        print "rang"
 #
-#b=testAtom()  
+#b=testAtom()
 #
 #enamldef Main(Window):
 ##    attr instr = b
@@ -227,7 +227,7 @@ enamldef Main(Window):
 #            vmodel=b
 #            vname="g"
 #            vvalue:=b.g
-#            
+#
 #        CallableVar:
 #            vmodel=b
 #            vname="myfunc"
@@ -236,25 +236,25 @@ enamldef Main(Window):
 #            vmodel=b
 #            vname="h"
 #            vvalue:=b.h
-#        CoercedVar: 
+#        CoercedVar:
 #            vmodel=b
 #            vname="k"
-#            vvalue:=b.k            
-#        TypedVar: 
+#            vvalue:=b.k
+#        TypedVar:
 #            vmodel=b
 #            vname="m"
-#            vvalue:=b.m            
+#            vvalue:=b.m
 #
-##            
-##            
+##
+##
 ##        #unit="MHz"
 ##    #UnitFloatField:
 ##    #    uvalue=10.0
 ##    #    unit_factor=10.0
 ##    #    unit="Hz"
 ##    #    show_uvalue=True
-##        
 ##
-###            
-##            
-#        
+##
+###
+##
+#

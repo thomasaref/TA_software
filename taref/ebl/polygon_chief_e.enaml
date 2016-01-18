@@ -23,17 +23,15 @@ enamldef EBLView(coreWindow): sv:
                 plotr:=chief.plot
                 initial_position=(500, 0)
         Container:
-            JDF_View: 
+            JDF_View:
                 visible=True
                 jdf:=chief.jdf
-        
+
         Container:
-            WaferCoordsView: 
+            WaferCoordsView:
                 visible=True
                 wc:=chief.jdf.wafer_coords
-        
-        #IPythonConsole:
-        #    pass
+
     AgentToolBar:
         boss_window:=sv
     ToolBar:

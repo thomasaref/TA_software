@@ -1,0 +1,23 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jan 18 22:41:58 2016
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import DockPane, Container, PushButton, MainWindow
+from taref.core.log import log_info
+from taref.core.log_e import LogWindow, LogPane
+
+enamldef Main(MainWindow):
+    Container:
+        LogWindow:
+            visible=True
+    LogPane:
+        pass
+    DockPane:
+        dock_area="right"
+        Container:
+            PushButton:
+                text = "test logging"
+                clicked :: log_info("button pushed")

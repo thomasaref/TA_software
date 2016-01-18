@@ -14,8 +14,7 @@ from taref.core.save_file import Save_File, Save_HDF5
 from plotter import Plotter
 from taref.core.shower import shower
 from collections import OrderedDict
-#import sys
-from taref.core.backbone import do_it_if_needed
+from taref.core.backbone import do_it_if_needed, private_property
 
 
 
@@ -28,7 +27,6 @@ class Chief(Atom):
     save_file=Typed(Save_File)
     saving=Enum(False, True, "No buffer")
     save_factory=Callable(Save_HDF5)
-    #agents=ContainerList()
     agent_dict=Typed(OrderedDict)
     plot=Typed(Plotter, ())
     plots=ContainerList()
@@ -36,12 +34,19 @@ class Chief(Atom):
     def _default_agent_dict(self):
         return OrderedDict()
 
-    @property
+    @private_property
+    def view_log(self):
+        from enaml import imports
+        with imports():
+            from taref.core.log_e import LogWindow
+        return LogWindow(visible=True)
+
+    @private_property
     def agents(self):
         """returns list of agents"""
         return self.agent_dict.values()
 
-    @property
+    @private_property
     def agent_names(self):
         """returns list of agent names"""
         return self.agent_dict.keys()
@@ -53,13 +58,11 @@ class Chief(Atom):
     SETUP_GROUP_NAME=Unicode("SetUp")
     SAVE_GROUP_NAME=Unicode("Measurements")
 
-    #display=Typed(StreamCatch, ()).tag(desc="a stream catch for the log window")
-
     busy = Bool(False).tag(desc="indicates function is running")
     abort = Bool(False).tag(desc="abort for use by agent functions")
     progress = Int(0).tag(desc="for progress bar")
 
-    show_all=Bool(False).tag(desc="shows all agents on start up")
+    show_all=Bool(True).tag(desc="shows all agents on start up")
 
     def _observe_abort(self, change):
         if self.abort==True:

@@ -1,0 +1,4 @@
+2016-01-18 22:45:04,386 - log.py (line 78) <<module>> DEBUG:  Started logging
+2016-01-18 22:45:04,387 - t_log.py (line 11) <<module>> INFO:  balh
+2016-01-18 22:45:04,387 - t_log.py (line 13) <<module>> INFO:  yoy
+2016-01-18 22:45:04,387 - t_log.py (line 14) <<module>> WARNING:  yay

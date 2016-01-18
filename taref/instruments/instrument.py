@@ -5,24 +5,30 @@ Created on Mon Jan 19 17:25:53 2015
 @author: thomasaref
 """
 
-from atom.api import Unicode, Bool, Value, Callable, List, Enum
-from a_Agent import Agent, set_all_tags, get_tag #Base, log
+from atom.api import Bool, Value, List, Enum
+from taref.core.backbone import private_property, tagged_callable
+from taref.core.agent import Agent
+from taref.core.log import log_info, log_warning#, make_log_file
 
-#import enaml
-#from enaml.qt.qt_application import QtApplication
-from LOG_functions import log_info, log_warning#, make_log_file
 
-    
 class InstrumentError(Exception):
     pass
 
-def boot_func(instr):
-    """default do nothing boot_func to allow definition of booter"""
-    pass
+def boot_func(func, **kwargs):
+    """decorator function for booter function in instrument"""
+    if "desc" not in kwargs:
+        kwargs["desc"]="the boot function for the instrument"
+    if "private" not in kwargs:
+        kwargs["private"]=True
+    return tagged_callable(**kwargs)(func)
 
-def close_func(instr):
-    """default do nothing close func to allow definition of closer"""
-    pass
+def close_func(func, **kwargs):
+    """decorator function for closer function in instrument"""
+    if "desc" not in kwargs:
+        kwargs["desc"]="the close function for the instrument"
+    if "private" not in kwargs:
+        kwargs["private"]=True
+    return tagged_callable(**kwargs)(func)
 
 class Instrument(Agent):
     """Instrument class. Provides functionality for running instruments"""
@@ -30,44 +36,36 @@ class Instrument(Agent):
     status=Enum( "Closed", "Active").tag(private=True, desc="a description of if the instrument is active or not, i.e. has been booted")
     send_now=Bool(True).tag(private=True, desc="when true, changing a value automatically sends it to the instrument if a send_cmd exists for that value")
 
-    booter=Callable(boot_func).tag(private=True, desc="the boot function for the instrument")
-    closer=Callable(close_func).tag(private=True, desc="the close function for the instrument")
-
     def boot(self,  **kwargs):
-        """Boot the instrument"""
-        log_info("BOOT: {0}".format(self.name))
+        """Boot the instrument using booter function if it exists"""
+        log_info("BOOTED: {0}".format(self.name))
         self.status="Active"
-        self.booter(self, **kwargs)
+        if "booter" in self.members():
+            self.booter(self, **kwargs)
 
     def close(self,  **kwargs):
-        """Close the instrument"""
-        log_info("CLOSE: {0}".format(self.name))
+        """Close the instrument using closer function if it exists"""
+        log_info("CLOSED: {0}".format(self.name))
         self.status="Closed"
-        self.closer(self, **kwargs)
+        if "closer" in self.members():
+            self.closer(self, **kwargs)
 
     def _observe_send_now(self, change):
         """if instrument send_now changes, change all send_now tags of parameters"""
         if change['type']!='create':
-            set_all_tags(self, send_now=self.send_now)
+            self.set_all_tags(send_now=self.send_now)
 
-#    def show(self):
-#        """stand alone for showing instrument. Shows a modified boss view that has the instrument as a dockpane"""
-#        with enaml.imports():
-#            from enaml_Instrument import InstrMain as InstrMain
-#            #from enaml_Base import AutoInstrView as InstrMain
-#        try:
-#            app = QtApplication()
-#            view = InstrMain(instrin=self, boss=self.boss)
-#            view.show()
-#            app.start()
-#        finally:
-#            self.boss.close_all()
+    @private_property
+    def view_window2(self):
+        from enaml import imports
+        with imports():
+            from instrument_e import InstrMain
+        return InstrMain(instrin=self)
 
     def receive_log(self, name):
         """Log for receiving. can be overwritten in child classes for customization of message"""
-        label=get_tag(self, name, 'label', name)
-        log_info("RECEIVE: {instr} {label}".format(
-                       instr=self.name, label=label))
+        label=self.get_tag(name, 'label', name)
+        log_info("RECEIVE: {instr} {label}".format(instr=self.name, label=label))
 
     def receive(self, name, **kwargs):
         """performs receive of parameter name i.e. executing associated get_cmd with value checking"""
@@ -88,8 +86,7 @@ class Instrument(Agent):
     def send_log(self, name):
         """Log for sending. can be overwritten in child classes to allow customization of message"""
         label=self.get_tag(name, 'label', name)
-        log_info("SEND: {instr} {label}".format(
-                       instr=self.name, label=label))
+        log_info("SEND: {instr} {label}".format(instr=self.name, label=label))
 
     def send(self, name, value=None, **kwargs):
         """performs send of parameter name i.e. executing associated set_cmd. If value is specified, parameter is set to value
@@ -133,22 +130,23 @@ class Instrument(Agent):
             if self.get_tag(name, 'send_now', self.send_now)==True:
                 if self.get_tag(name, 'set_cmd')!=None and self.status=='Active':
                     self.send(name)
-    @property                    
-    def boss(self):
-        from Atom_InstrumentBoss import instrumentboss as inboss #boss is imported to make it a singleton (all instruments have the same boss)
-        inboss.make_boss()
-        return inboss
+    @private_property
+    def chief(self):
+        from taref.instruments.instrument_chief import instrument_chief #boss is imported to make it a singleton (all instruments have the same boss)
+        #inboss.make_boss()
+        return instrument_chief
 
-    def __init__(self, **kwargs):
-        """extends __init__ of Slave to make booter and closer into logged functions"""
-        super(Instrument, self).__init__(**kwargs)
-        if not isinstance(self.booter, log):
-            self.booter=log(self.booter)
-        if not isinstance(self.closer, log):
-            self.closer=log(self.closer)
+#    def __init__(self, **kwargs):
+#        """extends __init__ of Slave to make booter and closer into logged functions"""
+#        super(Instrument, self).__init__(**kwargs)
+#        if not isinstance(self.booter, log):
+#            self.booter=log(self.booter)
+#        if not isinstance(self.closer, log):
+#            self.closer=log(self.closer)
 
 if __name__=="__main__":
     a=Instrument(name='blah')
     b=Instrument(name="bob")
-    a.boss.saving=False
-    a.show()
+    a.boot()
+    #a.boss.saving=False
+    #a.show()
