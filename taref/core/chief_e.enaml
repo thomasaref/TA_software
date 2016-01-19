@@ -6,7 +6,7 @@ Created on Mon Jul 13 20:55:47 2015
 """
 
 from enaml.widgets.api import ( Window, Field, PushButton, ToolBar, Action, MainWindow,
-    Container, MultilineField, DockPane, HGroup)
+    Container, MultilineField, DockPane, HGroup, VGroup, GroupBox)
 from enaml.layout.geometry import Pos, Rect, Size
 from enaml.core.api import Looper, Conditional
 from atom.api import List, Typed
@@ -79,13 +79,11 @@ enamldef basicView(coreWindow): sv:
     AgentToolBar:
         boss_window:=sv
 
-enamldef chiefView(coreWindow): sv:
-    """a default view of the chief for agents with a chief"""
-    attr chief
+enamldef LogSaveToolBar(ToolBar):
     ToolBar:
-        dock_area="left"
+        dock_area="top"
         Conditional:
-            condition = hasattr(sv.chief, "view_log")
+            condition = hasattr(chief, "view_log")
             Action:
                 text="Log"
                 triggered::
@@ -102,10 +100,30 @@ enamldef chiefView(coreWindow): sv:
             text = "PlotPane"
          #   triggered:: plotpane.show() #print dir(bossarea) #show_plot(bossarea, boss.plot) #show_pane(dyn_pages, 'Plot')
          #   tool_tip = "Show plot controls"
+
+enamldef chiefView(coreWindow): sv:
+    """a default view of the chief for agents with a chief"""
+    attr chief
     Conditional:
-        condition = sv.chief is not None
+        condition = getattr(chief, "run_func_names", []) != []
+        VGroup:
+            GroupBox:
+                Looper:
+                    iterable=chief.run_func_names
+                    PushButton:
+                        text = loop_item
+                        clicked :: chief.run_func_dict[loop_item]()
+            PushButton:
+                text = "FULL RUN"
+                clicked ::
+                    chief.full_run()
+                tool_tip = "Runs all functions"
+    LogSaveToolBar:
+        pass
+    Conditional:
+        condition = False #sv.chief is not None
         ToolBar:
-            dock_area="left"
+            dock_area="right"
 
             Action:
                 text = "Plot"
@@ -116,18 +134,6 @@ enamldef chiefView(coreWindow): sv:
                         #show_plot(boss.plot.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=boss.plot)
                 tool_tip = "Show plot"
 
-            Action:
-                separator=True
-            Action:
-                separator=True
-
-            Action: run:
-                text = "Run"
-                triggered :: chief.run()
-            Action:
-                separator=True
-            Action:
-                separator=True
     AgentToolBar:
         boss_window:=sv
     ToolBar:

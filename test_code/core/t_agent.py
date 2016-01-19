@@ -15,6 +15,21 @@ class Test(SubAgent):
     b=Int()
 t=Test()
 t2=Test()
+
+def run_test():
+    t.a=5
+    print "ran run_test"
+
+def run_test2():
+    t2.b=3
+    print "ran run_test2"
+
+t.chief.add_func(run_test)
+t.chief.add_func(run_test2)
+t.full_run()
+print t.a
+#t.chief.add_func(t.chief.chief_run_test)
+print run_test.func_name
 print t.name
 print t2.name
 print t.base_name

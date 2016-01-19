@@ -8,15 +8,16 @@ Created on Tue Jul  7 21:45:30 2015
 from atom.api import Atom
 
 from taref.core.log import log_info, log_warning, make_log_file, log_debug#, SAVE_GROUP_NAME, SETUP_GROUP_NAME, log_debug
-from atom.api import Atom, Bool, Typed, ContainerList, Callable, Dict, Float, Int, FloatRange, Range, Unicode, Str, List, Enum, Event, Instance
+from atom.api import Atom, Bool, Typed, ContainerList, Callable, Float, Int, FloatRange, Range, Unicode, Str, List, Enum, Event, cached_property
 from taref.core.read_file import Read_File
 from taref.core.save_file import Save_File, Save_HDF5
 from plotter import Plotter
 from taref.core.shower import shower
 from collections import OrderedDict
-from taref.core.backbone import do_it_if_needed, private_property
+from taref.core.backbone import do_it_if_needed
 
-
+def func_dict(func):
+    return {func.func_name:func}
 
 class Chief(Atom):
     """Overall control class that runs main code and handles files, saving and plotting"""
@@ -31,22 +32,42 @@ class Chief(Atom):
     plot=Typed(Plotter, ())
     plots=ContainerList()
 
-    def _default_agent_dict(self):
+    run_func_dict=Typed(OrderedDict)
+
+    def _default_run_func_dict(self):
         return OrderedDict()
 
-    @private_property
+    def add_func(self, func):
+        self.run_func_dict[func.func_name]=func
+
+    @cached_property
+    def run_funcs(self):
+        return self.run_func_dict.values()
+
+    @cached_property
+    def run_func_names(self):
+        return self.run_func_dict.keys()
+
+    def full_run(self):
+        for func in self.run_funcs:
+            func()
+
+    @cached_property
     def view_log(self):
         from enaml import imports
         with imports():
             from taref.core.log_e import LogWindow
-        return LogWindow(visible=True)
+        return LogWindow(visible=False)
 
-    @private_property
+    def _default_agent_dict(self):
+        return OrderedDict()
+
+    @cached_property
     def agents(self):
         """returns list of agents"""
         return self.agent_dict.values()
 
-    @private_property
+    @cached_property
     def agent_names(self):
         """returns list of agent names"""
         return self.agent_dict.keys()

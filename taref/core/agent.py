@@ -31,9 +31,11 @@ class SubAgent(Backbone):
         """shortcut to chief's abort control"""
         return self.chief.abort
 
-#    @property #remove?
-#    def default_list(self):
-#        return []
+    def add_func(self, func):
+        self.chief.add_func(func)
+
+    def full_run(self):
+        self.chief.full_run()
 
     def __init__(self, **kwargs):
         """extends Backbone __init__ to add agent to boss's agent list

@@ -182,11 +182,13 @@ def EBL_Polygons2dxf(verts, color, layer):
     dlist=dxfend(dlist)
     return dlist
 
+import io
+
 def save_dxf(verts, color, layer, file_path, write_mode="w"):
     dlist=EBL_Polygons2dxf(verts, color, layer)
     dxfstr=''.join(dlist)
-    with open(file_path, write_mode) as g:
-        g.write(dxfstr)
+    with io.open(file_path, mode=write_mode, encoding='ascii') as g: #,'ascii' 'cp1252', 'utf_8'
+        g.write(unicode(dxfstr))
 
 class AC_List(object):
     tlist=[]

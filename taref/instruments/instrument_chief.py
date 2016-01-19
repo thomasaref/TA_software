@@ -4,7 +4,7 @@ Created on Sat Dec 27 19:42:13 2014
 
 @author: thomasaref
 """
-from atom.api import Bool, Callable
+from atom.api import Bool, Callable, cached_property
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
 from taref.core.chief import Chief
@@ -14,12 +14,6 @@ from taref.core.backbone import private_property
 
 class InstrumentChief(Chief):
     """Extends Chief to accomodate instruments, booting, closing, autosaves data, and adds a prepare and finish functions."""
-    #prepare=Callable(factory=pass_factory)
-    #finish=Callable(factory=pass_factory)
-
-    @private_property
-    def full_run_func_list(self):
-        return [self.run]
 
     def _default_saving(self):
         return False #True
