@@ -5,46 +5,46 @@ Created on Mon Dec 21 18:28:47 2015
 @author: thomasaref
 """
 
-from taref.core.chief_e import coreWindow, AgentToolBar
-from enaml.widgets.api import ToolBar, Container, Action
-from taref.core.e_Plotter import PlotWindow
+from taref.core.chief_e import coreWindow, AgentToolBar, chiefView
+from enaml.widgets.api import ToolBar, Container, Action, VGroup
+from taref.core.plotter_e import PlotWindow
 from taref.ebl.jdf_e import JDF_View
 from taref.ebl.wafer_coords_e import WaferCoordsView
 
-enamldef EBLView(coreWindow): sv:
+enamldef EBLView(chiefView): sv:
     attr chief
     title="EBL View"
-    activated::
-        chief.plot_JDF()
-    Container:
-        Container:
-            PlotWindow: plot_window:
-                visible=True
-                plotr:=chief.plot
-                initial_position=(500, 0)
-        Container:
-            JDF_View:
-                visible=True
-                jdf:=chief.jdf
+#    activated::
+#        chief.plot_JDF()
+#    VGroup:
+#        Container:
+#            PlotWindow: plot_window:
+#                visible=True
+#                plotr:=chief.plot
+#                initial_position=(500, 0)
+#        Container:
+#            JDF_View:
+#                visible=True
+#                jdf:=chief.jdf
+#
+#        Container:
+#            WaferCoordsView:
+#                visible=True
+#                wc:=chief.jdf.wafer_coords
 
-        Container:
-            WaferCoordsView:
-                visible=True
-                wc:=chief.jdf.wafer_coords
-
-    AgentToolBar:
-        boss_window:=sv
-    ToolBar:
-        dock_area="left"
-        Action:
-            separator=True
-        Action:
-            text="Refresh Plot"
-            triggered::
-                chief.plot_JDF()
-        Action:
-            separator=True
-        Action:
-            text = "Plot"
-            triggered::
-                plot_window.show()
+#    AgentToolBar:
+#        boss_window:=sv
+#    ToolBar:
+#        dock_area="left"
+#        Action:
+#            separator=True
+##        Action:
+ #           text="Refresh Plot"
+ #           triggered::
+ #               chief.plot_JDF()
+ #       Action:
+ #           separator=True
+ #       Action:
+ #           text = "Plot"
+ #           triggered::
+ #               plot_window.show()

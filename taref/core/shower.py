@@ -14,23 +14,11 @@ def shower(*agents):
     also provides a show control of the objects"""
     app = QtApplication()
     with imports():
-        from chief_e import agentView, chiefView, basicView#, LogWindow
-    loc_chief=None
+        from chief_e import agentView, chiefView, basicView
     for n, a in enumerate(agents):
-        log_debug(a)
-        log_debug(hasattr(a, "view_window"))
-
-        if hasattr(a, "view_window"):
-            log_debug("view_window")
-            view=a.view_window
-        else:
-            view=agentView(agent=a)
-        if hasattr(a, "name"):
-            view.name=a.name
-        else:
-            view.name="agent_{0}".format(n)
-        if hasattr(a, "chief"):
-            loc_chief=a.chief
+        view=getattr(a, "view_window", agentView(agent=a))
+        view.name=getattr(a, "name", "agent_{0}".format(n))
+        loc_chief=getattr(a, "chief", None)
         view.title=view.name
         view.show()
         if loc_chief is not None:
@@ -49,3 +37,17 @@ def shower(*agents):
     view.show()
     app.start()
 
+def find_windows(a, tl=[]):
+    for name in a.members():
+        member=getattr(a, name)
+        if hasattr(member, "view_window"):
+            tl.append(name)
+            print tl
+            find_windows(member, tl)
+
+    return tl
+
+#self.plot.view_window.show()
+#        view=self.jdf.view_window
+#        view.show()
+#        view.hide()

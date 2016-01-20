@@ -12,7 +12,7 @@ from numpy import angle, absolute, dtype, log10, meshgrid, arange, linspace, sin
 from matplotlib import cm, colors
 from numpy import shape, split, squeeze, array, transpose, concatenate, atleast_2d, ndim
 from enaml import imports
-from atom.api import Atom, Int, Enum, Float, List, Dict, Typed, Unicode, ForwardTyped, Bool
+from atom.api import Atom, Int, Enum, Float, List, Dict, Typed, Unicode, ForwardTyped, Bool, cached_property, observe
 from matplotlib.axes import Axes
 from matplotlib import collections, transforms
 from matplotlib.collections import PolyCollection, LineCollection, QuadMesh, PathCollection
@@ -49,14 +49,6 @@ rcParams['ytick.major.size']=4
 #rcParams['lines.solid_joinstyle']='round'
 #rcParams['lines.solid_capstyle']='round'
 
-# Example data
-#import numpy as np
-#t = np.arange(0.0, 1.0 + 0.01, 0.01)
-#s = np.cos(4 * np.pi * t) + 2
-
-# plot some awesome science
-#fig.tight_layout(pad=0.1)  # Make the figure use all available whitespace
-#fig.savefig('awesome_science.pdf')
 from matplotlib.colors import colorConverter
 colors = [colorConverter.to_rgba(c) for c in ('r','g','b','c','y','m','k')]
 #from matplotlib.ticker import MaxNLocator
@@ -242,15 +234,19 @@ class AllXYFormat(XYFormat):
 class Plotter(Atom):
     name=Unicode()
     title=Unicode("yoyoyoyoyo")
-    xlabel=Unicode()
+    xlabel=Unicode("yo")
     ylabel=Unicode()
     x_scale=Enum('linear', 'log')
     y_scale=Enum('linear', 'log')
 
+    x_min=Float()
+    x_max=Float()
+    y_min=Float()
+    y_max=Float()
+
     autocolor=Bool(True)
 
     xyfs=Dict()
-    #plot= ForwardTyped(lambda: Plot)
     color_index=Int()
 
     clts=Dict()
@@ -268,23 +264,44 @@ class Plotter(Atom):
     def _default_fig(self):
          return Figure()
 
+    @observe("x_min", "x_max")
+    def change_x_lim(self, change):
+        if change["type"]=="update":
+            self.set_xlim(self.x_min, self.x_max)
+            self.draw()
+
+    @observe("y_min", "y_max")
+    def change_y_lim(self, change):
+        if change["type"]=="update":
+            self.set_ylim(self.y_min, self.y_max)
+            self.draw()
+
     def _observe_x_scale(self, change):
-         self.axe.set_xscale(self.x_scale)
+        self.axe.set_xscale(self.x_scale)
+        if change["type"]=="update":
+            self.draw()
 
     def _observe_y_scale(self, change):
          self.axe.set_yscale(self.y_scale)
+         if change["type"]=="update":
+            self.draw()
 
     def _default_plottables(self):
          return dict(plotted=[None])
 
     def _observe_title(self, change):
-         self.axe.set_title(self.title)
-
+        self.axe.set_title(self.title)
+        if change["type"]=="update":
+            self.draw()
     def _observe_xlabel(self, change):
-         self.axe.set_xlabel(self.xlabel)
+        self.axe.set_xlabel(self.xlabel)
+        if change["type"]=="update":
+            self.draw()
 
     def _observe_ylabel(self, change):
-         self.axe.set_ylabel(self.ylabel)
+        self.axe.set_ylabel(self.ylabel)
+        if change["type"]=="update":
+            self.draw()
 
     def _default_xyfs(self):
          xyf=AllXYFormat(plotter=self)
@@ -295,14 +312,14 @@ class Plotter(Atom):
                 self.plot.delplot(key)
          self.color_index=0
 
-    def _save(self):
-         global PlotGraphicsContext
-         if PlotGraphicsContext==None:
-             from chaco.plot_graphics_context import PlotGraphicsContext
-         win_size = self.plot.outer_bounds
-         plot_gc = PlotGraphicsContext(win_size)#, dpi=300)
-         plot_gc.render_component(self.plot)
-         plot_gc.save("image_test.png")
+#    def _save(self):
+#         global PlotGraphicsContext
+#         if PlotGraphicsContext==None:
+#             from chaco.plot_graphics_context import PlotGraphicsContext
+#         win_size = self.plot.outer_bounds
+#         plot_gc = PlotGraphicsContext(win_size)#, dpi=300)
+#         plot_gc.render_component(self.plot)
+#         plot_gc.save("image_test.png")
 
     def line_plot(self, zname, zdata, *args, **kwargs):
         """Uses LineCollection for efficient plotting of lines.
@@ -487,14 +504,19 @@ class Plotter(Atom):
         self.axe.texts=[]
 
     def draw(self):
-         if self.fig.canvas!=None:
-             self.fig.canvas.draw()
+        log_debug("draw called")
+        if self.fig.canvas!=None:
+            self.fig.canvas.draw()
 
     def set_xlim(self, xmin, xmax):
-         self.axe.set_xlim(xmin, xmax)
+        self.x_min=xmin
+        self.x_max=xmax
+        self.axe.set_xlim(xmin, xmax)
 
     def set_ylim(self, ymin, ymax):
-         self.axe.set_ylim(ymin, ymax)
+        self.y_min=ymin
+        self.y_max=ymax
+        self.axe.set_ylim(ymin, ymax)
 
     def get_data(self, zname, index=None, axis=0):
         data=[c.to_polygons() for c in self.clt.get_paths()]
@@ -565,7 +587,7 @@ class Plotter(Atom):
              self.gatherMultiD(yname, ydata, appen=appen, overwrite=overwrite, concat=concat)
          self.gatherMultiD(zname, zdata, appen=appen, overwrite=overwrite, concat=concat)
 
-    @property
+    @cached_property
     def view_window(self):
         with imports():
             from Plotter_e import PlotMain
@@ -573,6 +595,8 @@ class Plotter(Atom):
 
 if __name__=="__main__":
     a=Plotter()
+    print dir(a.fig)
+    print #a.fig.tight_layout()#(pad=0.1)
     x = arange(3)+3
     ys = array([x + i for i in arange(5)])
     data=[list(zip(x, y)) for y in ys]
@@ -586,7 +610,7 @@ if __name__=="__main__":
     #a.set_xlim(x.min(), x.max())
     #a.set_ylim(ys.min(), ys.max())
     a.draw()
-    show(a)
+    shower(a)
 
     def plot_data(self, zname, **kwargs):
          """pass in an appropriate kwarg to get zdata for the zname variable back"""
@@ -641,23 +665,23 @@ if __name__=="__main__":
 
          if add_legend:
              legend()
-    if not a.fig:
-        print "no fig!"
-    from numpy import exp, shape
-    xs = linspace(0, 8, 100)
-    ys = linspace(0, 4, 3)
-    x, y = meshgrid(xs,ys)
-    z = exp(-(x**2+y**2)/100)
-    zs=sin(xs)
-
-    #print a.fig.axes #as_list()
-    #a.fig.set_alpha(0.1)
-    from numpy import amin, amax
-    data=[((0,0), (0,-1), (3,1)), ((5,10), (6,11))]
-    print amin(data[0], 0), amax(data[0], 0)
-    a.set_data("mypoly", [((0,0), (0,-1), (3,1))])
-    a.show()
-    #print z
+#    if not a.fig:
+#        print "no fig!"
+#    from numpy import exp, shape
+#    xs = linspace(0, 8, 100)
+#    ys = linspace(0, 4, 3)
+#    x, y = meshgrid(xs,ys)
+#    z = exp(-(x**2+y**2)/100)
+#    zs=sin(xs)
+#
+#    #print a.fig.axes #as_list()
+#    #a.fig.set_alpha(0.1)
+#    from numpy import amin, amax
+#    data=[((0,0), (0,-1), (3,1)), ((5,10), (6,11))]
+#    print amin(data[0], 0), amax(data[0], 0)
+#    a.set_data("mypoly", [((0,0), (0,-1), (3,1))])
+#    a.show()
+#    #print z
     #zz= a.splitMultiD(z)
     #print zz
 #    zz.append(array([[1],[2],[3]]))

@@ -16,8 +16,8 @@ from taref.core.shower import shower
 from collections import OrderedDict
 from taref.core.backbone import do_it_if_needed
 
-def func_dict(func):
-    return {func.func_name:func}
+def func_dict(*funcs):
+    return OrderedDict(zip([func.func_name for func in funcs], funcs))
 
 class Chief(Atom):
     """Overall control class that runs main code and handles files, saving and plotting"""
@@ -31,6 +31,14 @@ class Chief(Atom):
     agent_dict=Typed(OrderedDict)
     plot=Typed(Plotter, ())
     plots=ContainerList()
+
+    def activated(self):
+        """what to do when window is activated"""
+        pass
+
+    @cached_property
+    def other_windows(self):
+        return [name for name in self.members() if hasattr(getattr(self, name), "view_window")]
 
     run_func_dict=Typed(OrderedDict)
 
@@ -48,7 +56,7 @@ class Chief(Atom):
     def run_func_names(self):
         return self.run_func_dict.keys()
 
-    def full_run(self):
+    def run_all(self):
         for func in self.run_funcs:
             func()
 
@@ -117,7 +125,7 @@ class Chief(Atom):
         self.read_file.read()
         self.read_data_distribute()
 
-    def _default_save_file(self):
+    def _default_save_file2(self):
         if self.saving==True:
             savefile=self.save_factory(buffer_save=False, base_dir=self.BASE_DIR, divider=self.DIVIDER,
                                        data_buffer={self.SAVE_GROUP_NAME:{}, self.SETUP_GROUP_NAME:{}})
@@ -157,8 +165,9 @@ class Chief(Atom):
         try:
             shower(*self.agents)
         finally:
-            if self.saving==True:
-                self.save_file.flush_buffers()
+            pass
+#            if self.saving==True:
+#                self.save_file.flush_buffers()
 
     def read_data_distribute(self):
         log_warning("read_data_distribute not tested!")

@@ -83,13 +83,34 @@ enamldef PlotFormat(Form):
     Label:
         text = "X axis"
     ObjectCombo:
-        items=list(plotr.get_member('index_scale').items)
-        selected:=plotr.index_scale
+        items=list(plotr.get_member('x_scale').items)
+        selected:=plotr.x_scale
     Label:
         text = "Y axis"
     ObjectCombo:
-        items=list(plotr.get_member('value_scale').items)
-        selected:=plotr.value_scale
+        items=list(plotr.get_member('y_scale').items)
+        selected:=plotr.y_scale
+
+    Label:
+        text="X min"
+    FloatField:
+        value:=plotr.x_min
+
+    Label:
+        text="X max"
+    FloatField:
+        value:=plotr.x_max
+    Label:
+        text="Y min"
+    FloatField:
+        value:=plotr.y_min
+    Label:
+        text="Y max"
+    FloatField:
+        value:=plotr.y_max
+
+
+
 
     Label:
         text = "add plot test"
@@ -130,8 +151,9 @@ enamldef PlotFormat(Form):
         clicked :: plotr._save()
     #Label:
     #    text = "add img plot"
-    #PushButton:
-    #    clicked :: plotr.add_img_plot()
+    PushButton:
+        text = "Draw"
+        clicked :: plotr.draw()
     PlotBox:
         pass
 
@@ -223,7 +245,8 @@ def show_item(name, area, target=None, ItemType=DockItem, position='left', OP=In
 
 
 enamldef PlotToolBar(ToolBar):
-    dock_area='left'
+    attr pm
+    dock_area='top'
     Action:
         separator=True
     Action:
@@ -242,8 +265,13 @@ enamldef PlotToolBar(ToolBar):
     #    separator=True
     Action:
         text = "Plot Format"
-        triggered :: show_item(name=plotr.name+"plot_format", area=plot_area, target="plot", ItemType=PlotFormatItem, position="right", OP=InsertItem) #plot_item.show()
-
+        triggered ::
+            print dir(pm)
+            print pm.tool_bars
+            print [child.name for child in pm.children]
+            print dir(pm.pf)
+            print parent#.pf.show() #show_item(name=plotr.name+"plot_format", area=plot_area, target="plot", ItemType=PlotFormatItem, position="right", OP=InsertItem) #plot_item.show()
+            pm.pf.show()
 
 #enamldef PlotContainer(Container):
 #    padding = 0
@@ -258,9 +286,9 @@ enamldef PlotToolBar(ToolBar):
 
 enamldef MatPlotContainer(Container):
         padding = 0
-        constraints = [ vbox( ptb, canvas)]
-        PlotToolBar: ptb:
-            pass
+        #constraints = [ vbox( ptb, canvas)]
+        #PlotToolBar: ptb:
+        #    pass
         MPLCanvas: canvas:
             figure << plotr.fig
             toolbar_visible=True
@@ -304,17 +332,17 @@ enamldef PlotWindow(Window):
     destroy_on_close=False
     MatPlotContainer:
         pass
-    
-enamldef PlotMain(MainWindow): 
+
+enamldef PlotMain(MainWindow): pm:
     attr plotr
-
     #initial_position=(0,0)
-    Container: 
-        alias plot_area
-        DockArea: plot_area:
-            layout = HSplitLayout('plot')
-            myPlotItem: ppi:
-                pass #plotr=plotrin
-            #activated :: 
-            #    show_item(name=plotr.name+"plot", area=plot_area,  ItemType=PlotItem)
-
+    MatPlotContainer:
+        pass
+    PlotToolBar:
+        pm:=pm
+    alias pf
+    DockPane:pf:
+        dock_area="left"
+        title = "Plot Format"
+        PlotFormat:
+            pass
