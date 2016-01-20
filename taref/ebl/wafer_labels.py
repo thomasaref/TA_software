@@ -17,7 +17,7 @@ class Wafer_Labels(EBL_Polygons):
     @private_property
     def polylist(self):
         self.verts=[]
-        for chip in self.chief.jdf.wafer_coords.xy_locations:
+        for chip in self.jdf.wafer_coords.xy_locations:
             self.WaferDig(wafer_type=chip[0],x_dig=chip[1], y_dig=chip[2],
                           xr=chip[3]*1.0e-6, yr=chip[4]*1.0e-6,
                           wr=self.digit_height/2.0,
@@ -27,9 +27,7 @@ class Wafer_Labels(EBL_Polygons):
     def _default_color(self):
         return "red"
 
-    @property
-    def base_name(self):
-        return "WAFER_LABELS"
+    base_name="WAFER_LABELS"
 
 class Digit(EBL_Polygons):
     digit_height=Float(300.0e-6).tag(unit="um")
@@ -45,9 +43,7 @@ class Digit(EBL_Polygons):
     def _default_color(self):
         return "red"
 
-    @property
-    def base_name(self):
-        return "DIGIT"
+    base_name="DIGIT"
 
 if __name__=="__main__":
     #a=Wafer_Labels()

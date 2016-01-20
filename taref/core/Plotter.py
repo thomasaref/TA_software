@@ -8,6 +8,7 @@ Created on Thu Sep 11 09:53:23 2014
 from taref.core.log import log_debug
 from taref.core.shower import shower
 from taref.core.universal import sqze
+from taref.core.agent import SubAgent
 from numpy import angle, absolute, dtype, log10, meshgrid, arange, linspace, sin, cos, sqrt, ma, fabs, amax
 from matplotlib import cm, colors
 from numpy import shape, split, squeeze, array, transpose, concatenate, atleast_2d, ndim
@@ -231,8 +232,9 @@ class AllXYFormat(XYFormat):
                 if key!="All":
                     setattr(self.plotter.xyfs[key], change['name'], change['value'])
 
-class Plotter(Atom):
-    name=Unicode()
+class Plotter(SubAgent):
+    base_name="plot"
+    #name=Unicode()
     title=Unicode("yoyoyoyoyo")
     xlabel=Unicode("yo")
     ylabel=Unicode()
@@ -268,40 +270,40 @@ class Plotter(Atom):
     def change_x_lim(self, change):
         if change["type"]=="update":
             self.set_xlim(self.x_min, self.x_max)
-            self.draw()
+            #self.draw()
 
     @observe("y_min", "y_max")
     def change_y_lim(self, change):
         if change["type"]=="update":
             self.set_ylim(self.y_min, self.y_max)
-            self.draw()
+            #self.draw()
 
     def _observe_x_scale(self, change):
         self.axe.set_xscale(self.x_scale)
-        if change["type"]=="update":
-            self.draw()
+        #if change["type"]=="update":
+            #self.draw()
 
     def _observe_y_scale(self, change):
          self.axe.set_yscale(self.y_scale)
-         if change["type"]=="update":
-            self.draw()
+         #if change["type"]=="update":
+            #self.draw()
 
     def _default_plottables(self):
          return dict(plotted=[None])
 
     def _observe_title(self, change):
         self.axe.set_title(self.title)
-        if change["type"]=="update":
-            self.draw()
+        #if change["type"]=="update":
+        #    self.draw()
     def _observe_xlabel(self, change):
         self.axe.set_xlabel(self.xlabel)
-        if change["type"]=="update":
-            self.draw()
+        #if change["type"]=="update":
+        #    self.draw()
 
     def _observe_ylabel(self, change):
         self.axe.set_ylabel(self.ylabel)
-        if change["type"]=="update":
-            self.draw()
+        #if change["type"]=="update":
+        #    self.draw()
 
     def _default_xyfs(self):
          xyf=AllXYFormat(plotter=self)
@@ -403,13 +405,13 @@ class Plotter(Atom):
          if zdata!=None:
              if plot_type is "poly":
                 if zname not in self.clts: #plottables['plotted']:#self.pd.list_data():
-                    clt=PolyCollection(zdata, alpha=0.5, antialiased=True)#, rasterized=False, antialiased=False)
+                    clt=PolyCollection([], alpha=0.5, antialiased=True)#, rasterized=False, antialiased=False)
                     if zcolor is not None:
                         clt.set_color(colorConverter.to_rgba(zcolor))
                     self.clts[zname]=clt
-                    self.axe.add_collection(self.clts[zname], autolim=True)
-                else:
-                    self.clts[zname].set_verts(zdata)
+                    self.axe.add_collection(self.clts[zname])
+                self.clts[zname].set_verts(zdata)
+
              elif plot_type is "line":
                 if zname not in self.clts:
                     clt=LineCollection(zdata)#, linewidths=(0.5, 1, 1.5, 2),
@@ -590,7 +592,7 @@ class Plotter(Atom):
     @cached_property
     def view_window(self):
         with imports():
-            from Plotter_e import PlotMain
+            from taref.core.plotter_e import PlotMain
         return PlotMain(plotr=self)
 
 if __name__=="__main__":

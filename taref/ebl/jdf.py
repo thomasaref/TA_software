@@ -6,12 +6,12 @@ Created on Mon Jun  1 10:46:56 2015
 """
 
 from taref.ebl.wafer_coords import FullWafer
-from atom.api import Typed, Unicode, Atom, List, Coerced, observe, cached_property
+from atom.api import Typed, Unicode, Atom, List, Coerced, observe, cached_property, Event
 from taref.core.log import log_debug
 from taref.core.shower import shower
-from taref.core.backbone import set_attr, get_tag
+from taref.core.backbone import set_attr, get_tag, private_property, Backbone
 from taref.core.universal import sqze
-from enaml import imports
+from taref.core.agent import SubAgent
 from re import compile as compiler
 
 from taref.core.plotter import Plotter
@@ -224,12 +224,29 @@ class JDF_Pattern(Atom):
         kwargs["y"]=kwargs.get("y", tempstr.split("(")[2].split(")")[0].split(",")[1])
         super(JDF_Pattern, self).__init__(**kwargs)
 
-class JDF_Top(Atom):
+class JDF_Top(SubAgent):
     """Top class that controls distribution of patterns into JDF"""
-    wafer_coords=Typed(FullWafer)
-    plot=Typed(Plotter, ())
 
-    @cached_property
+    base_name="jdf"
+
+    def show(self):
+        shower(self, self.wafer_coords)
+
+    def gen_jdf(self, agents):
+        for n, p in enumerate(agents):
+            if p.plot_sep:
+                self.patterns.append(JDF_Pattern(num=n+1, name=p.name))
+                self.sub_arrays.append(JDF_Array(array_num=n+1, assigns=[JDF_Assign(assign_type=["P({0})".format(n+1)],
+                         short_name=p.name, pos_assign=[(1, 1)])]))
+
+                self.main_arrays[0].assigns.append(JDF_Assign(assign_type=["A({0})".format(n+1)],
+                         short_name=p.name, pos_assign=[(n+1, 1)]))
+        self.input_jdf=self.jdf_produce()
+
+    wafer_coords=FullWafer(name="jdf_wafer_coords")
+    plot=Plotter(name="jdf_plot")
+
+    @private_property
     def xy_offsets(self):
         """recursive traces down locations of all patterns"""
         overall_dict={}
@@ -255,8 +272,9 @@ class JDF_Top(Atom):
     def assign_condition(self, item, n=0):
         return [assign.short_name for assign in self.main_arrays[n].assigns if item in assign.pos_assign]
 
-    @observe("wafer_coords.distribute_event")
-    def observe_distrib_event(self, change):
+    distribute_event=Event()
+
+    def _observe_distribute_event(self, change):
         self.distribute_coords()
         self.get_member("xy_offsets").reset(self)
         xmin=-0.05
@@ -274,9 +292,8 @@ class JDF_Top(Atom):
                     xmax=max(xmax, x_off)
                     ymin=min(ymin, y_off)
                     ymax=max(ymax, y_off)
-        #xymin={"Full":-self.wafer_coords.radius, "A":-self.wafer_coords.radius, "B":0.0, "C":-self.wafer_coords.radius, "D":0.0}[self.wafer_coords.wafer_type]
-        #xymax={"Full": self.wafer_coords.radius, "A":0.0, "B": self.wafer_coords.radius, "C":0.0, "D": self.wafer_coords.radius}[self.wafer_coords.wafer_type]
-        STRETCH=self.wafer_coords.stretch
+
+        STRETCH=self.wafer_coords.gap_size
         self.plot.set_xlim(xmin-STRETCH, xmax+STRETCH)
         self.plot.set_ylim(ymin-STRETCH, ymax+STRETCH)
         self.plot.xlabel="x (um)"
@@ -284,14 +301,12 @@ class JDF_Top(Atom):
         self.plot.title="JDF Pattern Distribution"
         self.plot.draw()
 
-    @property
+    @private_property
     def view_window(self):
+        from enaml import imports
         with imports():
             from taref.ebl.jdf_e import JDF_View
         return JDF_View(jdf=self)
-
-    def _default_wafer_coords(self):
-        return FullWafer()
 
     def set_valcom(self, name, value, comment=""):
         """utility function for setting a comment while setting value"""
@@ -308,6 +323,9 @@ class JDF_Top(Atom):
 
     def distribute_coords(self, num=None):
         """distribute coords using wafer_coords object"""
+        for qw in self.wafer_coords.quarter_wafers:
+            qw.get_member('bad_coords').reset(qw)
+            qw.get_member('good_coords').reset(qw)
         self.comments=["distributed main array for quarter wafer {}".format(self.wafer_coords.wafer_type)]
         self.Px, self.Py, self.Qx, self.Qy=self.wafer_coords.GLM
 
@@ -352,12 +370,13 @@ class JDF_Top(Atom):
     shot=Coerced(int, (8,)).tag(desc="Shot size in nm. should divide 4 um evenly")
     resist=Coerced(int, (165,)).tag(desc="dose")
     resist_comment=Unicode()
-    main_arrays=List().tag(desc="main arrays in JDF")
+    main_arrays=List().tag(desc="main arrays in JDF", private=True)
     sub_arrays=List().tag(desc="arrays in JDF")#.tag(width='max', inside_type=jdf_array)
     patterns=List().tag(desc="patterns in JDF")#.tag(width='max', inside_type=jdf_pattern)
     jdis=List().tag(desc="jdis in JDF")
 
     def _default_main_arrays(self):
+        log_debug([JDF_Main_Array()])
         if self.wafer_coords.wafer_type=="Full":
             return [JDF_Main_Array(), JDF_Main_Array(), JDF_Main_Array(), JDF_Main_Array()]
         return [JDF_Main_Array()]
@@ -496,6 +515,7 @@ def gen_jdf_quarter_wafer(patterns, qw="A"):
 
 if __name__=="__main__":
     a=JDF_Top()
+    log_debug(a.agent_dict)
     jdf_data="""JOB/W 'IDT',4,-4.2
 
 ; For exposure on YZ-cut LiNbO3, Cop+ZEP., q-wafer D
@@ -679,10 +699,9 @@ LAYER 1
 @ 'pads_W46.jdi'
 
 END 1"""
-
     a.input_jdf=jdf_data2
-    #print a.arrays[0].assigns[0].pos_assign
-    shower(a, a.wafer_coords)
+
+    shower(a)
     #print a.arrays[0].assigns[0].pos_assign
 
     #a=Text_Editor(name="Text_Editor", dir_path="/Volumes/aref/jbx9300/job/TA150515B/IDTs", main_file="idt.jdf")

@@ -9,7 +9,34 @@ from enaml import imports
 from enaml.qt.qt_application import QtApplication
 from taref.core.log import log_debug
 
+def get_view(obj, default_view, default_name):
+    view=getattr(obj, "view_window", default_view)
+    view.name=getattr(obj, "name", default_name)
+    if view.title=="":
+        view.title=view.name
+    return view
+
 def shower(*agents):
+
+    """a powerful showing function for any Atom object(s). Checks if object has a view_window property and otherwise uses a default.
+    also provides a show control of the objects"""
+    app = QtApplication()
+    with imports():
+        from taref.core.chief_e import agentView, basicView #, chiefView
+    for n, agent in enumerate(agents):
+        view=get_view(agent, agentView(agent=agent), "window_{0}".format(n))
+        view.show()
+#        if hasattr(agent, "agent_dict"):
+#            for other_agent in agent.agent_dict.values():
+#                if other_agent not in agents:
+#                    view=get_view(other_agent, agentView(agent=other_agent), "unnamed_agent")
+#                    view.initialize()
+    view=basicView(title="Show Control", name="show_control", chief_cls=type(agents[0]))
+    view.show()
+    app.start()
+
+
+def shower2(*agents):
     """a powerful showing function for any Atom object(s). Checks if object has a view_window property and otherwise uses a default.
     also provides a show control of the objects"""
     app = QtApplication()

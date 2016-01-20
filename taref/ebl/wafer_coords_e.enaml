@@ -5,20 +5,20 @@ Created on Thu Dec 24 01:36:14 2015
 @author: thomasaref
 """
 #from enaml.core.api import Conditional
-from enaml.widgets.api import (Window, PushButton, Html, Container, VGroup, HGroup, Label, 
+from enaml.widgets.api import (Window, PushButton, Html, Container, VGroup, HGroup, Label,
                                Form, Field, ObjectCombo)
 from taref.core.fundcore_e import UnitIntField, aHGroup, aWindow, UnitFloatField
 from enaml.layout.api import spacer
 
 enamldef WaferCoordsView(aWindow):
     attr wc
-    VGroup:        
+    VGroup:
         aHGroup:
             VGroup:
-                
+
                 Label:
                     text="Wafer type"
-                ObjectCombo: 
+                ObjectCombo:
                     items = list(wc.get_member("wafer_type").items)
                     selected := wc.wafer_type
             VGroup:
@@ -46,26 +46,20 @@ enamldef WaferCoordsView(aWindow):
             VGroup:
                 Label:
                     text="Bad Coordinate type:"
-                ObjectCombo: 
+                ObjectCombo:
                     items = list(wc.get_member("bad_coord_type").items)
                     selected := wc.bad_coord_type
             VGroup:
                 Label:
                     text="Randomize:"
-                ObjectCombo: 
+                ObjectCombo:
                     items = list(wc.get_member("randomize").items)
                     selected := wc.randomize
 
-            VGroup:
-                Label:
-                    text="Redistribute coordinates:"
-                PushButton:
-                    text = "Distribute"
-                    clicked :: 
-                        wc.distribute_event()
+
         Html:
             source <<  wc.html_text
-                                     
+
 enamldef Main(aWindow):
     attr wc
     VGroup:
@@ -74,7 +68,7 @@ enamldef Main(aWindow):
                 trailing_spacer=spacer
                 Label:
                     text="Wafer type"
-                ObjectCombo: 
+                ObjectCombo:
                     items = list(wc.get_member("wafer_type").items)
                     selected := wc.wafer_type
             aHGroup:
@@ -123,7 +117,7 @@ enamldef Main(aWindow):
                     unit="um"
         aHGroup:
             #trailing_spacer=spacer
-            
+
             Label:
                 text="Array:"
             Field:
@@ -170,14 +164,14 @@ enamldef Main(aWindow):
                 trailing_spacer=spacer
                 Label:
                     text="Bad Coordinate type:"
-                ObjectCombo: 
+                ObjectCombo:
                     items = list(wc.get_member("bad_coord_type").items)
                     selected := wc.bad_coord_type
-            
+
         Html:
             source << wc.html_text
-            
-                              
+
+
 enamldef FullWaferView(aWindow):
     attr fw
     VGroup:
@@ -200,6 +194,6 @@ enamldef FullWaferView(aWindow):
 #                    uvalue << wc.radius
 #                    minimum = 0
 #                    unit="um"
-            
+
         Html:
             source << fw.html

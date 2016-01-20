@@ -53,5 +53,5 @@ LAYER 1
 
 END 1"""
 
-    a.chief.jdf.input_jdf=jdf_text
+    a.jdf.input_jdf=jdf_text
     a.show()

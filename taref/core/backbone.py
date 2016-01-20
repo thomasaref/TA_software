@@ -16,7 +16,6 @@ from enaml.application import deferred_call
 from threading import Thread
 from taref.core.log import log_info, log_debug
 
-#_UPDATE_PREFIX_="_update_"
 _MAPPING_SUFFIX_="_mapping"
 
 def set_value_map(obj, name, value):
@@ -412,6 +411,7 @@ class Backbone(Atom):
 
     def extra_setup(self, param, typer):
         """sets up property_fs, ranges, and units"""
+        self._setup_logging_fs(param, typer)
         self._setup_property_fs(param, typer)
         self._setup_ranges(param, typer)
         self._setup_units(param, typer)
@@ -439,10 +439,13 @@ class Backbone(Atom):
         for item in self.property_items:
             item.reset(self)
 
-    def _setup_logging_fs(self):
+    def _setup_logging_fs(self, param, typer):
         """sets up logging_f's pointing obj to self"""
-        for name in [attr for attr, item in getmembers(self) if isinstance(item, logging_f)]:
-            setattr(getattr(self, name), "obj", self)
+        if typer==Callable:
+            item=getattr(self, param)
+            if isinstance(item, logging_f):
+                log_debug(param)
+                item.obj=self
 
     def _setup_property_fs(self, param, typer):
         """sets up property_f's pointing obj at self and setter at functions decorated with param.fget.setter"""
@@ -466,10 +469,9 @@ class Backbone(Atom):
                     unit_factor=self.get_tag(param, "unit_factor", self.unit_dict[unit])
                     self.set_tag(param, unit_factor=unit_factor)
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         """extends __init__ to autoset low and high tags for Range and FloatRange, autoset units for Ints and Floats and allow extra setup"""
-        super(Backbone, self).__init__(**kwargs)
-        self._setup_logging_fs()
+        super(Backbone, self).__init__(*args, **kwargs)
         for param in self.all_params:
             typer=self.get_type(param)
             self.extra_setup(param, typer)

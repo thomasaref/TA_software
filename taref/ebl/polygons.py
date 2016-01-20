@@ -9,11 +9,14 @@ from taref.core.agent import SubAgent
 from taref.core.backbone import private_property
 from taref.core.save_file import Save_DXF
 from taref.ebl.beamer_gen import BeamerGen
-from taref.ebl.polygon_chief import polygon_chief
-from taref.core.log import log_warning
+#from taref.ebl.polygon_chief import polygon_chief
+from taref.core.log import log_warning, log_debug
 from taref.ebl.polygon_backbone import (minx, maxx, miny, maxy, sP, sPoly,
                                         sR, sC, sT, sCT, sCross, sDig, sWaferDig)
-
+from taref.ebl.jdf import JDF_Top
+from taref.core.plotter import Plotter
+from taref.ebl.DXF_functions import save_dxf
+from taref.core.shower import shower
 class EBL_Polygons(SubAgent):
     color=Enum("green", "blue", "red", "purple", "brown", "black").tag(desc="color or datatype of item, could be used for dosing possibly")
     layer=Enum("Al", "Al_35nA", "Au").tag(desc='layer of item')
@@ -23,6 +26,65 @@ class EBL_Polygons(SubAgent):
     bmr=Typed(BeamerGen).tag(private=True)
     plot_sep=Bool(True)
     verts=List(default=[]).tag(private=True)
+
+    jdf=JDF_Top()
+    plot=Plotter(name="EBL Plot")
+
+#    @property
+#    def patterns(self):
+#        return [agent for agent in self.agent_dict.values() if isinstance(agent, EBL_Polygons)]
+
+    def show(self):
+        shower(self, self.plot)
+
+    @property
+    def cls_run_funcs(self):
+        return [self.plot_JDF, self.save_JDF_DXF]
+
+    @classmethod
+    def activated(cls):
+        log_debug(1)
+        #cls.jdf.gen_jdf([agent for agent in cls.agent_dict.values() if isinstance(agent, EBL_Polygons)])
+
+        cls.plot_JDF()
+
+    @classmethod
+    def plot_JDF(cls):
+        xmin=minx([])
+        xmax=maxx([])
+        ymin=miny([])
+        ymax=maxy([])
+        cls.jdf.get_member("xy_offsets").reset(cls.jdf)
+        xy_off=cls.jdf.xy_offsets
+        log_debug(2)
+        for p in cls.jdf.patterns:
+            a=cls.agent_dict[p.name]
+            log_debug(a)
+            verts=[]
+            for chip in xy_off.get(p.name, []):
+                sPoly(a, x_off=chip[0]*1.0e-6, y_off=chip[1]*1.0e-6, vs=verts)
+            log_debug(a)
+            cls.plot.set_data(a.name, verts, a.color)
+            log_debug(a)
+            xmin=min([minx(verts), xmin])
+            xmax=max([maxx(verts), xmax])
+            ymin=min([miny(verts), ymin])
+            ymax=max([maxy(verts), ymax])
+        log_debug(1)
+        cls.plot.set_xlim(xmin, xmax)
+        cls.plot.set_ylim(ymin, ymax)
+        cls.plot.draw()
+
+    @classmethod
+    def save_JDF_DXF(cls):
+        cls.jdf.get_member("xy_offsets").reset(cls.jdf)
+        xy_off=cls.jdf.xy_offsets
+        verts=[]
+        for p in cls.jdf.patterns:
+            a=cls.agent_dict[p.name] #[agent for agent in self.agents if agent.name==p.name][0]
+            for chip in xy_off.get(p.name, []):
+                sPoly(a, x_off=chip[0]*1.0e-6, y_off=chip[1]*1.0e-6, vs=verts)
+        save_dxf(verts, color="green", layer="PADS", file_path="marialasertest.dxf", write_mode="w")
 
     def add_to_jdf(self):
         self.chief.patterns[self.name_sug]={"shot_mod":self.shot_mod_table}
@@ -44,17 +106,12 @@ class EBL_Polygons(SubAgent):
     def obs_save_event(self, change):
         self.save_file.direct_save(self.verts[:], self.color, self.layer, write_mode='w')
 
-    @private_property
-    def base_name(self):
-        return "EBL_Polygons"
+    base_name="EBL_Polygons"
+    initial_position=(0,300)
 
-    @private_property
-    def initial_position(self):
-        return (0,300)
-
-    @private_property
-    def chief(self):
-        return polygon_chief
+#    @private_property
+#    def chief(self):
+#        return polygon_chief
 
 #    def __init__(self, **kwargs):
 #        """extends __init__ auto make polylist"""

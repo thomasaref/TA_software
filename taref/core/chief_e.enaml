@@ -29,75 +29,58 @@ enamldef agentView(Window):
 
 class showWindow(MainWindow):
     """adds a list of other windows to a MainWindow and a property that determines if all are visible"""
-    #a_wins=d_(List(default=[]))
-    #other_wins=d_(List(default=[]))
-    #all_wins=d_(List(default=[]))
-    #agent_wins=d_(List(default=[]))
-
-    @property
-    def agent_wins(self):
-        return [w for w in self.all_wins if hasattr(w, "agent")]
-
     @property
     def all_wins(self):
         return [w for w in self.windows if w!=self]
 
     @property
-    def other_wins(self):
-        return [w for w in self.all_wins if w not in self.agent_wins and not isinstance(w, LogWindow)]
-
-    @property
     def all_showing(self):
         all_showing=True
-        for w in self.agent_wins:
+        for w in self.all_wins:
             if not w.visible:
                 all_showing=False
         return all_showing
 
 enamldef coreWindow(showWindow): sv:
     """extends showWindow to initialize a_wins when activated and close all windows when the core is closed"""
+    attr chief_cls
     initial_position=(0,0)
-    #activated ::
-        #sv.all_wins=[w for w in sv.windows if w!=sv]
-    #    sv.a_wins=[w for w in sv.all_wins if hasattr(w, "agent")]
-        #sv.other_wins=[w for w in sv.all_wins if w not in sv.a_wins and not isinstance(w, LogWindow)]
-    #    print sv.all_wins
-    #    print sv.agent_wins
-    #    print sv.other_wins
     closed ::
-        for w in sv.windows:
+        for w in sv.all_wins:
             w.close()
 
-enamldef AgentToolBar(ToolBar):
-    """a toolbar that lists all agent windows and shows and hides them respectively when action is triggered"""
+enamldef WindowToolBar(ToolBar):
+    """a toolbar that lists all windows and links an action to showing them"""
     attr boss_window
     dock_area="left"
     Action:
-        text="Agents:"
+        text="Windows:"
         triggered::
             all_showing=boss_window.all_showing
-            for w in boss_window.agent_wins:
+            for w in boss_window.all_wins:
                 if all_showing:
                     w.hide()
                 else:
                     w.show()
                     w.send_to_front()
-        tool_tip = "Show/hide all agents"
+        tool_tip = "Show/hide all windows"
+    Action:
+        text="test"
+        triggered::
+            print boss_window.chief_cls
+            print chief_cls.activated()
     Action:
         separator=True
     Looper: loopy:
-        iterable = boss_window.agent_wins
+        iterable = boss_window.all_wins
         Action:
             text = loop_item.name
-            tool_tip = "Show agent: {0}".format(loop_item.name)
+            tool_tip = "Show window: {0}".format(loop_item.name)
             triggered::
                 loop_item.show()
                 loop_item.send_to_front()
 
-def get_name(obj):
-    if obj.name=="":
-        return unicode(obj)
-    return obj.name
+
 enamldef OtherToolBar(ToolBar):
     """a toolbar that lists all agent windows and shows and hides them respectively when action is triggered"""
     attr boss_window
@@ -126,8 +109,30 @@ enamldef OtherToolBar(ToolBar):
 
 enamldef basicView(coreWindow): sv:
     """the most basic view controller of a collection of Atoms without a chief"""
-    AgentToolBar:
+    activated ::
+        if hasattr(chief_cls, "activated"):
+            chief_cls.activated()
+    WindowToolBar:
         boss_window:=sv
+    Conditional:
+        condition = getattr(chief_cls, "run_func_dict", {}) != {}
+        VGroup:
+            GroupBox:
+                Looper:
+                    iterable=chief_cls.run_func_dict.keys()
+                    PushButton:
+                        text = loop_item
+                        clicked :: chief_cls.run_func_dict[loop_item]()
+            PushButton:
+                text = "Run All"
+                clicked ::
+                    log_debug(sv.windows)
+                    #print sv.agent_wins
+                    print sv.all_wins
+                    #print sv.other_wins
+                    #chief.run_all()
+                tool_tip = "Runs all functions"
+
 
 enamldef LogSaveToolBar(ToolBar):
     ToolBar:
@@ -190,7 +195,7 @@ enamldef chiefView(coreWindow): sv:
                         #show_plot(boss.plot.name+'plot', bossarea, target=bossarea.dock_items()[0].name, ItemType=PlotItem, position="right", plotr=boss.plot)
                 tool_tip = "Show plot"
 
-    AgentToolBar:
+    WindowToolBar:
         boss_window:=sv
     OtherToolBar:
         boss_window:=sv

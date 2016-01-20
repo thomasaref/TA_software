@@ -10,6 +10,7 @@ from taref.ebl.wafer_labels import Wafer_Labels, Digit
 from taref.ebl.cross import Cross, Symmetric_Cross, Symmetric_Inverse_Cross
 from taref.ebl.rectangle import Rectangle#, Dashed_Line_Horiz
 from taref.ebl.wafer_aligner import Wafer_Aligner, Wafer_Width_Checker
+from taref.core.log import log_debug
 
 if __name__=="__main__":
     jdf_text="""
@@ -211,5 +212,6 @@ P(43) 'VERT_W_ALIGN' (48130.0, 0.0)
     wafer_align=Wafer_Aligner(name="HORIZ_W_ALIGN")
     wafer_align=Wafer_Aligner(name="VERT_W_ALIGN", angle=90.0)
 
-    pads.chief.jdf.input_jdf=jdf_text
+    pads.jdf.input_jdf=jdf_text
+    log_debug(pads.agent_dict.keys())
     pads.show()

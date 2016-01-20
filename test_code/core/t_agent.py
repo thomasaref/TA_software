@@ -6,8 +6,9 @@ Created on Tue Nov  3 15:45:12 2015
 """
 
 from taref.core.agent import SubAgent, Spy, Agent
-from atom.api import Int, Float, ContainerList, Dict
+from atom.api import Int, Float, ContainerList, Dict, Atom
 from taref.core.log import log_info, log_debug
+from taref.core.shower import shower
 
 log_info(1)
 class Test(SubAgent):
@@ -16,7 +17,9 @@ class Test(SubAgent):
 t=Test()
 t2=Test()
 
+print type(t2).agent_dict
 def run_test():
+    print t.agent_dict
     t.a=5
     print "ran run_test"
 
@@ -24,18 +27,21 @@ def run_test2():
     t2.b=3
     print "ran run_test2"
 
-t.chief.add_func(run_test)
-t.chief.add_func(run_test2)
-t.full_run()
-print t.a
+t.add_func(run_test)
+#t.chief.add_func(run_test2)
+#t.full_run()
+#print t.agent_dict
 #t.chief.add_func(t.chief.chief_run_test)
-print run_test.func_name
-print t.name
-print t2.name
-print t.base_name
-print t.chief
-print t.abort
-print t.desc
+#print t.name
+#print t2.name
+#print t.base_name
+#print t.chief
+#print t.abort
+#print t.desc
+#shower(t, t2)
+print type(t.activated)
+print type(t.run_all)
+
 t.show()
 
 

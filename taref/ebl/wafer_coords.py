@@ -4,11 +4,12 @@ Created on Mon Jun  1 12:51:22 2015
 
 @author: thomasaref
 """
-from atom.api import Enum, Int, List, Float, Event, Atom, observe, cached_property
+from atom.api import Enum, Int, List, Float, Atom, observe, cached_property
 from enaml import imports
 #from taref.core.log import log_debug
 from taref.core.universal import sqze
 from random import shuffle
+from taref.core.agent import SubAgent
 
 QUARTER_WAFER_SIGNS={"A" : (-1, 1), "B" : (1, 1), "C" : (-1, -1), "D" : (1, -1)}
 
@@ -25,8 +26,6 @@ class SubWaferCoord(Atom):
     bad_coord_type=Enum("quarter wafer", "full wafer", "none")
 
     randomize=Enum(True, False)
-
-    distribute_event=Event()
 
     Px=Int(4000)
     Py=Int(40000)
@@ -197,9 +196,11 @@ class WaferCoords(SubWaferCoord):
         num_bad_coords=numCoords(self.bad_coords, num_patterns)
         return [self.distr_one_coord(i, num_patterns, num_good_coords, num_bad_coords) for i in range(num_patterns)]
 
-class FullWafer(SubWaferCoord):
+class FullWafer(SubAgent, SubWaferCoord):
     wafer_type=Enum("Full", "A", "B", "C", "D")
     quarter_wafers=List()
+
+    base_name="wafer_coords"
 
     @property
     def xy_locations(self):
@@ -207,12 +208,6 @@ class FullWafer(SubWaferCoord):
         for qw in self.quarter_wafers:
             t_list.extend(qw.xy_locations)
         return t_list
-
-    def _observe_distribute_event(self, change):
-        if change["type"]=="event":
-            for qw in self.quarter_wafers:
-                qw.get_member('bad_coords').reset(qw)
-                qw.get_member('good_coords').reset(qw)
 
     @observe("wafer_type", "diameter", "chip_size", "gap_size", "bad_coord_type")
     def do_update(self, change):
@@ -247,10 +242,6 @@ class FullWafer(SubWaferCoord):
     @cached_property
     def radius(self):
         return self.quarter_wafers[0].radius
-
-    @property
-    def stretch(self):
-        return self.gap_size#+self.chip_size/2
 
     @cached_property
     def N_chips(self):
@@ -309,7 +300,7 @@ class FullWafer(SubWaferCoord):
         return sqze(qw.distribute_coords(num_patterns) for qw in self.quarter_wafers)
 
 if __name__=="__main__":
-    from taref.core.shower import show
+    from taref.core.shower import shower
 
     if 0:
         #a=SubWaferCoord()
@@ -324,5 +315,5 @@ if __name__=="__main__":
     print a.distribute_coords(5)
 
     #a.html=a.html_txt()
-    show(a)
+    shower(a)
 

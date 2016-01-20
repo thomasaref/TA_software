@@ -360,8 +360,8 @@ class PADS(EBL_Polygons):
 
 if __name__=="__main__":
     a=PADS()#Au_sec=350.0e-6, bond_pad_in_shift=500.0e-6)#, bond_pad_gap=300.0e-6)
-    b=Al_PADS(chip=a)
-    a.full_EBL_save()
-    b.full_EBL_save()
+    #b=Al_PADS(chip=a)
+    #a.full_EBL_save()
+    #b.full_EBL_save()
 
     a.show()
