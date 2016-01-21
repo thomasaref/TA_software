@@ -13,15 +13,13 @@ from taref.ebl.pads import Test_Pads
 
 class Al_PADS(EBL_Polygons):
     """Makes aluminum section of pads"""
+    base_name="Al_PADS"
+
     def _default_color(self):
         return "red"
 
     def _default_layer(self):
         return "Al_35nA"
-
-    @private_property
-    def base_name(self):
-        return "Al_PADS"
 
     chip=Typed(EBL_Polygons)
     gndplane_side_gap=Float(30.0e-6).tag(unit='um', desc="side gap in ground plane")
@@ -230,6 +228,8 @@ class Al_PADS(EBL_Polygons):
 
 class PADS(EBL_Polygons):
     """creates gold portion of EBL_PADS"""
+    base_name="PADS"
+
     chip_height=Float(5000.0e-6).tag(unit='um', desc="the height of the chip (in um though would be more natural in mm) as defined by the dicing saw")
     chip_width=Float(5000.0e-6).tag(unit='um', desc="the width of the chip (in um though would be more natural in mm) as defined by the dicing saw")
     blade_width=Float(200.0e-6).tag(unit='um', desc="width of blade used to make dicing cuts")
@@ -244,7 +244,6 @@ class PADS(EBL_Polygons):
     gap=Float(120.0e-6).tag(unit='um', desc="gap of center strip. should be 50 Ohm impedance matched with w (120 um)") #180
 
     Au_sec=Float(150.0e-6).tag(unit="um")
-
 
     overlap=Float(30.0e-6).tag(unit="um")
 
@@ -277,10 +276,6 @@ class PADS(EBL_Polygons):
 
     def _default_layer(self):
         return "Au"
-
-    @private_property
-    def base_name(self):
-        return "PADS"
 
     @property
     def xbox(self):
@@ -360,7 +355,7 @@ class PADS(EBL_Polygons):
 
 if __name__=="__main__":
     a=PADS()#Au_sec=350.0e-6, bond_pad_in_shift=500.0e-6)#, bond_pad_gap=300.0e-6)
-    #b=Al_PADS(chip=a)
+    b=Al_PADS(chip=a)
     #a.full_EBL_save()
     #b.full_EBL_save()
 

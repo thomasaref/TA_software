@@ -38,9 +38,8 @@ t.add_func(run_test)
 #print t.chief
 #print t.abort
 #print t.desc
-#shower(t, t2)
-print type(t.activated)
-print type(t.run_all)
+#shower(t, t2, show_log=True)
+
 
 t.show()
 

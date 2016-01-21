@@ -5,33 +5,28 @@ Created on Mon Jan 19 17:25:53 2015
 @author: thomasaref
 """
 
-from atom.api import Bool, Value, List, Enum
-from taref.core.backbone import private_property, tagged_callable
+from atom.api import Bool, Value, List, Enum, Callable
+from taref.core.backbone import private_property, tagged_callable, logging_f
 from taref.core.agent import Agent
-from taref.core.log import log_info, log_warning#, make_log_file
+from taref.core.log import log_info, log_warning, log_debug#, make_log_file
 
 
 class InstrumentError(Exception):
     pass
 
-def boot_func(func, **kwargs):
-    """decorator function for booter function in instrument"""
-    if "desc" not in kwargs:
-        kwargs["desc"]="the boot function for the instrument"
-    if "private" not in kwargs:
-        kwargs["private"]=True
-    return tagged_callable(**kwargs)(func)
+class boot_func(tagged_callable):
+    """disposable decorator class for booter method that autosets some kwargs (if not specified)"""
+    default_kwargs=dict(desc="the boot function for the instrument", private=True, booter=True)
 
-def close_func(func, **kwargs):
-    """decorator function for closer function in instrument"""
-    if "desc" not in kwargs:
-        kwargs["desc"]="the close function for the instrument"
-    if "private" not in kwargs:
-        kwargs["private"]=True
-    return tagged_callable(**kwargs)(func)
+class close_func(tagged_callable):
+    """disposable decorator class for closer method that autosets some kwargs (if not specified)"""
+    default_kwargs=dict(desc="the close function for the instrument", private=True, closer=True)
 
 class Instrument(Agent):
     """Instrument class. Provides functionality for running instruments"""
+    base_name="instrument"
+    busy=False
+
     session=Value().tag(private=True, desc="a link to the session of the instrument. useful particularly for dll-based instruments")
     status=Enum( "Closed", "Active").tag(private=True, desc="a description of if the instrument is active or not, i.e. has been booted")
     send_now=Bool(True).tag(private=True, desc="when true, changing a value automatically sends it to the instrument if a send_cmd exists for that value")
@@ -40,15 +35,17 @@ class Instrument(Agent):
         """Boot the instrument using booter function if it exists"""
         log_info("BOOTED: {0}".format(self.name))
         self.status="Active"
-        if "booter" in self.members():
-            self.booter(self, **kwargs)
+        booter=self.get_all_tags("booter")
+        if booter != []:
+            getattr(self, booter[0])(self, **kwargs)
 
     def close(self,  **kwargs):
         """Close the instrument using closer function if it exists"""
         log_info("CLOSED: {0}".format(self.name))
         self.status="Closed"
-        if "closer" in self.members():
-            self.closer(self, **kwargs)
+        closer=self.get_all_tags("closer", none_value=[None])
+        if closer != []:
+            getattr(self, closer[0])(**kwargs)
 
     def _observe_send_now(self, change):
         """if instrument send_now changes, change all send_now tags of parameters"""
@@ -72,9 +69,9 @@ class Instrument(Agent):
         get_cmd=self.func2log(name, 'get_cmd')
         if get_cmd!=None and self.status=='Active':
             self.receive_log(name)
-            #self.busy=True
+            Instrument.busy=True
             value=get_cmd(self, **kwargs)
-            #self.busy=False
+            Instrument.busy=False
             temp=self.get_tag(name, 'send_now', self.send_now)
             self.set_tag(name, send_now=False)
             value=self.get_value_check(name, value)
@@ -91,9 +88,12 @@ class Instrument(Agent):
     def send(self, name, value=None, **kwargs):
         """performs send of parameter name i.e. executing associated set_cmd. If value is specified, parameter is set to value
         kwargs allows additional parameters required by set_cmd to be fed in."""
-        set_cmd=self.func2log(name, 'set_cmd')
+        set_cmd=self.get_tag(name, 'set_cmd')
         if set_cmd!=None and self.status=='Active':
-            #self.busy=True
+            if not isinstance(set_cmd, logging_f):
+                set_cmd=logging_f(set_cmd, obj=self, log=False)
+                self.set_tag(name, set_cmd=set_cmd)
+            Instrument.busy=True
             temp=self.get_tag(name, 'send_now', self.send_now)
             self.set_tag(name, send_now=False)
             if value!=None:
@@ -101,7 +101,7 @@ class Instrument(Agent):
             self.send_log(name)
             set_cmd(self, **kwargs)
             self.set_tag(name, send_now=temp)
-            #self.busy=False
+            Instrument.busy=False
         else:
             log_warning("WARNING: set_cmd doesn't exist or instrument not active")
 
@@ -130,11 +130,11 @@ class Instrument(Agent):
             if self.get_tag(name, 'send_now', self.send_now)==True:
                 if self.get_tag(name, 'set_cmd')!=None and self.status=='Active':
                     self.send(name)
-    @private_property
-    def chief(self):
-        from taref.instruments.instrument_chief import instrument_chief #boss is imported to make it a singleton (all instruments have the same boss)
-        #inboss.make_boss()
-        return instrument_chief
+#    @private_property
+#    def chief(self):
+#        from taref.instruments.instrument_chief import instrument_chief #boss is imported to make it a singleton (all instruments have the same boss)
+#        #inboss.make_boss()
+#        return instrument_chief
 
 #    def __init__(self, **kwargs):
 #        """extends __init__ of Slave to make booter and closer into logged functions"""
@@ -149,4 +149,4 @@ if __name__=="__main__":
     b=Instrument(name="bob")
     a.boot()
     #a.boss.saving=False
-    #a.show()
+    a.show()

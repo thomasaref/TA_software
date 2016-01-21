@@ -4,20 +4,24 @@ Created on Thu Jun 25 09:52:31 2015
 
 @author: thomasaref
 """
+from taref.core.log import log_debug
+
 from atom.api import Enum, List, Unicode, Typed, Bool, observe
 from taref.core.agent import SubAgent
 from taref.core.backbone import private_property
 from taref.core.save_file import Save_DXF
 from taref.ebl.beamer_gen import BeamerGen
-#from taref.ebl.polygon_chief import polygon_chief
-from taref.core.log import log_warning, log_debug
 from taref.ebl.polygon_backbone import (minx, maxx, miny, maxy, sP, sPoly,
                                         sR, sC, sT, sCT, sCross, sDig, sWaferDig)
 from taref.ebl.jdf import JDF_Top
 from taref.core.plotter import Plotter
 from taref.ebl.DXF_functions import save_dxf
-from taref.core.shower import shower
+
+
 class EBL_Polygons(SubAgent):
+    base_name="EBL_Polygons"
+    initial_position=(0,300)
+
     color=Enum("green", "blue", "red", "purple", "brown", "black").tag(desc="color or datatype of item, could be used for dosing possibly")
     layer=Enum("Al", "Al_35nA", "Au").tag(desc='layer of item')
     save_file=Typed(Save_DXF, ()).tag(no_spacer=True)
@@ -29,13 +33,10 @@ class EBL_Polygons(SubAgent):
 
     jdf=JDF_Top()
 
-    plot=Plotter(name="EBL Plot")
-
-#    @property
-#    def patterns(self):
-#        return [agent for agent in self.agent_dict.values() if isinstance(agent, EBL_Polygons)]
+    plot=Plotter(name="EBL Plot", xlabel="x (um)", ylabel="y (um)", title="EBL Plot")
 
     def show(self):
+        from taref.core.shower import shower
         shower(self, self.plot)
 
     @property
@@ -59,6 +60,8 @@ class EBL_Polygons(SubAgent):
         log_debug(2)
         for p in cls.jdf.patterns:
             a=cls.agent_dict[p.name]
+            a.reset_properties() #fix updating of properties
+            a.reset_property("polylist")
             log_debug(a)
             verts=[]
             for chip in xy_off.get(p.name, []):
@@ -106,18 +109,6 @@ class EBL_Polygons(SubAgent):
     def obs_save_event(self, change):
         self.save_file.direct_save(self.verts[:], self.color, self.layer, write_mode='w')
 
-    base_name="EBL_Polygons"
-    initial_position=(0,300)
-
-#    @private_property
-#    def chief(self):
-#        return polygon_chief
-
-#    def __init__(self, **kwargs):
-#        """extends __init__ auto make polylist"""
-#        super(EBL_Polygons, self).__init__(**kwargs)
-#        self.make_polylist()
-
     @property
     def xmin(self):
         return minx(self.verts)
@@ -136,14 +127,11 @@ class EBL_Polygons(SubAgent):
 
     @private_property
     def polylist(self):
-        self.verts=[]
+        """example polylist. to be overwritten in child classes
+        In general, self.verts should be cleared first i.e. self.verts=[] but this case is
+        interesting for testing out functions"""
+        #self.verts=[]
         return self.verts
-
-    #@polylist.setter(self, value):
-    #    self.verts=value
-
-    #    """function that makes polgyons in list. overwritten in children classes"""
-    #    log_warning("make_polylist not overwritten!")
 
     def P(self, verts):
         """adds a polygon to the polylist with vertices given as a list of tuples"""
@@ -183,7 +171,9 @@ class EBL_Polygons(SubAgent):
 
 if __name__=="__main__":
     a=EBL_Polygons()
-    print sP([(0,0), (1,0), (0,1)])
+    a.Dig("A", 0, 0, 10.0e-6, 1.0e-6)
+    a.Dig("B", 30.0e-6, 0, 10.0e-6, 1.0e-6)
+
     a.show()
 
 #    print a.sP([(0,0), (1,0), (0,1)])

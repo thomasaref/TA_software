@@ -5,19 +5,19 @@ Created on Tue Jan  5 01:07:15 2016
 @author: thomasaref
 """
 
-from taref.core.log import log_debug
+#from taref.core.log import log_debug
 from taref.physics.fundamentals import sinc_sq, pi, eps0
 from taref.core.backbone import tagged_property, property_f, private_property
 from taref.core.agent import Agent
 from atom.api import Float, Int, Enum, cached_property
-from taref.core.shower import show as shower
-from enaml import imports
-from numpy import array, arange, linspace
+
+from numpy import arange, linspace
 from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
 
 
 class IDT(Agent):
     """Theoretical description of IDT"""
+    base_name="idt"
 
     def plot_data(self, zname, **kwargs):
          """pass in an appropriate kwarg to get zdata for the zname variable back"""
@@ -73,13 +73,9 @@ class IDT(Agent):
          if add_legend:
              legend()
 
-    @private_property
-    def base_name(self):
-        return "idt"
-
-    def _default_main_params(self):
-        return ["ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct",
-                "material", "Dvv", "K2", "vf", "epsinf"]
+#    def _default_main_params(self):
+#        return ["ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct",
+#                "material", "Dvv", "K2", "vf", "epsinf"]
 
     Ga_0=Float(1)
     f=Float(4.4e9)
@@ -195,49 +191,51 @@ class IDT(Agent):
 
     @private_property
     def view_window(self):
+        from enaml import imports
         with imports():
             from taref.saw.idt_e import IDT_View
         return IDT_View(idt=self)
 
-
-a=IDT()
-
-print a.call_func("eta", a=0.2e-6, g=0.8e-6)#, vf=array([500.0, 600.0]), lbda0=array([0.5e-6, 0.6e-6]))
-a.plot_data("f0", lbda0=linspace(0.1e-6, 1.0e-6, 10000))
-print a.get_tag("lbda0", "unit_factor")
-show()
-if 1:
-    print a.K2, a.Dvv
-    #print dir(a.get_member("K2").fget.fset)
-    a.K2=5
-    a.Dvv=5
-    print a.K2
+if __name__=="__main__":
+    from taref.core.shower import shower
+    a=IDT()
     shower(a)
-    #print a.K2, a.Dvv
-    #print a.K2, a.Dvv
+    print a.call_func("eta", a=0.2e-6, g=0.8e-6)#, vf=array([500.0, 600.0]), lbda0=array([0.5e-6, 0.6e-6]))
+    a.plot_data("f0", lbda0=linspace(0.1e-6, 1.0e-6, 10000))
+    print a.get_tag("lbda0", "unit_factor")
+    show()
+    if 1:
+        print a.K2, a.Dvv
+        #print dir(a.get_member("K2").fget.fset)
+        a.K2=5
+        a.Dvv=5
+        print a.K2
+        shower(a)
+        #print a.K2, a.Dvv
+        #print a.K2, a.Dvv
 
 
-if 0:
-    print a.property_dict
-    print a.get_member("p").fget()#.func_code.co_varnames#(a, 1, 1)
-    #print a.p()
-    #a.eta=0.6
-    print a.p
-    a.a=5e-6
-    print a.p
-    show(a)
-    #a.get_member("lbda0").setter(a.set_func("lbda0"))
-    #a.lbda0=1.0e-6
+    if 0:
+        print a.property_dict
+        print a.get_member("p").fget()#.func_code.co_varnames#(a, 1, 1)
+        #print a.p()
+        #a.eta=0.6
+        print a.p
+        a.a=5e-6
+        print a.p
+        show(a)
+        #a.get_member("lbda0").setter(a.set_func("lbda0"))
+        #a.lbda0=1.0e-6
 
-if 0:
-    print a.f0
-    print a.a, a.f0
-    a.a=0.5e-6
-    print a.eta, a.a, a.g, a.f0
-    a.eta=0.1
-    print a.eta, a.a, a.g
-    a.g=0.5e-6
-    print a.eta, a.a, a.g
-    print a.lbda0, a.f0
+    if 0:
+        print a.f0
+        print a.a, a.f0
+        a.a=0.5e-6
+        print a.eta, a.a, a.g, a.f0
+        a.eta=0.1
+        print a.eta, a.a, a.g
+        a.g=0.5e-6
+        print a.eta, a.a, a.g
+        print a.lbda0, a.f0
 
-    print a.Ga_f
+        print a.Ga_f

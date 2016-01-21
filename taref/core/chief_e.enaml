@@ -18,14 +18,18 @@ from log_e import LogWindow
 from taref.core.fundtemps_e import InstrHolder
 from taref.core.log import log_debug
 
-enamldef agentView(Window):
+enamldef AgentView(Window):
     """default view for an agent based on dynamic templating"""
     attr agent
     destroy_on_close=False
     initial_size=get_attr(agent, "initial_size", (-1,-1))
     initial_position=get_attr(agent, "initial_position", (-1,-1))
+
+enamldef AutoAgentView(agentView):
+    """default view for an agent based on dynamic templating"""
     InstrHolder:
         instr:=agent
+
 
 class showWindow(MainWindow):
     """adds a list of other windows to a MainWindow and a property that determines if all are visible"""
@@ -36,11 +40,11 @@ class showWindow(MainWindow):
     @property
     def win_names(self):
         return [win.name for win in self.all_wins]
-        
+
     @property
     def win_dict(self):
         return dict(zip(self.win_names, self.all_wins))
-        
+
     @property
     def all_showing(self):
         all_showing=True
@@ -131,8 +135,10 @@ enamldef basicView(coreWindow): sv:
             chief_cls.activated()
     WindowToolBar:
         boss_window:=sv
-    AgentToolBar:
-        boss_window:=sv
+    Conditional:
+        condition = getattr(chief_cls, "agent_dict", {}) != {}
+        AgentToolBar:
+            boss_window:=sv
     Conditional:
         condition = getattr(chief_cls, "run_func_dict", {}) != {}
         VGroup:
@@ -144,6 +150,7 @@ enamldef basicView(coreWindow): sv:
             PushButton:
                 text = "Test"
                 clicked ::
+                    print dir(coreWindow)
                     log_debug(sv.windows)
                     print set([win.name for win in sv.all_wins]
                     ).union(chief_cls.agent_dict.keys())
@@ -151,7 +158,7 @@ enamldef basicView(coreWindow): sv:
                     print sv.all_wins
                     #print sv.other_wins
                     #chief.run_all()
-                tool_tip = "Runs all functions"
+                tool_tip = "test button"
 
 
 enamldef LogSaveToolBar(ToolBar):

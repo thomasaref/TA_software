@@ -10,13 +10,20 @@ if the value did not exist.
 """
 
 from inspect import getmembers
-from atom.api import Atom, List, Callable, Enum, Int, Float, Range, FloatRange, Property, ContainerList, Dict, Str, Unicode, Bool, Coerced
+from atom.api import Atom, List, Callable, Enum, Int, Float, Range, FloatRange, Property, ContainerList, Dict, Str, Unicode, Coerced
 from numpy import shape, ndarray
 from enaml.application import deferred_call
 from threading import Thread
 from taref.core.log import log_info, log_debug
 
 _MAPPING_SUFFIX_="_mapping"
+
+def get_view(obj, default_view, default_name="NO_NAME"):
+    view=getattr(obj, "view_window", default_view)
+    view.name=getattr(obj, "name", default_name)
+    if view.title=="":
+        view.title=view.name
+    return view
 
 def set_value_map(obj, name, value):
     """checks floats and ints for low/high limits and automaps an Enum when setting. Not working for List?"""
@@ -36,26 +43,27 @@ class logging_f(object):
     """A logging wrapper that is compatible with both functions or Callables.
     Auto sets self in the function call to self.obj if it has been set
     for easier use of Callables"""
-    def __init__(self, func):
+    def __init__(self, func, obj=None, log=True):
         self.func=func
-        self.obj=None
-        self.log=True
-        self.run_params=[param for param in get_run_params(func) if param!="self"]
+        self.obj=obj
+        self.log=log
+        self.run_params=[param for param in get_run_params(func)][1:]
 
-    def __call__(self, obj=None, *args, **kwargs):
+    def __call__(self, obj, *args, **kwargs):
         """call logs the call if desired and autoinserts kwargs and obj"""
         log_debug((obj, args, kwargs))
-        if obj is None:
-            obj=self.obj
+        #if obj is None:
+        #    obj=self.obj
         if len(args)==0:
             for param in self.run_params:
                 if param in kwargs:
                     if type(kwargs[param])==type(get_attr(obj, param)):
                         setattr(obj, param, kwargs[param])
                 else:
-                    if param in obj.property_names:
+                    if param in obj.property_dict.keys():
                         obj.get_member(param).reset(obj)
                     value=getattr(obj, param)
+                    #setattr(obj, param, value)
                     value=set_value_map(obj, param, value)
                     kwargs[param]=value
         #if hasattr(obj, "chief"): #not working. how to get return value?
@@ -64,14 +72,19 @@ class logging_f(object):
         #else:
         return_value=self.func(obj, *args, **kwargs)
         if self.log:
-            log_debug(kwargs)
+            #log_debug(kwargs)
             log_debug((self.func.func_name, return_value))
         return return_value
 
 class tagged_callable(object):
     """disposable decorator class that returns a Callable tagged with kwargs.
     Logging is initiated if tags private is not True or log is False"""
+    default_kwargs={}
+
     def __init__(self, **kwargs):
+        """adds default_kwargs if not specified in kwargs"""
+        for key in self.default_kwargs:
+            kwargs[key]=kwargs.get(key, self.default_kwargs[key])
         self.kwargs=kwargs
 
     def __call__(self, func):
@@ -341,8 +354,6 @@ unit_dict={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
 
 class Backbone(Atom):
     """Class combining primary functions for viewer operation"""
-    #main_params=List().tag(private=True, desc="main parameters: allows control over what is displayed and in what order")
-
     def get_metadata(self, name):
         return get_metadata(self, name)
 
@@ -395,18 +406,9 @@ class Backbone(Atom):
         return unit_dict
 
     @private_property
-    def property_names(self):
-        """gets all params that are Properties"""
-        return [name for name in self.all_params if self.get_type(name) is Property]
-
-    @private_property
-    def property_items(self):
-        """get all items corrseponding to self.property_names"""
-        return [self.get_member(name) for name in self.property_names]
-
-    @private_property
     def property_dict(self):
         """returns a dict mapping property_names to property_items"""
+        return dict([(name, self.get_member(name)) for name in self.all_params if self.get_type(name) is Property])
         return dict(zip(self.property_names, self.property_items))
 
     def extra_setup(self, param, typer):
@@ -436,7 +438,7 @@ class Backbone(Atom):
 
     def reset_properties(self):
         """resets all  properties"""
-        for item in self.property_items:
+        for item in self.property_dict.values():
             item.reset(self)
 
     def _setup_logging_fs(self, param, typer):
@@ -444,7 +446,7 @@ class Backbone(Atom):
         if typer==Callable:
             item=getattr(self, param)
             if isinstance(item, logging_f):
-                log_debug(param)
+                log_debug(item.obj)
                 item.obj=self
 
     def _setup_property_fs(self, param, typer):

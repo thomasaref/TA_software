@@ -1,0 +1,158 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jul 13 20:55:47 2015
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import ( Window, Field, PushButton, ToolBar, Action, MainWindow,
+    Container, MultilineField, DockPane, HGroup, VGroup, GroupBox)
+from enaml.layout.geometry import Pos, Rect, Size
+from enaml.core.api import Looper, Conditional
+from atom.api import List, Typed
+from enaml.core.declarative import d_
+from taref.core.backbone import get_attr, get_view
+#from e_Plotter import PlotWindow
+from log_e import LogWindow, LogPane
+from collections import OrderedDict
+from taref.core.fundtemps_e import InstrHolder
+from taref.core.log import log_debug
+
+enamldef AgentView(Window):
+    """backbone for agent window"""
+    attr agent
+    destroy_on_close=False
+    initial_size=get_attr(agent, "initial_size", (-1,-1))
+    initial_position=get_attr(agent, "initial_position", (-1,-1))
+
+enamldef AutoAgentView(AgentView):
+    """default view for an agent based on dynamic templating"""
+    InstrHolder:
+        instr:=agent
+
+class showWindow(MainWindow):
+    """adds a list of other windows to a MainWindow and a property that determines if all are visible"""
+    @property
+    def all_wins(self):
+        return [w for w in self.windows if w!=self]
+
+    @property
+    def agent_win_dict(self):
+        if hasattr(self.chief_cls, "agent_dict"):
+            all_win_dict=dict([(w.name, w) for w in self.all_wins])
+            return OrderedDict([(name, all_win_dict.get(name, None)) for name in self.chief_cls.agent_dict])
+        return {}
+
+    @property
+    def other_win_dict(self):
+        return OrderedDict([(w.name, w) for w in self.all_wins if w.name not in self.agent_win_dict and not isinstance(w, LogWindow)])
+
+    def show_and_send_to_front(self, name, win):
+        if win is None:
+            agent=self.chief_cls.agent_dict[name]
+            view=get_view(agent, AutoAgentView(agent=agent))
+            view.show()
+            view.send_to_front()
+        else:
+            win.show()
+            win.send_to_front()
+
+    def showhide_all(self, wins):
+        all_showing=all([getattr(w, 'visible', False) for w in wins.values()])
+        for name, window in wins.iteritems():
+            if all_showing:
+                window.hide()
+            else:
+                self.show_and_send_to_front(name, window)
+
+enamldef coreWindow(showWindow): sv:
+    """extends showWindow to close all windows when the core is closed and define chief_cls"""
+    attr chief_cls
+    initial_position=(0,0)
+    closed ::
+        for w in sv.all_wins:
+            w.close()
+
+enamldef WindowToolBar(ToolBar):
+    """a toolbar that lists all windows and links an action to showing them"""
+    attr boss_window
+    dock_area="left"
+    Action:
+        text="Windows:"
+        triggered:: boss_window.showhide_all(boss_window.other_win_dict)
+        tool_tip = "Show/hide all other windows"
+    Action:
+        text="test"
+        triggered::
+            print boss_window.chief_cls
+            print chief_cls.activated()
+    Action:
+        separator=True
+    Looper: loopy:
+        iterable = boss_window.other_win_dict
+        Action:
+            text = loop_item
+            tool_tip = "Show window: {0}".format(loop_item)
+            triggered::boss_window.show_and_send_to_front(loop_item, boss_window.agent_win_dict[loop_item])
+
+enamldef AgentToolBar(ToolBar):
+    """a toolbar that lists all agent windows and links an action to showing them"""
+    attr boss_window
+    dock_area="left"
+    Action:
+        text="Agents:"
+        triggered::boss_window.showhide_all(boss_window.agent_win_dict)
+        tool_tip = "Show/hide all agents"
+    Action:
+        separator=True
+    Looper:
+        iterable = boss_window.agent_win_dict #chief_cls.agent_dict.values()
+        Action:
+            text = loop_item
+            tool_tip = "Show agent: {0}".format(loop_item)
+            triggered::boss_window.show_and_send_to_front(loop_item, boss_window.agent_win_dict[loop_item])
+
+enamldef basicView(coreWindow): sv:
+    """the most basic view controller of a collection of Atoms without a chief"""
+    alias show_log:log.visible
+    activated ::
+        if hasattr(chief_cls, "activated"):
+            chief_cls.activated()
+    LogWindow: log:
+        pass
+    ToolBar:
+        dock_area="top"
+        Action:
+            text="Log"
+            triggered::
+                log.show()
+                log.send_to_front()
+            tool_tip = "Show log"
+    WindowToolBar:
+        boss_window:=sv
+    Conditional:
+        condition = getattr(chief_cls, "agent_dict", {}) != {}
+        AgentToolBar:
+            boss_window:=sv
+    Conditional:
+        condition = getattr(chief_cls, "run_func_dict", {}) != {}
+        VGroup:
+            Looper:
+                iterable=chief_cls.run_func_dict.keys()
+                PushButton:
+                    text = loop_item
+                    clicked :: chief_cls.run_func_dict[loop_item]()
+            PushButton:
+                text = "Test"
+                clicked ::
+                    log_debug(sv.windows)
+                    print set([win.name for win in sv.all_wins]
+                    ).union(chief_cls.agent_dict.keys())
+                    #print sv.agent_wins
+                    print sv.all_wins
+                    #print sv.other_wins
+                    #chief.run_all()
+                tool_tip = "test button"
+
+
+
