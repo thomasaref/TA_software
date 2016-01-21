@@ -34,6 +34,14 @@ class showWindow(MainWindow):
         return [w for w in self.windows if w!=self]
 
     @property
+    def win_names(self):
+        return [win.name for win in self.all_wins]
+        
+    @property
+    def win_dict(self):
+        return dict(zip(self.win_names, self.all_wins))
+        
+    @property
     def all_showing(self):
         all_showing=True
         for w in self.all_wins:
@@ -81,12 +89,12 @@ enamldef WindowToolBar(ToolBar):
                 loop_item.send_to_front()
 
 
-enamldef OtherToolBar(ToolBar):
+enamldef AgentToolBar(ToolBar):
     """a toolbar that lists all agent windows and shows and hides them respectively when action is triggered"""
     attr boss_window
-    dock_area="right"
+    dock_area="left"
     Action:
-        text="Windows:"
+        text="Agents:"
 #        triggered::
 #            all_showing=boss_window.all_showing
 #            for w in boss_window.agent_wins:
@@ -99,12 +107,21 @@ enamldef OtherToolBar(ToolBar):
     Action:
         separator=True
     Looper: loopy:
-        iterable = chief.other_windows
+        iterable = chief_cls.agent_dict.values()
         Action:
-            text = loop_item
+            text = loop_item.name
             tool_tip = "Show window: {0}".format(loop_item)
             triggered::
-                getattr(chief, loop_item).view_window.show()
+                if loop_item.name in boss_window.win_names:
+                    boss_window.win_dict[loop_item.name].show()
+                    boss_window.win_dict[loop_item.name].send_to_front()
+                else:
+                    view=getattr(loop_item, "view_window", agentView(agent=loop_item))
+                    view.name=getattr(loop_item, "name")
+                    if view.title=="":
+                        view.title=view.name
+                    view.show()
+#                getattr(chief, loop_item).view_window.show()
             #    loop_item.send_to_front()
 
 enamldef basicView(coreWindow): sv:
@@ -114,19 +131,22 @@ enamldef basicView(coreWindow): sv:
             chief_cls.activated()
     WindowToolBar:
         boss_window:=sv
+    AgentToolBar:
+        boss_window:=sv
     Conditional:
         condition = getattr(chief_cls, "run_func_dict", {}) != {}
         VGroup:
-            GroupBox:
-                Looper:
-                    iterable=chief_cls.run_func_dict.keys()
-                    PushButton:
-                        text = loop_item
-                        clicked :: chief_cls.run_func_dict[loop_item]()
+            Looper:
+                iterable=chief_cls.run_func_dict.keys()
+                PushButton:
+                    text = loop_item
+                    clicked :: chief_cls.run_func_dict[loop_item]()
             PushButton:
-                text = "Run All"
+                text = "Test"
                 clicked ::
                     log_debug(sv.windows)
+                    print set([win.name for win in sv.all_wins]
+                    ).union(chief_cls.agent_dict.keys())
                     #print sv.agent_wins
                     print sv.all_wins
                     #print sv.other_wins
@@ -197,7 +217,7 @@ enamldef chiefView(coreWindow): sv:
 
     WindowToolBar:
         boss_window:=sv
-    OtherToolBar:
+    AgentToolBar:
         boss_window:=sv
 
     ToolBar:

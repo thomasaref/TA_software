@@ -31,7 +31,7 @@ def shower(*agents):
 #                if other_agent not in agents:
 #                    view=get_view(other_agent, agentView(agent=other_agent), "unnamed_agent")
 #                    view.initialize()
-    view=basicView(title="Show Control", name="show_control", chief_cls=type(agents[0]))
+    view=basicView(title="Show Control", name="show_control", chief_cls=agents[0])
     view.show()
     app.start()
 

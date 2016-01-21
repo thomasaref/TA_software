@@ -28,6 +28,7 @@ class EBL_Polygons(SubAgent):
     verts=List(default=[]).tag(private=True)
 
     jdf=JDF_Top()
+
     plot=Plotter(name="EBL Plot")
 
 #    @property
@@ -43,9 +44,8 @@ class EBL_Polygons(SubAgent):
 
     @classmethod
     def activated(cls):
-        log_debug(1)
-        #cls.jdf.gen_jdf([agent for agent in cls.agent_dict.values() if isinstance(agent, EBL_Polygons)])
-
+        if cls.jdf.input_jdf=="":
+            cls.jdf.gen_jdf([agent for agent in cls.agent_dict.values() if isinstance(agent, EBL_Polygons)])
         cls.plot_JDF()
 
     @classmethod

@@ -211,7 +211,6 @@ P(43) 'VERT_W_ALIGN' (48130.0, 0.0)
 
     wafer_align=Wafer_Aligner(name="HORIZ_W_ALIGN")
     wafer_align=Wafer_Aligner(name="VERT_W_ALIGN", angle=90.0)
-
     pads.jdf.input_jdf=jdf_text
     log_debug(pads.agent_dict.keys())
     pads.show()

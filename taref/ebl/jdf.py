@@ -233,6 +233,7 @@ class JDF_Top(SubAgent):
         shower(self, self.wafer_coords)
 
     def gen_jdf(self, agents):
+        self.clear_JDF()
         for n, p in enumerate(agents):
             if p.plot_sep:
                 self.patterns.append(JDF_Pattern(num=n+1, name=p.name))
@@ -376,7 +377,6 @@ class JDF_Top(SubAgent):
     jdis=List().tag(desc="jdis in JDF")
 
     def _default_main_arrays(self):
-        log_debug([JDF_Main_Array()])
         if self.wafer_coords.wafer_type=="Full":
             return [JDF_Main_Array(), JDF_Main_Array(), JDF_Main_Array(), JDF_Main_Array()]
         return [JDF_Main_Array()]
@@ -387,7 +387,7 @@ class JDF_Top(SubAgent):
 
     def clear_JDF(self):
         self.comments=[]
-        self.main_arrays=[]
+        self.main_arrays=self._default_main_arrays()
         self.sub_arrays=[]
         self.patterns=[]
         self.jdis=[]
