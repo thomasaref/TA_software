@@ -8,14 +8,21 @@ A core collection of enamldefs including units for ints and floats and non-padde
 """
 
 from enaml.widgets.api import  ( HGroup, Container, GroupBox,  Field, Label, SpinBox,
-                                MultilineField, VGroup, ScrollArea, Window)  
+                                MultilineField, VGroup, ScrollArea, Window)
 from enaml.core.api import Conditional
 from enaml.validator import IntValidator, FloatValidator
+
+enamldef AgentWindow(Window):
+    """backbone for agent window"""
+    attr agent
+    destroy_on_close=False
+    initial_size=getattr(agent, "initial_size", (-1,-1))
+    initial_position=getattr(agent, "initial_position", (-1,-1))
 
 enamldef aWindow(Window):
     """a Window that is not destroyed on close"""
     destroy_on_close=False
-     
+
 enamldef aHGroup(HGroup):
     """a non-padded, non-width-aligning HGroup"""
     padding=0
@@ -25,16 +32,16 @@ enamldef aVGroup(ScrollArea):
     """A non-padded VGroup with builtin scroll area"""
     VGroup:
         padding=0
-        
+
 enamldef aContainer(Container):
-    """a non-padded container"""    
+    """a non-padded container"""
     padding=0
-    
+
 enamldef aGroupBox(GroupBox):
     """a non-padded GroupBox"""
     padding=0
 
-            
+
 enamldef UnitIntField(aHGroup):
     """ A field that only accept integer inputs and normalizes them by a unit factor"""
     attr minimum = None
@@ -52,7 +59,7 @@ enamldef UnitIntField(aHGroup):
         validator << IntValidator(base=10, minimum=minimum, maximum=maximum)
 
     Label: ul:
-        text = unicode(unit) 
+        text = unicode(unit)
         visible = unit!=""
 
     Conditional:
@@ -68,23 +75,23 @@ enamldef UnitSpinBox(aHGroup):
     attr show_uvalue : bool = False
     alias maximum : sb.maximum
     alias minimum : sb.minimum
-    
+
     func calc_uvalue(value, unit_factor):
         self.uvalue = value*unit_factor
 
     SpinBox: sb:
         value << uvalue/unit_factor
-        value :: calc_uvalue(value, unit_factor) 
+        value :: calc_uvalue(value, unit_factor)
 
     Label: ul:
-        text = unicode(unit) 
+        text = unicode(unit)
         visible = unit!=""
 
     Conditional:
         condition = show_uvalue
         Label: vl:
-            text << unicode("({})".format(uvalue)) 
-            
+            text << unicode("({})".format(uvalue))
+
 enamldef UnitFloatField(aHGroup):
     """a field for floats with units"""
     attr minimum = None
@@ -94,26 +101,26 @@ enamldef UnitFloatField(aHGroup):
     attr unit = ""
     attr uvalue : float = 0.0
     attr show_uvalue : bool = False
-    
+
     func calc_uvalue(text, unit_factor):
         self.uvalue=float(text)*unit_factor
 
     Field:
         text << unicode(uvalue/unit_factor)
         text :: calc_uvalue(text, unit_factor)
-        validator << FloatValidator(minimum=minimum, maximum=maximum, allow_exponent=allow_exponent) 
+        validator << FloatValidator(minimum=minimum, maximum=maximum, allow_exponent=allow_exponent)
 
     Label:
-        text = unicode(unit) 
+        text = unicode(unit)
         visible = unit!=""
 
     Conditional:
         condition = show_uvalue
         Label: vl:
-            text << unicode("({})".format(uvalue)) 
-   
+            text << unicode("({})".format(uvalue))
 
-################ test window ################### 
+
+################ test window ###################
 enamldef Main(Window):
     """test window"""
     VGroup:
@@ -127,9 +134,9 @@ enamldef Main(Window):
                 uvalue=10
                 show_uvalue=True
             UnitSpinBox: isb:
-                uvalue=10            
+                uvalue=10
                 unit_factor=10
                 maximum = 100000
                 show_uvalue=True
-        
+
 

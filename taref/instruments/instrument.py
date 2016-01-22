@@ -43,7 +43,7 @@ class Instrument(Agent):
         """Close the instrument using closer function if it exists"""
         log_info("CLOSED: {0}".format(self.name))
         self.status="Closed"
-        closer=self.get_all_tags("closer", none_value=[None])
+        closer=self.get_all_tags("closer")
         if closer != []:
             getattr(self, closer[0])(**kwargs)
 
@@ -66,8 +66,11 @@ class Instrument(Agent):
 
     def receive(self, name, **kwargs):
         """performs receive of parameter name i.e. executing associated get_cmd with value checking"""
-        get_cmd=self.func2log(name, 'get_cmd')
+        get_cmd=self.get_tag(name, 'get_cmd')
         if get_cmd!=None and self.status=='Active':
+            if not isinstance(get_cmd, logging_f):
+                get_cmd=logging_f(get_cmd, log=False)
+                self.set_tag(name, get_cmd=get_cmd)
             self.receive_log(name)
             Instrument.busy=True
             value=get_cmd(self, **kwargs)
@@ -91,7 +94,7 @@ class Instrument(Agent):
         set_cmd=self.get_tag(name, 'set_cmd')
         if set_cmd!=None and self.status=='Active':
             if not isinstance(set_cmd, logging_f):
-                set_cmd=logging_f(set_cmd, obj=self, log=False)
+                set_cmd=logging_f(set_cmd, log=False)
                 self.set_tag(name, set_cmd=set_cmd)
             Instrument.busy=True
             temp=self.get_tag(name, 'send_now', self.send_now)
@@ -130,19 +133,6 @@ class Instrument(Agent):
             if self.get_tag(name, 'send_now', self.send_now)==True:
                 if self.get_tag(name, 'set_cmd')!=None and self.status=='Active':
                     self.send(name)
-#    @private_property
-#    def chief(self):
-#        from taref.instruments.instrument_chief import instrument_chief #boss is imported to make it a singleton (all instruments have the same boss)
-#        #inboss.make_boss()
-#        return instrument_chief
-
-#    def __init__(self, **kwargs):
-#        """extends __init__ of Slave to make booter and closer into logged functions"""
-#        super(Instrument, self).__init__(**kwargs)
-#        if not isinstance(self.booter, log):
-#            self.booter=log(self.booter)
-#        if not isinstance(self.closer, log):
-#            self.closer=log(self.closer)
 
 if __name__=="__main__":
     a=Instrument(name='blah')

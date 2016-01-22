@@ -5,7 +5,7 @@ Created on Tue Jan  5 01:07:15 2016
 @author: thomasaref
 """
 
-#from taref.core.log import log_debug
+from taref.core.log import log_debug
 from taref.physics.fundamentals import sinc_sq, pi, eps0
 from taref.core.backbone import tagged_property, property_f, private_property
 from taref.core.agent import Agent
@@ -187,7 +187,7 @@ class IDT(Agent):
             print "Material not listed"
 
     def _default_material(self):
-        return 'LiNbYZ' #'GaAs'
+        return 'LiNbYZ'
 
     @private_property
     def view_window(self):
@@ -199,6 +199,11 @@ class IDT(Agent):
 if __name__=="__main__":
     from taref.core.shower import shower
     a=IDT()
+    b=IDT()
+
+    log_debug(a.K2, b.K2)
+    a.Dvv=5
+    print a.K2, b.K2
     shower(a)
     print a.call_func("eta", a=0.2e-6, g=0.8e-6)#, vf=array([500.0, 600.0]), lbda0=array([0.5e-6, 0.6e-6]))
     a.plot_data("f0", lbda0=linspace(0.1e-6, 1.0e-6, 10000))

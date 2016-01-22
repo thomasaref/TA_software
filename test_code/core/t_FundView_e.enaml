@@ -1,0 +1,163 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Jan 22 19:49:53 2016
+
+@author: thomasaref
+"""
+
+#from taref.core.fundview_e import BoolVar
+from enaml.core.api import Conditional, DynamicTemplate, Looper
+from enaml.widgets.api import Window, Container, HGroup, Label, CheckBox, VGroup, ScrollArea, SpinBox
+from enaml.layout.api import spacer
+from taref.core.atom_extension import get_tag, get_type
+from taref.core.fundcore_e import UnitIntField, UnitSpinBox
+from taref.core.backbone import get_main_params
+from atom.api import Bool, Int, Typed, List
+#        aHGroup:
+#            trailing_spacer=spacer_eval(instr, loop_item)
+#            func update_vval():
+#                setattr(instr, loop_item, s.tagged["instrvalue"].vvalue)
+#            Label:
+#                text=get_tag(instr, loop_item, "label", loop_item)
+#            DynamicTemplate: s:
+#                base = TypedView
+#                args << (get_type(instr, loop_item),)
+#                data << dict(vmodel=instr, vname=loop_item, vvalue=getattr(instr, loop_item))
+#                tags = ("instrvalue",)
+
+
+def spacer_eval(vmodel, vname):
+     """useful function for modifying spacer of aHGroup"""
+     no_spacer = get_tag(vmodel, vname, "no_spacer", False)
+     if no_spacer:
+         return None
+     return spacer
+
+from enaml.core.declarative import d_func
+class sHGroup(HGroup):
+    """ A push button which has something to say.
+
+    """
+    @d_func
+    def update_vval(self):
+        print "yoy"
+        setattr(self.vmodel, self.vname, self.vvalue)
+
+
+enamldef Var(sHGroup):
+    """a non-padded, non-width-aligning HGroup"""
+    attr vmodel
+    attr vname
+    attr vvalue << getattr(vmodel, vname)
+    #func update_vval():
+    #    setattr(vmodel, vname, vvalue)
+    vvalue :: self.update_vval()
+    padding=0
+    align_widths=False
+    trailing_spacer=spacer_eval(vmodel, vname)
+    Label:
+        text=get_tag(vmodel, vname, "label", vname)
+
+enamldef BoolVar(Var):
+    """boolean represented by CheckBox"""
+    CheckBox:
+        checked := vvalue
+
+enamldef ChoiceIntVar(Var):
+    """extends Var for integer types"""
+    Conditional:
+        condition= get_tag(vmodel, vname, "spec")!="spinbox"
+        UnitIntField:
+            uvalue:=vvalue
+            unit=get_tag(vmodel, vname, "unit", u"")
+            show_uvalue=get_tag(vmodel, vname, "show_value", False)
+            unit_factor=int(get_tag(vmodel, vname, "unit_factor", 1))
+            minimum=int(get_tag(vmodel, vname, 'low', -2147483648))
+            maximum=int(get_tag(vmodel, vname, 'high', 2147483647))
+    Conditional:
+        condition= get_tag(vmodel, vname, "spec")=="spinbox"
+        UnitSpinBox:
+            uvalue:=vvalue
+            unit=get_tag(vmodel, vname, "unit", u"")
+            show_uvalue=get_tag(vmodel, vname, "show_value", False)
+            unit_factor=int(get_tag(vmodel, vname, "unit_factor", 1))
+            minimum=int(get_tag(vmodel, vname, 'low', -2147483648))
+            maximum=int(get_tag(vmodel, vname, 'high', 2147483647))
+
+enamldef ListVar(Var):
+    vvalue<<getattr(vmodel, vname)[ind.value]
+    update_vval => ():
+        print "yo"
+        getattr(vmodel, vname)[ind.value]=s.tagged["vvalue"].vvalue
+    SpinBox: ind:
+        minimum=0
+        maximum = max(0, len(getattr(vmodel, vname))-1)
+    Label:
+        text<<unicode(vvalue)
+    DynamicTemplate: s:
+        base = TypedView
+        args = (type(vvalue),)
+        data << dict(vmodel=vmodel, vname=vname, vvalue=vvalue)
+        tags = ("vvalue",)
+
+template TypedView(AttrType):
+    """default template for unknown type"""
+    Var:
+        Label:
+            text << unicode((vname, vvalue))
+
+template TypedView(AttrType : Int):
+    """template for Int types"""
+    ChoiceIntVar: pass
+        #vvalue :: update_vval()
+
+template TypedView(AttrType : int):
+    """template for Int types"""
+    ChoiceIntVar: pass
+
+template TypedView(AttrType: Bool):
+    """ A template specialization for Bool members using CheckBox"""
+    BoolVar: pass
+        #vvalue :: update_vval()
+
+template TypedView(AttrType: List):
+    """ A template specialization for Bool members using CheckBox"""
+    ListVar: pass
+
+template InstrView(instr_view):
+    """goes to user defined templates"""
+    Label:
+        text="didn't work"
+
+template InstrView(instr_view: "Auto"):
+    Container:
+        Looper:
+            iterable<<get_main_params(instr)
+            DynamicTemplate: s:
+                    base = TypedView
+                    args << (get_type(instr, loop_item),)
+                    data << dict(vmodel=instr, vname=loop_item)#, vvalue=getattr(instr, loop_item))
+
+
+enamldef InstrHolder(Container):
+   attr instr
+   ScrollArea:
+       Container:
+           DynamicTemplate:
+               base = InstrView
+               args=(getattr(instr, "view", "Auto"), )
+
+enamldef TypedVar(Var):
+    """extends Var for Typed"""
+    InstrHolder:
+        instr:=vvalue
+
+template TypedView(AttrType: Typed):
+    """interface for a Typed member."""
+    TypedVar: pass
+
+enamldef Main(Window):
+    alias instr:ih.instr
+    InstrHolder: ih:
+        pass
+

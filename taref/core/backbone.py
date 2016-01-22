@@ -16,6 +16,7 @@ from enaml.application import deferred_call
 from threading import Thread
 from taref.core.log import log_info, log_debug
 
+
 _MAPPING_SUFFIX_="_mapping"
 
 def get_view(obj, default_view, default_name="NO_NAME"):
@@ -43,17 +44,14 @@ class logging_f(object):
     """A logging wrapper that is compatible with both functions or Callables.
     Auto sets self in the function call to self.obj if it has been set
     for easier use of Callables"""
-    def __init__(self, func, obj=None, log=True):
+    def __init__(self, func, log=True):
         self.func=func
-        self.obj=obj
         self.log=log
         self.run_params=[param for param in get_run_params(func)][1:]
 
     def __call__(self, obj, *args, **kwargs):
         """call logs the call if desired and autoinserts kwargs and obj"""
-        log_debug((obj, args, kwargs))
-        #if obj is None:
-        #    obj=self.obj
+        #log_debug(obj, args, kwargs, n=1)
         if len(args)==0:
             for param in self.run_params:
                 if param in kwargs:
@@ -63,7 +61,6 @@ class logging_f(object):
                     if param in obj.property_dict.keys():
                         obj.get_member(param).reset(obj)
                     value=getattr(obj, param)
-                    #setattr(obj, param, value)
                     value=set_value_map(obj, param, value)
                     kwargs[param]=value
         #if hasattr(obj, "chief"): #not working. how to get return value?
@@ -73,7 +70,7 @@ class logging_f(object):
         return_value=self.func(obj, *args, **kwargs)
         if self.log:
             #log_debug(kwargs)
-            log_debug((self.func.func_name, return_value))
+            log_debug(self.func.func_name, return_value, n=1)
         return return_value
 
 class tagged_callable(object):
@@ -128,7 +125,7 @@ class tagged_property(object):
 
     def __call__(self, func):
         t_func=property_f(func)
-        if self.kwargs.get("private", False) or not self.kwargs.get("log", True):
+        if self.kwargs.get("private", False) or not self.kwargs.get("log", False):
             t_func.log=False
         return Property(t_func, cached=True).tag(**self.kwargs)
 
@@ -139,6 +136,14 @@ class tag_Property(object):
 
     def __call__(self, func):
         return Property(func, cached=True).tag(**self.kwargs)
+
+class tag_Callable(object):
+    """disposable decorator class that returns a Callable tagged with kwargs"""
+    def __init__(self, **kwargs):
+        self.kwargs=kwargs
+
+    def __call__(self, func):
+        return Callable(func).tag(**self.kwargs)
 
 def private_property(fget):
     """ A decorator which converts a function into a cached Property tagged as private.
@@ -221,7 +226,7 @@ def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
         return [x for x in search_list if none_value!=get_tag(obj, x, key, none_value)]
     return [x for x in search_list if key_value==get_tag(obj, x, key, none_value)]
 
-#remove?
+
 def get_map(obj, name, value=None, reset=False):
     """gets the mapped value specified by the property mapping and returns the attribute value if it doesn't exist
         gets the map of an Enum defined in the property name_mapping.
@@ -338,7 +343,7 @@ def set_log(obj, name, value):
        elif typer==Float:
            unit_factor=get_tag(obj, name, 'unit_factor', 1.0)
            log_info("Set {instr} {label} to {value} {unit}".format(
-                             instr=obj_name, label=label, value=float(value)/unit_factor, unit=unit))
+                             instr=obj_name, label=label, value=float(value)/unit_factor, unit=unit), n=3)
        elif typer==Int:
            unit_factor=get_tag(obj, name, 'unit_factor', 1)
            log_info("Set {instr} {label} to {value} {unit}".format(
@@ -346,14 +351,38 @@ def set_log(obj, name, value):
        else:
            log_info("Set {instr} {label} to {value} {unit}".format(
                              instr=obj_name, label=label, value=value, unit=unit))
-   data_save(obj, name, value)
+   if hasattr(obj, "data_save"):
+       obj.datasave(name, value)
 
 unit_dict={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
               "G":1.0e9, "M":1.0e6, "k":1.0e3,
               "%":1.0/100.0}
 
+def _setup_property_fs(self, param, typer):
+    """sets up property_f's pointing obj at self and setter at functions decorated with param.fget.setter"""
+    item =get_attr(self.get_member(param), "fget")
+    if isinstance(item, property_f):
+        if item.fset_list!=[]:
+            self.get_member(param).setter(item.fset_maker(self))
+
+def _setup_ranges(self, param, typer):
+    """autosets low/high tags for Range and FloatRange"""
+    if typer in [Range, FloatRange]:
+        self.set_tag(param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
+
+def _setup_units(self, param, typer):
+    """autosets units using unit_dict"""
+    if typer in [Int, Float, Range, FloatRange, Property]:
+        if self.get_tag(param, "unit", False) and (self.get_tag(param, "unit_factor") is None):
+            unit=self.get_tag(param, "unit", "")[0]
+            if unit in self.unit_dict:
+                unit_factor=self.get_tag(param, "unit_factor", self.unit_dict[unit])
+                self.set_tag(param, unit_factor=unit_factor)
+
 class Backbone(Atom):
     """Class combining primary functions for viewer operation"""
+    unit_dict=unit_dict
+
     def get_metadata(self, name):
         return get_metadata(self, name)
 
@@ -402,21 +431,15 @@ class Backbone(Atom):
         return get_map(self, name=name, value=value)
 
     @private_property
-    def unit_dict(self):
-        return unit_dict
-
-    @private_property
     def property_dict(self):
         """returns a dict mapping property_names to property_items"""
         return dict([(name, self.get_member(name)) for name in self.all_params if self.get_type(name) is Property])
-        return dict(zip(self.property_names, self.property_items))
 
     def extra_setup(self, param, typer):
         """sets up property_fs, ranges, and units"""
-        self._setup_logging_fs(param, typer)
-        self._setup_property_fs(param, typer)
-        self._setup_ranges(param, typer)
-        self._setup_units(param, typer)
+        _setup_property_fs(self, param, typer)
+        _setup_ranges(self, param, typer)
+        _setup_units(self, param, typer)
 
     def call_func(self, name, **kwargs):
         """calls a func using keyword assignments. If name corresponds to a Property, calls the get func.
@@ -425,7 +448,7 @@ class Backbone(Atom):
             return self.property_dict[name].fget(self, **kwargs)
         elif name in self.all_params and hasattr(self, "_get_"+name):
             return getattr(self, "_get_"+name)(self, **kwargs)
-        return getattr(self, name)(**kwargs)
+        return getattr(self, name)(self, **kwargs)
 
     def __setattr__(self, name, value):
         """uses __setattr__ to log changes except for ContainerList"""
@@ -440,36 +463,6 @@ class Backbone(Atom):
         """resets all  properties"""
         for item in self.property_dict.values():
             item.reset(self)
-
-    def _setup_logging_fs(self, param, typer):
-        """sets up logging_f's pointing obj to self"""
-        if typer==Callable:
-            item=getattr(self, param)
-            if isinstance(item, logging_f):
-                log_debug(item.obj)
-                item.obj=self
-
-    def _setup_property_fs(self, param, typer):
-        """sets up property_f's pointing obj at self and setter at functions decorated with param.fget.setter"""
-        item =get_attr(self.get_member(param), "fget")
-        if isinstance(item, property_f):
-            item.obj=self
-            if item.fset_list!=[]:
-                self.get_member(param).setter(item.fset_maker(self))
-
-    def _setup_ranges(self, param, typer):
-        """autosets low/high tags for Range and FloatRange"""
-        if typer in [Range, FloatRange]:
-            self.set_tag(param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
-
-    def _setup_units(self, param, typer):
-        """autosets units using unit_dict"""
-        if typer in [Int, Float, Range, FloatRange, Property]:
-            if self.get_tag(param, "unit", False) and (self.get_tag(param, "unit_factor") is None):
-                unit=self.get_tag(param, "unit", "")[0]
-                if unit in self.unit_dict:
-                    unit_factor=self.get_tag(param, "unit_factor", self.unit_dict[unit])
-                    self.set_tag(param, unit_factor=unit_factor)
 
     def __init__(self, *args, **kwargs):
         """extends __init__ to autoset low and high tags for Range and FloatRange, autoset units for Ints and Floats and allow extra setup"""

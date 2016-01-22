@@ -8,17 +8,53 @@ A collection of logging related functions. Configures logging to be output
 points it at a stream and a memory handler and starts logging.
 """
 
-from logging import debug as log_debug, warning as log_warning, info as log_info
+from logging import debug, warning, info
 from logging import getLogger, StreamHandler, FileHandler, basicConfig, DEBUG, Formatter#, INFO
 from logging.handlers import MemoryHandler
 from atom.api import Atom, Unicode, Int, cached_property
+from sys import exc_info
+from os.path import basename
 
 #configure logging
 MEMBUFFER=30
-LOGFORMATTER='%(asctime)s - %(filename)s (line %(lineno)d) <%(funcName)s> %(levelname)s:  %(message)s'
+LOGFORMATTER='%(asctime)s %(levelname)s  @ %(message)s'
 LOGLEVEL=DEBUG #INFO
 
 basicConfig(format=LOGFORMATTER, level=LOGLEVEL)
+
+#from functools import wraps
+def rec(obj, n=0):
+    for m in range(n):
+        obj=obj.t
+    return obj.n
+
+def new_log_func(func):
+    """redefines func so args are incorporated into message and name and line of execution are correct"""
+
+    def new_func(*args, **kwargs):
+        n=kwargs.pop("n", 0)
+        try:
+            raise Exception
+        except:
+            fb=exc_info()[2].tb_frame.f_back
+            for m in range(n):
+                fb=fb.f_back
+            print fb.f_code.co_filename
+            func("{0} {1} {2}: {3}".format(fb.f_lineno, basename(fb.f_code.co_filename),
+                  fb.f_code.co_name, ", ".join([str(arg) for arg in args])), **kwargs)
+    return new_func
+
+log_debug=new_log_func(debug)
+log_info=new_log_func(info)
+log_warning=new_log_func(warning)
+
+def msg(*args):
+    try:
+        raise Exception
+    except:
+        fb=exc_info()[2].tb_frame.f_back.f_back
+        return "{0} {1} {2}: {3}".format(fb.f_lineno, basename(fb.f_code.co_filename),
+              fb.f_code.co_name, ", ".join([str(arg) for arg in args]))
 
 class StreamCatch(Atom):
     """a stream catching class for use with the log window"""
@@ -38,13 +74,6 @@ class StreamCatch(Atom):
     @cached_property
     def initial_size(self):
         return (self.log_width, self.log_height)
-
-#    @cached_property
-#    def view_window(self):
-#        from enaml import imports()
-#        with imports():
-#            from log_e import LogWindow
-#        return LogWindow()
 
     log_str=Unicode()
 

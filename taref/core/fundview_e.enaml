@@ -10,13 +10,13 @@ from enaml.widgets.api import  Container, CheckBox, Label, SpinBox, ScrollArea, 
 from enaml.core.api import Conditional
 from taref.core.backbone import get_tag
 from taref.core.fundcore_e import aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField
-
+from atom.api import Value
 
 enamldef Var(Container):
     """a Var container has a model, name and value"""
     attr vmodel
     attr vname
-    attr vvalue# : getattr(vmodel, vname)
+    attr vvalue = getattr(vmodel, vname)
     padding=0
 
 enamldef BoolVar(Var):
@@ -80,7 +80,7 @@ enamldef IntVar(Var):
 enamldef ChoiceIntVar(Var):
     """extends Var for integer types"""
     Conditional:
-        condition= get_tag(vmodel, vname, "spec")=="intfield"
+        condition= get_tag(vmodel, vname, "spec")!="spinbox"
         UnitIntField:
             uvalue:=vvalue
             unit=get_tag(vmodel, vname, "unit", u"")
@@ -89,7 +89,7 @@ enamldef ChoiceIntVar(Var):
             minimum=int(get_tag(vmodel, vname, 'low', -2147483648))
             maximum=int(get_tag(vmodel, vname, 'high', 2147483647))
     Conditional:
-        condition= get_tag(vmodel, vname, "spec")!="intfield"
+        condition= get_tag(vmodel, vname, "spec")=="spinbox"
         UnitSpinBox:
             uvalue:=vvalue
             unit=get_tag(vmodel, vname, "unit", u"")

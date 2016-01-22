@@ -11,7 +11,7 @@ from enaml.widgets.api import Form, Label, SpinBox, VGroup, HGroup, ScrollArea, 
 from enaml.core.api import Conditional, DynamicTemplate, Looper
 from enaml.core.declarative import d_
 from enaml.layout.api import spacer
-from taref.core.backbone import get_attr, get_tag, get_run_params, get_map, get_type, get_main_params, run_func
+from taref.core.backbone import get_main_params, get_map, get_run_params,  run_func
 from atom.api import Atom, Unicode, Str, Float, Int, ContainerList, List, Typed, Instance, Coerced, Bool, Range, Enum, Callable, FloatRange
 from taref.core.fundview_e import ( aHGroup, aVGroup, aGroupBox, UnitSpinBox, UnitIntField, UnitFloatField, Var, BoolVar,
                         IntVar, FloatVar, ChoiceIntVar, RangeVar, FloatRangeVar, ChoiceStrVar)
@@ -19,6 +19,8 @@ from taref.core.fundcore_e import aContainer
 from taref.core.log import log_debug
 from taref.core.usertemps_e import UserInstrView
 from numpy import ndarray
+
+from taref.core.atom_extension import get_tag, get_type
 
 def spacer_eval(vmodel, vname):
      """useful function for modifying spacer of aHGroup"""
@@ -42,7 +44,7 @@ enamldef InstrHolder(aContainer):
        aContainer:
            DynamicTemplate:
                base = InstrView
-               args=(get_attr(instr, "view", "Auto"), )
+               args=(getattr(instr, "view", "Auto"), )
 
 enamldef AutoInstrCont(aContainer):
     Looper:
@@ -105,14 +107,14 @@ enamldef CallableVar(Var):
     """extends Var for Callable"""
     aHGroup:
         Conditional:
-            condition = hasattr(vmodel, "chief")
+            condition = hasattr(vmodel, "busy")
             PushButton:
                 text = 'Run'
                 clicked ::
                     run_func(vmodel, vname)
-                enabled << not vmodel.chief.busy
+                enabled << not vmodel.busy
         Conditional:
-            condition = not hasattr(vmodel, "chief")
+            condition = not hasattr(vmodel, "busy")
             PushButton:
                 text = 'Run'
                 clicked :: vvalue(vmodel)
@@ -134,13 +136,13 @@ enamldef CallableVar(Var):
                             data << dict(vmodel=vmodel, vname=vname, vvalue=getattr(vmodel, loop_item))
                             tags = ("vvalue",)
         Conditional:
-            condition = hasattr(vmodel, "chief")
+            condition = hasattr(vmodel, "abort")
             PushButton:
                 text = 'Abort'
                 clicked ::
                     log_debug("abort pressed")
-                    vmodel.chief.abort=True
-                enabled <<  vmodel.chief.busy
+                    vmodel.abort=True
+                enabled <<  vmodel.busy
 
 class aListHGroup(aHGroup):
     vlist = d_(Coerced(list)) #ContainerList(default=[0]))
