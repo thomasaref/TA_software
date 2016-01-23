@@ -7,24 +7,15 @@ Created on Fri Jan 22 19:49:53 2016
 
 #from taref.core.fundview_e import BoolVar
 from enaml.core.api import Conditional, DynamicTemplate, Looper
-from enaml.widgets.api import Window, Container, HGroup, Label, CheckBox, VGroup, ScrollArea, SpinBox
+from enaml.widgets.api import (Window, Container, HGroup, Label, CheckBox,
+                               VGroup, ScrollArea, SpinBox, Form, Field,
+                               PushButton, ObjectCombo)
 from enaml.layout.api import spacer
-from taref.core.atom_extension import get_tag, get_type
+from taref.core.atom_extension import get_tag, get_type, get_map
 from taref.core.fundcore_e import UnitIntField, UnitSpinBox
 from taref.core.backbone import get_main_params
-from atom.api import Bool, Int, Typed, List
-#        aHGroup:
-#            trailing_spacer=spacer_eval(instr, loop_item)
-#            func update_vval():
-#                setattr(instr, loop_item, s.tagged["instrvalue"].vvalue)
-#            Label:
-#                text=get_tag(instr, loop_item, "label", loop_item)
-#            DynamicTemplate: s:
-#                base = TypedView
-#                args << (get_type(instr, loop_item),)
-#                data << dict(vmodel=instr, vname=loop_item, vvalue=getattr(instr, loop_item))
-#                tags = ("instrvalue",)
-
+from atom.api import Bool, Int, Typed, List, Coerced, Enum
+from taref.core.universal import msg
 
 def spacer_eval(vmodel, vname):
      """useful function for modifying spacer of aHGroup"""
@@ -33,131 +24,178 @@ def spacer_eval(vmodel, vname):
          return None
      return spacer
 
-from enaml.core.declarative import d_func
-class sHGroup(HGroup):
-    """ A push button which has something to say.
-
-    """
-    @d_func
-    def update_vval(self):
-        print "yoy"
-        setattr(self.vmodel, self.vname, self.vvalue)
-
-
-enamldef Var(sHGroup):
-    """a non-padded, non-width-aligning HGroup"""
-    attr vmodel
-    attr vname
-    attr vvalue << getattr(vmodel, vname)
-    #func update_vval():
-    #    setattr(vmodel, vname, vvalue)
-    vvalue :: self.update_vval()
+enamldef Var(HGroup):
+    """top variable that adds label and spacer"""
+    attr vmodel=parent.vmodel
+    attr vname<<parent.vname
+    attr vvalue:=getattr(vmodel, vname)
     padding=0
     align_widths=False
     trailing_spacer=spacer_eval(vmodel, vname)
     Label:
-        text=get_tag(vmodel, vname, "label", vname)
+        text<<get_tag(vmodel, vname, "label", vname)
+    DynamicTemplate: s:
+        base = TypedView
+        args << (get_type(vmodel, vname), get_tag(vmodel, vname, "spec"))
+        #args :: type(getattr(vmodel, vname))
+enamldef BoolVar(CheckBox):
+    """boolean shown as CheckBox"""
+    checked := parent.vvalue
 
-enamldef BoolVar(Var):
-    """boolean represented by CheckBox"""
-    CheckBox:
-        checked := vvalue
+enamldef UnitIntFieldVar(UnitIntField):
+    """integer shown as IntField with units"""
+    uvalue:=parent.vvalue
+    unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
+    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
+    unit_factor=int(get_tag(parent.vmodel, parent.vname, "unit_factor", 1))
+    minimum=int(get_tag(parent.vmodel, parent.vname, 'low', -2147483648))
+    maximum=int(get_tag(parent.vmodel, parent.vname, 'high', 2147483647))
 
-enamldef ChoiceIntVar(Var):
-    """extends Var for integer types"""
-    Conditional:
-        condition= get_tag(vmodel, vname, "spec")!="spinbox"
-        UnitIntField:
-            uvalue:=vvalue
-            unit=get_tag(vmodel, vname, "unit", u"")
-            show_uvalue=get_tag(vmodel, vname, "show_value", False)
-            unit_factor=int(get_tag(vmodel, vname, "unit_factor", 1))
-            minimum=int(get_tag(vmodel, vname, 'low', -2147483648))
-            maximum=int(get_tag(vmodel, vname, 'high', 2147483647))
-    Conditional:
-        condition= get_tag(vmodel, vname, "spec")=="spinbox"
-        UnitSpinBox:
-            uvalue:=vvalue
-            unit=get_tag(vmodel, vname, "unit", u"")
-            show_uvalue=get_tag(vmodel, vname, "show_value", False)
-            unit_factor=int(get_tag(vmodel, vname, "unit_factor", 1))
-            minimum=int(get_tag(vmodel, vname, 'low', -2147483648))
-            maximum=int(get_tag(vmodel, vname, 'high', 2147483647))
-
-enamldef ListVar(Var):
-    vvalue<<getattr(vmodel, vname)[ind.value]
-    update_vval => ():
-        print "yo"
-        getattr(vmodel, vname)[ind.value]=s.tagged["vvalue"].vvalue
+enamldef UnitSpinBoxVar(UnitSpinBox):
+    """integer shown as SpinBox with units"""
+    uvalue:=parent.vvalue
+    unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
+    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
+    unit_factor=int(get_tag(parent.vmodel, parent.vname, "unit_factor", 1))
+    minimum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'low', -2147483648))
+    maximum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'high', 2147483647))
+    
+enamldef ListVar(HGroup):
+    """requires list entries to all be of same type"""
+    attr vmodel=parent.vmodel
+    attr vname=parent.vname
+    attr vvalue:=getattr(parent.vmodel, parent.vname)[ind.value]
     SpinBox: ind:
         minimum=0
         maximum = max(0, len(getattr(vmodel, vname))-1)
-    Label:
-        text<<unicode(vvalue)
     DynamicTemplate: s:
         base = TypedView
-        args = (type(vvalue),)
-        data << dict(vmodel=vmodel, vname=vname, vvalue=vvalue)
-        tags = ("vvalue",)
+        args = (type(vvalue),
+                 get_tag(vmodel, vname, "spec"))
 
-template TypedView(AttrType):
-    """default template for unknown type"""
-    Var:
-        Label:
-            text << unicode((vname, vvalue))
+enamldef ListScrollVar(ScrollArea):
+    """scroll area list"""
+    constraints = [height==200]
 
-template TypedView(AttrType : Int):
-    """template for Int types"""
-    ChoiceIntVar: pass
-        #vvalue :: update_vval()
+    Form:
+        Looper:
+            iterable := vvalue
+            PushButton:
+                text = '>'
+                constraints = [width == 10, height == 15]
+                clicked :: print loop_index #open_menu(loop_item)
+            Label:
+                text = unicode(loop_item)
 
-template TypedView(AttrType : int):
-    """template for Int types"""
-    ChoiceIntVar: pass
+template TypedView(AttrType, spec):
+    """default template for unknown type and spec"""
+    Label:
+        text << msg(parent.vname, parent.vvalue, AttrType, spec)
 
-template TypedView(AttrType: Bool):
-    """ A template specialization for Bool members using CheckBox"""
+template TypedView(AttrType : Int, spec):
+    """default template for Int types"""
+    UnitIntFieldVar: pass
+
+template TypedView(AttrType : Int, spec : "spinbox"):
+    """SpinBox template for Int types"""
+    UnitSpinBoxVar: pass
+
+template TypedView(AttrType : int, spec):
+    """int template flows through to Int templates"""
+    TypedView(Int, spec): pass
+
+template TypedView(AttrType: Bool, spec):
+    """default template for Bool types"""
     BoolVar: pass
-        #vvalue :: update_vval()
 
-template TypedView(AttrType: List):
-    """ A template specialization for Bool members using CheckBox"""
+template TypedView(AttrType : bool, spec):
+    """bool template flows through to Bool template"""
+    TypedView(Bool, spec): pass
+
+template TypedView(AttrType: List, spec):
+    """default template for List"""
     ListVar: pass
+
+template TypedView(AttrType: list, spec):
+    """list template flows through to List templates"""
+    TypedView(List, spec): pass
+
+#def enum_spacer_eval(vmodel, vname, vvalue):
+#      if get_tag(vmodel, vname, "map_type")=="attribute":
+#          return spacer_eval(vmodel, vvalue)
+#      return spacer_eval(vmodel, vname)
+
+enamldef EnumVar(HGroup):
+    """extends Var for Enum"""
+    attr vmodel=parent.vmodel
+    attr vname=parent.vname
+    attr vvalue:=parent.vvalue
+    ObjectCombo:
+        items = list(vmodel.get_member(vname).items)
+        selected := vvalue
+    Label:
+        text <<  unicode(get_map(vmodel, vname))
+
+enamldef EnumAttrVar(HGroup):
+    """extends Var for Enum"""
+    attr vmodel=parent.vmodel
+    attr vname=parent.vname
+    attr vvalue:=parent.vvalue
+    ObjectCombo:
+        items = list(vmodel.get_member(vname).items)
+        selected := vvalue
+    Var:
+        vname<<parent.vvalue
+        #vvalue:=get_map(vmodel, str(parent.vvalue))
+
+template TypedView(AttrType: Enum, spec):
+    """default template for Enum"""
+    EnumVar: pass
+
+template TypedView(AttrType: Enum, spec : "attribute"):
+    """attribute showing template for mapped Enum"""
+    EnumAttrVar: pass
+
+######################
 
 template InstrView(instr_view):
     """goes to user defined templates"""
     Label:
-        text="didn't work"
+        text=msg(instr_view, vmodel, vname, vvalue)
 
 template InstrView(instr_view: "Auto"):
     Container:
+        attr vmodel=parent.vmodel
         Looper:
-            iterable<<get_main_params(instr)
-            DynamicTemplate: s:
-                    base = TypedView
-                    args << (get_type(instr, loop_item),)
-                    data << dict(vmodel=instr, vname=loop_item)#, vvalue=getattr(instr, loop_item))
+            iterable<<get_main_params(parent.vmodel)
+            Var:
+                vname=loop_item
+                vvalue:=getattr(vmodel, loop_item)
 
+enamldef InstrHolder(ScrollArea):
+    attr vmodel=parent.vmodel
+    Container:
+        attr vmodel=parent.vmodel
+        DynamicTemplate:
+            base = InstrView
+            args=(getattr(vmodel, "view", "Auto"), )
 
-enamldef InstrHolder(Container):
-   attr instr
-   ScrollArea:
-       Container:
-           DynamicTemplate:
-               base = InstrView
-               args=(getattr(instr, "view", "Auto"), )
-
-enamldef TypedVar(Var):
+enamldef TypedVar(InstrHolder):
     """extends Var for Typed"""
-    InstrHolder:
-        instr:=vvalue
+    vmodel:=parent.vvalue
 
-template TypedView(AttrType: Typed):
+template TypedView(AttrType: Typed, spec):
     """interface for a Typed member."""
     TypedVar: pass
 
+
+################test window##########################
 enamldef Main(Window):
-    alias instr:ih.instr
-    InstrHolder: ih:
-        pass
+    attr vmodel
+    VGroup:
+        attr vmodel=parent.vmodel
+        Var:
+            vname="ti"
+        InstrHolder: ih:
+            pass
 

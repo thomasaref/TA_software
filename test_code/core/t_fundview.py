@@ -11,12 +11,14 @@ def show(a):
     app = QtApplication()
     with imports():
         from t_FundView_e import Main
-    view=Main(instr=a)
+    view=Main(vmodel=a)
     view.show()
     app.start()
 
-from atom.api import Atom, Bool, Int, Typed, ContainerList
+from atom.api import Atom, Bool, Int, Typed, ContainerList, Coerced, Enum, cached_property
+
 class subtest(Atom):
+    view="field"
     tb=Bool()
     ti=Int().tag(label="MY INT")
     def _observe_tb(self, change):
@@ -27,11 +29,16 @@ class subtest(Atom):
 
 class Test(Atom):
     tt=Typed(subtest, ())
+    tc=Coerced(int)
     tb=Bool()
-    ti=Int().tag(unit_factor=10, show_value=True, unit="dog", spec="spinbox")
-    tl=ContainerList(default=[1,2,3])
-
-    def _observe_tl(self, change):
+    ti=Int().tag(unit_factor=10, show_value=True, unit="dog", spec="sinbox")
+    tl=ContainerList(default=[0,True,3,5,6,True, False, False, 3, 4, 5, 6]).tag(no_spacer=True)
+    te=Enum("tc","ti").tag(spec="attribute")
+    
+    @cached_property
+    def te_mapping(self):
+        return {"tc":self.tc, "ti":self.ti}
+    def _observe_tc(self, change):
         print change
 
     def _observe_tb(self, change):

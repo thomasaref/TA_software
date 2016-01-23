@@ -41,4 +41,5 @@ def pass_factory():
         pass
     return do_nothing
 
-
+def msg(*args):
+    return ", ".join([unicode(arg) for arg in args])

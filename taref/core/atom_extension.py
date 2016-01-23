@@ -5,7 +5,7 @@ Created on Fri Jan 22 19:12:36 2016
 @author: thomasaref
 """
 
-from atom.api import Property, Callable
+from atom.api import Property, Callable, Coerced
 
 _MAPPING_SUFFIX_="_mapping"
 
@@ -21,6 +21,8 @@ def get_tag(obj, name, key, none_value=None):
 def get_type(obj, name):
     """returns type of member with given name, with possible override via tag typer"""
     typer=type(obj.get_member(name))
+    if typer==Coerced:
+        typer=type(getattr(obj, name))
     return get_tag(obj, name, "typer", typer)
 
 def reset_property(obj, name):
