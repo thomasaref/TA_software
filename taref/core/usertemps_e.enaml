@@ -65,39 +65,10 @@ enamldef Main(Window):
 template UserInstrView(instr_view : "field"):
     fieldcont:
         test:=instr
+
 ############################################################
 template UserInstrView(instr_view):
     """ This default specialization displays read-only text for the value."""
-    #instr_view:
-    #    visible=True
     Field:
         read_only = True
         text << unicode((instr, vmodel, vname))
-
-
-
-class fake(object):
-    def fff():
-        pass
-
-template FundView(base, name, baseType: type(fake.fff)):
-    """A template specialization for a Callable using a PushButton"""
-    Container:
-        padding = 0
-        #constraints = [hbox(pb1, gb1), align('top', pb1, gb1)]
-        PushButton: pb1:
-            text = 'Run'
-            clicked :: getattr(base, name)() #do_it_if_needed(var, "receive") #receive()
-            #enabled << not instr.busy
-        #GroupBox: gb1:
-        #    padding = 0
-        #    visible = run_params(base, name)!=[]
-        #    title = get_tag(base, name, 'label', name)+" parameters:"
-        #    Looper: get_loop:
-        #            iterable << run_params(base, name)
-        #            DynamicTemplate:
-        #                base=VarTemp #text = '{0} {1}'.format(loop_index, loop_item)
-        #                args=(loop_item, base, type(base))
-
-# isinstance(func, FunctionType):
-

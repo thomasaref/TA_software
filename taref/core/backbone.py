@@ -178,9 +178,9 @@ class tag_Callable2(tag_Callable):
     """disposable decorator class that returns a Callable tagged with kwargs"""
     def __call__(self, func):
         if "run_params" not in self.kwargs:
-            self.kwargs["run_params"]=get_run_params(func)[1:]
-        super(tag_Callable2, self).__call__(func)            
-        
+            self.kwargs["run_params"]=get_run_params(func)
+        super(tag_Callable2, self).__call__(func)
+
 def private_property(fget):
     """ A decorator which converts a function into a cached Property tagged as private.
     Improves performance greatly over property!

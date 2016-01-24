@@ -6,22 +6,21 @@ Created on Thu Jul  9 16:51:22 2015
 
 A core collection of enamldefs including units for ints and floats and non-padded containers
 """
-
+from taref.core.log import log_debug
 from enaml.widgets.api import  ( HGroup, Container, GroupBox,  Field, Label, SpinBox,
                                 MultilineField, VGroup, ScrollArea, Window)
 from enaml.core.api import Conditional
 from enaml.validator import IntValidator, FloatValidator
 
-enamldef AgentWindow(Window):
-    """backbone for agent window"""
-    attr agent
-    destroy_on_close=False
-    initial_size=getattr(agent, "initial_size", (-1,-1))
-    initial_position=getattr(agent, "initial_position", (-1,-1))
-
 enamldef aWindow(Window):
     """a Window that is not destroyed on close"""
     destroy_on_close=False
+
+enamldef AgentWindow(aWindow):
+    """backbone for agent window"""
+    attr agent
+    initial_size=getattr(agent, "initial_size", (-1,-1))
+    initial_position=getattr(agent, "initial_position", (-1,-1))
 
 enamldef aHGroup(HGroup):
     """a non-padded, non-width-aligning HGroup"""
@@ -41,7 +40,6 @@ enamldef aGroupBox(GroupBox):
     """a non-padded GroupBox"""
     padding=0
 
-
 enamldef UnitIntField(aHGroup):
     """ A field that only accept integer inputs and normalizes them by a unit factor"""
     attr minimum = None
@@ -54,9 +52,19 @@ enamldef UnitIntField(aHGroup):
         self.uvalue = int(value)*unit_factor
     alias read_only : intf.read_only
     Field: intf:
+        activated::
+            if not validator.validate(text):
+                if parent.minimum is None:
+                    if parent.maximum is None:
+                        parent.uvalue=0
+                    else:
+                        parent.uvalue=parent.maximum
+                else:
+                    parent.uvalue=parent.minimum
         text << unicode(uvalue/unit_factor)
-        text :: calc_uvalue(text, unit_factor)
-        validator << IntValidator(base=10, minimum=minimum, maximum=maximum)
+        text ::
+            calc_uvalue(text, unit_factor)
+        validator << IntValidator(base=10, minimum=minimum/unit_factor, maximum=maximum/unit_factor)
 
     Label: ul:
         text = unicode(unit)
@@ -106,9 +114,18 @@ enamldef UnitFloatField(aHGroup):
         self.uvalue=float(text)*unit_factor
 
     Field:
+        activated::
+            if not validator.validate(text):
+                if parent.minimum is None:
+                    if parent.maximum is None:
+                        parent.uvalue=0.0
+                    else:
+                        parent.uvalue=parent.maximum
+                else:
+                    parent.uvalue=parent.minimum
         text << unicode(uvalue/unit_factor)
         text :: calc_uvalue(text, unit_factor)
-        validator << FloatValidator(minimum=minimum, maximum=maximum, allow_exponent=allow_exponent)
+        validator << FloatValidator(minimum=minimum/unit_factor, maximum=maximum/unit_factor, allow_exponent=allow_exponent)
 
     Label:
         text = unicode(unit)

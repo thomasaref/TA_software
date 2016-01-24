@@ -34,14 +34,20 @@ class Test(Atom):
     ti=Int().tag(unit_factor=10, show_value=True, unit="dog", spec="sinbox")
     tl=ContainerList(default=[0,True,3,5,6,True, False, False, 3, 4, 5, 6]).tag(no_spacer=True)
     te=Enum("tc","ti").tag(spec="attribute")
-    
+
+    @property
+    def run_funcs(self):
+        """class or static methods to include in run_func_dict on initialization. Can be overwritten in child classes"""
+        return []
+
     @Callable
     def myc(self):
         print "myc called"
-        
+
     @cached_property
     def te_mapping(self):
         return {"tc":self.tc, "ti":self.ti}
+
     def _observe_tc(self, change):
         print change
 

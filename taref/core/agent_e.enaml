@@ -15,15 +15,9 @@ from taref.core.backbone import get_attr, get_view
 #from e_Plotter import PlotWindow
 from log_e import LogWindow, LogPane
 from collections import OrderedDict
-from taref.core.fundtemps_e import InstrHolder
+from taref.core.typedview_e import InstrHolder
 from taref.core.log import log_debug
-
-enamldef AgentView(Window):
-    """backbone for agent window"""
-    attr agent
-    destroy_on_close=False
-    initial_size=get_attr(agent, "initial_size", (-1,-1))
-    initial_position=get_attr(agent, "initial_position", (-1,-1))
+from taref.core.fundcor_e import AgentView
 
 enamldef AutoAgentView(AgentView):
     """default view for an agent based on dynamic templating"""

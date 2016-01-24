@@ -20,4 +20,6 @@ enamldef Main(MainWindow):
         Container:
             PushButton:
                 text = "test logging"
-                clicked :: log_info("button pushed")
+                clicked ::
+                    log_info("button pushed")
+                    log_info("button pushed", n=1)

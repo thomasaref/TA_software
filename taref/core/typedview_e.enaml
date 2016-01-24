@@ -7,15 +7,15 @@ Created on Fri Jan 22 19:49:53 2016
 
 from taref.core.log import log_debug
 from enaml.core.api import Conditional, DynamicTemplate, Looper
-from enaml.widgets.api import (Window, Container, Label, HGroup, VGroup, ScrollArea, SpinBox, Form, PushButton, ObjectCombo, GroupBox)
-from taref.core.atom_extension import get_tag, get_type, get_map
-from taref.core.backbone import get_main_params, get_run_params
+from enaml.widgets.api import (Window, Container, Label, HGroup, VGroup, ScrollArea, ObjectCombo, SpinBox, PushButton,  GroupBox)#, Form)
+from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params, get_run_params
 from atom.api import Bool, Int, Typed, List, Coerced, Enum, Callable, Float, Str, Unicode, Range, FloatRange, Instance
 from taref.core.universal import msg
 from numpy import ndarray
-from var_e import (Var, VarVGroup, FieldExt, MultilineExt, BoolExt, UnitIntFieldExt, UnitSpinBoxExt, UnitRangeExt, UnitFloatExt, UnitFloatRangeExt, EnumExt)
+from taref.core.var_e import (Var, VarVGroup, FieldExt, MultilineExt, BoolExt, UnitIntFieldExt, UnitSpinBoxExt, UnitRangeExt, UnitFloatExt, UnitFloatRangeExt, EnumExt)
+from taref.core.fundcore_e import aHGroup, aVGroup
+from taref.core.usertemps_e import UserInstrView
 
-from taref.core.fundcore_e import aHGroup
 
 enamldef DynExt(DynamicTemplate):
     base = TypedView
@@ -141,7 +141,7 @@ template TypedView(AttrType: Enum, spec):
     """default template for Enum"""
     EnumExt: pass
 
-enamldef EnumAttrExt(HGroup):
+enamldef EnumAttrExt(aHGroup):
     """extends Var for Enum"""
     attr vmodel=parent.vmodel
     attr vname=parent.vname
@@ -186,17 +186,10 @@ template TypedView(AttrType: Callable, spec):
     CallableExt: pass
 
 ###################### INSTRVIEW #################################
-
 template InstrView(instr_view):
     """goes to user defined templates"""
-    Label:
-        text=msg(instr_view, vmodel, vname, vvalue)
-
-#from taref.core.usertemps_e import UserInstrView
-#template InstrView(instr_view):
-#    """goes to user defined templates"""
-#    UserInstrView(instr_view):
-#        pass
+    UserInstrView(instr_view):
+        pass
 
 template InstrView(instr_view: "Auto"):
     Container:
@@ -205,18 +198,69 @@ template InstrView(instr_view: "Auto"):
             iterable<<get_main_params(parent.vmodel)
             DynVar:
                 vname=loop_item
-                #vvalue:=getattr(vmodel, loop_item)
 
-enamldef InstrHolder(ScrollArea):
+#enamldef InstrHolder(Container):
+#    attr vmodel=parent.vmodel
+#    #Container:
+#    #    attr vmodel=parent.vmodel
+#    DynamicTemplate:
+#            base = InstrView
+#            args=(getattr(vmodel, "view", "Auto"), )
+
+enamldef InstrHolder(DynamicTemplate):
     attr vmodel=parent.vmodel
-    Container:
+    base = InstrView
+    args=(getattr(vmodel, "view", "Auto"), )
+
+enamldef functionExt(aHGroup):
+    #attr vmodel=parent.vmodel
+    attr vfunc
+    PushButton:
+        text = 'Run'
+        clicked :: vfunc(*[getattr(vfunc.im_self, name) for name in get_run_params(vfunc.im_func)])
+    Conditional:
+        condition = get_run_params(vfunc.im_func)!=[]
+        GroupBox:
+            title = vfunc.im_func.func_name+" parameters:"
+            Container:
+                attr vmodel=vfunc.im_self
+                Looper:
+                    iterable=get_run_params(vfunc.im_func)
+                    DynVar:
+                        vname=loop_item
+
+enamldef InstrVGroup(VGroup):
+    attr vmodel=parent.vmodel
+    Conditional:
+        condition = list(getattr(vmodel, "run_funcs", []))!=[]
+        ScrollArea:
+            VGroup:
+                #attr vmodel=parent.parent.vmodel
+                Looper:
+                    iterable=getattr(vmodel, "run_funcs")
+                    functionExt:
+                        vfunc=loop_item
+                    PushButton:
+                        text = unicode(loop_item)
+                        clicked ::
+                            log_debug(dir(loop_item))
+                            log_debug(loop_item.im_self)
+                            log_debug(get_run_params(loop_item))
+                            loop_item()
+
+
+                PushButton:
+                    text = "Test"
+                    clicked ::
+                        log_debug("blah")
+                    tool_tip = "test button"
+    ScrollArea:
         attr vmodel=parent.vmodel
-        DynamicTemplate:
-            base = InstrView
-            args=(getattr(vmodel, "view", "Auto"), )
+        InstrHolder:
+            pass
 
 ##################### TYPED ########################################
-enamldef TypedExt(InstrHolder):
+enamldef TypedExt(InstrVGroup):
     """extends Var for Typed"""
     vmodel:=parent.vvalue
 
@@ -256,10 +300,19 @@ if __name__=="__main__":
 
         def _observe_t_list(self, change):
             log_debug(change)
+
+        def test_func(self, t_int=30):
+            log_debug("ran")
+
+        @cached_property
+        def run_funcs(self):
+            return [self.test_func]
+
     t=Test()
 
 enamldef Main(Window):
     attr vmodel = t
+    attr instr=t
     VarVGroup:
         DynVar:
             vname="t_int"
@@ -268,6 +321,7 @@ enamldef Main(Window):
             vname="t_callable"
         CoercedVar:
             vname="t_coerced"
-        InstrHolder: ih:
-            pass
+        InstrVGroup:
+            vmodel=instr
+
 
