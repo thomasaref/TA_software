@@ -9,12 +9,12 @@ Created on Fri Jan 22 19:49:53 2016
 from enaml.core.api import Conditional, DynamicTemplate, Looper
 from enaml.widgets.api import (Window, Container, HGroup, Label, CheckBox,
                                VGroup, ScrollArea, SpinBox, Form, Field,
-                               PushButton, ObjectCombo)
+                               PushButton, ObjectCombo, GroupBox)
 from enaml.layout.api import spacer
 from taref.core.atom_extension import get_tag, get_type, get_map
 from taref.core.fundcore_e import UnitIntField, UnitSpinBox
-from taref.core.backbone import get_main_params
-from atom.api import Bool, Int, Typed, List, Coerced, Enum
+from taref.core.backbone import get_main_params, get_run_params
+from atom.api import Bool, Int, Typed, List, Coerced, Enum, Callable
 from taref.core.universal import msg
 
 def spacer_eval(vmodel, vname):
@@ -37,7 +37,7 @@ enamldef Var(HGroup):
     DynamicTemplate: s:
         base = TypedView
         args << (get_type(vmodel, vname), get_tag(vmodel, vname, "spec"))
-        #args :: type(getattr(vmodel, vname))
+
 enamldef BoolVar(CheckBox):
     """boolean shown as CheckBox"""
     checked := parent.vvalue
@@ -87,6 +87,67 @@ enamldef ListScrollVar(ScrollArea):
             Label:
                 text = unicode(loop_item)
 
+enamldef EnumVar(HGroup):
+    """extends Var for Enum"""
+    attr vmodel=parent.vmodel
+    attr vname=parent.vname
+    attr vvalue:=parent.vvalue
+    ObjectCombo:
+        items = list(vmodel.get_member(vname).items)
+        selected := vvalue
+    Label:
+        text <<  unicode(get_map(vmodel, vname))
+
+enamldef EnumAttrVar(HGroup):
+    """extends Var for Enum"""
+    attr vmodel=parent.vmodel
+    attr vname=parent.vname
+    attr vvalue:=parent.vvalue
+    ObjectCombo:
+        items = list(vmodel.get_member(vname).items)
+        selected := vvalue
+    Var:
+        vname<<parent.vvalue
+
+enamldef CallableVar(HGroup):
+    """extends Var for Callable"""
+    attr vmodel=parent.vmodel
+    attr vname=parent.vname
+    attr vvalue:=parent.vvalue
+    Conditional:
+        condition = hasattr(vmodel, "busy")
+        PushButton:
+            text = 'Run'
+            clicked ::vvalue(vmodel)# run_func(vmodel, vname)
+            enabled << not vmodel.busy
+    Conditional:
+        condition = not hasattr(vmodel, "busy")
+        PushButton:
+            text = 'Run'
+            clicked ::vvalue(vmodel)# run_func(vmodel, vname)
+    Label:
+        text=msg(get_run_params(vvalue)[1:])
+    Conditional:
+        condition=False #get_tag(vmodel, vname, "run_params", get_run_params(vvalue)[1:])!=[]
+
+        GroupBox:
+            attr vmodel=parent.vmodel
+            title = get_tag(vmodel, vname, 'label', vname)+" parameters:"
+            Container:
+                attr vmodel=parent.vvalue
+                Looper:
+                        iterable=get_run_params(vvalue)[1:]
+                        Var:
+                            vname=loop_item
+    Conditional:
+        condition = hasattr(vmodel, "abort")
+        PushButton:
+            text = 'Abort'
+            clicked ::
+                log_debug("abort pressed")
+                vmodel.abort=True
+            enabled <<  vmodel.busy
+
 template TypedView(AttrType, spec):
     """default template for unknown type and spec"""
     Label:
@@ -120,34 +181,6 @@ template TypedView(AttrType: list, spec):
     """list template flows through to List templates"""
     TypedView(List, spec): pass
 
-#def enum_spacer_eval(vmodel, vname, vvalue):
-#      if get_tag(vmodel, vname, "map_type")=="attribute":
-#          return spacer_eval(vmodel, vvalue)
-#      return spacer_eval(vmodel, vname)
-
-enamldef EnumVar(HGroup):
-    """extends Var for Enum"""
-    attr vmodel=parent.vmodel
-    attr vname=parent.vname
-    attr vvalue:=parent.vvalue
-    ObjectCombo:
-        items = list(vmodel.get_member(vname).items)
-        selected := vvalue
-    Label:
-        text <<  unicode(get_map(vmodel, vname))
-
-enamldef EnumAttrVar(HGroup):
-    """extends Var for Enum"""
-    attr vmodel=parent.vmodel
-    attr vname=parent.vname
-    attr vvalue:=parent.vvalue
-    ObjectCombo:
-        items = list(vmodel.get_member(vname).items)
-        selected := vvalue
-    Var:
-        vname<<parent.vvalue
-        #vvalue:=get_map(vmodel, str(parent.vvalue))
-
 template TypedView(AttrType: Enum, spec):
     """default template for Enum"""
     EnumVar: pass
@@ -155,6 +188,10 @@ template TypedView(AttrType: Enum, spec):
 template TypedView(AttrType: Enum, spec : "attribute"):
     """attribute showing template for mapped Enum"""
     EnumAttrVar: pass
+
+template TypedView(AttrType: Callable, spec):
+    """default template for Enum"""
+    CallableVar: pass
 
 ######################
 

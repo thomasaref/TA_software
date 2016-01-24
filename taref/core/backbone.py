@@ -33,12 +33,14 @@ def set_value_map(obj, name, value):
         return get_map(obj, name, value)
     return value
 
-def get_run_params(f):
+def get_run_params(f, skip_first=True):
     """returns names of parameters a function will call"""
     if hasattr(f, "run_params"):
         return f.run_params
     argcount=f.func_code.co_argcount
-    return f.func_code.co_varnames[0:argcount]
+    if skip_first:
+        return list(f.func_code.co_varnames[1:argcount])
+    return list(f.func_code.co_varnames[0:argcount])
 
 class logging_f(object):
     """A logging wrapper that is compatible with both functions or Callables.
@@ -145,6 +147,40 @@ class tag_Callable(object):
     def __call__(self, func):
         return Callable(func).tag(**self.kwargs)
 
+from functools import wraps
+def log_func(func):
+    @wraps
+    def new_func(obj, *args, **kwargs):
+        """call logs the call if desired and autoinserts kwargs and obj"""
+        #log_debug(obj, args, kwargs, n=1)
+        if len(args)==0:
+            for param in self.run_params:
+                if param in kwargs:
+                    if type(kwargs[param])==type(get_attr(obj, param)):
+                        setattr(obj, param, kwargs[param])
+                else:
+                    if param in obj.property_dict.keys():
+                        obj.get_member(param).reset(obj)
+                    value=getattr(obj, param)
+                    value=set_value_map(obj, param, value)
+                    kwargs[param]=value
+        #if hasattr(obj, "chief"): #not working. how to get return value?
+        #    objargs=(obj,)+args
+        #    return_value=do_it_if_needed(obj.chief, self.func, *objargs, **kwargs)
+        #else:
+        return_value=self.func(obj, *args, **kwargs)
+        if self.log:
+            #log_debug(kwargs)
+            log_debug(self.func.func_name, return_value, n=1)
+        return return_value
+
+class tag_Callable2(tag_Callable):
+    """disposable decorator class that returns a Callable tagged with kwargs"""
+    def __call__(self, func):
+        if "run_params" not in self.kwargs:
+            self.kwargs["run_params"]=get_run_params(func)[1:]
+        super(tag_Callable2, self).__call__(func)            
+        
 def private_property(fget):
     """ A decorator which converts a function into a cached Property tagged as private.
     Improves performance greatly over property!

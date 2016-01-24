@@ -5,9 +5,20 @@ Created on Fri Jan 22 19:12:36 2016
 @author: thomasaref
 """
 
-from atom.api import Property, Callable, Coerced
+from atom.api import Property, Callable, Coerced, Atom
 
 _MAPPING_SUFFIX_="_mapping"
+
+def get_metadata(obj, name):
+    """returns the metadata of a member if it exists and generates an empty dictionary if it does not
+        Returns the metadata dictionary of member of obj specified by name.
+    This allows easy access to metadata and autogenerates an empty dictionary if metadata is None."""
+    if isinstance(obj, Atom):
+        member=obj.get_member(name)
+        if member.metadata is None:
+            member.metadata={}
+        return member.metadata
+    return {}
 
 def get_tag(obj, name, key, none_value=None):
     """returns the tag key of a member name an returns none_value if it does not exist

@@ -15,7 +15,7 @@ def show(a):
     view.show()
     app.start()
 
-from atom.api import Atom, Bool, Int, Typed, ContainerList, Coerced, Enum, cached_property
+from atom.api import Atom, Callable, Bool, Int, Typed, ContainerList, Coerced, Enum, cached_property
 
 class subtest(Atom):
     view="field"
@@ -35,6 +35,10 @@ class Test(Atom):
     tl=ContainerList(default=[0,True,3,5,6,True, False, False, 3, 4, 5, 6]).tag(no_spacer=True)
     te=Enum("tc","ti").tag(spec="attribute")
     
+    @Callable
+    def myc(self):
+        print "myc called"
+        
     @cached_property
     def te_mapping(self):
         return {"tc":self.tc, "ti":self.ti}
