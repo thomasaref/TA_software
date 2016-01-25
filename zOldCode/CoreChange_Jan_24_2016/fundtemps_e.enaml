@@ -376,4 +376,50 @@ enamldef Main(Window):
 #            enabled << len(vlist)>0
 #
 
+enamldef functionExt(aHGroup):
+    #attr vmodel=parent.vmodel
+    attr vfunc
+    PushButton:
+        text = 'Run'
+        clicked :: vfunc(*[getattr(vfunc.im_self, name) for name in get_run_params(vfunc.im_func)])
+    Conditional:
+        condition = get_run_params(vfunc.im_func)!=[]
+        GroupBox:
+            title = vfunc.im_func.func_name+" parameters:"
+            Container:
+                attr vmodel=vfunc.im_self
+                Looper:
+                    iterable=get_run_params(vfunc.im_func)
+                    DynVar:
+                        vname=loop_item
+
+enamldef InstrVGroup(VGroup):
+    attr vmodel=parent.vmodel
+    Conditional:
+        condition = list(getattr(vmodel, "run_funcs", []))!=[]
+        ScrollArea:
+            VGroup:
+                #attr vmodel=parent.parent.vmodel
+                Looper:
+                    iterable=getattr(vmodel, "run_funcs")
+                    functionExt:
+                        vfunc=loop_item
+                    PushButton:
+                        text = unicode(loop_item)
+                        clicked ::
+                            log_debug(dir(loop_item))
+                            log_debug(loop_item.im_self)
+                            log_debug(get_run_params(loop_item))
+                            loop_item()
+
+
+                PushButton:
+                    text = "Test"
+                    clicked ::
+                        log_debug("blah")
+                    tool_tip = "test button"
+    ScrollArea:
+        attr vmodel=parent.vmodel
+        InstrHolder:
+            pass
 

@@ -15,6 +15,7 @@ from numpy import ndarray
 from taref.core.var_e import (Var, VarVGroup, FieldExt, MultilineExt, BoolExt, UnitIntFieldExt, UnitSpinBoxExt, UnitRangeExt, UnitFloatExt, UnitFloatRangeExt, EnumExt)
 from taref.core.fundcore_e import aHGroup, aVGroup
 from taref.core.usertemps_e import UserInstrView
+from types import MethodType
 
 
 enamldef DynExt(DynamicTemplate):
@@ -23,10 +24,6 @@ enamldef DynExt(DynamicTemplate):
 
 enamldef DynVar(Var):
     DynExt: pass
-#    """Dynamically templating Var"""
-#    DynamicTemplate: s:
-#        base = TypedView
-#        args << (get_type(vmodel, vname), get_tag(vmodel, vname, "spec"))
 
 template TypedView(AttrType, spec):
     """default template for unknown type and spec"""
@@ -166,7 +163,11 @@ enamldef CallableExt(aHGroup):
     attr vvalue=parent.vvalue
     PushButton:
         text = 'Run'
-        clicked :: vvalue(vmodel, *[getattr(vmodel, name) for name in get_run_params(vvalue)])
+        clicked :: 
+            if not isinstance(vvalue, MethodType):
+                vvalue(vmodel, *[getattr(vmodel, name) for name in get_run_params(vvalue)])
+            else:
+                vvalue(*[getattr(vmodel, name) for name in get_run_params(vvalue)])
     Conditional:
         condition = get_tag(vmodel, vname, "run_params", get_run_params(vvalue))!=[]
         GroupBox:
@@ -199,68 +200,14 @@ template InstrView(instr_view: "Auto"):
             DynVar:
                 vname=loop_item
 
-#enamldef InstrHolder(Container):
-#    attr vmodel=parent.vmodel
-#    #Container:
-#    #    attr vmodel=parent.vmodel
-#    DynamicTemplate:
-#            base = InstrView
-#            args=(getattr(vmodel, "view", "Auto"), )
-
 enamldef InstrHolder(DynamicTemplate):
     attr vmodel=parent.vmodel
     base = InstrView
     args=(getattr(vmodel, "view", "Auto"), )
 
-enamldef functionExt(aHGroup):
-    #attr vmodel=parent.vmodel
-    attr vfunc
-    PushButton:
-        text = 'Run'
-        clicked :: vfunc(*[getattr(vfunc.im_self, name) for name in get_run_params(vfunc.im_func)])
-    Conditional:
-        condition = get_run_params(vfunc.im_func)!=[]
-        GroupBox:
-            title = vfunc.im_func.func_name+" parameters:"
-            Container:
-                attr vmodel=vfunc.im_self
-                Looper:
-                    iterable=get_run_params(vfunc.im_func)
-                    DynVar:
-                        vname=loop_item
-
-enamldef InstrVGroup(VGroup):
-    attr vmodel=parent.vmodel
-    Conditional:
-        condition = list(getattr(vmodel, "run_funcs", []))!=[]
-        ScrollArea:
-            VGroup:
-                #attr vmodel=parent.parent.vmodel
-                Looper:
-                    iterable=getattr(vmodel, "run_funcs")
-                    functionExt:
-                        vfunc=loop_item
-                    PushButton:
-                        text = unicode(loop_item)
-                        clicked ::
-                            log_debug(dir(loop_item))
-                            log_debug(loop_item.im_self)
-                            log_debug(get_run_params(loop_item))
-                            loop_item()
-
-
-                PushButton:
-                    text = "Test"
-                    clicked ::
-                        log_debug("blah")
-                    tool_tip = "test button"
-    ScrollArea:
-        attr vmodel=parent.vmodel
-        InstrHolder:
-            pass
 
 ##################### TYPED ########################################
-enamldef TypedExt(InstrVGroup):
+enamldef TypedExt(InstrHolder):
     """extends Var for Typed"""
     vmodel:=parent.vvalue
 
@@ -273,8 +220,6 @@ template TypedView(AttrType: Typed, spec):
 
 template TypedView(AttrType: Instance):
     TypedView(Typed): pass
-
-
 
 ################test window##########################
 
@@ -312,7 +257,6 @@ if __name__=="__main__":
 
 enamldef Main(Window):
     attr vmodel = t
-    attr instr=t
     VarVGroup:
         DynVar:
             vname="t_int"
@@ -321,7 +265,9 @@ enamldef Main(Window):
             vname="t_callable"
         CoercedVar:
             vname="t_coerced"
-        InstrVGroup:
-            vmodel=instr
+        ScrollArea:
+            attr vmodel=parent.vmodel
+            InstrHolder:
+                pass #vmodel=instr
 
 

@@ -40,7 +40,9 @@ _MAPPING_SUFFIX_="_mapping"
 #print a.new_func
 #a.new_func()
 #print a.members()
-
+from types import MethodType
+def make_instancemethod(obj, func):
+    setattr(obj, func.func_name, MethodType(func, obj, type(obj)))
 
 def get_run_params(f, skip_first=True):
     """returns names of parameters a function will call"""

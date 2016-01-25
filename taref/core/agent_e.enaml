@@ -5,7 +5,7 @@ Created on Mon Jul 13 20:55:47 2015
 @author: thomasaref
 """
 
-from enaml.widgets.api import ( Window, Field, PushButton, ToolBar, Action, MainWindow,
+from enaml.widgets.api import ( Window, ScrollArea, Field, PushButton, ToolBar, Action, MainWindow,
     Container, MultilineField, DockPane, HGroup, VGroup, GroupBox)
 from enaml.layout.geometry import Pos, Rect, Size
 from enaml.core.api import Looper, Conditional
@@ -17,12 +17,15 @@ from log_e import LogWindow, LogPane
 from collections import OrderedDict
 from taref.core.typedview_e import InstrHolder
 from taref.core.log import log_debug
-from taref.core.fundcor_e import AgentView
+from taref.core.fundcore_e import AgentWindow
 
-enamldef AutoAgentView(AgentView):
+enamldef AutoAgentView(AgentWindow):
     """default view for an agent based on dynamic templating"""
-    InstrHolder:
-        instr:=agent
+    Container:
+        ScrollArea:
+            attr vmodel=parent.parent.agent
+            InstrHolder:
+                pass #vmodel:=agent
 
 class showWindow(MainWindow):
     """adds a list of other windows to a MainWindow and a property that determines if all are visible"""
