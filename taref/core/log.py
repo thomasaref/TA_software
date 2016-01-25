@@ -39,7 +39,7 @@ def new_log_func(func):
             fb=exc_info()[2].tb_frame.f_back
             for m in range(n):
                 fb=fb.f_back
-            print fb.f_code.co_filename
+            #print fb.f_code.co_filename
             func("{0} {1} {2}: {3}".format(fb.f_lineno, basename(fb.f_code.co_filename),
                   fb.f_code.co_name, ", ".join([str(arg) for arg in args])), **kwargs)
     return new_func

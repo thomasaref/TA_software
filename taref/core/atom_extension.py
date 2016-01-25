@@ -3,49 +3,176 @@
 Created on Fri Jan 22 19:12:36 2016
 
 @author: thomasaref
+utility functions that extend Atom
+A collection of functions for using taref's dynamic view. To maintain compatibility with Atom and object
+derived objects, these are defined as standalone functions.
 """
 
-from atom.api import Property, Callable, Coerced, Atom
-from taref.core.log import log_debug
-_MAPPING_SUFFIX_="_mapping"
+from atom.api import Property, Callable, Coerced, Enum, Float, Int, Unicode, List, Dict, Str, ContainerList, Range, FloatRange
+from numpy import shape, ndarray
+from taref.core.log import log_debug, log_info
+from functools import wraps
+from enaml.application import deferred_call
+from threading import Thread
 
-#def new_func(self):
-#    print self.unit_factor
-#
-#class Floater(Atom):
-#    a=Range()
-#    desc=Unicode()
-#    unit=Unicode()
-#    show_uvalue=Bool(False)
-#    unit_factor=Float(1.0)
-#    minimum=Float()
-#    maximum=Float()
-#    new_func=Callable(new_func)
-#
-#    def __init__(self, **kwargs):
-#        super(Floater, self).__init__(**kwargs)
-#        for name in self.members():
-#            if type(self.get_member(name)) ==Callable:
-#                setattr(self, name, MethodType(getattr(self, name), self, type(self)))
-#
-#    def test_func(self):
-#        pass
-#
-#a=Floater()
-#
-#print a.test_func
-##a.new_func=MethodType(new_func, a, type(a))
-#
-##print help(type(a.test_func))
-#print a.new_func
-#a.new_func()
-#print a.members()
+
+_MAPPING_SUFFIX_="_mapping"
+UNIT_DICT={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
+              "G":1.0e9, "M":1.0e6, "k":1.0e3,
+              "%":1.0/100.0}
+
+def set_tag(obj, name, **kwargs):
+    """sets the tag of a member using Atom's built in tag functionality"""
+    obj.get_member(name).tag(**kwargs)
+
+def set_all_tags(obj, **kwargs):
+    """set all parameters tags using keyword arguments.
+        Shortcut to use Atom's tag functionality to set metadata on members not marked private, i.e. all_params.
+    This is an easy way to set the same tag on all params"""
+    for param in get_all_params(obj):
+        set_tag(obj, param, **kwargs)
+
+def get_tag(obj, name, key, none_value=None):
+    """returns the tag key of a member name an returns none_value if it does not exist
+        Shortcut to use Atom's retrive particular metadata which returns a none_value if it does not exist.
+    This is an easy way to get a tag on a particular member and provide a default if it isn't there.
+    runs slightly faster in this form"""
+    metadata=obj.get_member(name).metadata
+    if metadata is None:
+        return none_value
+    return metadata.get(key, none_value)
+
+def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
+    """returns a list of names of parameters with a certain key_value
+        Shortcut retrieve members with particular metadata. There are several variants based on inputs.
+        With only obj and key specified, returns all member names who have that key
+        with key_value specified, returns all member names that have that key set to key_value
+        with key_value and none_value specified equal, returns all member names that have that key set to key_value or do not have the tag
+        specifying search list limits the members searched
+        Finally, if key_value is none, returns those members not matching none_value"""
+    if search_list is None:
+        search_list=obj.members()
+    if key_value is None:
+        return [x for x in search_list if none_value!=get_tag(obj, x, key, none_value)]
+    return [x for x in search_list if key_value==get_tag(obj, x, key, none_value)]
+
+def get_view(obj, default_view, default_name="NO_NAME"):
+    view=getattr(obj, "view_window", default_view)
+    view.name=getattr(obj, "name", default_name)
+    if view.title=="":
+        view.title=view.name
+    return view
+
+def get_property_names(obj):
+    if hasattr(obj, "property_names"):
+        return obj.property_names
+    return [name for name in get_all_params(obj) if type(obj.get_member(name))==Property]
+
+def reset_property(obj, name):
+    obj.get_member(name).reset(obj)
+
+def reset_properties(obj):
+    """resets all  properties"""
+    if hasattr(obj, "property_values"):
+        for item in obj.property_values:
+            item.reset(obj)
+    else:
+        for item in [obj.get_member(name) for name in get_all_params(obj) if type(obj.get_member(name))==Property]:
+            item.reset(obj)
+
+def lowhigh_check(obj, name, value):
+    """can specify low and high tags to keep float or int within a range."""
+    if type(value) in (float, int):
+        low=get_tag(obj, name, 'low')
+        if low is not None:
+            if value<low:
+                return low
+        high=get_tag(obj, name, 'high')
+        if high is not None:
+            if value>high:
+                return high
+    return value
+
+def set_value_map(obj, name, value):
+    """checks floats and ints for low/high limits and automaps an Enum when setting. Not working for List?"""
+    value=lowhigh_check(obj, name, value)
+    if get_type(obj, name)==Enum:
+        return get_map(obj, name, value)
+    return value
+
+def log_func(func, pname=None):
+    """logging decorator for Callables that logs call if tag log!=False"""
+    func_name=func.func_name
+    if pname is None:
+        pname=func_name
+    @wraps(func)
+    def new_func(self, *args, **kwargs):
+        """logs the call of an instance method and autoinserts kwargs"""
+        if get_tag(self, pname, "log", False):
+            log_debug("RAN: {0} {1}".format(getattr(self, "name", ""), func_name), n=1)
+        if len(args)==0:
+            members=self.members().keys()
+            for param in get_run_params(new_func):
+                if param in members:
+                    if param in kwargs:
+                        try:
+                            setattr(self, param, kwargs[param])
+                        except TypeError:
+                            pass
+                    else:
+                        if param in get_property_names(self):
+                            self.get_member(param).reset(self)
+                        value=getattr(self, param)
+                        value=set_value_map(self, param, value)
+                        kwargs[param]=value
+        #if hasattr(obj, "chief"): #not working. how to get return value?
+        #    objargs=(obj,)+args
+        #    return_value=do_it_if_needed(obj.chief, self.func, *objargs, **kwargs)
+        #else:
+        return func(self, *args, **kwargs)
+    new_func.pname=pname
+    new_func.run_params=get_run_params(func)
+    return new_func
+
+def param_decider(self, obj, param, value):
+    if param==self.name:
+        return value
+    return getattr(obj, param)
+
+def property_func(func):
+    #name_list=func.func_name.split("_get_")
+    #if name_list[0]=="":
+    #    name=name_list[1]
+    #else:
+    #    name=name_list[0]
+    new_func=log_func(func)
+    new_func.fset_list=[]
+    def setter(set_func):
+        s_func=log_func(func, new_func.pname)
+        new_func.fset_list.append(s_func)
+        return s_func
+    new_func.setter=setter
+    return new_func
+
+
 from types import MethodType
-def make_instancemethod(obj, func):
-    setattr(obj, func.func_name, MethodType(func, obj, type(obj)))
+def make_instancemethod(obj, func, name=None):
+    func=log_func(func, name)
+    setattr(obj, func.pname, MethodType(func, obj, type(obj)))
+    return func
+
+class instancemethod(object):
+    """disposable decorator object for instancemethods defined outside of Atom class"""
+    def __init__(self, obj, name=None):
+        self.name=name
+        self.obj=obj
+
+    def __call__(self, func):
+        make_instancemethod(self.obj, func, self.name)
+        return func
 
 def get_run_params(f, skip_first=True):
-    """returns names of parameters a function will call"""
+    """returns names of parameters a function will call, skips first parameter if skip_first is True"""
     if hasattr(f, "run_params"):
         return f.run_params
     argcount=f.func_code.co_argcount
@@ -53,41 +180,12 @@ def get_run_params(f, skip_first=True):
         return list(f.func_code.co_varnames[1:argcount])
     return list(f.func_code.co_varnames[0:argcount])
 
-def get_member(obj, name):
-    """returns a member if get_member exists and the attribute itself if it does not.
-    Returns the member of obj specified by name. This allows easy access to member functions and is included in the Atom api"""
-    if hasattr(obj, "get_member"):
-        return obj.get_member(str(name))
-    return getattr(obj, str(name))
 
-def get_metadata(obj, name):
-    """returns the metadata of a member if it exists and generates an empty dictionary if it does not
-        Returns the metadata dictionary of member of obj specified by name.
-    This allows easy access to metadata and autogenerates an empty dictionary if metadata is None."""
-    if isinstance(obj, Atom):
-        member=obj.get_member(name)
-        if member.metadata is None:
-            member.metadata={}
-        return member.metadata
-    return {}
-
-def get_tag(obj, name, key, none_value=None):
-    """returns the tag key of a member name an returns none_value if it does not exist
-        Shortcut to use Atom's retrive particular metadata which returns a none_value if it does not exist.
-    This is an easy way to get a tag on a particular member and provide a default if it isn't there."""
-    member=obj.get_member(name)
-    if member.metadata is None:
-        member.metadata={}
-    return member.metadata.get(key, none_value)
 
 def get_type(obj, name):
     """returns type of member with given name, with possible override via tag typer"""
     typer=type(obj.get_member(name))
     return get_tag(obj, name, "typer", typer)
-
-def reset_property(obj, name):
-    """shortcut to atom's property reset functionality"""
-    get_member(obj, name).reset(obj)
 
 def get_map(obj, name, value=None, reset=False):
     """gets the mapped value specified by the property mapping and returns the attribute value if it doesn't exist
@@ -125,6 +223,10 @@ class tag_Property(object):
     def __call__(self, func):
         return Property(func, cached=self.cached).tag(**self.kwargs)
 
+class tagged_property(tag_Property):
+    def __call__(self, func):
+        return super(tagged_property, self).__call__(property_func(func))
+
 def private_property(fget):
     """ A decorator which converts a function into a cached Property tagged as private.
     Improves performance greatly over property!
@@ -140,43 +242,27 @@ class tag_Callable(object):
         return Callable(func).tag(**self.kwargs)
 
 
-def set_tag(obj, name, **kwargs):
-    """sets the tag of a member using Atom's built in tag functionality"""
-    obj.get_member(name).tag(**kwargs)
 
-def set_all_tags(obj, **kwargs):
-    """set all parameters tags using keyword arguments.
-        Shortcut to use Atom's tag functionality to set metadata on members not marked private, i.e. all_params.
-    This is an easy way to set the same tag on all params"""
-    for param in get_all_params(obj):
-        set_tag(obj, param, **kwargs)
-
-def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
-    """returns a list of names of parameters with a certain key_value
-        Shortcut retrieve members with particular metadata. There are several variants based on inputs.
-        With only obj and key specified, returns all member names who have that key
-        with key_value specified, returns all member names that have that key set to key_value
-        with key_value and none_value specified equal, returns all member names that have that key set to key_value or do not have the tag
-        specifying search list limits the members searched
-        Finally, if key_value is none, returns those members not matching none_value"""
-    if search_list is None:
-        search_list=obj.members()
-    if key_value is None:
-        return [x for x in search_list if none_value!=get_tag(obj, x, key, none_value)]
-    return [x for x in search_list if key_value==get_tag(obj, x, key, none_value)]
 
 def get_reserved_names(obj):
     """reserved names not to perform standard logging and display operations on,
            i.e. members that are tagged as private and will behave as usual Atom members"""
+    if hasattr(obj, "reserved_names"):
+        return obj.all_params
     return get_all_tags(obj, key="private", key_value=True)
 
 def get_all_params(obj):
-    """all members that are not tagged as private, i.e. not in reserved_names and will behave as agents"""
+    """all members that are not tagged as private, i.e. not in reserved_names and will behave as agents.
+        order of magnitude faster when combine with private_property"""
+    if hasattr(obj, "all_params"):
+        return obj.all_params
     return get_all_tags(obj, key="private", key_value=False, none_value=False)
 
 def get_all_main_params(obj):
     """all members in all_params that are not tagged as sub.
      Convenience function for more easily custom defining main_params in child classes"""
+    if hasattr(obj, "all_main_params"):
+        return obj.all_main_params
     return get_all_tags(obj, 'sub', False, False, get_all_params(obj))
 
 def get_main_params(obj):
@@ -185,12 +271,118 @@ def get_main_params(obj):
         return obj.main_params
     return get_all_main_params(obj)
 
-def get_attr(obj, name, none_value=None):
-    """returns the attribute if the obj has it and the none_value if it does not"""
-    return getattr(obj, name, none_value)
+#def get_attr(obj, name, none_value=None):
+#    """returns the attribute if the obj has it and the none_value if it does not"""
+#    return getattr(obj, name, none_value)
 
 def set_attr(self, name, value, **kwargs):
     """utility function for setting tags while setting value"""
     setattr(self, name, value)
     if kwargs!={}:
         set_tag(self, name, **kwargs)
+
+#def data_save(obj, name, value):
+#    """data saving. does nothing if data_save is not defined"""
+#    if hasattr(obj, "data_save"):
+#        obj.datasave(name, value)
+
+def set_log(obj, name, value):
+   """called when parameter of given name is set to value i.e. instr.parameter=value. Customized messages for different types. Also saves data"""
+   if get_tag(obj, name, 'log', True):
+       label=get_tag(obj, name, 'label', name)
+       unit=get_tag(obj, name, 'unit', "")
+       obj_name=getattr(obj, "name", "NO_NAME")
+       typer=get_type(obj, name)
+       if typer==Coerced:
+           typer=type(getattr(obj, name))
+       if typer==Enum:
+           log_info("Set {instr} {label} to {value} ({map_val})".format(
+                 instr=obj_name, label=label, value=value,
+                 map_val=get_map(obj, name, value)))
+       elif typer in (List, ContainerList):
+           log_info("Set {instr} {label} to {length} list".format(
+               instr=obj_name, label=label, length=shape(value)))
+       elif typer==ndarray:
+           log_info("Set {instr} {label} to {length} array".format(
+               instr=obj_name, label=label, length=shape(value)))
+       elif typer==Dict:
+           log_info("Set {instr} {label} dict".format(instr=obj_name, label=label))
+       elif typer in (Unicode, Str):
+           log_info("Set {instr} {label} to {length} length string".format(instr=obj_name, label=label, length=len(value)))
+       elif typer==Float:
+           unit_factor=get_tag(obj, name, 'unit_factor', 1.0)
+           log_info("Set {instr} {label} to {value} {unit}".format(
+                             instr=obj_name, label=label, value=float(value)/unit_factor, unit=unit), n=1)
+       elif typer==Int:
+           unit_factor=get_tag(obj, name, 'unit_factor', 1)
+           log_info("Set {instr} {label} to {value} {unit}".format(
+                             instr=obj_name, label=label, value=int(value)/unit_factor, unit=unit))
+       else:
+           log_info("Set {instr} {label} to {value} {unit}".format(
+                             instr=obj_name, label=label, value=value, unit=unit))
+   if hasattr(obj, "data_save"):
+       obj.datasave(name, value)
+
+def _setup_callables(self, param, typer):
+    if typer == Callable:
+        func=getattr(self, param)
+        if func is not None:
+            make_instancemethod(self, func)
+
+def fset_maker(obj, fget, name):
+    def setit(obj, value):
+        argvalues=[]
+        for fset in fget.fset_list:
+            for param in fset.run_params:
+                if param==name:
+                    argvalues.append(value)
+                else:
+                    argvalues.append(getattr(obj, param))
+            setattr(obj, fset.name, fset(obj, *argvalues))
+    return setit
+
+def _setup_property_fs(self, param, typer):
+    """sets up property_f's pointing obj at self and setter at functions decorated with param.fget.setter"""
+    if typer==Property:
+        fget =getattr(self.get_member(param), "fget")
+        if getattr(fget, "fset_list", []) != []:
+            self.get_member(param).setter(fset_maker(self, fget, param))
+
+def _setup_ranges(self, param, typer):
+    """autosets low/high tags for Range and FloatRange"""
+    if typer in [Range, FloatRange]:
+        self.set_tag(param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
+
+def _setup_units(self, param, typer):
+    """autosets units using unit_dict"""
+    if typer in [Int, Float, Range, FloatRange, Property]:
+        if get_tag(self, param, "unit", False) and (get_tag(self, param, "unit_factor") is None):
+            unit=get_tag(self, param, "unit", "")[0]
+            if unit in self.unit_dict:
+                unit_factor=get_tag(self, param, "unit_factor", getattr(self, "unit_dict", UNIT_DICT)[unit])
+                set_tag(self, param, unit_factor=unit_factor)
+
+def extra_setup(self, param, typer):
+    """sets up property_fs, ranges, and units"""
+    _setup_callables(self, param, typer)
+    _setup_property_fs(self, param, typer)
+    _setup_ranges(self, param, typer)
+    _setup_units(self, param, typer)
+
+def code_caller(topdog, code, *args, **kwargs):
+    result=code(*args, **kwargs)
+    try:
+        deferred_call(setattr, topdog, 'busy', False)
+        deferred_call(setattr, topdog, 'progress', 0)
+        deferred_call(setattr, topdog, 'abort', False)
+    except RuntimeError:
+        topdog.busy=False
+        topdog.progress=0
+        topdog.abort=False
+    return result
+
+def do_it_if_needed(topdog, code, *args, **kwargs):
+    if not topdog.busy:
+        topdog.busy = True
+        thread = Thread(target=code_caller, args=(topdog, code)+args, kwargs=kwargs)
+        thread.start()

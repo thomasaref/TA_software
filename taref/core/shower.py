@@ -5,7 +5,7 @@ Created on Mon Aug 24 12:38:54 2015
 @author: thomasaref
 """
 #from taref.core.log import log_debug
-from backbone import get_view
+from taref.core.atom_extension import get_view
 
 def shower(*agents, **kwargs):
     """a powerful showing function for any Atom object(s) specified in agents.

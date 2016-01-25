@@ -7,6 +7,7 @@ Created on Sat Jul  4 13:03:26 2015
 #from taref.core.log import log_debug
 from atom.api import Unicode, ContainerList
 from taref.core.backbone import Backbone
+from taref.core.atom_extension import private_property, set_log, reset_properties
 from collections import OrderedDict
 from taref.core.shower import shower
 
@@ -39,7 +40,7 @@ class SubAgent(Backbone):
         for func in funcs:
             self.run_func_dict[func.func_name]=func
 
-    @property
+    @private_property
     def cls_run_funcs(self):
         """class or static methods to include in run_func_dict on initialization. Can be overwritten in child classes"""
         return []
@@ -56,10 +57,10 @@ class SubAgent(Backbone):
         agent_name=self.name
         if agent_name=="":
             agent_name=self.base_name
-        if agent_name in self.agent_dict:
-            agent_name="{name}__{num}".format(name=agent_name, num=len(self.agent_dict))
+        if agent_name in SubAgent.agent_dict:
+            agent_name="{name}__{num}".format(name=agent_name, num=len(SubAgent.agent_dict))
         self.name=agent_name
-        self.agent_dict[self.name]=self
+        SubAgent.agent_dict[self.name]=self
         self.add_func(*self.cls_run_funcs)
 
 class Spy(SubAgent):
@@ -69,9 +70,9 @@ class Spy(SubAgent):
     def log_changes(self, change):
         """a simple logger for all changes and to reset properties"""
         if change["type"]!="create":
-            self.set_log(change["name"], change["value"])
+            set_log(self, change["name"], change["value"])
         if change["type"]=="update":
-            self.reset_properties()
+            reset_properties(self)
 
     def extra_setup(self, param, typer):
         """adds log_changes observer to all params"""
@@ -86,8 +87,8 @@ class Agent(SubAgent):
         """uses __setattr__ to log changes and reset properties"""
         super(Agent, self).__setattr__(name, value)
         if name in self.all_params:
-            self.set_log(name, value)
-            self.reset_properties()
+            set_log(self, name, value)
+            reset_properties(self)
 
     def extra_setup(self, param, typer):
         """adds observer for ContainerLists to catch changes not covered by setattr.
@@ -99,5 +100,5 @@ class Agent(SubAgent):
     def log_changes(self, change):
         """a simple logger for changes not of type create or update that also resets properties"""
         if change["type"] not in ("create", "update"):
-            self.set_log(change["name"], change["value"])
-            self.reset_properties()
+            set_log(self, change["name"], change["value"])
+            reset_properties(self)

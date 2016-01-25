@@ -7,7 +7,7 @@ Created on Tue Jan  5 01:07:15 2016
 
 from taref.core.log import log_debug
 from taref.physics.fundamentals import sinc_sq, pi, eps0
-from taref.core.backbone import tagged_property, property_f, private_property
+from taref.core.atom_extension import tagged_property, private_property
 from taref.core.agent import Agent
 from atom.api import Float, Int, Enum, cached_property
 
@@ -105,7 +105,7 @@ class IDT(Agent):
 
     f0=Float(5.0e9).tag(unit="GHz", desc="Center frequency", reference="")
 
-    @property_f
+    #@property_f
     def _get_eta(self, a, g):
          return a/(a+g)
 
