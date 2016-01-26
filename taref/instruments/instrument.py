@@ -8,7 +8,8 @@ Created on Mon Jan 19 17:25:53 2015
 from atom.api import Bool, Value, List, Enum, Callable
 from taref.core.agent import Agent
 from taref.core.log import log_info, log_warning, log_debug#, make_log_file
-from taref.core.atom_extension import private_property, set_tag, get_tag, get_type, get_inv, log_func
+from taref.core.atom_extension import private_property, set_tag, get_tag, get_type, get_inv, log_func, tag_Callable, get_all_tags
+from taref.core.save_file import Save_HDF5
 
 class InstrumentError(Exception):
     pass
@@ -28,31 +29,82 @@ def get_value_check(obj, name, value):
             return value.keys()
         return value
 
+class booter(tag_Callable):
+    default_kwargs=dict(desc="the boot function for the instrument", private=True, booter=True)
+
+class closer(tag_Callable):
+    default_kwargs=dict(desc="the close function for the instrument", private=True, closer=True)
+
 class Instrument(Agent):
     """Instrument class. Provides functionality for running instruments"""
     base_name="instrument"
     busy=False
+    saving=False
+    abort=False
+    progress=0
+    save_file=Save_HDF5()
+    view="instrument"
+
+    @classmethod
+    def run_measurement(cls):
+        log_info("Measurement started")
+        cls.run()
+        log_info("Measurement finished")
+
+    @classmethod
+    def run(cls):
+        pass
+
+    @private_property
+    def progress(self):
+        return self.int_progress
 
     session=Value().tag(private=True, desc="a link to the session of the instrument. useful particularly for dll-based instruments")
     status=Enum( "Closed", "Active").tag(private=True, desc="a description of if the instrument is active or not, i.e. has been booted")
     send_now=Bool(True).tag(private=True, desc="when true, changing a value automatically sends it to the instrument if a send_cmd exists for that value")
 
-    booter=Callable().tag(desc="the boot function for the instrument", private=True)
-    closer=Callable().tag(desc="the close function for the instrument", private=True)
+    def show(self):
+        """saves data and closes instruments if it crashes"""
+        from taref.core.shower import shower
+        try:
+            shower(self)
+        finally:
+            self.close_all()
+            if self.saving:
+                self.save_file.flush_buffers()
+
+    @classmethod
+    def boot_all(cls):
+        for instr in cls.agent_dict.values():
+            if instr.status=='Closed':
+                instr.boot()
+
+    @classmethod
+    def close_all(cls):
+        for instr in cls.agent_dict.values():
+            if instr.status=='Active':
+                instr.close()
+
+    @private_property
+    def cls_run_funcs(self):
+        """class or static methods to include in run_func_dict on initialization. Can be overwritten in child classes"""
+        return [self.boot_all, self.close_all, self.run_measurement, self.run]
 
     def boot(self,  **kwargs):
         """Boot the instrument using booter function if it exists"""
         log_info("BOOTED: {0}".format(self.name))
         self.status="Active"
-        if self.booter is not None:
-            self.booter(self, **kwargs)
+        booter=get_all_tags(self, "booter", True)
+        if booter!=[]:
+            getattr(self, booter[0])(self, **kwargs)
 
     def close(self,  **kwargs):
         """Close the instrument using closer function if it exists"""
         log_info("CLOSED: {0}".format(self.name))
         self.status="Closed"
-        if self.closer is not None:
-            self.closer(**kwargs)
+        closer=get_all_tags(self, "closer", True)
+        if closer!=[]:
+            getattr(self, closer[0])(self, **kwargs)
 
     def _observe_send_now(self, change):
         """if instrument send_now changes, change all send_now tags of parameters"""

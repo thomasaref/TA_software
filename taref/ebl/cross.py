@@ -8,7 +8,7 @@ Created on Sun Jan  3 00:51:53 2016
 from taref.ebl.polygons import EBL_Polygons
 from atom.api import Float, Property
 from taref.ebl.polygon_backbone import horiz_refl, vert_refl, horizvert_refl, sP
-from taref.core.backbone import private_property
+from taref.core.atom_extension import private_property, reset_property
 
 class Cross(EBL_Polygons):
     """draws a cross of given height, width and line width)"""
@@ -48,7 +48,7 @@ class Inverse_Cross(Cross):
     def polylist(self):
         """makes inverse cross through reflections"""
         self.verts=[]
-        self.reset_property("_s_crossbox_TL")
+        reset_property(self, "_s_crossbox_TL")
         self.verts.extend(self._s_crossbox_TL)
         self.verts.extend(horiz_refl(self._s_crossbox_TL))
         self.verts.extend(vert_refl(self._s_crossbox_TL))

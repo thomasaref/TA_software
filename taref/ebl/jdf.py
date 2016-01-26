@@ -9,7 +9,7 @@ from taref.ebl.wafer_coords import FullWafer
 from atom.api import Typed, Unicode, Atom, List, Coerced, observe, cached_property, Event
 from taref.core.log import log_debug
 from taref.core.shower import shower
-from taref.core.backbone import set_attr, get_tag, private_property, Backbone
+from taref.core.atom_extension import set_attr, get_tag, private_property
 from taref.core.universal import sqze
 from taref.core.agent import SubAgent
 from re import compile as compiler
@@ -309,10 +309,6 @@ class JDF_Top(SubAgent):
             from taref.ebl.jdf_e import JDF_View
         return JDF_View(jdf=self)
 
-    def set_valcom(self, name, value, comment=""):
-        """utility function for setting a comment while setting value"""
-        set_attr(self, name, value, comment=comment)
-
     def append_valcom(self, inlist, name, fmt_str="{0}{1}", sep=";"):
             comment=format_comment(get_tag(self, name, "comment", ""))
             value=getattr(self, name)
@@ -439,11 +435,11 @@ class JDF_Top(SubAgent):
                 if 'END' in tempstr:
                     inside_layer=False
                 elif 'STDCUR' in tempstr:
-                    self.set_valcom("stdcur", tempstr.split("STDCUR")[1], comment)
+                    set_attr(self, "stdcur", tempstr.split("STDCUR")[1], comment=comment)
                 elif 'SHOT' in tempstr:
-                    self.set_valcom("shot", tempstr.split(',')[1], comment)
+                    set_attr(self, "shot", tempstr.split(',')[1], comment=comment)
                 elif 'RESIST' in tempstr:
-                    self.set_valcom("resist", tempstr.split('RESIST')[1], comment)
+                    set_attr(self, "resist", tempstr.split('RESIST')[1], comment=comment)
                 elif 'P(' in tempstr:
                     self.add_pattern(tempstr, comment)
                 elif tempstr.startswith('@'):

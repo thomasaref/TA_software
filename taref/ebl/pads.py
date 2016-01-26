@@ -8,7 +8,7 @@ Created on Mon Dec  8 10:19:24 2014
 from atom.api import Float, Typed
 from taref.ebl.polygon_backbone import horiz_refl, vert_refl, horizvert_refl, rotate, sC, sP, sT
 from taref.ebl.polygons import EBL_Polygons
-from taref.core.backbone import private_property
+from taref.core.atom_extension import private_property, reset_property
 
 
 class Test_Pads(EBL_Polygons):
@@ -35,7 +35,7 @@ class Test_Pads(EBL_Polygons):
     def polylist(self):
         """makes 4 branched testpad through reflections"""
         self.verts=[]
-        self.reset_property("_s_testpad_TL")
+        reset_property(self, "_s_testpad_TL")
         self.verts.extend(self._s_testpad_TL)
         self.verts.extend(horiz_refl(self._s_testpad_TL))
         self.verts.extend(vert_refl(self._s_testpad_TL))
@@ -389,9 +389,9 @@ class PADS(EBL_Polygons):
         """creates pads by using reflection on mark box and making bond pads"""
         self.verts=[]
         self.make_bond_pads()
-        self.reset_property("_s_labelbox_TL")
+        reset_property(self, "_s_labelbox_TL")
         self.verts.extend(self._s_labelbox_TL)
-        self.reset_property("_s_markbox_BL")
+        reset_property(self, "_s_markbox_BL")
         self.verts.extend(self._s_markbox_BL)
         self.verts.extend(horiz_refl(self._s_markbox_BL))
         self.verts.extend(horizvert_refl(self._s_markbox_BL))
@@ -404,11 +404,11 @@ class PADS(EBL_Polygons):
         """creates bond pad portion by reflecting and rotating TL bond pad.
         Left and right bond pads are offset so gap is centered on chip. Top and bottom bond pads are not"""
         self.ocpw=self.gap/2.0+self.w/2.0
-        self.reset_property("_s_bond_pad_TL")
+        reset_property(self, "_s_bond_pad_TL")
         self.verts.extend(self._s_bond_pad_TL)
         self.verts.extend(horiz_refl(self._s_bond_pad_TL))
         self.ocpw=0
-        self.reset_property("_s_bond_pad_TL")
+        reset_property(self, "_s_bond_pad_TL")
         self.verts.extend(rotate(horiz_refl(self._s_bond_pad_TL), 90))
         self.verts.extend(vert_refl(rotate(horiz_refl(self._s_bond_pad_TL), 90)))
         self.ocpw=self.gap/2.0+self.w/2.0

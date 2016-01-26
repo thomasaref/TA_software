@@ -8,7 +8,7 @@ from taref.core.log import log_debug
 
 from atom.api import Enum, List, Unicode, Typed, Bool, observe
 from taref.core.agent import SubAgent
-from taref.core.backbone import private_property
+from taref.core.atom_extension import private_property, reset_properties, reset_property
 from taref.core.save_file import Save_DXF
 from taref.ebl.beamer_gen import BeamerGen
 from taref.ebl.polygon_backbone import (minx, maxx, miny, maxy, sP, sPoly,
@@ -60,8 +60,8 @@ class EBL_Polygons(SubAgent):
         log_debug(2)
         for p in cls.jdf.patterns:
             a=cls.agent_dict[p.name]
-            a.reset_properties() #fix updating of properties
-            a.reset_property("polylist")
+            reset_properties(a) #fix updating of properties
+            reset_property(a, "polylist")
             log_debug(a)
             verts=[]
             for chip in xy_off.get(p.name, []):
@@ -171,7 +171,7 @@ class EBL_Polygons(SubAgent):
 
 if __name__=="__main__":
     a=EBL_Polygons()
-    a.Dig("A", 0, 0, 10.0e-6, 1.0e-6)
+    a.Dig("8", 0, 0, 10.0e-6, 1.0e-6)
     a.Dig("B", 30.0e-6, 0, 10.0e-6, 1.0e-6)
 
     a.show()

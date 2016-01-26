@@ -29,8 +29,9 @@ enamldef Var(aHGroup):
     attr vname=parent.vname
     attr vvalue:=getattr(vmodel, vname)
     trailing_spacer=spacer_eval(vmodel, vname)
-    Label:
-        text<<get_tag(vmodel, vname, "label", vname)
+    alias label : lbl
+    Label: lbl:
+        text=get_tag(vmodel, vname, "label", vname)
         tool_tip=get_tag(vmodel, vname, "desc", "")
 
 enamldef VarVGroup(VGroup):
@@ -39,16 +40,20 @@ enamldef VarVGroup(VGroup):
 
 ####################### Just unicode showing of unhandled types ############################
 enamldef LabelExt(Label):
-    text << msg(parent.vmodel, parent.vname, parent.vvalue, parent.vmodel.get_member(parent.vname).fset)
+    text << msg(parent.vmodel, parent.vname, parent.vvalue)
 
 enamldef LabelVar(Var):
-    LabelExt: pass
+    alias ext
+    LabelExt: ext:
+        pass
 
 enamldef ReadOnlyExt(Label):
     text << unicode(parent.vvalue)
 
 enamldef ReadOnlyVar(Var):
-    ReadOnlyExt: pass
+    alias ext
+    ReadOnlyExt: ext:
+        pass
 
 def rdonly(vmodel, vname):
     member=vmodel.get_member(vname)
@@ -64,7 +69,9 @@ enamldef FieldExt(Field):
     read_only=rdonly(parent.vmodel, parent.vname)
 
 enamldef FieldVar(Var):
-    FieldExt: pass
+    alias ext
+    FieldExt: ext:
+        pass
 
 enamldef MultilineExt(MultilineField):
     """extends Var for string types"""
@@ -72,15 +79,25 @@ enamldef MultilineExt(MultilineField):
     read_only=rdonly(parent.vmodel, parent.vname)
 
 enamldef MultilineVar(Var):
-    MultilineExt: pass
+    alias ext
+    MultilineExt: ext:
+        pass
 
 ################### BOOLEANS #########################
 enamldef BoolExt(CheckBox):
-    """boolean shown as CheckBox"""
-    checked := parent.vvalue
+    """boolean shown as CheckBox with extensions for read_only option"""
+    attr read_only : bool = rdonly(parent.vmodel, parent.vname)
+    checked << parent.vvalue
+    clicked ::
+        if not read_only:
+            parent.vvalue=self.checked
+        else:
+            self.checked=parent.vvalue
 
 enamldef BoolVar(Var):
-    BoolExt: pass
+    alias ext
+    BoolExt: ext:
+        pass
 
 ##################### INTS ##############################
 enamldef UnitIntFieldExt(UnitIntField):
@@ -93,7 +110,9 @@ enamldef UnitIntFieldExt(UnitIntField):
     maximum=int(get_tag(parent.vmodel, parent.vname, 'high', 2147483647))
 
 enamldef UnitIntVar(Var):
-    UnitIntFieldExt: pass
+    alias ext
+    UnitIntFieldExt: ext:
+        pass
 
 enamldef UnitSpinBoxExt(UnitSpinBox):
     """integer shown as SpinBox with units"""
@@ -105,14 +124,16 @@ enamldef UnitSpinBoxExt(UnitSpinBox):
     maximum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'high', 2147483647))
 
 enamldef UnitSpinBoxVar(Var):
-    UnitSpinBoxExt: pass
+    alias ext
+    UnitSpinBoxExt: ext:
+        pass
 
 ##################### FLOATS ####################################################
 def floater(value):
     if value is None:
         return value
     return float(value)
-    
+
 enamldef UnitFloatExt(UnitFloatField):
     """extends Var for float types"""
     uvalue:=parent.vvalue
@@ -122,31 +143,48 @@ enamldef UnitFloatExt(UnitFloatField):
     minimum=floater(get_tag(parent.vmodel, parent.vname, 'low'))
     maximum=floater(get_tag(parent.vmodel, parent.vname, 'high'))
     read_only=rdonly(parent.vmodel, parent.vname)
+
 enamldef UnitFloatVar(Var):
-    UnitFloatExt: pass
+    alias ext
+    UnitFloatExt: ext:
+        pass
 
 ################### RANGES #################################
-enamldef UnitRangeExt(UnitIntField):uif:
+def get_minimum(obj, param):
+    low=get_tag(obj, param, "low")
+    if low is not None:
+        return low
+    return obj.get_member(param).validate_mode[1][0]
+
+def get_maximum(obj, param):
+    high=get_tag(obj, param, "high")
+    if high is not None:
+        return high
+    return obj.get_member(param).validate_mode[1][1]
+
+enamldef UnitRangeExt(UnitIntField): uif:
     """a Range control with units"""
     uvalue:=parent.vvalue
     unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
     unit_factor=int(get_tag(parent.vmodel, parent.vname, "unit_factor", 1))
-    minimum = sel_slider.minimum
-    maximum = sel_slider.maximum
-    #tracking
+    minimum = get_minimum(parent.vmodel, parent.vname)
+    maximum = get_maximum(parent.vmodel, parent.vname)
+    attr tracking : bool = get_tag(parent.vmodel, parent.vname, "tracking", False)
     Label: min_lbl:
         text << str(sel_slider.minimum/uif.unit_factor)
     Slider: sel_slider:
-        minimum = parent.parent.vmodel.get_member(parent.parent.vname).validate_mode[1][0]
-        maximum = parent.parent.vmodel.get_member(parent.parent.vname).validate_mode[1][1]
-        value :=parent.parent.vvalue
-        tracking = get_tag(parent.parent.vmodel, parent.parent.vname, "tracking", False)
+        minimum = uif.minimum
+        maximum = uif.maximum
+        value :=uif.uvalue
+        tracking = uif.tracking
     Label: max_lbl:
         text << str(sel_slider.maximum/uif.unit_factor)
 
 enamldef UnitRangeVar(Var):
-    UnitRangeExt: pass
+    alias ext
+    UnitRangeExt: ext:
+        pass
 
 from enaml.stdlib.slider_transform import FloatTransform
 enamldef UnitFloatRangeExt(UnitFloatField): uff:
@@ -155,22 +193,26 @@ enamldef UnitFloatRangeExt(UnitFloatField): uff:
     unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
     unit_factor=float(get_tag(parent.vmodel, parent.vname, "unit_factor", 1.0))
-    minimum = sel_slider.minimum
-    maximum = sel_slider.maximum
+    minimum = get_minimum(parent.vmodel, parent.vname)
+    maximum = get_maximum(parent.vmodel, parent.vname)
+    attr tracking : bool = get_tag(parent.vmodel, parent.vname, "tracking", False)
+    attr precision : int = get_tag(parent.vmodel, parent.vname, 'precision', 100)
     Label: min_lbl:
             text << str(ft.minimum)
     Slider: sel_slider:
-        tracking = True
+        tracking = uff.tracking #get_tag(vmodel, vname, "tracking", False)
         FloatTransform: ft:
-            minimum = parent.parent.parent.vmodel.get_member(parent.parent.parent.vname).validate_mode[1][0]
-            maximum = parent.parent.parent.vmodel.get_member(parent.parent.parent.vname).validate_mode[1][1]
-            value :=parent.parent.parent.vvalue
-            precision=get_tag(parent.parent.parent.vmodel, parent.parent.parent.vname, 'precision', 100)
+            minimum = uff.minimum
+            maximum =  uff.maximum
+            value := uff.uvalue
+            precision= uff.precision
     Label: max_lbl:
         text << str(ft.maximum)
 
 enamldef UnitFloatRangeVar(Var):
-    UnitFloatRangeExt: pass
+    alias ext
+    UnitFloatRangeExt: ext:
+        pass
 
 ################### LISTS #####################################
 
@@ -192,73 +234,126 @@ enamldef ListScrollVar(Var):
     ListScrollExt: pass
 
 ######################## ENUM ################################
-enamldef EnumExt(HGroup):
+enamldef EnumExt(aHGroup):
     """extends Var for Enum"""
-    ObjectCombo:
+    alias object_combo
+    alias label
+    ObjectCombo: object_combo:
         items = list(parent.parent.vmodel.get_member(parent.parent.vname).items)
         selected := parent.parent.vvalue
-    Conditional:
-        condition = get_tag(parent.parent.vmodel, parent.parent.vname, "show_value", True)
-        Label:
-            text <<  unicode(get_map(parent.parent.vmodel, parent.parent.vname, parent.parent.vvalue))
+    Label: label:
+        visible=get_tag(parent.parent.vmodel, parent.parent.vname, "show_value", True)
+        text <<  unicode(get_map(parent.parent.vmodel, parent.parent.vname, parent.parent.vvalue))
 
 enamldef EnumVar(Var):
-    EnumExt: pass
+    alias ext
+    EnumExt: ext:
+        pass
 
 
 ################test window##########################
 if __name__=="__main__":
-    from atom.api import Bool, Int, Typed, List, Coerced, Enum, Callable, Float, Str, Unicode, Range, FloatRange, Instance, Atom, cached_property, Property
-
+    from atom.api import observe, Bool, Int, Typed, List, Coerced, Enum, Callable, Float, Str, Unicode, Range, FloatRange, Instance, Atom, cached_property, Property
+    from taref.core.atom_extension import tag_Property, get_map, reset_property
     class Test(Atom):
         t_field=Unicode("unicode").tag(desc="FieldVar for Unicode and String")
         t_str=Str("str").tag(desc="MultilineVar for Unicode and Str")
+
+        def _observe_t_field(self, change):
+            self.get_member("t_readonly_field").reset(self)
+
+        @tag_Property(desc="demonstrates readonly version of field for readonly property")
+        def t_readonly_field(self):
+            return self.t_field
+
+
         t_bool=Bool(True).tag(desc="default boolean template")
+
+        def _observe_t_bool(self, change):
+            reset_property(self, "t_readonly_bool")
+
+        @tag_Property(desc="demonstrates readonly version of bool for readonly property")
+        def t_readonly_bool(self):
+            return self.t_bool
+
+
         t_int=Int(10).tag(unit_factor=10, show_value=True, unit="x10", low=20, high=50, desc="UnitIntVar with unit, unit_factor and show_value")
-        t_spinbox=Int(1).tag(desc="UnitSpinBoxVar for ints demonstrating low and high tags", low=2, high=5)
+        t_range=Range(0,5,1)
+        def _observe_t_int(self, change):
+            self.get_member("t_readonly_int").reset(self)
+
+        @tag_Property(desc="demonstrates readonly version of int for readonly property")
+        def t_readonly_int(self):
+            return self.t_int
+
         t_float=Float(1).tag(desc="UnitFloatVar for floats with unit, unit_factor, show_value, low and high tags",
                             unit="/2", unit_factor=0.5, show_value=True, low=3.0, high=5.0)
-        t_range=Range(0,5,1)
-        t_floatrange=FloatRange(0.0, 5.0, 1.0)
-        t_list=List(default=[1,2,3])
-        t_enum=Enum("a", "b", "c").tag(mapping=dict(a=4, b=5, c=6))
+        t_floatrange=FloatRange(0.0, 5.0, 1.0).tag(tracking=True)
 
-        @cached_property
+        def _observe_t_float(self, change):
+            self.get_member("t_readonly_float").reset(self)
+
+        @tag_Property(desc="demonstrates readonly version of int for readonly property")
+        def t_readonly_float(self):
+            return self.t_float
+
+        t_list=List(default=[1,2,3])
+        t_enum=Enum("a", "b", "c")
+
+        @tag_Property(desc="mapping of t_enum displayed as Label")
         def t_enum_mapping(self):
             return dict(a=1, b=2, c=3)
 
-        @cached_property
-        def t_prop(self):
-            return self.t_enum
-
-        def _observe_t_enum(self, change):
-            self.get_member("t_prop").reset(self)
+        @observe("t_field", "t_str", "t_bool", "t_int", "t_spinbox", "t_float", "t_range", "t_floatrange", "t_enum")
+        def report_change(self, change):
+            if not get_tag(self, change["name"], "tracking", False):
+                log_debug(change)
     t=Test()
 
 enamldef Main(Window):
-    attr vmodel = t
-    VarVGroup:
-        FieldVar:
-            vname="t_field"
-        MultilineVar:
-            vname="t_str"
-        BoolVar:
-            vname="t_bool"
-        UnitIntVar:
-            vname="t_int"
-        UnitSpinBoxVar:
-            vname="t_spinbox"
-        UnitFloatVar:
-            vname="t_float"
-        UnitRangeVar:
-            vname="t_range"
-        UnitFloatRangeVar:
-            vname="t_floatrange"
-        ListScrollVar:
-            vname="t_list"
-        EnumVar:
-            vname="t_enum"
-        LabelVar:
-            vname="t_enum_mapping"
-        ReadOnlyVar:
-            vname="t_prop"
+    attr agent = t
+    Container:
+        ScrollArea:
+            VGroup:
+                attr vmodel = agent
+                FieldVar:
+                    vname="t_field"
+                MultilineVar:
+                    vname="t_str"
+                FieldVar:
+                    vname="t_readonly_field"
+                MultilineVar:
+                    vname="t_readonly_field"
+
+                BoolVar:
+                    vname="t_bool"
+                BoolVar:
+                    vname="t_readonly_bool"
+
+                UnitIntVar:
+                    vname="t_int"
+                UnitIntVar:
+                    vname="t_readonly_int"
+                UnitRangeVar:
+                    vname="t_int"
+                UnitSpinBoxVar:
+                    vname="t_int"
+                UnitRangeVar:
+                    vname="t_range"
+
+
+                UnitFloatVar:
+                    vname="t_float"
+                UnitFloatRangeVar:
+                    vname="t_float"
+                    label.tool_tip="Can use FloatRange with Float if tags low and high are specified"
+                UnitFloatRangeVar:
+                    vname="t_floatrange"
+
+                ListScrollVar:
+                    vname="t_list"
+                EnumVar:
+                    vname="t_enum"
+                LabelVar:
+                    vname="t_enum_mapping"
+

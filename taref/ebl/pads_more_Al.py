@@ -8,7 +8,7 @@ Created on Mon Dec  8 10:19:24 2014
 from atom.api import Float, Typed
 from taref.ebl.polygon_backbone import horiz_refl, vert_refl, horizvert_refl, rotate, sP, sT, sCT
 from taref.ebl.polygons import EBL_Polygons
-from taref.core.backbone import private_property
+from taref.core.atom_extension import private_property, reset_property
 from taref.ebl.pads import Test_Pads
 
 class Al_PADS(EBL_Polygons):
@@ -335,14 +335,14 @@ class PADS(EBL_Polygons):
     def polylist(self):
         """creates pads by using reflection on mark box and making bond pads"""
         self.verts=[]
-        self.reset_property("_s_bond_pad_TL")
+        reset_property(self, "_s_bond_pad_TL")
         self.verts.extend(self._s_bond_pad_TL)
         self.verts.extend(horiz_refl(self._s_bond_pad_TL))
         self.verts.extend(rotate(horiz_refl(self._s_bond_pad_TL), 90))
         self.verts.extend(vert_refl(rotate(horiz_refl(self._s_bond_pad_TL), 90)))
-        self.reset_property("_s_labelbox_TL")
+        reset_property(self, "_s_labelbox_TL")
         self.verts.extend(self._s_labelbox_TL)
-        self.reset_property("_s_markbox_BL")
+        reset_property(self, "_s_markbox_BL")
         self.verts.extend(self._s_markbox_BL)
         self.verts.extend(horiz_refl(self._s_markbox_BL))
         self.verts.extend(horizvert_refl(self._s_markbox_BL))

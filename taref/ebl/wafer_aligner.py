@@ -8,7 +8,7 @@ Created on Wed Jan 13 21:08:46 2016
 from taref.ebl.polygons import EBL_Polygons
 from taref.ebl.polygon_backbone import sP, rotate, sPoly, sTransform
 from atom.api import Float, Typed, Int
-from taref.core.backbone import private_property
+from taref.core.atom_extension import private_property, reset_property
 
 
 class Wafer_Width_Checker(EBL_Polygons):
@@ -23,7 +23,7 @@ class Wafer_Width_Checker(EBL_Polygons):
     @private_property
     def polylist(self):
         self.verts=[]
-        self.reset_property("_s_width_checker")
+        reset_property(self, "_s_width_checker")
         self.verts.extend(rotate(self._s_width_checker, self.angle))
         return self.verts
 
@@ -63,7 +63,7 @@ class Wafer_Aligner(EBL_Polygons):
     @private_property
     def polylist(self):
         self.verts=[]
-        self.reset_property("_s_wafer_aligner")
+        reset_property(self, "_s_wafer_aligner")
         self.verts.extend(rotate(self._s_wafer_aligner, self.angle))
         return self.verts
 
@@ -87,7 +87,7 @@ class Wafer_Aligner(EBL_Polygons):
                (-self.flat_length/2.0, -3.0*self.linewidth/2.0),
                (self.flat_length/2.0, -3.0*self.linewidth/2.0),
                (self.flat_length/2.0, -self.linewidth/2.0)], vs=vs)
-        self.reset_property("_s_marker")
+        reset_property(self, "_s_marker")
         for n in range(self.num_marker):
             sTransform(self._s_marker, (n-self.num_marker/2)*self.flat_length/self.num_marker, vs=vs)
         sTransform(self._s_marker, -self.flat_length/2.0-self.linewidth/2.0, theta=90.0, vs=vs)

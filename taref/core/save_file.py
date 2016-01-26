@@ -24,7 +24,7 @@ class Save_File(Filer):
     save_event=Event()
 
     def show(self):
-        show(self)
+        shower(self)
 
     def _default_data_buffer(self):
         return OrderedDict()

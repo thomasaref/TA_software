@@ -15,12 +15,12 @@ from taref.core.filer_e import ReadWrap, SaveWrap
 template UserInstrView(instr_view: "Read_File"):
     """ Displays a read file interface"""
     ReadWrap:
-        filer:= instr
+        filer:= parent.vmodel
 
 template UserInstrView(instr_view: "Save_File"):
     """Displays a save file interface"""
     SaveWrap:
-        filer:=instr
+        filer:=parent.vmodel
 
 #from taref.ebl.EBL_enaml import EBContWrap
 #template UserInstrView(instr_view: "Polyer"):
@@ -71,4 +71,4 @@ template UserInstrView(instr_view):
     """ This default specialization displays read-only text for the value."""
     Field:
         read_only = True
-        text << unicode((instr, vmodel, vname))
+        text << unicode(parent.vmodel)

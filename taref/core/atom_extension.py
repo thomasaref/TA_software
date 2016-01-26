@@ -80,7 +80,7 @@ def call_func(obj, name, **kwargs):
     elif name in get_all_params(obj) and hasattr(obj, "_get_"+name):
         return getattr(obj, "_get_"+name)(obj, **kwargs)
     return getattr(obj, name)(obj, **kwargs)
-     
+
 def reset_property(obj, name):
     obj.get_member(name).reset(obj)
 
@@ -194,14 +194,6 @@ def get_inv(obj, name, value):
             return {v:k for k, v in mapping.iteritems()}[value]
     return value
 
-class tag_Property(object):
-    """disposable decorator class that returns a cached Property tagged with kwargs"""
-    def __init__(self, cached=True, **kwargs):
-        self.kwargs=kwargs
-        self.cached=cached
-
-    def __call__(self, func):
-        return Property(func, cached=self.cached).tag(**self.kwargs)
 
 def private_property(fget):
     """ A decorator which converts a function into a cached Property tagged as private.
@@ -211,11 +203,24 @@ def private_property(fget):
 
 class tag_Callable(object):
     """disposable decorator class that returns a Callable tagged with kwargs"""
+    default_kwargs={}
     def __init__(self, **kwargs):
+        """adds default_kwargs if not specified in kwargs"""
+        for key in self.default_kwargs:
+            kwargs[key]=kwargs.get(key, self.default_kwargs[key])
         self.kwargs=kwargs
 
     def __call__(self, func):
         return Callable(func).tag(**self.kwargs)
+
+class tag_Property(tag_Callable):
+    """disposable decorator class that returns a cached Property tagged with kwargs"""
+    def __init__(self, cached=True, **kwargs):
+        super(tag_Property, self).__init__(**kwargs)
+        self.cached=cached
+
+    def __call__(self, func):
+        return Property(func, cached=self.cached).tag(**self.kwargs)
 
 def get_reserved_names(obj):
     """reserved names not to perform standard logging and display operations on,
@@ -252,7 +257,7 @@ def set_attr(self, name, value, **kwargs):
 
 def set_log(obj, name, value):
    """called when parameter of given name is set to value i.e. instr.parameter=value. Customized messages for different types. Also saves data"""
-   if get_tag(obj, name, 'log', True):
+   if get_tag(obj, name, 'log', True) and not get_tag(obj, name, "tracking", False):
        label=get_tag(obj, name, 'label', name)
        unit=get_tag(obj, name, 'unit', "")
        obj_name=getattr(obj, "name", "NO_NAME")

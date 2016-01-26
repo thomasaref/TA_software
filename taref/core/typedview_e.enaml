@@ -23,7 +23,9 @@ enamldef DynExt(DynamicTemplate):
     args << (get_type(parent.vmodel, parent.vname), get_tag(parent.vmodel, parent.vname, "spec"))
 
 enamldef DynVar(Var):
-    DynExt: pass
+    alias ext
+    DynExt: ext:
+        pass
 
 template TypedView(AttrType, spec):
     """default template for unknown type and spec"""
@@ -101,14 +103,18 @@ enamldef CoercedExt(DynamicTemplate):
     args = (type(parent.vvalue), get_tag(parent.vmodel, parent.vname, "spec"))
 
 enamldef CoercedVar(Var):
-    CoercedExt: pass
+    alias ext
+    CoercedExt: ext:
+        pass
 
 template TypedView(AttrType: Coerced, spec):
-    """default template for Enum"""
+    """default template for Coerced"""
     CoercedExt: pass
 
 template TypedView(AttrType: Property, spec):
+    """default template for Property goes through Coerced"""
     TypedView(Coerced, spec): pass
+
 ################### LISTS #####################################
 enamldef ListExt(aHGroup):
     """requires list entries to all be of same type"""
@@ -120,6 +126,8 @@ enamldef ListExt(aHGroup):
         maximum = max(0, len(getattr(vmodel, vname))-1)
     CoercedExt:
         pass
+enamldef ListSpinBoxVar(Var):
+    ListExt: pass
 
 template TypedView(AttrType: List, spec):
     """default template for List"""
@@ -163,9 +171,10 @@ enamldef CallableExt(aHGroup):
     attr vmodel=parent.vmodel
     attr vname=parent.vname
     attr vvalue=parent.vvalue
-    PushButton:
+    alias push_button : pb
+    PushButton: pb:
         text = 'Run'
-        clicked :: 
+        clicked ::
             if not isinstance(vvalue, MethodType):
                 vvalue(vmodel, *[getattr(vmodel, name) for name in get_run_params(vvalue)])
             else:
@@ -182,7 +191,9 @@ enamldef CallableExt(aHGroup):
                         vname=loop_item
 
 enamldef CallableVar(Var):
-    CallableExt: pass
+    alias ext
+    CallableExt: ext:
+        pass
 
 template TypedView(AttrType: Callable, spec):
     """default template for Enum"""
@@ -195,26 +206,30 @@ template InstrView(instr_view):
         pass
 
 template InstrView(instr_view: "Auto"):
-    Container:
-        attr vmodel=parent.vmodel
-        Looper:
-            iterable<<get_main_params(parent.vmodel)
-            DynVar:
-                vname=loop_item
+    Looper:
+        iterable<<get_main_params(parent.vmodel)
+        DynVar:
+            vname=loop_item
 
-enamldef InstrHolder(DynamicTemplate):
+enamldef InstrHolder(Container):
     attr vmodel=parent.vmodel
-    base = InstrView
-    args=(getattr(vmodel, "view", "Auto"), )
+    padding=0
+    DynamicTemplate:
+        base = InstrView
+        args=(getattr(vmodel, "view", "Auto"), )
 
 
 ##################### TYPED ########################################
-enamldef TypedExt(InstrHolder):
+enamldef TypedExt(GroupBox):
     """extends Var for Typed"""
-    vmodel:=parent.vvalue
+    title=get_tag(vmodel, vname, 'group_label', vname+" parameters:")
+    InstrHolder:
+        vmodel:=parent.parent.vvalue
 
 enamldef TypedVar(Var):
-    TypedExt: pass
+    alias ext
+    TypedExt: ext:
+        pass
 
 template TypedView(AttrType: Typed, spec):
     """interface for a Typed member."""
@@ -226,11 +241,36 @@ template TypedView(AttrType: Instance):
 ################test window##########################
 
 if __name__=="__main__":
-    from atom.api import Atom, Value, cached_property, ContainerList, Coerced
+    from atom.api import Value, ContainerList
+    from atom.api import observe, Bool, Int, Typed, List, Coerced, Enum, Callable, Float, Str, Unicode, Range, FloatRange, Instance, Atom, cached_property, Property
+    from taref.core.atom_extension import tag_Property, get_map, reset_property
+
+    class subtest(Atom):
+        sub_int=Int()
+        sub_Float=Float()
+
     class Test(Atom):
+        main_params=["t_value", "t_field", "t_str", "t_readonly_field", "t_readonly_str"]
+        t_typed=Typed(subtest, ())
         t_value=Value().tag(desc="default template for unknown type")
         t_field=Unicode("unicode").tag(desc="default template for Unicode and String")
         t_str=Str("str").tag(desc="spec=multiline template for Unicode and Str", spec="multiline")
+
+        def _observe_t_field(self, change):
+            self.get_member("t_readonly_field").reset(self)
+
+        @tag_Property(desc="demonstrates readonly version of field for readonly property", spec="multiline")
+        def t_readonly_field(self):
+            return self.t_field
+
+        def _observe_t_str(self, change):
+            self.get_member("t_readonly_str").reset(self)
+
+        @tag_Property(desc="demonstrates readonly version of multiline for readonly property", spec="multiline")
+        def t_readonly_str(self):
+            return self.t_str
+
+
         t_int=Int(20).tag(unit_factor=10, show_value=True, unit="x10", desc="default template for Ints showing unit, unit_factor and show_value")
         t_spinbox=Int(1).tag(desc="spec=spinbox template for Ints demonstrating low and high tags", spec="spinbox", low=2, high=5)
         t_bool=Bool(True).tag(desc="default boolean template")
@@ -262,14 +302,114 @@ enamldef Main(Window):
     VarVGroup:
         DynVar:
             vname="t_int"
-            tool_tip="demonstrating separate use of Var for custom enaml"
+            tool_tip="demonstrating separate use of Var for custom enaml layouts"
         CallableVar:
             vname="t_callable"
+            ext.push_button.text="go"
         CoercedVar:
             vname="t_coerced"
+        TypedVar:
+            ext.title="yo"
+            vname="t_typed"
         ScrollArea:
             attr vmodel=parent.vmodel
             InstrHolder:
                 pass #vmodel=instr
 
+################test window##########################
+if __name__=="__main2__":
+
+    class Test(Atom):
+
+
+
+        t_bool=Bool(True).tag(desc="default boolean template")
+
+        def _observe_t_bool(self, change):
+            reset_property(self, "t_readonly_bool")
+
+        @tag_Property(desc="demonstrates readonly version of bool for readonly property")
+        def t_readonly_bool(self):
+            return self.t_bool
+
+
+        t_int=Int(10).tag(unit_factor=10, show_value=True, unit="x10", low=20, high=50, desc="UnitIntVar with unit, unit_factor and show_value")
+        t_range=Range(0,5,1)
+        def _observe_t_int(self, change):
+            self.get_member("t_readonly_int").reset(self)
+
+        @tag_Property(desc="demonstrates readonly version of int for readonly property")
+        def t_readonly_int(self):
+            return self.t_int
+
+        t_float=Float(1).tag(desc="UnitFloatVar for floats with unit, unit_factor, show_value, low and high tags",
+                            unit="/2", unit_factor=0.5, show_value=True, low=3.0, high=5.0)
+        t_floatrange=FloatRange(0.0, 5.0, 1.0).tag(tracking=True)
+
+        def _observe_t_float(self, change):
+            self.get_member("t_readonly_float").reset(self)
+
+        @tag_Property(desc="demonstrates readonly version of int for readonly property")
+        def t_readonly_float(self):
+            return self.t_float
+
+        t_list=List(default=[1,2,3])
+        t_enum=Enum("a", "b", "c")
+
+        @tag_Property(desc="mapping of t_enum displayed as Label")
+        def t_enum_mapping(self):
+            return dict(a=1, b=2, c=3)
+
+        @observe("t_field", "t_str", "t_bool", "t_int", "t_spinbox", "t_float", "t_range", "t_floatrange", "t_enum")
+        def report_change(self, change):
+            if not get_tag(self, change["name"], "tracking", False):
+                log_debug(change)
+    t=Test()
+
+#enamldef Main(Window):
+#    attr agent = t
+#    Container:
+#        ScrollArea:
+#            VGroup:
+#                attr vmodel = agent
+#                FieldVar:
+#                    vname="t_field"
+#                MultilineVar:
+#                    vname="t_str"
+#                FieldVar:
+#                    vname="t_readonly_field"
+#                MultilineVar:
+#                    vname="t_readonly_field"
+#
+#                BoolVar:
+#                    vname="t_bool"
+#                BoolVar:
+#                    vname="t_readonly_bool"
+#
+#                UnitIntVar:
+#                    vname="t_int"
+#                UnitIntVar:
+#                    vname="t_readonly_int"
+#                UnitRangeVar:
+#                    vname="t_int"
+#                UnitSpinBoxVar:
+#                    vname="t_int"
+#                UnitRangeVar:
+#                    vname="t_range"
+#
+#
+#                UnitFloatVar:
+#                    vname="t_float"
+#                UnitFloatRangeVar:
+#                    vname="t_float"
+#                    label_tool_tip="Can use FloatRange with Float if tags low and high are specified"
+#                UnitFloatRangeVar:
+#                    vname="t_floatrange"
+#
+#                ListScrollVar:
+#                    vname="t_list"
+#                EnumVar:
+#                    vname="t_enum"
+#                LabelVar:
+#                    vname="t_enum_mapping"
 

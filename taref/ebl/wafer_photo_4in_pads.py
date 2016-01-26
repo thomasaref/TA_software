@@ -9,7 +9,7 @@ from taref.ebl.pads_more_Al import PADS
 from taref.ebl.wafer_labels import Wafer_Labels, Digit
 from taref.ebl.cross import Cross, Symmetric_Cross, Symmetric_Inverse_Cross
 from taref.ebl.rectangle import Rectangle#, Dashed_Line_Horiz
-from taref.ebl.wafer_aligner import Wafer_Aligner, Wafer_Width_Checker
+from taref.ebl.wafer_aligner import Wafer_Aligner#, Wafer_Width_Checker
 from taref.core.log import log_debug
 
 if __name__=="__main__":
