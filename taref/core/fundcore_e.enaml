@@ -40,6 +40,11 @@ enamldef aGroupBox(GroupBox):
     """a non-padded GroupBox"""
     padding=0
 
+def None_div(numerator, denominator):
+    if numerator is None:
+        return numerator
+    return numerator/denominator
+
 enamldef UnitIntField(aHGroup):
     """ A field that only accept integer inputs and normalizes them by a unit factor"""
     attr minimum = None
@@ -50,8 +55,10 @@ enamldef UnitIntField(aHGroup):
     attr show_uvalue : bool = False
     func calc_uvalue(value, unit_factor):
         self.uvalue = int(value)*unit_factor
-    alias read_only : intf.read_only
-    Field: intf:
+    attr read_only : bool = False
+
+    Field:
+        read_only=parent.read_only
         activated::
             if not validator.validate(text):
                 if parent.minimum is None:
@@ -64,7 +71,7 @@ enamldef UnitIntField(aHGroup):
         text << unicode(uvalue/unit_factor)
         text ::
             calc_uvalue(text, unit_factor)
-        validator << IntValidator(base=10, minimum=minimum/unit_factor, maximum=maximum/unit_factor)
+        validator << IntValidator(base=10, minimum=None_div(minimum,unit_factor), maximum=None_div(maximum, unit_factor))
 
     Label: ul:
         text = unicode(unit)
@@ -100,6 +107,7 @@ enamldef UnitSpinBox(aHGroup):
         Label: vl:
             text << unicode("({})".format(uvalue))
 
+    
 enamldef UnitFloatField(aHGroup):
     """a field for floats with units"""
     attr minimum = None
@@ -109,11 +117,13 @@ enamldef UnitFloatField(aHGroup):
     attr unit = ""
     attr uvalue : float = 0.0
     attr show_uvalue : bool = False
-
+    attr read_only : bool = False
+    
     func calc_uvalue(text, unit_factor):
         self.uvalue=float(text)*unit_factor
 
     Field:
+        read_only=parent.read_only
         activated::
             if not validator.validate(text):
                 if parent.minimum is None:
@@ -125,7 +135,7 @@ enamldef UnitFloatField(aHGroup):
                     parent.uvalue=parent.minimum
         text << unicode(uvalue/unit_factor)
         text :: calc_uvalue(text, unit_factor)
-        validator << FloatValidator(minimum=minimum/unit_factor, maximum=maximum/unit_factor, allow_exponent=allow_exponent)
+        validator << FloatValidator(minimum=None_div(minimum, unit_factor), maximum=None_div(maximum,unit_factor), allow_exponent=allow_exponent)
 
     Label:
         text = unicode(unit)

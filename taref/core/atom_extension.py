@@ -14,6 +14,7 @@ from taref.core.log import log_debug, log_info
 from functools import wraps
 from enaml.application import deferred_call
 from threading import Thread
+from types import MethodType
 
 
 _MAPPING_SUFFIX_="_mapping"
@@ -56,29 +57,37 @@ def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
         return [x for x in search_list if none_value!=get_tag(obj, x, key, none_value)]
     return [x for x in search_list if key_value==get_tag(obj, x, key, none_value)]
 
-def get_view(obj, default_view, default_name="NO_NAME"):
-    view=getattr(obj, "view_window", default_view)
-    view.name=getattr(obj, "name", default_name)
-    if view.title=="":
-        view.title=view.name
-    return view
+def get_type(obj, name):
+    """returns type of member with given name, with possible override via tag typer"""
+    typer=type(obj.get_member(name))
+    return get_tag(obj, name, "typer", typer)
 
 def get_property_names(obj):
     if hasattr(obj, "property_names"):
         return obj.property_names
-    return [name for name in get_all_params(obj) if type(obj.get_member(name))==Property]
+    return [name for name in get_all_params(obj) if type(obj.get_member(name)) is Property]
 
+def get_property_values(obj):
+    if hasattr(obj, "property_values"):
+        return obj.property_values
+    return [obj.get_member(name) for name in get_all_params(obj) if type(obj.get_member(name)) is Property]
+
+def call_func(obj, name, **kwargs):
+    """calls a func using keyword assignments. If name corresponds to a Property, calls the get func.
+    otherwise, if name_mangled func "_get_"+name exists, calls that. Finally calls just the name if these are not the case"""
+    if name in get_property_names(obj):
+        return obj.get_member(name).fget(obj, **kwargs)
+    elif name in get_all_params(obj) and hasattr(obj, "_get_"+name):
+        return getattr(obj, "_get_"+name)(obj, **kwargs)
+    return getattr(obj, name)(obj, **kwargs)
+     
 def reset_property(obj, name):
     obj.get_member(name).reset(obj)
 
 def reset_properties(obj):
     """resets all  properties"""
-    if hasattr(obj, "property_values"):
-        for item in obj.property_values:
-            item.reset(obj)
-    else:
-        for item in [obj.get_member(name) for name in get_all_params(obj) if type(obj.get_member(name))==Property]:
-            item.reset(obj)
+    for item in get_property_values(obj):
+        item.reset(obj)
 
 def lowhigh_check(obj, name, value):
     """can specify low and high tags to keep float or int within a range."""
@@ -134,28 +143,6 @@ def log_func(func, pname=None):
     new_func.run_params=get_run_params(func)
     return new_func
 
-def param_decider(self, obj, param, value):
-    if param==self.name:
-        return value
-    return getattr(obj, param)
-
-def property_func(func):
-    #name_list=func.func_name.split("_get_")
-    #if name_list[0]=="":
-    #    name=name_list[1]
-    #else:
-    #    name=name_list[0]
-    new_func=log_func(func)
-    new_func.fset_list=[]
-    def setter(set_func):
-        s_func=log_func(func, new_func.pname)
-        new_func.fset_list.append(s_func)
-        return s_func
-    new_func.setter=setter
-    return new_func
-
-
-from types import MethodType
 def make_instancemethod(obj, func, name=None):
     func=log_func(func, name)
     setattr(obj, func.pname, MethodType(func, obj, type(obj)))
@@ -179,13 +166,6 @@ def get_run_params(f, skip_first=True):
     if skip_first:
         return list(f.func_code.co_varnames[1:argcount])
     return list(f.func_code.co_varnames[0:argcount])
-
-
-
-def get_type(obj, name):
-    """returns type of member with given name, with possible override via tag typer"""
-    typer=type(obj.get_member(name))
-    return get_tag(obj, name, "typer", typer)
 
 def get_map(obj, name, value=None, reset=False):
     """gets the mapped value specified by the property mapping and returns the attribute value if it doesn't exist
@@ -223,10 +203,6 @@ class tag_Property(object):
     def __call__(self, func):
         return Property(func, cached=self.cached).tag(**self.kwargs)
 
-class tagged_property(tag_Property):
-    def __call__(self, func):
-        return super(tagged_property, self).__call__(property_func(func))
-
 def private_property(fget):
     """ A decorator which converts a function into a cached Property tagged as private.
     Improves performance greatly over property!
@@ -240,9 +216,6 @@ class tag_Callable(object):
 
     def __call__(self, func):
         return Callable(func).tag(**self.kwargs)
-
-
-
 
 def get_reserved_names(obj):
     """reserved names not to perform standard logging and display operations on,
@@ -271,20 +244,11 @@ def get_main_params(obj):
         return obj.main_params
     return get_all_main_params(obj)
 
-#def get_attr(obj, name, none_value=None):
-#    """returns the attribute if the obj has it and the none_value if it does not"""
-#    return getattr(obj, name, none_value)
-
 def set_attr(self, name, value, **kwargs):
     """utility function for setting tags while setting value"""
     setattr(self, name, value)
     if kwargs!={}:
         set_tag(self, name, **kwargs)
-
-#def data_save(obj, name, value):
-#    """data saving. does nothing if data_save is not defined"""
-#    if hasattr(obj, "data_save"):
-#        obj.datasave(name, value)
 
 def set_log(obj, name, value):
    """called when parameter of given name is set to value i.e. instr.parameter=value. Customized messages for different types. Also saves data"""
@@ -323,51 +287,6 @@ def set_log(obj, name, value):
    if hasattr(obj, "data_save"):
        obj.datasave(name, value)
 
-def _setup_callables(self, param, typer):
-    if typer == Callable:
-        func=getattr(self, param)
-        if func is not None:
-            make_instancemethod(self, func)
-
-def fset_maker(obj, fget, name):
-    def setit(obj, value):
-        argvalues=[]
-        for fset in fget.fset_list:
-            for param in fset.run_params:
-                if param==name:
-                    argvalues.append(value)
-                else:
-                    argvalues.append(getattr(obj, param))
-            setattr(obj, fset.name, fset(obj, *argvalues))
-    return setit
-
-def _setup_property_fs(self, param, typer):
-    """sets up property_f's pointing obj at self and setter at functions decorated with param.fget.setter"""
-    if typer==Property:
-        fget =getattr(self.get_member(param), "fget")
-        if getattr(fget, "fset_list", []) != []:
-            self.get_member(param).setter(fset_maker(self, fget, param))
-
-def _setup_ranges(self, param, typer):
-    """autosets low/high tags for Range and FloatRange"""
-    if typer in [Range, FloatRange]:
-        self.set_tag(param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
-
-def _setup_units(self, param, typer):
-    """autosets units using unit_dict"""
-    if typer in [Int, Float, Range, FloatRange, Property]:
-        if get_tag(self, param, "unit", False) and (get_tag(self, param, "unit_factor") is None):
-            unit=get_tag(self, param, "unit", "")[0]
-            if unit in self.unit_dict:
-                unit_factor=get_tag(self, param, "unit_factor", getattr(self, "unit_dict", UNIT_DICT)[unit])
-                set_tag(self, param, unit_factor=unit_factor)
-
-def extra_setup(self, param, typer):
-    """sets up property_fs, ranges, and units"""
-    _setup_callables(self, param, typer)
-    _setup_property_fs(self, param, typer)
-    _setup_ranges(self, param, typer)
-    _setup_units(self, param, typer)
 
 def code_caller(topdog, code, *args, **kwargs):
     result=code(*args, **kwargs)

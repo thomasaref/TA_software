@@ -7,104 +7,40 @@ Created on Tue Jan  5 01:08:32 2016
 
 from enaml.widgets.api import Window, VGroup, Form, Label, ObjectCombo
 from taref.core.fundcore_e import UnitIntField, aHGroup, aWindow, UnitFloatField
-
-    #def _default_main_params(self):
-    #    return ["ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct", 
-    #            "material", "Dvv", "K2", "vf", "epsinf"]
+from taref.core.var_e import EnumVar, UnitFloatVar, UnitIntVar
 
 enamldef IDT_View(Window):
     attr idt
 
     Form:
-        Label:
-            text="finger type"
-        ObjectCombo:
-            items=list(idt.get_member("ft").items)
-            selected:=idt.ft
-
-        Label:
-            text="f0"
-        UnitFloatField:
-            uvalue:=idt.f0
-            unit="GHz"
-            unit_factor=1.0e9
- 
-        Label:
-            text="lbda0"
-        UnitFloatField:
-            uvalue:=idt.lbda0
-            unit="um"
-            unit_factor=1.0e-6
- 
-        Label:
-            text="a"
-        UnitFloatField:
-            uvalue:=idt.a
-            unit="um"
-            unit_factor=1.0e-6
-
-        Label:
-            text="g"
-        UnitFloatField:
-            uvalue:=idt.g
-            unit="um"
-            unit_factor=1.0e-6
-          
-        Label:
-            text="eta"
-        UnitFloatField:
-            uvalue:=idt.eta
-
- 
-        Label:
-            text="Np"
-        UnitIntField:
-            uvalue:=idt.Np
-            minimum=1
-
-        Label:
-            text="ef"
-        UnitIntField:
-            uvalue:=idt.ef
-            minimum=0
-
-        Label:
-            text="W"
-        UnitFloatField:
-            uvalue:=idt.W
-            unit="um"
-            unit_factor=1.0e-6
-
-        Label:
-            text="Ct"
-        UnitFloatField:
-            uvalue:=idt.Ct
-
-        Label:
-            text="vf"
-        UnitFloatField:
-            uvalue:=idt.vf
-
-        Label:
-            text="f"
-        UnitFloatField:
-            uvalue:=idt.f
-            unit="GHz"
-            unit_factor=1.0e9
-
-        Label:
-            text="Ga_0"
-        UnitFloatField:
-            uvalue:=idt.Ga_0
-
-        Label:
-            text="Dvv"
-        UnitFloatField:
-            uvalue:=idt.Dvv
-            
-        Label:
-            text="K2"
-        UnitFloatField:
-            uvalue:=idt.K2
-
-            
+        attr vmodel = idt
+        EnumVar:
+            vname="ft"
+        UnitFloatVar:
+            vname="f0"
+        UnitFloatVar:
+            vname="lbda0"
+        UnitFloatVar:
+            vname="a"
+        UnitFloatVar:
+            vname="g"
+        UnitFloatVar:
+            vname="eta"
+        UnitIntVar:
+            vname="Np"
+        UnitIntVar:
+            vname="ef"
+        UnitFloatVar:
+            vname="W"
+        UnitFloatVar:
+            vname="Ct"
+        UnitFloatVar:
+            vname="vf"
+        UnitFloatVar:
+            vname="f"
+        UnitFloatVar:
+            vname="Ga_0"
+        UnitFloatVar:
+            vname="Dvv"
+        UnitFloatVar:
+            vname="K2"            

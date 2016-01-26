@@ -7,7 +7,8 @@ Created on Tue Jan  5 01:07:15 2016
 
 from taref.core.log import log_debug
 from taref.physics.fundamentals import sinc_sq, pi, eps0
-from taref.core.atom_extension import tagged_property, private_property
+from taref.core.atom_extension import private_property
+from taref.core.extra_setup import tagged_property, property_func
 from taref.core.agent import Agent
 from atom.api import Float, Int, Enum, cached_property
 
@@ -18,6 +19,8 @@ from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, leg
 class IDT(Agent):
     """Theoretical description of IDT"""
     base_name="idt"
+    #main_params=["ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct", 
+    #            "material", "Dvv", "K2", "vf", "epsinf"]
 
     def plot_data(self, zname, **kwargs):
          """pass in an appropriate kwarg to get zdata for the zname variable back"""
@@ -73,23 +76,19 @@ class IDT(Agent):
          if add_legend:
              legend()
 
-#    def _default_main_params(self):
-#        return ["ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct",
-#                "material", "Dvv", "K2", "vf", "epsinf"]
-
     Ga_0=Float(1)
     f=Float(4.4e9)
 
-    ft=Enum("double", "single").tag(desc="finger type of IDT", label="Finger type")
+    ft=Enum("double", "single").tag(desc="finger type of IDT", label="Finger type", show_value=False)
 
-    @cached_property
+    @tagged_property()
     def mult(self):
         return {"double" : 2.0, "single" : 1.0}[self.ft]
 
     Np=Int(7).tag(desc="number of finger pairs. this should be at least 1", low=1)
 
     ef=Int(0).tag(desc="number of extra fingers to compensate for edge effect.",
-                    label="# of extra fingers")
+                    label="# of extra fingers", low=0)
 
     W=Float(25.0e-6).tag(desc="height of finger.", unit="um")
 
@@ -105,7 +104,7 @@ class IDT(Agent):
 
     f0=Float(5.0e9).tag(unit="GHz", desc="Center frequency", reference="")
 
-    #@property_f
+    @property_func
     def _get_eta(self, a, g):
          return a/(a+g)
 
@@ -120,7 +119,7 @@ class IDT(Agent):
     @K2.fget.setter
     def _get_Dvv(self, K2):
         return K2/2.0
-
+        
     @tagged_property(unit=" F", desc="Total capacitance of IDT", reference="Morgan page 16/145")
     def Ct(self, ft, W, epsinf, Np):
         m={"double" : 1.414213562373, "single" : 1.0}[ft]
@@ -190,7 +189,7 @@ class IDT(Agent):
         return 'LiNbYZ'
 
     @private_property
-    def view_window(self):
+    def view_window2(self):
         from enaml import imports
         with imports():
             from taref.saw.idt_e import IDT_View
@@ -203,6 +202,12 @@ if __name__=="__main__":
 
     log_debug(a.K2, b.K2)
     a.Dvv=5
+    print a._get_Dvv(4)
+    log_debug(a.get_member("K2").fget.fset_list)
+    log_debug(a.get_member("K2").fset(a, 3))
+
+    log_debug(a.get_member("K2").fset)
+
     print a.K2, b.K2
     shower(a)
     print a.call_func("eta", a=0.2e-6, g=0.8e-6)#, vf=array([500.0, 600.0]), lbda0=array([0.5e-6, 0.6e-6]))

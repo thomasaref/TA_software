@@ -6,7 +6,7 @@ Created on Sun Jan 24 16:31:00 2016
 """
 
 from taref.core.log import log_debug
-from enaml.core.api import Looper
+from enaml.core.api import Looper, Conditional
 from enaml.widgets.api import (Window, Container, HGroup, Label, CheckBox, Slider,
                                VGroup, ScrollArea, SpinBox, Form, Field, MultilineField,
                                PushButton, ObjectCombo, GroupBox)
@@ -14,6 +14,7 @@ from enaml.layout.api import spacer
 from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params, get_run_params
 from taref.core.fundcore_e import UnitIntField, UnitSpinBox, UnitFloatField, aHGroup, aVGroup
 from taref.core.universal import msg
+from atom.api import Property
 
 def spacer_eval(vmodel, vname):
      """useful function for modifying spacer of aHGroup"""
@@ -49,10 +50,18 @@ enamldef ReadOnlyExt(Label):
 enamldef ReadOnlyVar(Var):
     ReadOnlyExt: pass
 
+def rdonly(vmodel, vname):
+    member=vmodel.get_member(vname)
+    if type(member) is Property:
+        if member.fset is None:
+            return True
+    return False
+
 #####################  STRINGS #####################
 enamldef FieldExt(Field):
     """extends Var for string types"""
     text:=parent.vvalue
+    read_only=rdonly(parent.vmodel, parent.vname)
 
 enamldef FieldVar(Var):
     FieldExt: pass
@@ -60,6 +69,7 @@ enamldef FieldVar(Var):
 enamldef MultilineExt(MultilineField):
     """extends Var for string types"""
     text:=parent.vvalue
+    read_only=rdonly(parent.vmodel, parent.vname)
 
 enamldef MultilineVar(Var):
     MultilineExt: pass
@@ -102,7 +112,7 @@ def floater(value):
     if value is None:
         return value
     return float(value)
-
+    
 enamldef UnitFloatExt(UnitFloatField):
     """extends Var for float types"""
     uvalue:=parent.vvalue
@@ -111,7 +121,7 @@ enamldef UnitFloatExt(UnitFloatField):
     unit_factor=float(get_tag(parent.vmodel, parent.vname, "unit_factor", 1.0))
     minimum=floater(get_tag(parent.vmodel, parent.vname, 'low'))
     maximum=floater(get_tag(parent.vmodel, parent.vname, 'high'))
-
+    read_only=rdonly(parent.vmodel, parent.vname)
 enamldef UnitFloatVar(Var):
     UnitFloatExt: pass
 
@@ -187,8 +197,10 @@ enamldef EnumExt(HGroup):
     ObjectCombo:
         items = list(parent.parent.vmodel.get_member(parent.parent.vname).items)
         selected := parent.parent.vvalue
-    Label:
-        text <<  unicode(get_map(parent.parent.vmodel, parent.parent.vname, parent.parent.vvalue))
+    Conditional:
+        condition = get_tag(parent.parent.vmodel, parent.parent.vname, "show_value", True)
+        Label:
+            text <<  unicode(get_map(parent.parent.vmodel, parent.parent.vname, parent.parent.vvalue))
 
 enamldef EnumVar(Var):
     EnumExt: pass

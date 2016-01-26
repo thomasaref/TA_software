@@ -9,7 +9,7 @@ from taref.core.log import log_debug
 from enaml.core.api import Conditional, DynamicTemplate, Looper
 from enaml.widgets.api import (Window, Container, Label, HGroup, VGroup, ScrollArea, ObjectCombo, SpinBox, PushButton,  GroupBox)#, Form)
 from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params, get_run_params
-from atom.api import Bool, Int, Typed, List, Coerced, Enum, Callable, Float, Str, Unicode, Range, FloatRange, Instance
+from atom.api import Bool, Int, Typed, List, Coerced, Enum, Callable, Float, Str, Unicode, Range, FloatRange, Instance, Property
 from taref.core.universal import msg
 from numpy import ndarray
 from taref.core.var_e import (Var, VarVGroup, FieldExt, MultilineExt, BoolExt, UnitIntFieldExt, UnitSpinBoxExt, UnitRangeExt, UnitFloatExt, UnitFloatRangeExt, EnumExt)
@@ -107,6 +107,8 @@ template TypedView(AttrType: Coerced, spec):
     """default template for Enum"""
     CoercedExt: pass
 
+template TypedView(AttrType: Property, spec):
+    TypedView(Coerced, spec): pass
 ################### LISTS #####################################
 enamldef ListExt(aHGroup):
     """requires list entries to all be of same type"""
