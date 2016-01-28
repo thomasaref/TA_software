@@ -6,11 +6,13 @@ Created on Tue Sep 15 17:48:06 2015
 """
 
 file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A58_cooldown1/TA_A58_scb_refl_power_fluxswp.hdf5"
-#from SHOW_functions import show
-from enaml import imports
-from enaml.qt.qt_application import QtApplication
+file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/Data_1008/TA46_refll_fluxpowswp_4p2GHz4pGHz.hdf5"
 
-from HDF5_functions import read_hdf5
+#from SHOW_functions import show
+#from enaml import imports
+#from enaml.qt.qt_application import QtApplication
+
+#from HDF5_functions import read_hdf5
 #
 #g=read_hdf5(file_path)
 #print g
@@ -20,8 +22,9 @@ from HDF5_functions import read_hdf5
 #print g["Traces"].attrs
 from atom.api import Atom, Unicode, List, Dict, Typed, Bool, Float, Coerced
 from numpy import shape, array, ndarray, linspace, reshape, dtype
-
+from taref.core.universal import Array
 from h5py import File
+from taref.core.atom_extension import private_property
 
 def empty_array():
     return []
@@ -52,7 +55,7 @@ class DataParser(Atom):
 
     def _observe_user(self, change):
         print change
-        
+
     time_stamp=Coerced(ndarray, coercer=array, factory=empty_array)
 
     #specific variables
@@ -96,7 +99,7 @@ class DataParser(Atom):
             self.data[akey]=f["Data"][akey][:]
         for akey, aitem in f["Data"].attrs.iteritems():
             self.data[akey]=aitem
-                    
+
         self.shaper=list(shape(f["Data"]["Data"]))
         print f["Traces"].keys()
         #key="Channels"
@@ -115,7 +118,7 @@ class DataParser(Atom):
 #            else:
 #                if key[-2:]!="_N" and key[-5:]!="_t0dt":
 #                    self.trace_list.append(key)
-                    
+
         #self.trace_extract(f, trace_name=self.trace_list[0])
         #print f[key]["Channel names"].attrs.keys()
         #print key, f[key][:]
@@ -148,13 +151,20 @@ class DataParser(Atom):
         Magcom=Magvec[:,0,:]+1j*Magvec[:,1,:]
         self.magcom=reshape(Magcom, s, order="F")
 
-    def show(self):
-        app=QtApplication()
+    @private_property
+    def view_window(self):
+        from enaml import imports
         with imports():
             from SS_FileParser_enaml import Main
-        view=Main(ss=self)
-        view.show()
-        app.start()
+        return Main(ss=self)
+
+#    def show(self):
+#        app=QtApplication()
+#        with imports():
+#            from SS_FileParser_enaml import Main
+#        view=Main(ss=self)
+#        view.show()
+#        app.start()
 
 
 dp=DataParser()
@@ -164,4 +174,6 @@ with File(file_path, "r") as f:
     #dp.trace_extract(f)
     #dp.print_self()
     #print dp.magcom.dtype
-dp.show()
+from taref.core.shower import shower
+shower(dp)
+#dp.show()

@@ -5,9 +5,9 @@ Created on Sun Apr 20 16:46:27 2014
 @author: thomasaref
 """
 from atom.api import Float, Int, Enum, Unicode
-from taref.core.atom_extension import tag_Callable, set_tag
+from taref.core.atom_extension import tag_Callable, set_tag, get_tag
 from taref.instruments.instrument import booter
-from taref.instruments.GPIB import  GPIB_Instrument, GPIB_read
+from taref.instruments.GPIB import  GPIB_Instrument, GPIB_read, start_GPIB
 from numpy import linspace
 from time import sleep
 
@@ -25,14 +25,13 @@ class Yoko(GPIB_Instrument):
         set_tag(self, "identify", do=False)
 
     @booter
-    def start_Yoko(self, address, delay, timeout, reset, selftest, lock, send_end, identify, clear):
-        self.start_GPIB(address=address, delay=delay, timeout = timeout, reset = reset, selftest = selftest,
-                   lock = lock, send_end = send_end, identify = identify, clear=clear)
+    def booter(self, address, delay, timeout, reset, selftest, lock, send_end, identify, clear, header):
+        start_GPIB(self, address, delay, timeout, reset, selftest,
+                   lock, send_end, identify, clear)
         sleep(0.05)#yoko crashes if this pause isn't after the clear
-        self.header.send()
+        if get_tag(self, "header", "do", False):
+            self.header.send()
 
-    command=Unicode().tag(GPIB_writes="{command}")
-    response=Unicode().tag(get_cmd=GPIB_read, spec="multiline")
 
     voltage=Float(0.0).tag(label="Voltage", unit="V",
                         GPIB_writes="PRS;SA{:.4e};PRE;RU1",
@@ -56,7 +55,8 @@ class Yoko(GPIB_Instrument):
 
 if __name__=="__main__":
     a=Yoko(address="GPIB0::10::INSTR")
-    a.show()
+    print get_tag(a, "voltage", "set_cmd")
+    a.show(a)
     #a.ramp_steps=3
     #a.ramp()
     #a.voltage.send(0.0)

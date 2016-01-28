@@ -25,9 +25,10 @@ class Read_File(Filer):
 
     @property
     def view(self):
-        return "Read_File"
+        from taref.core.filer_e import ReadShow
+        return ReadShow
 
-    @property        
+    @property
     def view_window(self):
         """stand alone for showing filer."""
         with imports():
@@ -46,6 +47,7 @@ class Read_HDF5(Read_File):
 
     def do_read(self):
         self.data=read_hdf5(self.file_path)
+        self.data_str=unicode(self.data)
         log_info("Read data from hdf5 file: {0}".format(self.file_path))
 
 class Read_NP(Read_File):
@@ -61,7 +63,7 @@ class Read_DXF(Read_File):
     def _default_file_type(self):
         return "dxf"
 
-    
+
 #    """reads a layer of an autocad dxf file"""
 #    def read(self, layer="Al"):
 #        """reads dxf file in and places polygons in polylist"""
@@ -85,10 +87,10 @@ class Read_TXT(Read_File):
 
     def data_distributor(self, templist):
         self.data["data"]=templist
-    
+
     def _observe_read_event(self, change):
-        self.data_str="".join(self.data["data"])   
-        
+        self.data_str="".join(self.data["data"])
+
 if __name__=="__main__":
     #a=Read_File()
     #a.read()

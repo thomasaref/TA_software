@@ -32,6 +32,9 @@ class dataset(object):
     def __repr__(self):
         return "dataset( data={data}, datatype={datatype})".format(data=self.data, datatype=self.datatype)
 
+    def __getitem__(self, key):
+        return self.data[key]
+
 class group(OrderedDict):
     """a class that represents a hdf5 group"""
     def __init__(self, attrs=None, *args, **kwargs):

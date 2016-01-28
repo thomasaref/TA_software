@@ -7,7 +7,7 @@ Created on Fri Jan 22 19:49:53 2016
 
 from taref.core.log import log_debug
 from enaml.core.api import Conditional, DynamicTemplate, Looper
-from enaml.widgets.api import (Window, Container, Label, HGroup, VGroup, ScrollArea, ObjectCombo, SpinBox, PushButton,  GroupBox, CheckBox, Form)
+from enaml.widgets.api import (MultilineField, Window, Container, Label, HGroup, VGroup, ScrollArea, ObjectCombo, SpinBox, PushButton,  GroupBox, CheckBox, Form)
 from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params, get_run_params, set_tag
 from atom.api import Bool, Int, Typed, List, Coerced, Enum, Callable, Float, Str, Unicode, Range, FloatRange, Instance, Property
 from taref.core.universal import msg
@@ -116,12 +116,31 @@ enamldef ListExt(aHGroup):
         maximum = max(0, len(getattr(vmodel, vname))-1)
     CoercedExt:
         pass
+
 enamldef ListSpinBoxVar(Var):
     ListExt: pass
 
+def unitize(value, unit_factor=1.0):
+    if type(value)==int:
+        return int(value/unit_factor)
+    elif type(value)==float:
+        return float(value/unit_factor)
+    return value
+from numpy import array2string
+
+enamldef ListReadOnlyExt(aHGroup):
+    attr unit_factor=get_tag(parent.vmodel, parent.vname, "unit_factor", 1.0)
+    attr unit = get_tag(parent.vmodel, parent.vname, "unit", "")
+    MultilineField:
+        read_only=True
+        text=array2string(parent.parent.vvalue/unit_factor, separator="\n")
+    Label:
+        text = unicode(unit)
+        visible = unit!=""
+
 template TypedView(AttrType: List, spec):
     """default template for List"""
-    ListExt: pass
+    ListReadOnlyExt: pass
 
 template TypedView(AttrType: list, spec):
     """list template flows through to List templates"""

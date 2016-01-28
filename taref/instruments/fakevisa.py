@@ -15,6 +15,9 @@ class session(object):
     def ask(self, astr):
         print "ask"+astr
         return astr
+    def read(self):
+        print "read"
+        return "read"
 
 class fakevisa(object):
     @staticmethod

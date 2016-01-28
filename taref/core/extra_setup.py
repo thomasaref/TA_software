@@ -59,8 +59,8 @@ def _setup_ranges(self, param, typer):
         set_tag(self, param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
 
 def _setup_units(self, param, typer):
-    """autosets units using unit_dict"""
-    if typer in [Int, Float, Range, FloatRange, Property]:
+        """autosets units using unit_dict"""
+        #if typer in [Int, Float, Range, FloatRange, Property]:
         if get_tag(self, param, "unit", False) and (get_tag(self, param, "unit_factor") is None):
             unit=get_tag(self, param, "unit", "")[0]
             if unit in self.unit_dict:

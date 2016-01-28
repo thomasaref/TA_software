@@ -8,7 +8,7 @@ A core collection of enamldefs including units for ints and floats and non-padde
 """
 from taref.core.log import log_debug
 from enaml.widgets.api import  ( HGroup, Container, GroupBox,  Field, Label, SpinBox,
-                                MultilineField, VGroup, ScrollArea, Window)
+                                MultilineField, VGroup, ScrollArea, Window, MainWindow)
 from enaml.core.api import Conditional
 from enaml.validator import IntValidator, FloatValidator
 
@@ -16,9 +16,10 @@ enamldef aWindow(Window):
     """a Window that is not destroyed on close"""
     destroy_on_close=False
 
-enamldef AgentWindow(aWindow):
+enamldef AgentWindow(MainWindow):
     """backbone for agent window"""
     attr agent
+    destroy_on_close=False
     initial_size=getattr(agent, "initial_size", (-1,-1))
     initial_position=getattr(agent, "initial_position", (-1,-1))
 
@@ -107,7 +108,7 @@ enamldef UnitSpinBox(aHGroup):
         Label: vl:
             text << unicode("({})".format(uvalue))
 
-    
+
 enamldef UnitFloatField(aHGroup):
     """a field for floats with units"""
     attr minimum = None
@@ -118,7 +119,7 @@ enamldef UnitFloatField(aHGroup):
     attr uvalue : float = 0.0
     attr show_uvalue : bool = False
     attr read_only : bool = False
-    
+
     func calc_uvalue(text, unit_factor):
         self.uvalue=float(text)*unit_factor
 

@@ -4,29 +4,46 @@ Created on Thu May  7 11:20:09 2015
 
 @author: thomasaref
 """
-
-from enaml.widgets.api import ToolBar, Action, VGroup, PushButton, GroupBox, ScrollArea, Container, Field, Label
+from enaml.widgets.api import Form, ToolBar, Action, VGroup, PushButton, GroupBox, ScrollArea, Container, Field, Label, DockPane, Notebook, Page
 from enaml.core.api import Looper, Conditional
 from enaml.layout.api import spacer
 from taref.core.agent_e import CoreView
-from taref.core.instrview_e import InstrView, InstrHolder, InstrVar
+from taref.core.instrview_e import InstrView, InstrHolder, DynVar
 from taref.core.log import log_debug
 from taref.core.fundcore_e import AgentWindow, aHGroup
-from taref.core.atom_extension import get_run_params
-##This code between the bars is just to demonstrate how to include a custom enaml template
-###------------------------------
-#from enaml_TestTemp import InstrAltCont
-#template InstrTemp(InstrView: "Field"): #Dummy template demonstrating custom Instrument layouts using the view variable
-#    InstrAltCont:
-#        pass
-###---------------------------------
-#
-##The auto enaml layout for Instruments
-#from enaml_Base import AutoInstrCont
-#template InstrTemp(InstrView):
-#    AutoInstrCont:
-#        #minimum_size=1000
-#        pass
+from taref.core.atom_extension import get_run_params, get_tag, set_tag
+
+enamldef InstrVar(DynVar):
+    Conditional:
+        condition = get_tag(vmodel, vname, "sub", False) and get_tag(vmodel, vname, "do") != None
+        PushButton:
+                text = "Do"
+                checkable = True
+                checked << get_tag(vmodel, vname, "do", False)
+                clicked :: set_tag(vmodel, vname, do=self.checked)
+    Conditional:
+        condition<<get_tag(vmodel, vname, "set_cmd") != None and not get_tag(vmodel, vname, "send_now", vmodel.send_now)
+        VGroup:
+            PushButton:
+                text = "Send"
+                clicked :: vmodel.send(vname)
+            PushButton:
+                text = "Now"
+                checkable = True
+                checked << get_tag(vmodel, vname, "send_now", vmodel.send_now)
+                clicked :: set_tag(vmodel, vname, send_now=self.checked)
+
+    Conditional:
+        condition=get_tag(vmodel, vname, "get_cmd") != None
+        VGroup:
+            PushButton:
+                text = "Receive"
+                clicked :: vmodel.receive(vname)
+
+enamldef InstrLooper(Looper):
+    attr vmodel=parent.vmodel
+    InstrVar:
+        vname=loop_item
 
 enamldef BootCloseToolBar(ToolBar):
     dock_area="right"
@@ -60,44 +77,49 @@ enamldef BootExt(aHGroup):
     """Boot function display"""
     trailing_spacer=spacer
     PushButton: pb:
-        text = 'Boot'
-        clicked :: instr.boot()
+        text << 'Boot' if instr.status=="Closed" else 'Active'
+        clicked ::
+            instr.boot()
+            self.checked=instr.status=="Active"
+        checkable=True
+        checked << instr.status=="Active"
     Conditional:
-        condition = instr.boot_name!=""
-        Conditional:
-            condition = get_run_params(getattr(instr, instr.boot_name))!=[]
-            GroupBox: gb:
-                title = "Boot parameters:"
-                attr vmodel=instr
-                Looper:
-                    iterable=get_run_params(getattr(instr, instr.boot_name))
-                    InstrVar:
-                        vname=loop_item
+        condition = get_run_params(instr.booter)!=[]
+        GroupBox: gb:
+            title = "Boot parameters:"
+            attr vmodel=instr
+            Looper:
+                iterable=get_run_params(instr.booter)
+                InstrVar:
+                    vname=loop_item
 
 enamldef CloseExt(aHGroup):
     """Close function display"""
     trailing_spacer=spacer
     PushButton: pb:
-        text = 'Close'
+        text << 'Close' if instr.status=="Active" else 'Closed'
         clicked :: instr.close()
-    Conditional:
-        condition = instr.close_name!=""
-        Conditional:
-            condition = get_run_params(getattr(instr, instr.close_name))!=[]
-            GroupBox: gb:
-                title = "Close parameters:"
-                attr vmodel=instr
-                Looper:
-                    iterable=get_run_params(getattr(instr, instr.close_name))
-                    InstrVar:
-                        vname=loop_item
+        checkable=True
+        checked << instr.status=="Closed"
+    #Conditional:
+    #    condition = instr.close_name!=""
+        #Conditional:
+        #    condition = get_run_params(getattr(instr, instr.close_name))!=[]
+    GroupBox: gb:
+        title = "Close parameters:"
+        attr vmodel=instr
+        Looper:
+            iterable=get_run_params(instr.closer)
+            InstrVar:
+                vname=loop_item
 
-enamldef StatusExt(aHGroup):
+enamldef StatusExt(Form):
     """Close function display"""
-    trailing_spacer=spacer
-    GroupBox:
-        title = "Boot/Close"
-        flat=True
+
+    aHGroup:
+        trailing_spacer=spacer
+        Label:
+            text = "Status:"
         PushButton:
             text << instr.status
             checkable=True
@@ -107,50 +129,106 @@ enamldef StatusExt(aHGroup):
                     instr.close()
                 else:
                     instr.boot()
-    Conditional:
-        condition = instr.boot_name!=""
-        Conditional:
-            condition = get_run_params(getattr(instr, instr.boot_name))!=[]
-            GroupBox:
-                title = "Boot parameters:"
-                attr vmodel=instr
-                Looper:
-                    iterable=get_run_params(getattr(instr, instr.boot_name))
-                    InstrVar:
-                        vname=loop_item
-    Conditional:
-        condition = instr.close_name!=""
-        Conditional:
-            condition = get_run_params(getattr(instr, instr.close_name))!=[]
-            GroupBox:
-                title = "Close parameters:"
-                attr vmodel=instr
-                Looper:
-                    iterable=get_run_params(getattr(instr, instr.close_name))
-                    InstrVar:
-                        vname=loop_item
-    VGroup:
+#    Conditional:
+#        condition = instr.boot_name!=""
+#        Conditional:
+#            condition = get_run_params(getattr(instr, instr.boot_name))!=[]
+#            GroupBox:
+#                title = "Boot parameters:"
+#                attr vmodel=instr
+#                Looper:
+#                    iterable=get_run_params(getattr(instr, instr.boot_name))
+#                    InstrVar:
+#                        vname=loop_item
+#    Conditional:
+#        condition = instr.close_name!=""
+#        Conditional:
+#            condition = get_run_params(getattr(instr, instr.close_name))!=[]
+#            GroupBox:
+#                title = "Close parameters:"
+#                attr vmodel=instr
+#                Looper:
+#                    iterable=get_run_params(getattr(instr, instr.close_name))
+#                    InstrVar:
+#                        vname=loop_item
+    aHGroup:
+        trailing_spacer=spacer
         Label:
-            text="Automatic Send On Change"
+            text="Automatic Send On Change:"
         PushButton:
                 text << {True : "ON", False : "OFF"}[instr.send_now]
                 checkable=True
                 checked << instr.send_now
                 clicked ::
                     instr.send_now=self.checked
+
+enamldef StatusPane(DockPane):
+    title=instr.name
+    dock_area="top"
+    closable=False
+    StatusExt:
+        pass
+
+enamldef TestExt(aHGroup):
+    """test function display"""
+    trailing_spacer=spacer
+    PushButton:
+        text = "Run"
+        clicked :: instr.command_response()
+    GroupBox: gb:
+            title = "Parameters:"
+            attr vmodel=instr
+            Looper:
+                iterable=["command", "resp_delay", "response"]
+                InstrVar:
+                    vname=loop_item
+
+enamldef InstrumentNotebook(Notebook):
+    selected_tab="instrument"
+    #tab_style = 'preferences'
+    tabs_closable=False
+    Page:
+        name="bootclose"
+        title="Boot/Close"
+        VGroup:
+            BootExt:
+                pass
+            CloseExt:
+                pass
+    Page:
+        name="instrument"
+        title="Instrument"
+        VGroup:
+            ScrollArea:
+                InstrHolder:
+                    vmodel=instr
+
+enamldef GPIB_InstrumentNotebook(InstrumentNotebook):
+    Page:
+        name="test"
+        title="Test"
+        VGroup:
+            TestExt:
+                pass
+
 enamldef InstrumentView(AgentWindow):
     """default view for an agent based on dynamic templating"""
     attr instr
-    activated :: print "yow"
-    VGroup:
-        GroupBox:
-            VGroup:
-                StatusExt:
-                    pass
+    #activated :: print "yow"
+    StatusPane:
+        pass
+    Container:
+        InstrumentNotebook:
+            pass
 
-        ScrollArea:
-            InstrHolder:
-                vmodel=instr
+enamldef GPIB_InstrumentView(AgentWindow):
+    """default view for an agent based on dynamic templating"""
+    attr instr
+    StatusPane:
+        pass
+    Container:
+        GPIB_InstrumentNotebook:
+            pass
 
 #enamldef InstrumentToolBar(ToolBar):
 #    dock_area='left'

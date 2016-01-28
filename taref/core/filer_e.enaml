@@ -7,7 +7,7 @@ Implemements GUIs for saving and loading files
 """
 
 from enaml.layout.api import vbox, hbox, spacer, align
-from enaml.widgets.api import (Container, Label, PushButton, Field, ObjectCombo, Window, 
+from enaml.widgets.api import (Container, Label, PushButton, Field, ObjectCombo, Window,
                                FileDialogEx, MultilineField, GroupBox, HGroup, VGroup)
 
 enamldef SimpleSave(HGroup):
@@ -41,7 +41,7 @@ enamldef SimpleRead(HGroup):
                 filer.file_path = path
                 filer.read()
                 rd_ev()
-    alias clicked : rdb.clicked               
+    alias clicked : rdb.clicked
     PushButton: rdb:
         text = "Read"
         clicked ::
@@ -101,9 +101,14 @@ enamldef SaveWrap(SaveBox):
 
 enamldef SimpleSaveWrap(SimpleSave):
     attr filer
-    
-enamldef ReadWrap(SimpleRead):
-    attr filer
+
+enamldef ReadShow(ReadBox):
+    attr vmodel=parent.vmodel
+    attr iterable
+    attr filer=parent.vmodel
+
+enamldef ReadWrap(ReadBox):
+    attr filer = parent.vmodel
 
 enamldef ReadSaveWrap(Container):
     attr save_file
@@ -115,10 +120,10 @@ enamldef ReadSaveWrap(Container):
         SaveWrap: sw:
             filer=save_file
             coder=runcode
-                
+
     ReadWrap: rw:
         filer=read_file
-        rd_ev:: print "read"
+        #rd_ev:: print "read"
     MultilineField:
         text << unicode(read_file.data)
 
@@ -129,7 +134,7 @@ enamldef SaveMain(Window):
     title="SaveBox test"
     VGroup:
         ReadWrap:
-            rd_ev:: print "read"
+            #rd_ev:: print "read"
 
             filer=read_file
             #clicked :: print "read data"
@@ -151,7 +156,7 @@ enamldef ReadBoxMain(Window):
         ReadWrap:
             filer = read_file
         MultilineField:
-            text := read_file.data_str
+            text << read_file.data_str
 
 enamldef SimpleSaveMain(Window):
     attr filer

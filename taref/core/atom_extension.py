@@ -270,7 +270,7 @@ def set_log(obj, name, value):
            log_info("Set {instr} {label} to {value} ({map_val})".format(
                  instr=obj_name, label=label, value=value,
                  map_val=get_map(obj, name, value)))
-       elif typer in (List, ContainerList):
+       elif typer in (List, ContainerList, list):
            log_info("Set {instr} {label} to {length} list".format(
                instr=obj_name, label=label, length=shape(value)))
        elif typer==ndarray:

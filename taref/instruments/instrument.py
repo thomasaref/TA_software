@@ -29,13 +29,13 @@ def get_value_check(obj, name, value):
         return value
 
 class tag_booter(tag_Callable):
-    default_kwargs=dict(desc="the boot function for the instrument", private=True, booter=True)
+    default_kwargs=dict(desc="the boot function for the instrument", private=True)
 
 def booter(func):
     return tag_booter()(func)
 
 class tag_closer(tag_Callable):
-    default_kwargs=dict(desc="the close function for the instrument", private=True, closer=True)
+    default_kwargs=dict(desc="the close function for the instrument", private=True)
 
 def closer(func):
     return tag_closer()(func)
@@ -48,7 +48,6 @@ class Instrument(Agent):
     abort=False
     int_progress=0
     save_file=Save_HDF5()
-    view="Instrument"
 
     @classmethod
     def run_measurement(cls):
@@ -93,27 +92,27 @@ class Instrument(Agent):
         for instr in cls.agent_dict.values():
             instr.close()
 
+    @booter
+    def booter(self):
+        pass
+
+    @closer
+    def closer(self):
+        pass
+
     def boot(self,  **kwargs):
         """Boot the instrument using booter function if it exists"""
         if self.status=="Closed":
             log_info("BOOTED: {0}".format(self.name))
             self.status="Active"
-            if self.boot_name!="":
-                getattr(self, self.boot_name)(**kwargs)
-
-    @private_property
-    def boot_name(self):
-        boot_list=get_all_tags(self, "booter", True)
-        return boot_list[0] if boot_list!=[] else ""
+            self.booter(**kwargs)
 
     def close(self,  **kwargs):
         """Close the instrument using closer function if it exists"""
         if self.status=="Active":
             log_info("CLOSED: {0}".format(self.name))
             self.status="Closed"
-            close_list=get_all_tags(self, "closer", True)
-            if close_list!=[]:
-                getattr(self, close_list[0])(**kwargs)
+            self.closer(**kwargs)
 
     @private_property
     def close_name(self):
@@ -131,6 +130,11 @@ class Instrument(Agent):
         with imports():
             from taref.instruments.instrument_e import InstrumentView
         return InstrumentView(instr=self)
+
+    @private_property
+    def view(self):
+        from taref.instruments.instrument_e import InstrLooper
+        return InstrLooper
 
     def receive_log(self, name):
         """Log for receiving. can be overwritten in child classes for customization of message"""
@@ -157,9 +161,9 @@ class Instrument(Agent):
                 setattr(self, name, value)
                 set_tag(self, name, send_now=temp)
             else:
-                log_warning("WARNING: get_cmd doesn't exist")
+                log_warning("WARNING: {instr} {name} get_cmd doesn't exist".format(instr=self.name, name=name))
         else:
-            log_warning("WARNING: instrument not active")
+            log_warning("WARNING: Instrument {instr} not active".format(instr=self.name))
 
     def send_log(self, name):
         """Log for sending. can be overwritten in child classes to allow customization of message"""
@@ -185,9 +189,9 @@ class Instrument(Agent):
                 set_tag(self, name, send_now=temp)
                 Instrument.busy=False
             else:
-                log_warning("WARNING: set_cmd doesn't exist")
+                log_warning("WARNING: {instr} {name} set_cmd doesn't exist".format(instr=self.name, name=name))
         else:
-            log_warning("WARNING: instrument not active")
+            log_warning("WARNING: Instrument {instr} not active".format(instr=self.name))
 
 
     def __setattr__(self, name, value):
@@ -202,10 +206,8 @@ class Instrument(Agent):
 
     def __init__(self, **kwargs):
         super(Instrument, self).__init__(**kwargs)
-        if self.boot_name != "":
-            make_instancemethod(self, getattr(self, self.boot_name))
-        if self.close_name != "":
-            make_instancemethod(self, getattr(self, self.close_name))
+        make_instancemethod(self, self.booter)
+        make_instancemethod(self, self.closer)
 
 if __name__=="__main__":
     a=Instrument(name='blah')

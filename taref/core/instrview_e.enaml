@@ -4,10 +4,10 @@ Created on Wed Jan 27 21:41:24 2016
 
 @author: thomasaref
 """
-
+import enaml.qt #work around for Qdate error. import order
 from taref.core.usertemps_e import UserInstrView
 from enaml.core.api import Conditional, DynamicTemplate, Looper
-from enaml.widgets.api import VGroup, PushButton, Container, GroupBox
+from enaml.widgets.api import VGroup, PushButton, Container, GroupBox, Label
 from taref.core.var_e import Var
 from taref.core.typedview_e import TypedView
 from taref.core.fundcore_e import aHGroup
@@ -28,67 +28,31 @@ enamldef DynVar(Var):
 template DynTypedView(AttrType, spec):
     TypedView(AttrType, spec): pass
 
+
 ###################### INSTRVIEW #################################
+
+enamldef AgentLooper(Looper):
+    attr vmodel=parent.vmodel
+    #iterable=get_main_params(vmodel)
+    DynVar:
+        vname=loop_item
+
 template InstrView(instr_view):
-    """goes to user defined templates"""
-    UserInstrView(instr_view):
+    instr_view:
         pass
 
-template InstrView(instr_view: "Auto"):
-    Looper:
-        DynVar:
-            vname=loop_item
-
-template InstrView(instr_view: "Instrument"):
-    Looper:
-        InstrVar:
-            vname=loop_item
-
-enamldef InstrVar(DynVar):
-    Conditional:
-        condition = get_tag(vmodel, vname, "sub", False) and get_tag(vmodel, vname, "get_cmd") != None
-        PushButton:
-                text = "Do"
-                checkable = True
-                checked << get_tag(vmodel, vname, "do", False)
-                clicked :: set_tag(vmodel, vname, do=self.checked)
-    Conditional:
-        condition<<get_tag(vmodel, vname, "set_cmd") != None and not get_tag(vmodel, vname, "send_now", vmodel.send_now)
-        VGroup:
-            PushButton:
-                text = "Send"
-                clicked :: vmodel.send(vname)
-            PushButton:
-                text = "Now"
-                checkable = True
-                checked << get_tag(vmodel, vname, "send_now", vmodel.send_now)
-                clicked :: set_tag(vmodel, vname, send_now=self.checked)
-
-    Conditional:
-        condition=get_tag(vmodel, vname, "get_cmd") != None
-        VGroup:
-            PushButton:
-                text = "Receive"
-                clicked :: vmodel.receive(vname)
-
-#template InstrView(instr_view: "instrument"):
+#template InstrView2(instr_view):
 #    Looper:
-#        iterable<<get_main_params(parent.vmodel)
-#        InstrVar:
+#        instr_view:
 #            vname=loop_item
-#
-#template InstrView(instr_view: "Auto"):
-#    Looper:
-#        iterable<<get_main_params(parent.vmodel)
-#        DynVar:
-#            vname=loop_item
+        #Label:
+        #    text=unicode(instr_view)
 
 enamldef InstrHolder(VGroup):
     attr vmodel=parent.vmodel
-    #padding=0
     DynamicTemplate:
         base = InstrView
-        args=(getattr(vmodel, "view", "Auto"),)
+        args=(getattr(vmodel, "view", AgentLooper),)
         data=dict(iterable=get_main_params(vmodel))
 
 
@@ -99,13 +63,6 @@ enamldef CallableExt(aHGroup):
     attr vname=parent.vname
     attr vvalue=parent.vvalue
     alias push_button : pb
-    Conditional:
-        condition = get_tag(vmodel, vname, "sub", False)
-        PushButton:
-                text = "Do"
-                checkable = True
-                checked << get_tag(vmodel, vname, "do", False)
-                clicked :: set_tag(vmodel, vname, do=self.checked)
     PushButton: pb:
         text = 'Run'
         clicked ::
@@ -120,7 +77,7 @@ enamldef CallableExt(aHGroup):
             attr vmodel=parent.parent.vmodel
             DynamicTemplate:
                 base = InstrView
-                args=(getattr(vmodel, "view", "Auto"),)
+                args=(getattr(vmodel, "view", AgentLooper),)
                 data=dict(iterable=get_run_params(vvalue))
 
 enamldef CallableVar(Var):

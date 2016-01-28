@@ -8,8 +8,8 @@ Created on Tue Sep 22 22:02:58 2015
 from enaml.widgets.api import Form, Window, Field, Label, MultilineField, CheckBox, ObjectCombo, SpinBox, Notebook, Page, Container, ComboBox
 from enaml.stdlib.fields import FloatField
 from enaml.core.api import Looper
-from e_FundCore import UnitFloatField
-
+from taref.core.fundcore_e import UnitFloatField
+from taref.core.var_e import Var
 
 enamldef BasicPage(Page):
     title = "Basic info"
@@ -53,14 +53,14 @@ enamldef BasicPage(Page):
         Label:
             text = "Time per point:"
         Label:
-            text="{} seconds".format(ss.time_per_point)    
+            text="{} seconds".format(ss.time_per_point)
         Label:
             text=str(ss.data)
 
 
 enamldef ObjectComboDict(Form):
     attr dict_combo
-    alias lbl    
+    alias lbl
     alias dc
     Label: lbl:
         text = "Name:"
@@ -70,7 +70,7 @@ enamldef ObjectComboDict(Form):
         iterable=dict_combo[dc.selected].keys()
         Label: lpr_lbl:
             text=loop_item
-        Form:            
+        Form:
             Looper:
                 iterable=dict_combo[dc.selected][lpr_lbl.text].dtype.names
                 Label:
@@ -80,7 +80,7 @@ enamldef ObjectComboDict(Form):
 
 enamldef DoubleLayerDict(Form):
     attr dict_combo
-    alias lbl    
+    alias lbl
     alias dc
     Label: lbl:
         text = "Name:"
@@ -95,7 +95,7 @@ enamldef DoubleLayerDict(Form):
 
 enamldef SingleLayerDict(Form):
     attr dict_combo
-    alias lbl    
+    alias lbl
     alias dc
     Label: lbl:
         text = "Name:"
@@ -120,11 +120,11 @@ enamldef DataPage(Page):
     title="Data"
     SingleLayerDict:
         dict_combo=ss.data
-        
+
 enamldef ComboBoxArray(Form):
     attr arr_combo
     attr name_index : int =0
-    alias lbl    
+    alias lbl
     alias ac
     alias lpr
     Label: lbl:
@@ -137,20 +137,20 @@ enamldef ComboBoxArray(Form):
         Label:
             text=loop_item
         Label:
-            text<<str(arr_combo[ac.index][loop_index]) #str(loop_item)            
+            text<<str(arr_combo[ac.index][loop_index]) #str(loop_item)
 
 enamldef Traces(Form):
     attr arr_combo
     attr name_index : int =0
-    alias lbl    
+    alias lbl
     alias ac
     Label: lbl:
         text = "Name:"
     ComboBox: ac:
         index = 0
         items=[o[name_index] for o in arr_combo]
-    #Label  
-      
+    #Label
+
 enamldef TracesPage(Page):
     title="Traces"
     ComboBoxArray:
@@ -169,37 +169,43 @@ enamldef StepListPage(Page):
     ComboBoxArray:
         arr_combo<<ss.step_list
         lbl.text="Step List:"
-    
+
 enamldef InstrumentsPage(Page):
     title="Instruments"
     ComboBoxArray: cba:
         arr_combo<<ss.instruments
         name_index=4
-        lbl.text="Instrument:"        
+        lbl.text="Instrument:"
 
 enamldef ChannelsPage(Page):
     title="Channels"
     ComboBoxArray:
         arr_combo<<ss.channels
-        lbl.text="Channel" 
-        
+        lbl.text="Channel"
+
+enamldef SS_Notebook(Notebook):
+    BasicPage:
+        pass
+    StepListPage:
+        pass
+    TracesPage:
+        pass
+    InstrumentsPage:
+        pass
+    ChannelsPage:
+        pass
+    StepConfigPage:
+        pass
+    InstrumentConfigPage:
+        pass
+    DataPage:
+        pass
+
+enamldef SS_Var(Var):
+    attr ss=parent.vmodel
+
 enamldef Main(Window):
     attr ss
     Container:
-        Notebook:
-            BasicPage:
-                pass
-            StepListPage:
-                pass
-            TracesPage:
-                pass
-            InstrumentsPage:
-                pass
-            ChannelsPage:
-                pass
-            StepConfigPage:
-                pass
-            InstrumentConfigPage:
-                pass
-            DataPage:
-                pass
+        SS_Notebook:
+            pass
