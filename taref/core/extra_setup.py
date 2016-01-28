@@ -50,12 +50,13 @@ def _setup_callables(self, param, typer):
     if typer == Callable:
         func=getattr(self, param)
         if func is not None:
+            #func.log_message=get_tag(self, param, "log_message", "RAN: {0} {1}")
             make_instancemethod(self, func)
 
 def _setup_ranges(self, param, typer):
     """autosets low/high tags for Range and FloatRange"""
     if typer in [Range, FloatRange]:
-        self.set_tag(param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
+        set_tag(self, param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
 
 def _setup_units(self, param, typer):
     """autosets units using unit_dict"""

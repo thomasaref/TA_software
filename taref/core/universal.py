@@ -35,9 +35,11 @@ def write_text(file_path, text_list, mode="w"):
 def Array(shape=1):
     return Coerced(ndarray, args=(shape,), coercer=array)
 
+def do_nothing(*args, **kwargs):
+        pass
 
-def pass_factory():
-    def do_nothing():
+def pass_factory(*args, **kwargs):
+    def do_nothing(*args, **kwargs):
         pass
     return do_nothing
 

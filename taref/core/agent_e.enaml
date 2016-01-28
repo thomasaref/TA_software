@@ -11,11 +11,11 @@ from enaml.layout.geometry import Pos, Rect, Size
 from enaml.core.api import Looper, Conditional
 from atom.api import List, Typed
 from enaml.core.declarative import d_
-from taref.core.shower_backbone import get_view
+from taref.core.shower_backbone import get_view_window
 #from e_Plotter import PlotWindow
 from log_e import LogWindow, LogPane
 from collections import OrderedDict
-from taref.core.typedview_e import InstrHolder
+from taref.core.instrview_e import InstrHolder
 from taref.core.log import log_debug
 from taref.core.fundcore_e import AgentWindow
 
@@ -27,7 +27,7 @@ enamldef AutoAgentView(AgentWindow):
             InstrHolder:
                 pass #vmodel:=agent
 
-class showWindow(MainWindow):
+class ShowWindow(MainWindow):
     """adds a list of other windows to a MainWindow and a property that determines if all are visible"""
     @property
     def all_wins(self):
@@ -47,7 +47,7 @@ class showWindow(MainWindow):
     def show_and_send_to_front(self, name, win):
         if win is None:
             agent=self.chief_cls.agent_dict[name]
-            view=get_view(agent, AutoAgentView(agent=agent))
+            view=get_view_window(agent, AutoAgentView(agent=agent))
             view.show()
             view.send_to_front()
         else:
@@ -62,7 +62,7 @@ class showWindow(MainWindow):
             else:
                 self.show_and_send_to_front(name, window)
 
-enamldef coreWindow(showWindow): sv:
+enamldef CoreWindow(ShowWindow): sv:
     """extends showWindow to close all windows when the core is closed and define chief_cls"""
     attr chief_cls
     initial_position=(0,0)
@@ -72,17 +72,12 @@ enamldef coreWindow(showWindow): sv:
 
 enamldef WindowToolBar(ToolBar):
     """a toolbar that lists all windows and links an action to showing them"""
-    attr boss_window
+    attr boss_window=parent
     dock_area="left"
     Action:
         text="Windows:"
         triggered:: boss_window.showhide_all(boss_window.other_win_dict)
         tool_tip = "Show/hide all other windows"
-    Action:
-        text="test"
-        triggered::
-            print boss_window.chief_cls
-            print chief_cls.activated()
     Action:
         separator=True
     Looper: loopy:
@@ -90,11 +85,11 @@ enamldef WindowToolBar(ToolBar):
         Action:
             text = loop_item
             tool_tip = "Show window: {0}".format(loop_item)
-            triggered::boss_window.show_and_send_to_front(loop_item, boss_window.agent_win_dict[loop_item])
+            triggered::boss_window.show_and_send_to_front(loop_item, boss_window.other_win_dict[loop_item])
 
 enamldef AgentToolBar(ToolBar):
     """a toolbar that lists all agent windows and links an action to showing them"""
-    attr boss_window
+    attr boss_window=parent
     dock_area="left"
     Action:
         text="Agents:"
@@ -109,7 +104,17 @@ enamldef AgentToolBar(ToolBar):
             tool_tip = "Show agent: {0}".format(loop_item)
             triggered::boss_window.show_and_send_to_front(loop_item, boss_window.agent_win_dict[loop_item])
 
-enamldef basicView(coreWindow): sv:
+enamldef LogToolBar(ToolBar):
+    attr log=parent.log
+    dock_area="top"
+    Action:
+        text="Log"
+        triggered::
+            log.show()
+            log.send_to_front()
+        tool_tip = "Show log"
+
+enamldef CoreView(CoreWindow):
     """the most basic view controller of a collection of Atoms without a chief"""
     alias show_log:log.visible
     activated ::
@@ -117,20 +122,19 @@ enamldef basicView(coreWindow): sv:
             chief_cls.activated()
     LogWindow: log:
         pass
-    ToolBar:
-        dock_area="top"
-        Action:
-            text="Log"
-            triggered::
-                log.show()
-                log.send_to_front()
-            tool_tip = "Show log"
-    WindowToolBar:
-        boss_window:=sv
+    LogToolBar:
+        pass
+    Conditional:
+        condition = getattr(self, "other_win_dict", {}) != {}
+        WindowToolBar:
+            pass
     Conditional:
         condition = getattr(chief_cls, "agent_dict", {}) != {}
         AgentToolBar:
-            boss_window:=sv
+            pass
+
+enamldef BasicView(CoreView):
+    """the most basic view controller of a collection of Atoms without a chief"""
     Conditional:
         condition = getattr(chief_cls, "run_func_dict", {}) != {}
         VGroup:
@@ -150,6 +154,7 @@ enamldef basicView(coreWindow): sv:
                     #print sv.other_wins
                     #chief.run_all()
                 tool_tip = "test button"
+
 
 
 

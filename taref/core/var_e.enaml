@@ -60,7 +60,7 @@ def rdonly(vmodel, vname):
     if type(member) is Property:
         if member.fset is None:
             return True
-    return False
+    return get_tag(vmodel, vname, "read_only", False)
 
 #####################  STRINGS #####################
 enamldef FieldExt(Field):
@@ -84,9 +84,20 @@ enamldef MultilineVar(Var):
         pass
 
 ################### BOOLEANS #########################
-enamldef BoolExt(CheckBox):
+enamldef BoolExt2(CheckBox):
     """boolean shown as CheckBox with extensions for read_only option"""
     attr read_only : bool = rdonly(parent.vmodel, parent.vname)
+    checked << parent.vvalue
+    clicked ::
+        if not read_only:
+            parent.vvalue=self.checked
+        else:
+            self.checked=parent.vvalue
+
+enamldef BoolExt(PushButton):
+    attr read_only : bool = rdonly(parent.vmodel, parent.vname)
+    text << unicode(parent.vvalue)
+    checkable = True
     checked << parent.vvalue
     clicked ::
         if not read_only:
@@ -316,6 +327,11 @@ enamldef Main(Window):
         ScrollArea:
             VGroup:
                 attr vmodel = agent
+                BoolVar:
+                    vname="t_bool"
+                BoolVar:
+                    vname="t_readonly_bool"
+
                 FieldVar:
                     vname="t_field"
                 MultilineVar:
@@ -325,10 +341,7 @@ enamldef Main(Window):
                 MultilineVar:
                     vname="t_readonly_field"
 
-                BoolVar:
-                    vname="t_bool"
-                BoolVar:
-                    vname="t_readonly_bool"
+
 
                 UnitIntVar:
                     vname="t_int"

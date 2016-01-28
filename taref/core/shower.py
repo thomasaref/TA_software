@@ -5,7 +5,8 @@ Created on Mon Aug 24 12:38:54 2015
 @author: thomasaref
 """
 #from taref.core.log import log_debug
-from taref.core.shower_backbone import get_view
+from taref.core.shower_backbone import get_view_window
+from atom.api import Atom
 
 def shower(*agents, **kwargs):
     """a powerful showing function for any Atom object(s) specified in agents.
@@ -15,14 +16,17 @@ def shower(*agents, **kwargs):
     from enaml.qt.qt_application import QtApplication
     app = QtApplication()
     with imports():
-        from taref.core.agent_e import AutoAgentView, basicView #, chiefView
+        from taref.core.agent_e import AutoAgentView, BasicView #, chiefView
     for n, agent in enumerate(agents):
-        view=get_view(agent, AutoAgentView(agent=agent), "window_{0}".format(n))
+        view=get_view_window(agent, AutoAgentView(agent=agent), "window_{0}".format(n))
         view.show()
-    chief_view=kwargs.pop("chief_view", basicView)
-    kwargs["chief_cls"]=kwargs.get("chief_cls", agents[0])
+    chief_view=kwargs.pop("chief_view", BasicView)
+    kwargs["chief_cls"]=kwargs.get("chief_cls", agents[0] if agents!=() else Atom)
     kwargs["title"]=kwargs.get("title", "Show Control")
     kwargs["name"]=kwargs.get("name", "show_control")
     view=chief_view(**kwargs)
     view.show()
     app.start()
+
+if __name__=="__main__":
+    shower()

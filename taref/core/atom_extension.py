@@ -114,11 +114,13 @@ def log_func(func, pname=None):
     func_name=func.func_name
     if pname is None:
         pname=func_name
+
+    log_message=getattr(func, "log_message", "RAN: {0} {1}")
     @wraps(func)
     def new_func(self, *args, **kwargs):
         """logs the call of an instance method and autoinserts kwargs"""
         if get_tag(self, pname, "log", False):
-            log_debug("RAN: {0} {1}".format(getattr(self, "name", ""), func_name), n=1)
+            log_debug(log_message.format(getattr(self, "name", ""), func_name), n=1)
         if len(args)==0:
             members=self.members().keys()
             for param in get_run_params(new_func):
@@ -127,7 +129,7 @@ def log_func(func, pname=None):
                         try:
                             setattr(self, param, kwargs[param])
                         except TypeError:
-                            pass
+                            set_tag(self, param, do=kwargs[param])
                     else:
                         if param in get_property_names(self):
                             self.get_member(param).reset(self)

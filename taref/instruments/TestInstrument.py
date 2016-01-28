@@ -7,8 +7,9 @@ Created on Wed Dec 24 06:04:52 2014
 Tests and demonstrates various functionality of Instruments defined by Atom_Base
 """
 
-from taref.instruments.instrument import Instrument, boot_func, close_func, tagged_callable
-from atom.api import Float, Int, Unicode, Bool, Enum, ContainerList, List, Callable, Range, FloatRange
+from taref.instruments.instrument import Instrument, booter, closer#, instr_show#, tagged_callable
+from taref.core.atom_extension import tag_Callable, private_property
+from atom.api import Float, Int, Unicode, Bool, Enum, ContainerList, List, Callable, Range, FloatRange, Coerced
 from taref.core.log import log_debug
 
 def get_inttry(instr, booltry, voltage):
@@ -51,37 +52,50 @@ def external_func(instr, voltage): #functions should have the instrument as thie
         print a, voltage
 
 class Test_Instrument(Instrument):
-    view=Enum("Auto", "Field").tag(private=True) #this demonstrates how to overwrite the view option to allow use of custom enaml layouts
-    #plot_all=Bool(False)
-    v2=Range(0,10,1)
-    v3=FloatRange(0.1, 10.0, 3.0).tag(precision=1000)
+    @classmethod
+    def run_it(cls):
+        print cls
 
-    booter=Callable(boot_func1).tag(private=True) #overwriting booter to allow new boot function
+    @private_property
+    def cls_run_funcs(self):
+        """class or static methods to include in run_func_dict on initialization. Can be overwritten in child classes"""
+        return [self.run_it]
+
+    @classmethod
+    def activated(cls):
+        print cls
 
     voltage=Float(1.0).tag(unit="V", label="Voltage", sub=True) #demonstrates a Float sub parameter with label and unit
-    inttry=Int().tag(set_cmd=set_inttry, get_cmd=get_inttry)
+    inttry=Coerced(int).tag(set_cmd=set_inttry, get_cmd=get_inttry)
     strtry=Unicode().tag(set_cmd=set_strtry)
     booltry=Bool().tag(sub=True)
     enumtry=Enum('a', 'b').tag(mapping={'a':1, 'b':2}, set_cmd=testenum, get_cmd=get_enum) #Enums must specifiy a mapping in tag. The parameters of Enum must match the keys in mapping giving the ordering of keys with the first value being the default
     listtry=ContainerList(default=[0, 2,3,4,5,6,7,8,9]).tag(get_cmd=testlist) #ContainerLists are used to hold data arrays. A default must be given.
     grptry=List(default=['booltry', 'inttry']).tag(get_cmd=testgrp) #Lists hold the names of items united by a common set_cmd or get_cmd
 
-    @boot_func(private=False, label="Boot")
+    @booter()
     def boot_it(self, voltage):
         print "You called boot_func1 on instrument {name} with sub parameter voltage={voltage}".format(name=self.name, voltage=voltage)
 
-    @tagged_callable()
+    @tag_Callable()
     def internal_func(self, inttry): #functions can also be declared internally though they should still be declared a Callable (or decorated with log)
        print "you ran internal_func with sub paramater inttry={inttry}".format(inttry=self.name) #type(self).voltage.metadata['get_cmd'](3,4) #print "yowza"
 
     #calltry=Callable(internal_func) #this shows how to define an internal function as a Callable (so it appears in the GUI)
 
-    calltry1=tagged_callable()(external_func) #allows functions that neither set or get values to be defined. This shows how to do it for a function declared outside the class
+    #calltry1=tagged_callable()(external_func) #allows functions that neither set or get values to be defined. This shows how to do it for a function declared outside the class
 
 if __name__=="__main__":
 
-    a=Test_Instrument(name="Tom") #instruments should be given names
-    a.calltry1(a)
+    a=Test_Instrument(name="Tom")
+    b=Test_Instrument()
+    a.boot()
+    def run():
+        print a, type(a)
+    a.add_func(run)
+    #instr_show()
+    Test_Instrument.show()
+    #a.calltry1(a)
     #b=Test_Instrument(name="Bob", view="Field") #shows how to call a custom view of an instrument
     #a.internal_func()
 #    a.boss.buffer_save=True

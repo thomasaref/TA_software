@@ -1,0 +1,152 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jan 27 21:41:24 2016
+
+@author: thomasaref
+"""
+
+from taref.core.usertemps_e import UserInstrView
+from enaml.core.api import Conditional, DynamicTemplate, Looper
+from enaml.widgets.api import VGroup, PushButton, Container, GroupBox
+from taref.core.var_e import Var
+from taref.core.typedview_e import TypedView
+from taref.core.fundcore_e import aHGroup
+from atom.api import Callable, Typed, Instance
+from taref.core.atom_extension import get_type, get_tag, set_tag, get_run_params, get_main_params
+from types import MethodType
+
+##########################DYNAMIC################################
+enamldef DynExt(DynamicTemplate):
+    base = DynTypedView
+    args << (get_type(parent.vmodel, parent.vname), get_tag(parent.vmodel, parent.vname, "spec"))
+
+enamldef DynVar(Var):
+    alias ext
+    DynExt: ext:
+        pass
+
+template DynTypedView(AttrType, spec):
+    TypedView(AttrType, spec): pass
+
+###################### INSTRVIEW #################################
+template InstrView(instr_view):
+    """goes to user defined templates"""
+    UserInstrView(instr_view):
+        pass
+
+template InstrView(instr_view: "Auto"):
+    Looper:
+        DynVar:
+            vname=loop_item
+
+template InstrView(instr_view: "Instrument"):
+    Looper:
+        InstrVar:
+            vname=loop_item
+
+enamldef InstrVar(DynVar):
+    Conditional:
+        condition = get_tag(vmodel, vname, "sub", False) and get_tag(vmodel, vname, "get_cmd") != None
+        PushButton:
+                text = "Do"
+                checkable = True
+                checked << get_tag(vmodel, vname, "do", False)
+                clicked :: set_tag(vmodel, vname, do=self.checked)
+    Conditional:
+        condition<<get_tag(vmodel, vname, "set_cmd") != None and not get_tag(vmodel, vname, "send_now", vmodel.send_now)
+        VGroup:
+            PushButton:
+                text = "Send"
+                clicked :: vmodel.send(vname)
+            PushButton:
+                text = "Now"
+                checkable = True
+                checked << get_tag(vmodel, vname, "send_now", vmodel.send_now)
+                clicked :: set_tag(vmodel, vname, send_now=self.checked)
+
+    Conditional:
+        condition=get_tag(vmodel, vname, "get_cmd") != None
+        VGroup:
+            PushButton:
+                text = "Receive"
+                clicked :: vmodel.receive(vname)
+
+#template InstrView(instr_view: "instrument"):
+#    Looper:
+#        iterable<<get_main_params(parent.vmodel)
+#        InstrVar:
+#            vname=loop_item
+#
+#template InstrView(instr_view: "Auto"):
+#    Looper:
+#        iterable<<get_main_params(parent.vmodel)
+#        DynVar:
+#            vname=loop_item
+
+enamldef InstrHolder(VGroup):
+    attr vmodel=parent.vmodel
+    #padding=0
+    DynamicTemplate:
+        base = InstrView
+        args=(getattr(vmodel, "view", "Auto"),)
+        data=dict(iterable=get_main_params(vmodel))
+
+
+########################## CALLABLE ###############################
+enamldef CallableExt(aHGroup):
+    """extends Var for Callable"""
+    attr vmodel=parent.vmodel
+    attr vname=parent.vname
+    attr vvalue=parent.vvalue
+    alias push_button : pb
+    Conditional:
+        condition = get_tag(vmodel, vname, "sub", False)
+        PushButton:
+                text = "Do"
+                checkable = True
+                checked << get_tag(vmodel, vname, "do", False)
+                clicked :: set_tag(vmodel, vname, do=self.checked)
+    PushButton: pb:
+        text = 'Run'
+        clicked ::
+            if not isinstance(vvalue, MethodType):
+                vvalue(vmodel, *[getattr(vmodel, name) for name in get_run_params(vvalue)])
+            else:
+                vvalue(*[getattr(vmodel, name) for name in get_run_params(vvalue)])
+    Conditional: co:
+        condition = get_run_params(vvalue)!=[]
+        GroupBox: gb:
+            title = get_tag(vmodel, vname, 'label', vname)+" parameters:"
+            attr vmodel=parent.parent.vmodel
+            DynamicTemplate:
+                base = InstrView
+                args=(getattr(vmodel, "view", "Auto"),)
+                data=dict(iterable=get_run_params(vvalue))
+
+enamldef CallableVar(Var):
+    alias ext
+    CallableExt: ext:
+        pass
+
+template DynTypedView(AttrType: Callable, spec):
+    """default template for Enum"""
+    CallableExt: pass
+
+##################### TYPED ########################################
+enamldef TypedExt(GroupBox):
+    """extends Var for Typed"""
+    title=get_tag(vmodel, vname, 'group_label', vname+" parameters:")
+    InstrHolder:
+        vmodel:=parent.parent.vvalue
+
+enamldef TypedVar(Var):
+    alias ext
+    TypedExt: ext:
+        pass
+
+template DynTypedView(AttrType: Typed, spec):
+    """interface for a Typed member."""
+    TypedExt: pass
+
+template DynTypedView(AttrType: Instance):
+    TypedView(Typed): pass
