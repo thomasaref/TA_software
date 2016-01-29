@@ -335,6 +335,8 @@ enamldef PlotWindow(Window):
 
 enamldef PlotMain(MainWindow): pm:
     attr plotr
+    name=plotr.name
+    destroy_on_close=False
     #initial_position=(0,0)
     MatPlotContainer:
         pass

@@ -15,10 +15,10 @@ from numpy import shape, split, squeeze, array, transpose, concatenate, atleast_
 from enaml import imports
 from atom.api import Atom, Int, Enum, Float, List, Dict, Typed, Unicode, ForwardTyped, Bool, cached_property, observe
 from matplotlib.axes import Axes
-from matplotlib import collections, transforms
+#from matplotlib import collections, transforms
 from matplotlib.collections import PolyCollection, LineCollection, QuadMesh, PathCollection
 from matplotlib.figure import Figure
-
+from collections import OrderedDict
 #slow imports
 Plot = None
 PanTool=None
@@ -232,9 +232,11 @@ class AllXYFormat(XYFormat):
                 if key!="All":
                     setattr(self.plotter.xyfs[key], change['name'], change['value'])
 
-class Plotter(SubAgent):
+class Plotter(Atom):
     base_name="plot"
-    #name=Unicode()
+    name=Unicode()
+    plot_dict=OrderedDict()
+    
     title=Unicode("yoyoyoyoyo")
     xlabel=Unicode("yo")
     ylabel=Unicode()
@@ -258,6 +260,18 @@ class Plotter(SubAgent):
     plottables=Dict()
     overall_plot_type=Enum("XY plot", "img plot")
 
+    def __init__(self, **kwargs):
+        """extends Backbone __init__ to add agent to boss's agent list
+        and give unique default name."""
+        super(Plotter, self).__init__(**kwargs)
+        plot_name=self.name
+        if plot_name=="":
+            plot_name=self.base_name
+        if plot_name in Plotter.plot_dict:
+            plot_name="{name}__{num}".format(name=plot_name, num=len(Plotter.plot_dict))
+        self.name=plot_name
+        Plotter.plot_dict[self.name]=self
+        
     def _default_axe(self):
          axe=self.fig.add_subplot(111)
          axe.autoscale_view(True)
@@ -597,6 +611,7 @@ class Plotter(SubAgent):
 
 if __name__=="__main__":
     a=Plotter()
+    print Plotter.plot_dict
     print dir(a.fig)
     print #a.fig.tight_layout()#(pad=0.1)
     x = arange(3)+3

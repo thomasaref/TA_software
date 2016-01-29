@@ -9,7 +9,7 @@ from enaml.widgets.api import ( Window, ScrollArea, Field, PushButton, ToolBar, 
     Container, MultilineField, DockPane, HGroup, VGroup, GroupBox)
 from enaml.layout.geometry import Pos, Rect, Size
 from enaml.core.api import Looper, Conditional
-from atom.api import List, Typed
+from atom.api import List, Typed, cached_property
 from enaml.core.declarative import d_
 from taref.core.shower_backbone import get_view_window
 #from e_Plotter import PlotWindow
@@ -26,6 +26,7 @@ enamldef AutoAgentView(AgentWindow):
             attr vmodel=parent.parent.agent
             InstrHolder:
                 pass #vmodel:=agent
+#from taref.core.plotter import Plotter
 
 class ShowWindow(MainWindow):
     """adds a list of other windows to a MainWindow and a property that determines if all are visible"""
@@ -33,16 +34,37 @@ class ShowWindow(MainWindow):
     def all_wins(self):
         return [w for w in self.windows if w!=self]
 
-    @property
+    @cached_property
+    def all_win_dict(self):
+        return dict([(w.name, w) for w in self.all_wins])
+        
+    @cached_property
     def agent_win_dict(self):
         if hasattr(self.chief_cls, "agent_dict"):
-            all_win_dict=dict([(w.name, w) for w in self.all_wins])
+            self.get_member("all_win_dict").reset(self)
             return OrderedDict([(name, all_win_dict.get(name, None)) for name in self.chief_cls.agent_dict])
         return {}
 
+    @cached_property
+    def plot_win_dict(self):
+        if hasattr(self.chief_cls, "plot_dict"):
+            self.get_member("all_win_dict").reset(self)
+            return OrderedDict([(name, all_win_dict.get(name, None)) for name in self.chief_cls.plot_win_dict])
+        return {}
+
+#    @property
+#    def plot_win_dict(self):
+#        all_win_dict=dict([(w.name, w) for w in self.all_wins])
+#        print all_win_dict
+#        print Plotter.plot_dict
+#        return OrderedDict([(name, all_win_dict.get(name, None)) for name in Plotter.plot_dict])
+        
     @property
     def other_win_dict(self):
-        return OrderedDict([(w.name, w) for w in self.all_wins if w.name not in self.agent_win_dict and not isinstance(w, LogWindow)])
+        return OrderedDict([(w.name, w) for w in self.all_wins if
+        w.name not in self.agent_win_dict
+        and w.name not in self.plot_win_dict
+        and not isinstance(w, LogWindow)])
 
     def show_and_send_to_front(self, name, win):
         if win is None:
@@ -105,8 +127,9 @@ enamldef AgentToolBar(ToolBar):
             triggered::boss_window.show_and_send_to_front(loop_item, boss_window.agent_win_dict[loop_item])
 
 enamldef LogToolBar(ToolBar):
-    attr log=parent.log
+    #attr log
     dock_area="top"
+
     Action:
         text="Log"
         triggered::
@@ -114,25 +137,36 @@ enamldef LogToolBar(ToolBar):
             log.send_to_front()
         tool_tip = "Show log"
 
-enamldef CoreView(CoreWindow):
+enamldef CoreView(CoreWindow): cv:
     """the most basic view controller of a collection of Atoms without a chief"""
     alias show_log:log.visible
     activated ::
         if hasattr(chief_cls, "activated"):
             chief_cls.activated()
+    alias log
     LogWindow: log:
         pass
     LogToolBar:
-        pass
+#        log=cv.log
+        Action:
+            text = "test"
+            triggered :: print getattr(cv, "plot_win_dict")
     Conditional:
-        condition = getattr(self, "other_win_dict", {}) != {}
+        condition = getattr(cv, "other_win_dict", {}) != {}
         WindowToolBar:
             pass
     Conditional:
         condition = getattr(chief_cls, "agent_dict", {}) != {}
         AgentToolBar:
             pass
-
+    Conditional:
+        condition = getattr(chief_cls, "plot_dict", {}) != {}
+        DockPane:
+            dock_area="right"
+            VGroup:
+                PushButton:
+                    text="add plot"
+                    clicked :: print "add plot"
 enamldef BasicView(CoreView):
     """the most basic view controller of a collection of Atoms without a chief"""
     Conditional:
