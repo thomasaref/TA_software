@@ -6,7 +6,7 @@ Created on Mon Jul 13 20:55:47 2015
 """
 
 from enaml.widgets.api import ( Window, ScrollArea, Field, PushButton, ToolBar, Action, MainWindow,
-    Container, MultilineField, DockPane, HGroup, VGroup, GroupBox)
+    Container, MultilineField, DockPane, HGroup, VGroup, GroupBox, Label, ObjectCombo, Form)
 from enaml.layout.geometry import Pos, Rect, Size
 from enaml.core.api import Looper, Conditional
 from atom.api import List, Typed, cached_property
@@ -17,8 +17,8 @@ from log_e import LogWindow, LogPane
 from collections import OrderedDict
 from taref.core.instrview_e import InstrHolder
 from taref.core.log import log_debug
-from taref.core.fundcore_e import AgentWindow
-
+from taref.core.fundcore_e import AgentWindow, aHGroup
+from taref.core.atom_extension import get_all_tags, get_type
 enamldef AutoAgentView(AgentWindow):
     """default view for an agent based on dynamic templating"""
     Container:
@@ -26,63 +26,54 @@ enamldef AutoAgentView(AgentWindow):
             attr vmodel=parent.parent.agent
             InstrHolder:
                 pass #vmodel:=agent
-#from taref.core.plotter import Plotter
 
 class ShowWindow(MainWindow):
     """adds a list of other windows to a MainWindow and a property that determines if all are visible"""
-    @property
+    @cached_property
     def all_wins(self):
         return [w for w in self.windows if w!=self]
 
     @cached_property
     def all_win_dict(self):
-        return dict([(w.name, w) for w in self.all_wins])
-        
+        self.get_member("all_wins").reset(self)
+        return dict([(w.name, w) for w in self.all_wins if w.name!=""])
+
     @cached_property
     def agent_win_dict(self):
-        if hasattr(self.chief_cls, "agent_dict"):
-            self.get_member("all_win_dict").reset(self)
-            return OrderedDict([(name, all_win_dict.get(name, None)) for name in self.chief_cls.agent_dict])
-        return {}
+        self.get_member("all_win_dict").reset(self)
+        return OrderedDict([(name, self.all_win_dict.get(name, None)) for name in getattr(self.chief_cls, "agent_dict", {})])
 
     @cached_property
     def plot_win_dict(self):
-        if hasattr(self.chief_cls, "plot_dict"):
-            self.get_member("all_win_dict").reset(self)
-            return OrderedDict([(name, all_win_dict.get(name, None)) for name in self.chief_cls.plot_win_dict])
-        return {}
+        self.get_member("all_win_dict").reset(self)
+        return OrderedDict([(name, self.all_win_dict.get(name, None)) for name in getattr(self.chief_cls, "plot_dict", {})])
 
-#    @property
-#    def plot_win_dict(self):
-#        all_win_dict=dict([(w.name, w) for w in self.all_wins])
-#        print all_win_dict
-#        print Plotter.plot_dict
-#        return OrderedDict([(name, all_win_dict.get(name, None)) for name in Plotter.plot_dict])
-        
-    @property
+    @cached_property
     def other_win_dict(self):
-        return OrderedDict([(w.name, w) for w in self.all_wins if
-        w.name not in self.agent_win_dict
-        and w.name not in self.plot_win_dict
-        and not isinstance(w, LogWindow)])
+        self.get_member("all_win_dict").reset(self)
+        self.get_member("agent_win_dict").reset(self)
+        self.get_member("plot_win_dict").reset(self)
+        other_wins=[name for name in self.all_win_dict if name not in self.plot_win_dict and name not in self.agent_win_dict]# and not isinstance(self.all_win_dict[name], LogWindow)]
+        return OrderedDict([(name, all_win_dict.get(name, None)) for name in other_wins])
+
+    def print_kids(self):
+        print self.windows
+        print self.all_wins
+        print self.all_win_dict
+        print self.agent_win_dict
+        print self.other_win_dict
+
+        print [kid for kid in self.children if isinstance(kid, Window)]
 
     def show_and_send_to_front(self, name, win):
         if win is None:
-            agent=self.chief_cls.agent_dict[name]
-            view=get_view_window(agent, AutoAgentView(agent=agent))
-            view.show()
-            view.send_to_front()
-        else:
-            win.show()
-            win.send_to_front()
-
-    def showhide_all(self, wins):
-        all_showing=all([getattr(w, 'visible', False) for w in wins.values()])
-        for name, window in wins.iteritems():
-            if all_showing:
-                window.hide()
-            else:
-                self.show_and_send_to_front(name, window)
+            agent=self.chief_cls.agent_dict.get(name, None)
+            if agent is None:
+                agent=self.chief_cls.plot_dict.get(name)
+            win=get_view_window(agent, AutoAgentView(agent=agent))
+        win.show()
+        win.send_to_front()
+        self.get_member("other_win_dict").reset(self)
 
 enamldef CoreWindow(ShowWindow): sv:
     """extends showWindow to close all windows when the core is closed and define chief_cls"""
@@ -95,47 +86,116 @@ enamldef CoreWindow(ShowWindow): sv:
 enamldef WindowToolBar(ToolBar):
     """a toolbar that lists all windows and links an action to showing them"""
     attr boss_window=parent
+    attr win_dict << boss_window.all_win_dict
+    alias top_action
     dock_area="left"
-    Action:
-        text="Windows:"
-        triggered:: boss_window.showhide_all(boss_window.other_win_dict)
-        tool_tip = "Show/hide all other windows"
-    Action:
-        separator=True
-    Looper: loopy:
-        iterable = boss_window.other_win_dict
-        Action:
-            text = loop_item
-            tool_tip = "Show window: {0}".format(loop_item)
-            triggered::boss_window.show_and_send_to_front(loop_item, boss_window.other_win_dict[loop_item])
-
-enamldef AgentToolBar(ToolBar):
-    """a toolbar that lists all agent windows and links an action to showing them"""
-    attr boss_window=parent
-    dock_area="left"
-    Action:
-        text="Agents:"
-        triggered::boss_window.showhide_all(boss_window.agent_win_dict)
-        tool_tip = "Show/hide all agents"
+    #orientation="vertical"
+    Action: top_action:
+        text="Windows"
     Action:
         separator=True
     Looper:
-        iterable = boss_window.agent_win_dict #chief_cls.agent_dict.values()
+        iterable << win_dict
         Action:
             text = loop_item
-            tool_tip = "Show agent: {0}".format(loop_item)
-            triggered::boss_window.show_and_send_to_front(loop_item, boss_window.agent_win_dict[loop_item])
+            tool_tip = "Show window: {0}".format(loop_item)
+            triggered::
+                boss_window.show_and_send_to_front(loop_item, win_dict[loop_item])
 
 enamldef LogToolBar(ToolBar):
-    #attr log
     dock_area="top"
-
     Action:
         text="Log"
         triggered::
             log.show()
             log.send_to_front()
         tool_tip = "Show log"
+
+from taref.core.plotter import Plotter
+from numpy import arange, array, ndarray
+from atom.api import Float, Int, List, ContainerList, Coerced, Property
+def get_plottables(agent):
+    plottables=get_all_tags(agent, "plot", True)
+    if plottables!=[]:
+        return plottables
+    plottables=[param for param in agent.main_params if get_type(agent, param) in (Float, Int, List, ContainerList, Coerced, Property)]
+    return plottables
+
+enamldef PlotPane(DockPane):
+    attr cw=parent
+    attr plot_dict=cw.chief_cls.plot_dict
+    dock_area="bottom"
+    Form:
+        Label:
+            text="X agent:"
+        Label:
+            text="X var:"
+        aHGroup:
+            ObjectCombo: x_agent:
+                items << cw.agent_win_dict.keys()
+        aHGroup:
+            ObjectCombo:
+                items << get_plottables(cw.chief_cls.agent_dict[x_agent.selected])
+                selected = None# << items[0]
+        Label:
+            text="Y agent:"
+        Label:
+            text="Y var:"
+        aHGroup:
+            ObjectCombo: y_agent:
+                items << cw.agent_win_dict.keys()
+        aHGroup:
+            ObjectCombo: yvar:
+                items << get_plottables(cw.chief_cls.agent_dict[y_agent.selected])
+                selected << items[0]
+        Label:
+            text="Z agent:"
+        Label:
+            text="Z var:"
+        aHGroup:
+            ObjectCombo: z_agent:
+                items << cw.agent_win_dict.keys()
+        aHGroup:
+            ObjectCombo: z_var:
+                items << get_plottables(cw.chief_cls.agent_dict[z_agent.selected])
+                selected << items[0]
+        ObjectCombo: plt_type:
+            items = Plotter.plot_type_list #["Line plot", "Scatter plot", "Colormap", "Polygon", "Text"]
+        Label:
+            text="Plot name"
+        Field: plt_name:
+            text = Plotter.base_name
+        Label:
+            text="Data name"
+        Field: dta_name:
+            text << "{0}_{1}".format(z_agent.selected, z_var.selected)
+        PushButton:
+            text="new plot"
+            clicked ::
+                a=Plotter(name=plt_name.text)
+                #a.draw()
+                cw.get_member("agent_win_dict").reset(cw)
+                cw.show_and_send_to_front(a.name, cw.agent_win_dict[a.name])
+
+                #a.plot_type_map[plt_type.selected]("blah", ys[0], label="1", color="red")
+
+        PushButton:
+                text="add plot"
+                clicked ::
+                        a=Plotter(name=plt_name.text)
+                        x = arange(3)+3
+                        ys = array([x + i for i in arange(5)])
+                        data=[list(zip(x, y)) for y in ys]
+                        a.plot_type_map[plt_type.selected](dta_name, ys[0], label="1", color="red")
+                        a.scatter_plot("bob", x-4, ys[0]+10, label="2", color="blue")
+
+                        a.line_plot("bill", x-2, ys[0]+6, ys[1]+6, color="green", label="bob")#, color=("red", "blue", "green"))
+                        a.axe.legend()
+                        a.draw()
+                        #cw.chief_cls.plot_dict[a.name]=a
+                        cw.get_member("agent_win_dict").reset(cw)
+                        cw.show_and_send_to_front(a.name, cw.agent_win_dict[a.name])
+
 
 enamldef CoreView(CoreWindow): cv:
     """the most basic view controller of a collection of Atoms without a chief"""
@@ -146,27 +206,30 @@ enamldef CoreView(CoreWindow): cv:
     alias log
     LogWindow: log:
         pass
-    LogToolBar:
-#        log=cv.log
+    LogToolBar: tb:
         Action:
             text = "test"
-            triggered :: print getattr(cv, "plot_win_dict")
-    Conditional:
-        condition = getattr(cv, "other_win_dict", {}) != {}
-        WindowToolBar:
-            pass
-    Conditional:
-        condition = getattr(chief_cls, "agent_dict", {}) != {}
-        AgentToolBar:
-            pass
-    Conditional:
-        condition = getattr(chief_cls, "plot_dict", {}) != {}
-        DockPane:
-            dock_area="right"
-            VGroup:
-                PushButton:
-                    text="add plot"
-                    clicked :: print "add plot"
+            triggered ::
+                cv.print_kids()
+                print [child.text for child in tb.children]# #print getattr(cv, "plot_win_dict")
+    #WindowToolBar:
+    #    pass
+    WindowToolBar:
+        top_action.text="Agents"
+        win_dict<<cv.agent_win_dict
+    WindowToolBar:
+        top_action.text="Other Windows"
+        win_dict<<cv.other_win_dict
+#    WindowToolBar:
+#        top_action.text="Plots"
+#        win_dict<<cv.plot_win_dict
+
+    #Conditional:
+    #    condition = getattr(chief_cls, "plot_dict", {}) != {}
+    PlotPane:
+        pass
+                        #shower(a) #print "add plot"
+
 enamldef BasicView(CoreView):
     """the most basic view controller of a collection of Atoms without a chief"""
     Conditional:

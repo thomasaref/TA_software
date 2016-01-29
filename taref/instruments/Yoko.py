@@ -56,7 +56,7 @@ class Yoko(GPIB_Instrument):
 if __name__=="__main__":
     a=Yoko(address="GPIB0::10::INSTR")
     print get_tag(a, "voltage", "set_cmd")
-    a.show(a)
+    a.show()
     #a.ramp_steps=3
     #a.ramp()
     #a.voltage.send(0.0)

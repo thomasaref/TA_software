@@ -6,14 +6,133 @@ Created on Fri Dec 26 19:13:08 2014
 """
 from enaml.widgets.api import (Container, Field, ObjectCombo, Window,
      MainWindow, Form, Label, PushButton, DockPane, ToolBar, Action,
-     MPLCanvas, DockArea, DockItem
-        )
+     MPLCanvas, DockArea, DockItem, CheckBox)
 from enaml.widgets.color_dialog import ColorDialog
 from enaml.stdlib.fields import FloatField
 
 from enaml.core.api import Include, Looper, DynamicTemplate
 from enaml.layout.api import vbox, hbox, align, spacer, HSplitLayout, InsertItem
+from taref.core.fundcore_e import aHGroup
+from taref.core.atom_extension import get_all_tags, get_type, get_tag
+from atom.api import Float, Int, List, ContainerList, Coerced, Property
+from numpy import arange, array
+from taref.core.log import log_debug
+def get_plottables(agent):
+    plottables=[""]
+    plottables.extend(get_all_tags(agent, "plot", True))
+    if plottables!=[""]:
+        log_debug(plottables)
 
+        return plottables
+    plottables.extend([param for param in agent.main_params if
+        get_type(agent, param) in (Float, Int, List, ContainerList, Coerced, Property)])
+    log_debug(plottables)
+    return plottables
+
+enamldef PlotPane(DockPane):
+    attr pt=parent
+    dock_area="bottom"
+    Form:
+        Label:
+            text="X agent:"
+        Label:
+            text="X var:"
+        aHGroup:
+            ObjectCombo: x_agent:
+                items << pt.agent_dict.keys()
+        aHGroup:
+            ObjectCombo: x_var:
+                items << get_plottables(pt.agent_dict[x_agent.selected])
+                selected << items[0]
+        Label:
+            text="Y agent:"
+        Label:
+            text="Y var:"
+        aHGroup:
+            ObjectCombo: y_agent:
+                items << pt.agent_dict.keys()
+        aHGroup:
+            ObjectCombo: yvar:
+                items << get_plottables(pt.agent_dict[y_agent.selected])
+                selected << items[0]
+        Label:
+            text="Z agent:"
+        Label:
+            text="Z var:"
+        aHGroup:
+            ObjectCombo: z_agent:
+                items << pt.agent_dict.keys()
+        aHGroup:
+            ObjectCombo: z_var:
+                items << get_plottables(pt.agent_dict[z_agent.selected])
+                selected << items[0]
+        ObjectCombo: plt_type:
+            items = pt.plot_type_list #["Line plot", "Scatter plot", "Colormap", "Polygon", "Text"]
+        CheckBox:
+            checked:=pt.show_legend
+        CheckBox:
+            checked:=pt.append
+        ObjectCombo: clt_key:
+            items<<pt.clts_keys
+            selected:: dta_name.text=selected
+        Label:
+            text << unicode(pt.clts.get(clt_key.selected, None))
+        Label:
+            text="Plot name"
+        Field: plt_name:
+            text = pt.base_name
+        Label:
+            text="Data name"
+        Field: dta_name:
+            text << "{0}_{1}".format(z_agent.selected, z_var.selected)
+            submit_triggers=['lost_focus', 'return_pressed', "auto_sync"]
+            text::
+                for key in clt_key.items:
+                    if key.startswith(text):
+                        clt_key.selected=key
+
+        ObjectCombo: plt_color:
+            items=pt.plt_colors
+        PushButton:
+            text="new plot"
+            clicked ::
+                a=Plotter(name=plt_name.text)
+                a.plot_type_map[plt_type.selected]("blah", ys[0], label="1", color="red")
+
+        PushButton:
+                text="add plot"
+                clicked ::
+                        #a=Plotter(name=plt_name.text)
+                        x = arange(3)+3
+                        ys = array([x + i for i in arange(5)])
+                        data=[list(zip(x, y)) for y in ys]
+                        print x_agent.selected, x_var.selected
+                        xdata=getattr(pt.agent_dict[x_agent.selected], x_var.selected, None)
+                        #ydata=getattr(pt.agent_dict[y_agent.selected], y_var.selected, None)
+                        zdata=getattr(pt.agent_dict[z_agent.selected], z_var.selected, None)
+                        if pt.ylabel=="":
+                            pt.ylabel=get_tag(pt.agent_dict[z_agent.selected], z_var.selected, "label", "bla")
+
+                        if plt_type.selected=="Line plot":
+                            if xdata is None:
+                                pt.line_plot(dta_name.text, ys[0], label=dta_name.text, color=plt_color.selected)
+                            else:
+                                if pt.xlabel=="":
+                                    pt.xlabel=get_tag(pt.agent_dict[x_agent.selected], x_var.selected, "label", "bla")
+
+                                pt.line_plot(dta_name.text, x-2, ys[0]+6, color=plt_color.selected, label=dta_name.text)#, color=("red", "blue", "green"))
+                            if pt.title=="":
+                                pt.title="{0} vs {1}".format(pt.ylabel, pt.xlabel)
+
+                        elif plt_type.selected=="Scatter plot":
+                            pt.scatter_plot(dta_name.text, x-4, ys[0]+10, label=dta_name.text, color=plt_color.selected if plt_color.selected != "auto" else "blue")
+                        #if pt.show_legend:
+                        #    pt.axe.legend()
+                        pt.draw()
+                        pt.get_member("clts_keys").reset(pt)
+                        #cw.chief_cls.plot_dict[a.name]=a
+                        #cw.get_member("agent_win_dict").reset(cw)
+                        #cw.show_and_send_to_front(a.name, cw.agent_win_dict[a.name])
 enamldef PlotBox(Container):
     attr plottables<<plotr.plottables
     Container:
@@ -154,8 +273,6 @@ enamldef PlotFormat(Form):
     PushButton:
         text = "Draw"
         clicked :: plotr.draw()
-    PlotBox:
-        pass
 
 enamldef XYformat(Form):
     attr xyf<<plotr.xyfs[it.selected]
@@ -343,6 +460,9 @@ enamldef PlotMain(MainWindow): pm:
     PlotToolBar:
         pm:=pm
     alias pf
+    PlotPane:
+        pt = plotr
+        dock_area="right"
     DockPane:pf:
         dock_area="left"
         title = "Plot Format"

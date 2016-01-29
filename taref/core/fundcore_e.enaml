@@ -11,6 +11,7 @@ from enaml.widgets.api import  ( HGroup, Container, GroupBox,  Field, Label, Spi
                                 MultilineField, VGroup, ScrollArea, Window, MainWindow)
 from enaml.core.api import Conditional
 from enaml.validator import IntValidator, FloatValidator
+from enaml.layout.api import spacer
 
 enamldef aWindow(Window):
     """a Window that is not destroyed on close"""
@@ -27,6 +28,7 @@ enamldef aHGroup(HGroup):
     """a non-padded, non-width-aligning HGroup"""
     padding=0
     align_widths=False
+    trailing_spacer=spacer
 
 enamldef aVGroup(ScrollArea):
     """A non-padded VGroup with builtin scroll area"""

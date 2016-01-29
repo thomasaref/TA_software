@@ -9,6 +9,8 @@ from taref.core.log import log_debug
 from taref.core.shower import shower
 from taref.core.universal import sqze
 from taref.core.agent import SubAgent
+from taref.core.atom_extension import private_property
+
 from numpy import angle, absolute, dtype, log10, meshgrid, arange, linspace, sin, cos, sqrt, ma, fabs, amax
 from matplotlib import cm, colors
 from numpy import shape, split, squeeze, array, transpose, concatenate, atleast_2d, ndim
@@ -232,13 +234,13 @@ class AllXYFormat(XYFormat):
                 if key!="All":
                     setattr(self.plotter.xyfs[key], change['name'], change['value'])
 
-class Plotter(Atom):
+class Plotter(SubAgent):
     base_name="plot"
-    name=Unicode()
-    plot_dict=OrderedDict()
-    
-    title=Unicode("yoyoyoyoyo")
-    xlabel=Unicode("yo")
+    #name=Unicode()
+    #plot_dict=OrderedDict()
+    plt_colors=['auto', 'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan', 'magenta', 'orange']
+    title=Unicode()
+    xlabel=Unicode()
     ylabel=Unicode()
     x_scale=Enum('linear', 'log')
     y_scale=Enum('linear', 'log')
@@ -249,29 +251,52 @@ class Plotter(Atom):
     y_max=Float()
 
     autocolor=Bool(True)
+    show_legend=Bool(False)
+    append=Bool(True)
+    #auto_xlim=Bool(True)
+    #auto_ylim=Bool(True)
+
+    def _observe_show_legend(self, change):
+        if self.show_legend:
+            self.axe.legend()
+
 
     xyfs=Dict()
     color_index=Int()
 
     clts=Dict()
+
+    @private_property
+    def clts_keys(self):
+        return self.clts.keys()
     fig=Typed(Figure)
     axe=Typed(Axes)
 
     plottables=Dict()
     overall_plot_type=Enum("XY plot", "img plot")
 
-    def __init__(self, **kwargs):
-        """extends Backbone __init__ to add agent to boss's agent list
-        and give unique default name."""
-        super(Plotter, self).__init__(**kwargs)
-        plot_name=self.name
-        if plot_name=="":
-            plot_name=self.base_name
-        if plot_name in Plotter.plot_dict:
-            plot_name="{name}__{num}".format(name=plot_name, num=len(Plotter.plot_dict))
-        self.name=plot_name
-        Plotter.plot_dict[self.name]=self
-        
+    plot_type_list=["Line plot", "Scatter plot", "Colormap", "Polygon", "Text"]
+
+    @private_property
+    def plot_type_map(self):
+        return {"Line plot" : self.line_plot,
+                "Scatter plot" : self.scatter_plot,
+                "Colormap" : self.colormap,
+                "Polygon" : self.poly_plot,
+                "Text" : self.add_text}
+
+#    def __init__(self, **kwargs):
+#        """extends Backbone __init__ to add agent to boss's agent list
+#        and give unique default name."""
+#        super(Plotter, self).__init__(**kwargs)
+#        plot_name=self.name
+#        if plot_name=="":
+#            plot_name=self.base_name
+#        if plot_name in Plotter.plot_dict:
+#            plot_name="{name}__{num}".format(name=plot_name, num=len(Plotter.plot_dict))
+#        self.name=plot_name
+#        Plotter.plot_dict[self.name]=self
+
     def _default_axe(self):
          axe=self.fig.add_subplot(111)
          axe.autoscale_view(True)
@@ -344,7 +369,7 @@ class Plotter(Atom):
            otherwise assumes zdata is x data and args[0] is y data.
            In kwargs, if append=False, data overwrites existing data in self.clts
            If tuples, xlim or ylim are passed in kwargs, will use those for setting limits"""
-        log_debug(len(shape(zdata)))# in (int, float))
+
         xlim=kwargs.pop("xlim", None)
         ylim=kwargs.pop("ylim", None)
 
@@ -355,7 +380,8 @@ class Plotter(Atom):
             else:
                 self.autocolor=False
         data=[]
-        if kwargs.pop("append", True):
+        self.append=kwargs.pop("append", self.append)
+        if self.append:
             clt=self.clts.get(zname, None)
             if clt:
                 data=clt.get_segments()
@@ -603,7 +629,7 @@ class Plotter(Atom):
              self.gatherMultiD(yname, ydata, appen=appen, overwrite=overwrite, concat=concat)
          self.gatherMultiD(zname, zdata, appen=appen, overwrite=overwrite, concat=concat)
 
-    @cached_property
+    @private_property
     def view_window(self):
         with imports():
             from taref.core.plotter_e import PlotMain
