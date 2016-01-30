@@ -9,16 +9,23 @@ from atom.api import Unicode, ContainerList
 from taref.core.backbone import Backbone
 from taref.core.atom_extension import private_property, set_log, reset_properties
 from collections import OrderedDict
-from taref.core.shower import shower
+#from taref.core.shower import shower
+from enaml import imports
+with imports():
+    from taref.core.agent_e import AutoAgentView, BasicView
+    from taref.core.interactive import InteractiveWindow
+
+
+#    kwargs["chief_cls"]=kwargs.get("chief_cls", agents[0] if agents!=() else Atom)
 
 class SubAgent(Backbone):
     """Adds chief functionality to Backbone"""
     name=Unicode().tag(private=True, desc="name of agent. This name will be modified to be unique, if necessary")
     desc=Unicode().tag(private=True, desc="optional description of agent")
 
-    def show(self):
-        """default show function just shows the agent itself"""
-        shower(self)
+#    def show(self):
+#        """default show function just shows the agent itself"""
+#        shower(self)
 
     base_name="subagent"
 
@@ -33,7 +40,7 @@ class SubAgent(Backbone):
     abort=False
 
     run_func_dict=OrderedDict()
-    
+
     plot_dict=OrderedDict()
 
     def add_func(self, *funcs):
@@ -51,6 +58,12 @@ class SubAgent(Backbone):
     def activated(cls):
         """function that runs when window is activated"""
         pass
+
+    @private_property
+    def view_window(self):
+        return AutoAgentView(agent=self)
+    chief_window=BasicView(title="Show Control")
+    interactive_window=InteractiveWindow()
 
     def __init__(self, **kwargs):
         """extends Backbone __init__ to add agent to boss's agent list
@@ -104,3 +117,7 @@ class Agent(SubAgent):
         if change["type"] not in ("create", "update"):
             set_log(self, change["name"], change["value"])
             reset_properties(self)
+
+if __name__=="__main__":
+    a=Agent()
+    print Agent, type(a), type(a)==Agent

@@ -1,0 +1,64 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Jan 30 13:51:10 2016
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import MultilineField, PushButton, MainWindow, IPythonConsole, VGroup, Form, DockPane, HGroup, ToolBar, Action
+from atom.api import Atom, Float
+from taref.core.log import log_info, log_warning, log_stream
+
+log_info("hello")
+
+class Test(Atom):
+    a=Float()
+
+t=Test()
+
+enamldef Main(MainWindow): main:
+    attr myobj := t
+    title = "Interactive taref editor"
+    ToolBar:
+        dock_area="left"
+        Action:
+            text = "Run"
+            triggered::
+                try:
+                    exec(runtxt.field_text())
+                except Exception as e:
+                    log_warning(e)
+        Action:
+            separator = True
+        Action:
+            separator = True
+        Action:
+            text = "Append:"
+        Action:
+            separator = True
+        Action:
+            text = "History"
+            triggered::
+                runtxt.text=runtxt.field_text()+"\n"+"\n".join(ipc.get_var("In"))
+        Action:
+            text = "Output"
+            triggered::
+                out_list=["\nOut={"]
+                for key, item in ipc.get_var("Out").iteritems():
+                    out_list.append("{key} : {item},".format(key=key, item=item))
+                out_list.append("}")
+                runtxt.text=runtxt.field_text()+"\n"+"\n".join(out_list)
+    alias runtxt
+    VGroup:
+        MultilineField: runtxt:
+            pass
+    alias ipc
+    DockPane:
+        closable = False
+        dock_area="bottom"
+        HGroup:
+            IPythonConsole: ipc:
+                initial_ns=dict(windows=main.windows, b=myobj, log_info=log_info)
+            MultilineField:
+                read_only=True
+                text<<log_stream.log_str

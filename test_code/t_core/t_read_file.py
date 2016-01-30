@@ -9,31 +9,40 @@ from taref.core.read_file import Read_HDF5
 from taref.core.shower import shower
 from taref.core.atom_extension import tag_Property
 from taref.core.extra_setup import tagged_property
-from numpy import float64, linspace, shape, reshape, squeeze
+from numpy import float64, linspace, shape, reshape, squeeze, mean
 from h5py import File
 from taref.core.universal import Array
-#read_hdf=Read_HDF5(file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/Data_1008/TA46_refll_fluxpowswp_4p2GHz4pGHz.hdf5")
+from taref.physics.fundamentals import dB
 
+#read_hdf=Read_HDF5(file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/Data_1008/TA46_refll_fluxpowswp_4p2GHz4pGHz.hdf5")
+from taref.core.log import log_debug
+log_debug("hi")
 from taref.core.agent import SubAgent, Agent
-from atom.api import Float, Typed, Unicode
+from atom.api import Float, Typed, Unicode, Int
 
 class Fund(Agent):
     base_name="Fund"
     fridge_att=Float(87.0+20.0+5.0).tag(unit="dB")
 
-fund=Fund()
+#fund=Fund()
 
 class Lyzer(Agent):
     rd_hdf=Typed(Read_HDF5)#.tag(private=True)
     #fd=Typed(Fund, ())
 
+    powind=Int(4)
+    probe_frq=Float().tag(unit="GHz", label="Probe frequency", read_only=True)
+    probe_pwr=Float().tag(unit="dBm", label="Probe power", read_only=True)
+    yoko=Array().tag(unit="V", plot=True, label="Yoko")
+    pwr=Array().tag(unit="dBm", plot=True)
+    Magcom=Array().tag(plot=True)
+    freq=Array().tag(unit="GHz", plot=True, label="Frequency")
+    comment=Unicode().tag(read_only=True, spec="multiline")
+    MagdB=Array().tag(plot=True)
 
-    probe_frq=Float().tag(unit="GHz", label="Probe frequency", readonly=True)
-    probe_pwr=Float().tag(unit="dBm", label="Probe power", readonly=True)
-    yoko=Array().tag(unit="V")
-    pwr=Array().tag(unit="dBm")
-    Magcom=Array()
-    freq=Array().tag(unit="GHz")
+    def _observe_powind(self, change):
+        if change["type"]=="update":
+            self.MagdB=dB(self.Magcom[:, :, self.powind])
 
     def _default_rd_hdf(self):
         return Read_HDF5(file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/Data_1008/TA46_refll_fluxpowswp_4p2GHz4pGHz.hdf5")
@@ -41,7 +50,7 @@ class Lyzer(Agent):
     def read_data(self):
         with File(self.rd_hdf.file_path, 'r') as f:
             print f["Traces"].keys()
-            print f.attrs["comment"]
+            self.comment=f.attrs["comment"]
             print f["Instrument config"].keys()
             self.probe_frq=f["Instrument config"]['Rohde&Schwarz Network Analyzer - IP: 169.254.107.192,  at localhost'].attrs["Start frequency"]
             self.probe_pwr=f["Instrument config"]['Rohde&Schwarz Network Analyzer - IP: 169.254.107.192,  at localhost'].attrs["Output power"]
@@ -64,7 +73,13 @@ class Lyzer(Agent):
             Magcom=reshape(Magcom, s, order="F")
             self.freq=linspace(fstart, fstart+fstep*(sm-1), sm)
             print shape(Magcom)
-            Magcom=squeeze(Magcom)
+            self.Magcom=squeeze(Magcom)
+            #Magabs=Magcom[:, :, :]-mean(Magcom[:, 197:200, :], axis=1, keepdims=True)
+
+            fridge_att=87.0+20.0+5.0
+            #pwrlin=0*0.001*10.0**((pwr[powind]-fridge_att)/10.0)
+
+            self.MagdB=dB(Magcom[:, :, self.powind])
 #        powind=4
 #        print pwr[powind]
 #        Magabs=Magcom[:, :, :]-mean(Magcom[:, 197:200, :], axis=1, keepdims=True)
@@ -130,8 +145,11 @@ class Lyzer(Agent):
 a=Lyzer()
 #a.rd_hdf.read()
 a.read_data()
+print a.Magcom
 print a.probe_frq, a.probe_pwr
 print a.yoko.dtype
+#print locals()
+#print globals()
 #print a.sm
-shower(a)
+shower(a)#locals_dict=locals())
 #read_hdf.show()

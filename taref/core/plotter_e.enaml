@@ -52,7 +52,7 @@ enamldef PlotPane(DockPane):
             ObjectCombo: y_agent:
                 items << pt.agent_dict.keys()
         aHGroup:
-            ObjectCombo: yvar:
+            ObjectCombo: y_var:
                 items << get_plottables(pt.agent_dict[y_agent.selected])
                 selected << items[0]
         Label:
@@ -108,31 +108,44 @@ enamldef PlotPane(DockPane):
                         data=[list(zip(x, y)) for y in ys]
                         print x_agent.selected, x_var.selected
                         xdata=getattr(pt.agent_dict[x_agent.selected], x_var.selected, None)
-                        #ydata=getattr(pt.agent_dict[y_agent.selected], y_var.selected, None)
+
                         zdata=getattr(pt.agent_dict[z_agent.selected], z_var.selected, None)
-                        if pt.ylabel=="":
-                            pt.ylabel=get_tag(pt.agent_dict[z_agent.selected], z_var.selected, "label", "bla")
+                        log_debug(xdata, zdata)
+
 
                         if plt_type.selected=="Line plot":
+                            if pt.ylabel=="":
+                                pt.ylabel=get_tag(pt.agent_dict[z_agent.selected], z_var.selected, "label", "#")
                             if xdata is None:
-                                pt.line_plot(dta_name.text, ys[0], label=dta_name.text, color=plt_color.selected)
+                                pt.line_plot(dta_name.text, zdata, label=dta_name.text, color=plt_color.selected)
                             else:
                                 if pt.xlabel=="":
-                                    pt.xlabel=get_tag(pt.agent_dict[x_agent.selected], x_var.selected, "label", "bla")
+                                    pt.xlabel=get_tag(pt.agent_dict[x_agent.selected], x_var.selected, "label", "#")
 
-                                pt.line_plot(dta_name.text, x-2, ys[0]+6, color=plt_color.selected, label=dta_name.text)#, color=("red", "blue", "green"))
+                                pt.line_plot(dta_name.text, xdata, zdata, color=plt_color.selected, label=dta_name.text)#, color=("red", "blue", "green"))
                             if pt.title=="":
                                 pt.title="{0} vs {1}".format(pt.ylabel, pt.xlabel)
 
                         elif plt_type.selected=="Scatter plot":
-                            pt.scatter_plot(dta_name.text, x-4, ys[0]+10, label=dta_name.text, color=plt_color.selected if plt_color.selected != "auto" else "blue")
-                        #if pt.show_legend:
-                        #    pt.axe.legend()
+                            pt.scatter_plot(dta_name.text, xdata, zdata, label=dta_name.text, color=plt_color.selected if plt_color.selected != "auto" else "blue")
+                        elif plt_type.selected=="Colormap":
+                            if xdata is not None:
+                                ydata=getattr(pt.agent_dict[y_agent.selected], y_var.selected, None)
+                                if ydata is not None:
+                                    pt.colormap(dta_name.text, xdata, ydata, zdata)
+                                    if pt.xlabel=="":
+                                        pt.xlabel=get_tag(pt.agent_dict[x_agent.selected], x_var.selected, "label", "#")
+                                    if pt.ylabel=="":
+                                        pt.ylabel=get_tag(pt.agent_dict[z_agent.selected], y_var.selected, "label", "#")
+                                    if pt.title=="":
+                                        pt.title="{0} vs {1}".format(pt.ylabel, pt.xlabel)
+                                else:
+                                    pt.colormap(dta_name.text, zdata)
+                            else:
+                                pt.colormap(dta_name.text, zdata)
                         pt.draw()
                         pt.get_member("clts_keys").reset(pt)
-                        #cw.chief_cls.plot_dict[a.name]=a
-                        #cw.get_member("agent_win_dict").reset(cw)
-                        #cw.show_and_send_to_front(a.name, cw.agent_win_dict[a.name])
+
 enamldef PlotBox(Container):
     attr plottables<<plotr.plottables
     Container:
