@@ -81,7 +81,12 @@ class Instrument(Agent):
             if Instrument.saving:
                 Instrument.save_file.flush_buffers()
 
-
+    @classmethod
+    def clean_up(cls):
+        cls.close_all()
+        if cls.saving:
+            cls.save_file.flush_buffers()
+        
     @classmethod
     def boot_all(cls):
         for instr in cls.agent_dict.values():

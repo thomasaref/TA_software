@@ -34,13 +34,16 @@ enamldef AutoAgentView(AgentWindow):
 class ShowWindow(MainWindow):
     """adds a list of other windows to a MainWindow and a property that determines if all are visible"""
     @cached_property
+    def window_dict(self):
+        return dict([(w.name, w) for w in self.windows])
+        
+    @cached_property
     def all_wins(self):
         return [w for w in self.windows if w!=self]
 
     @cached_property
     def all_win_dict(self):
-        self.get_member("all_wins").reset(self)
-        return dict([(w.name, w) for w in self.all_wins if w.name!=""])
+        return dict([(w.name, w) for w in self.all_wins if w != self and w.name not in ("ipython", "log", "run_code")])
 
     @cached_property
     def agent_win_dict(self):
@@ -48,32 +51,14 @@ class ShowWindow(MainWindow):
         return OrderedDict([(name, self.all_win_dict.get(name, None)) for name in getattr(self.chief_cls, "agent_dict", {})])
 
     @cached_property
-    def plot_win_dict(self):
-        self.get_member("all_win_dict").reset(self)
-        return OrderedDict([(name, self.all_win_dict.get(name, None)) for name in getattr(self.chief_cls, "plot_dict", {})])
-
-    @cached_property
     def other_win_dict(self):
         self.get_member("all_win_dict").reset(self)
         self.get_member("agent_win_dict").reset(self)
-        self.get_member("plot_win_dict").reset(self)
-        other_wins=[name for name in self.all_win_dict if name not in self.plot_win_dict and name not in self.agent_win_dict]# and not isinstance(self.all_win_dict[name], LogWindow)]
-        return OrderedDict([(name, self.all_win_dict.get(name, None)) for name in other_wins])
-
-    def print_kids(self):
-        print self.windows
-        print self.all_wins
-        print self.all_win_dict
-        print self.agent_win_dict
-        print self.other_win_dict
-
-        print [kid for kid in self.children if isinstance(kid, Window)]
+        return OrderedDict([(name, self.all_win_dict[name]) for name in self.all_win_dict if name not in self.agent_win_dict])
 
     def show_and_send_to_front(self, name, win):
         if win is None:
             agent=self.chief_cls.agent_dict.get(name, None)
-            if agent is None:
-                agent=self.chief_cls.plot_dict.get(name)
             win=get_view_window(agent, AutoAgentView(agent=agent))
         win.show()
         win.send_to_front()
@@ -82,8 +67,10 @@ class ShowWindow(MainWindow):
 enamldef CoreWindow(ShowWindow): sv:
     """extends showWindow to close all windows when the core is closed and define chief_cls"""
     attr chief_cls
+    name="show_control"
     initial_position=(0,0)
     closed ::
+        sv.get_member("all_wins").reset(sv)
         for w in sv.all_wins:
             w.close()
 
@@ -106,14 +93,34 @@ enamldef WindowToolBar(ToolBar):
             triggered::
                 boss_window.show_and_send_to_front(loop_item, win_dict[loop_item])
 
-enamldef LogToolBar(ToolBar):
+enamldef TopToolBar(ToolBar):
     dock_area="top"
-    Action:
-        text="Log"
-        triggered::
-            chief_cls.interactive_window.show()
-            chief_cls.send_to_front()
-        tool_tip = "Show log"
+    Conditional:
+        condition = hasattr(chief_cls, "log_window")
+        Action:
+            text="Log"
+            triggered::
+                chief_cls.log_window.show()
+                chief_cls.log_window.send_to_front()
+            tool_tip = "Show log"
+
+    Conditional:
+        condition = hasattr(chief_cls, "interactive_window")
+        Action:
+            text="IPython"
+            triggered::
+                chief_cls.interactive_window.show()
+                chief_cls.interactive_window.send_to_front()
+            tool_tip = "Show IPython window"
+
+    Conditional:
+        condition = hasattr(chief_cls, "code_window")
+        Action:
+            text="Code"
+            triggered::
+                chief_cls.code_window.show()
+                chief_cls.code_window.send_to_front()
+            tool_tip = "Show code window"
 
 #from taref.core.plotter import Plotter
 #from numpy import arange, array, ndarray
@@ -200,47 +207,24 @@ enamldef LogToolBar(ToolBar):
 #                        cw.get_member("agent_win_dict").reset(cw)
 #                        cw.show_and_send_to_front(a.name, cw.agent_win_dict[a.name])
 
-
 enamldef CoreView(CoreWindow): cv:
     """the most basic view controller of a collection of Atoms without a chief"""
-    #alias show_log:log.visible
     activated ::
-        #if show_log:
-        #    log.show()
         if hasattr(chief_cls, "activated"):
             chief_cls.activated()
-    #alias log
-    #InteractiveWindow: log:
-    #    visible=True #pass #input_dict=chief_cls
-#    alias log
-#    LogWindow: log:
-#        pass
-    LogToolBar: tb:
+    TopToolBar: tb:
         Action:
             text = "test"
-#            triggered ::
-#                cv.print_kids()
-#                print [child.text for child in tb.children]# #print getattr(cv, "plot_win_dict")
-    #WindowToolBar:
-    #    pass
     WindowToolBar:
         top_action.text="Agents"
         win_dict<<cv.agent_win_dict
     WindowToolBar:
         top_action.text="Other Windows"
         win_dict<<cv.other_win_dict
-#    WindowToolBar:
-#        top_action.text="Plots"
-#        win_dict<<cv.plot_win_dict
-
-    #Conditional:
-    #    condition = getattr(chief_cls, "plot_dict", {}) != {}
-    #PlotPane:
-    #    pass
-                        #shower(a) #print "add plot"
 
 enamldef BasicView(CoreView):
     """the most basic view controller of a collection of Atoms without a chief"""
+    title="Show Control"    
     Conditional:
         condition = getattr(chief_cls, "run_func_dict", {}) != {}
         VGroup:

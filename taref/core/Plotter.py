@@ -637,7 +637,7 @@ class Plotter(SubAgent):
 
 if __name__=="__main__":
     a=Plotter()
-    print Plotter.plot_dict
+    #print Plotter.plot_dict
     print dir(a.fig)
     print #a.fig.tight_layout()#(pad=0.1)
     x = arange(3)+3

@@ -5,57 +5,102 @@ Created on Sat Jan 30 13:51:10 2016
 @author: thomasaref
 """
 
-from enaml.widgets.api import MultilineField, PushButton, MainWindow, IPythonConsole, VGroup, Form, DockPane, HGroup, ToolBar, Action
-from atom.api import Atom, Float
-from taref.core.log import log_info, log_warning, log_stream
+from enaml.widgets.api import DockPane, MultilineField, MainWindow, IPythonConsole, VGroup
+from atom.api import Atom, Float, Unicode, Int
+
+class LogIPythonConsole(IPythonConsole):
+    InOut_index=Int(1)               
+    InOut_text=Unicode("#IPython Log:\n\n")
+
+    def text_ev(self):
+        if len(self.get_var("In"))>self.InOut_index:
+            self.InOut_index+=1
+            self.InOut_text+=self.get_var("In")[-1]+"\n"
+            outstr=self.get_var("Out").get(self.InOut_index-1, None)
+            if outstr is not None:
+                self.InOut_text+="#{0}\n".format(outstr)
 
 def update_and_return(indict, updict):
     indict.update(updict)
     return indict
 
 enamldef InteractiveWindow(MainWindow): main:
+    destroy_on_close=False
     attr input_dict : dict = {}
-    title = "Interactive taref editor"
-    ToolBar:
-        dock_area="left"
-        Action:
-            text = "Run"
-            triggered::
-                try:
-                    exec(runtxt.field_text())
-                except Exception as e:
-                    log_warning(e)
-        Action:
-            separator = True
-        Action:
-            separator = True
-        Action:
-            text = "Append:"
-        Action:
-            separator = True
-        Action:
-            text = "History"
-            triggered::
-                runtxt.text=runtxt.field_text()+"\n"+"\n".join(ipc.get_var("In"))
-        Action:
-            text = "Output"
-            triggered::
-                out_list=["\nOut={"]
-                for key, item in ipc.get_var("Out").iteritems():
-                    out_list.append("{key} : {item},".format(key=key, item=item))
-                out_list.append("}")
-                runtxt.text=runtxt.field_text()+"\n"+"\n".join(out_list)
-    alias runtxt
+    name="ipython"
+    title = "IPython"
+    closed :: 
+        self.set_size(self.size())
+        self.set_position(self.position())
     VGroup:
+        alias ipc
+        LogIPythonConsole: ipc:
+            activated::
+                self.proxy.text_control.textChanged.connect(self.text_ev)
+            initial_ns=update_and_return({"w_dict" : dict([(w.name, w) for w in main.windows])}, input_dict)
+
         MultilineField: runtxt:
-            pass
-    alias ipc
-    DockPane:
-        closable = False
-        dock_area="bottom"
-        HGroup:
-            IPythonConsole: ipc:
-                initial_ns=update_and_return(dict(windows=main.windows), input_dict)
-            MultilineField:
-                read_only=True
-                text<<log_stream.log_str
+            read_only=True
+            text<<ipc.InOut_text
+
+enamldef CodeWindow(MainWindow):
+    name="run_code"
+    title="Run Code"
+    destroy_on_close=False
+    initial_size=(1000,500)
+    alias show_code
+    VGroup:
+        MultilineField: show_code:
+            read_only=True
+
+enamldef Main(InteractiveWindow):
+    pass
+
+#from taref.core.log import log_info, log_warning, log_stream
+
+#enamldef InteractiveWindow(MainWindow): main:
+#    attr input_dict : dict = {}
+#    title = "Interactive taref editor"
+#    ToolBar:
+#        dock_area="left"
+#        Action:
+#            text = "Run"
+#            triggered::
+#                try:
+#                    exec(runtxt.field_text())
+#                except Exception as e:
+#                    log_warning(e)
+#        Action:
+#            separator = True
+#        Action:
+#            separator = True
+#        Action:
+#            text = "Append:"
+#        Action:
+#            separator = True
+#        Action:
+#            text = "History"
+#            triggered::
+#                runtxt.text=runtxt.field_text()+"\n"+"\n".join(ipc.get_var("In"))
+#        Action:
+#            text = "Output"
+#            triggered::
+#                out_list=["\nOut={"]
+#                for key, item in ipc.get_var("Out").iteritems():
+#                    out_list.append("{key} : {item},".format(key=key, item=item))
+#                out_list.append("}")
+#                runtxt.text=runtxt.field_text()+"\n"+"\n".join(out_list)
+#    alias runtxt
+#    VGroup:
+#        MultilineField: runtxt:
+#            text<<ipc.InOut_text
+#    alias ipc
+#    DockPane:
+#        closable = False
+#        dock_area="bottom"
+#        HGroup:
+#            IPythonConsole: ipc:
+#                initial_ns=update_and_return(dict(windows=main.windows), input_dict)
+#            MultilineField:
+#                read_only=True
+#                text<<log_stream.log_str

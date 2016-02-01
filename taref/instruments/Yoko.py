@@ -56,7 +56,8 @@ class Yoko(GPIB_Instrument):
 if __name__=="__main__":
     a=Yoko(address="GPIB0::10::INSTR")
     print get_tag(a, "voltage", "set_cmd")
-    a.show()
+    from taref.core.shower import shower
+    shower(a)
     #a.ramp_steps=3
     #a.ramp()
     #a.voltage.send(0.0)

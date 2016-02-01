@@ -11,6 +11,7 @@ from taref.core.atom_extension import (UNIT_DICT, private_property, get_reserved
 get_all_main_params, lowhigh_check, make_instancemethod, get_type)
 from taref.core.extra_setup import extra_setup
 
+
 class Backbone(Atom):
     """Class combining primary functions for viewer operation"""
     unit_dict=UNIT_DICT

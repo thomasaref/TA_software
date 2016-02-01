@@ -9,25 +9,31 @@ from atom.api import Unicode, ContainerList
 from taref.core.backbone import Backbone
 from taref.core.atom_extension import private_property, set_log, reset_properties
 from collections import OrderedDict
-#from taref.core.shower import shower
+
 from enaml import imports
 with imports():
     from taref.core.agent_e import AutoAgentView, BasicView
-    from taref.core.interactive import InteractiveWindow
-
-
-#    kwargs["chief_cls"]=kwargs.get("chief_cls", agents[0] if agents!=() else Atom)
+    from taref.core.interactive import InteractiveWindow, CodeWindow
+    from taref.core.log_e import LogWindow
 
 class SubAgent(Backbone):
     """Adds chief functionality to Backbone"""
     name=Unicode().tag(private=True, desc="name of agent. This name will be modified to be unique, if necessary")
     desc=Unicode().tag(private=True, desc="optional description of agent")
 
-#    def show(self):
-#        """default show function just shows the agent itself"""
-#        shower(self)
-
     base_name="subagent"
+
+    @private_property
+    def view_window(self):
+        return AutoAgentView(agent=self)
+
+    chief_window=BasicView()
+
+    interactive_window=InteractiveWindow()
+
+    log_window=LogWindow()
+    
+    code_window=CodeWindow()
 
     @classmethod
     def run_all(cls):
@@ -40,8 +46,6 @@ class SubAgent(Backbone):
     abort=False
 
     run_func_dict=OrderedDict()
-
-    plot_dict=OrderedDict()
 
     def add_func(self, *funcs):
         """adds functions to run_func_dict. functions should be a classmethod, a staticmethod
@@ -59,11 +63,6 @@ class SubAgent(Backbone):
         """function that runs when window is activated"""
         pass
 
-    @private_property
-    def view_window(self):
-        return AutoAgentView(agent=self)
-    chief_window=BasicView(title="Show Control")
-    interactive_window=InteractiveWindow()
 
     def __init__(self, **kwargs):
         """extends Backbone __init__ to add agent to boss's agent list
