@@ -6,21 +6,37 @@ Created on Sat Jan 30 13:51:10 2016
 """
 
 from enaml.widgets.api import DockPane, MultilineField, MainWindow, IPythonConsole, VGroup
-from atom.api import Atom, Float, Unicode, Int
+from atom.api import Atom, Float, Unicode, Int, Typed
 
-class LogIPythonConsole(IPythonConsole):
-    InOut_index=Int(1)               
-    InOut_text=Unicode("#IPython Log:\n\n")
+#class LogIPythonConsole(IPythonConsole):
+#    InOut_index=Int(1)
+#    InOut_text=Unicode("#IPython Log:\n\n")
+#
+#    def text_ev(self):
+#        if len(self.get_var("In"))>self.InOut_index:
+#            self.InOut_index+=1
+#            self.InOut_text+=self.get_var("In")[-1]+"\n"
+#            outstr=self.get_var("Out").get(self.InOut_index-1, None)
+#            if outstr is not None:
+#                self.InOut_text+="#{0}\n".format(outstr)
 
-    def text_ev(self):
-        if len(self.get_var("In"))>self.InOut_index:
+
+class text_ev(object):
+    """decorator class to allow auto update of IPython Log"""
+    def __init__(self, ipc):
+        self.ipc=ipc
+        self.InOut_index=1
+
+    def __call__(self):
+        if len(self.ipc.get_var("In"))>self.InOut_index:
             self.InOut_index+=1
-            self.InOut_text+=self.get_var("In")[-1]+"\n"
-            outstr=self.get_var("Out").get(self.InOut_index-1, None)
+            self.ipc.InOut_text+=self.ipc.get_var("In")[-1]+"\n"
+            outstr=self.ipc.get_var("Out").get(self.InOut_index-1, None)
             if outstr is not None:
-                self.InOut_text+="#{0}\n".format(outstr)
+                self.ipc.InOut_text+="#{0}\n".format(outstr)
 
 def update_and_return(indict, updict):
+    """utility function for one line combination of two dictionaries"""
     indict.update(updict)
     return indict
 
@@ -29,14 +45,16 @@ enamldef InteractiveWindow(MainWindow): main:
     attr input_dict : dict = {}
     name="ipython"
     title = "IPython"
-    closed :: 
+    closed ::
         self.set_size(self.size())
         self.set_position(self.position())
     VGroup:
         alias ipc
-        LogIPythonConsole: ipc:
+        IPythonConsole: ipc:
+            attr InOut_text = "#IPython Log (Outputs appear with comment # in front)\n\n"
             activated::
-                self.proxy.text_control.textChanged.connect(self.text_ev)
+                #te=text_ev(ipc)
+                self.proxy.text_control.textChanged.connect(text_ev(ipc))
             initial_ns=update_and_return({"w_dict" : dict([(w.name, w) for w in main.windows])}, input_dict)
 
         MultilineField: runtxt:

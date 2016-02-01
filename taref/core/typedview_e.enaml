@@ -133,7 +133,7 @@ enamldef ListReadOnlyExt(aHGroup):
     attr unit = get_tag(parent.vmodel, parent.vname, "unit", "")
     MultilineField:
         read_only=True
-        text=array2string(parent.parent.vvalue/unit_factor, separator="\n")
+        text<<array2string(parent.parent.vvalue/unit_factor, separator="\n")
     Label:
         text = unicode(unit)
         visible = unit!=""

@@ -15,12 +15,49 @@ from functools import wraps
 from enaml.application import deferred_call
 from threading import Thread
 from types import MethodType
+from taref.physics.fundamentals import dB, inv_dB
+
+class inv_dB_func(object):
+    def __init__(self, coercer=float):
+        self.coercer=coercer
+        self.unit="inv_dB"
+
+    def __call__(self, text):
+        return dB(self.coercer(text))
+
+    def inv(self, value):
+        if value is None:
+            return value
+        return inv_dB(value)
+
+class dB_func(object):
+    def __init__(self, coercer=float):
+        self.coercer=coercer
+        self.unit="dB"
+
+    def __call__(self, text):
+        return inv_dB(self.coercer(text))
+
+    def inv(self, value):
+        if value is None:
+            return value
+        return dB(value)
 
 
 _MAPPING_SUFFIX_="_mapping"
+PREFIX_DICT={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
+           "G":1.0e9, "M":1.0e6, "k":1.0e3,}
 UNIT_DICT={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
-              "G":1.0e9, "M":1.0e6, "k":1.0e3,
-              "%":1.0/100.0}
+           "G":1.0e9, "M":1.0e6, "k":1.0e3,
+           "%":1.0/100.0,
+           "nm":1.0e-9, "um":1.0e-6, "mm":1.0e-3, "cm":1.0e-2, "km":1.0e3,
+           "GHz":1.0e9, "MHz":1.0e6, "kHz":1.0e3,
+           "mW" : 1.0e-3,
+           #"dB":dB_func(), "inv_dB":inv_dB_func(),
+}
+
+def get_display(obj, name):
+    return get_tag(obj, name, "display_func")(getattr(obj, name))
 
 def set_tag(obj, name, **kwargs):
     """sets the tag of a member using Atom's built in tag functionality"""
@@ -63,11 +100,13 @@ def get_type(obj, name):
     return get_tag(obj, name, "typer", typer)
 
 def get_property_names(obj):
+    """returns property names that are in all_params"""
     if hasattr(obj, "property_names"):
         return obj.property_names
     return [name for name in get_all_params(obj) if type(obj.get_member(name)) is Property]
 
 def get_property_values(obj):
+    """returns property values that are in all_params"""
     if hasattr(obj, "property_values"):
         return obj.property_values
     return [obj.get_member(name) for name in get_all_params(obj) if type(obj.get_member(name)) is Property]
@@ -85,7 +124,7 @@ def reset_property(obj, name):
     obj.get_member(name).reset(obj)
 
 def reset_properties(obj):
-    """resets all  properties"""
+    """resets all  properties that are in all_params"""
     for item in get_property_values(obj):
         item.reset(obj)
 

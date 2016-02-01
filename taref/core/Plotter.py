@@ -9,24 +9,19 @@ from taref.core.log import log_debug
 from taref.core.shower import shower
 from taref.core.universal import sqze
 from taref.core.agent import SubAgent
-from taref.core.atom_extension import private_property
+from taref.core.atom_extension import private_property, get_tag
 
 from numpy import angle, absolute, dtype, log10, meshgrid, arange, linspace, sin, cos, sqrt, ma, fabs, amax
-from matplotlib import cm, colors
+from matplotlib import cm
 from numpy import shape, split, squeeze, array, transpose, concatenate, atleast_2d, ndim
+
 from enaml import imports
+
 from atom.api import Atom, Int, Enum, Float, List, Dict, Typed, Unicode, ForwardTyped, Bool, cached_property, observe
 from matplotlib.axes import Axes
-#from matplotlib import collections, transforms
-from matplotlib.collections import PolyCollection, LineCollection, QuadMesh, PathCollection
+from matplotlib.collections import PolyCollection, LineCollection#, QuadMesh, PathCollection
 from matplotlib.figure import Figure
-from collections import OrderedDict
-#slow imports
-Plot = None
-PanTool=None
-ZoomTool=None
-LegendTool=None
-PlotGraphicsContext=None
+#from collections import OrderedDict
 
 #import matplotlib
 #matplotlib.use('GTKAgg')
@@ -52,14 +47,17 @@ rcParams['ytick.major.size']=4
 #rcParams['lines.solid_joinstyle']='round'
 #rcParams['lines.solid_capstyle']='round'
 
-from matplotlib.colors import colorConverter
-colors = [colorConverter.to_rgba(c) for c in ('r','g','b','c','y','m','k')]
+#from matplotlib.colors import colorConverter
+#colors = [colorConverter.to_rgba(c) for c in ('r','g','b','c','y','m','k')]
 #from matplotlib.ticker import MaxNLocator
 #my_locator = MaxNLocator(6)
 # Set up axes and plot some awesome science
 #ax.yaxis.set_major_locator(my_locator)
 
-mycolors=[ 'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan', 'magenta', 'orange']
+mycolors=('auto', 'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan', 'magenta', 'orange', 'darkblue', 'darkred')
+
+
+mymarkers=(".", ",", "o", "v", "^", "<",">", "1", "2", "3", "4", "8", "s", "p", "*", "h", "H", "+", "x", "D", "d", "|", "_", "$2/3$")
 
 class XYFormat(Atom):
     rend_list=List(default=[None, None, None]) #First is line, second is scatter #Typed(BaseXYPlot)
@@ -67,152 +65,57 @@ class XYFormat(Atom):
     xname=Unicode()
     yname=Unicode()
     zname=Unicode()
-    colormap=Enum("jet")
+    colormap=Enum("jet", "rainbow", "nipy_spectral")
 
-    line_color=Enum(*mycolors)
-    plot_type=Enum('line', 'scatter', 'line+scatter')
-    line_width=Float(1.0)
-    marker = Enum('square', 'circle', 'triangle', 'inverted_triangle', 'plus', 'cross', 'diamond', 'dot', 'pixel')
-    marker_size = Float(3.0)
-    outline_color=Enum(*mycolors)
-    outline_width=Float(1.0)
-    inside_color=Enum(*mycolors)
-    line_style=Enum('solid', 'dot dash', 'dash', 'dot', 'long dash')
-    render_style=Enum('connectedpoints', 'hold', 'connectedhold')
+    alpha=Float(1.0)
+    label=Unicode().tag(refresh_legend=True)
+    edgecolor=Enum(*mycolors).tag(refresh_legend=True)
+    visible=Bool(True)
+    facecolor=Enum(*mycolors).tag(refresh_legend=True)
+
+
+#    plot_type=Enum('line', 'scatter', 'line+scatter')
+    linewidth=Float(2.0).tag(refresh_legend=True)
+    marker = Enum(*mymarkers)
+#    marker_size = Float(3.0)
+#    outline_color=Enum(*mycolors)
+#    outline_width=Float(1.0)
+#    inside_color=Enum(*mycolors)
+    linestyle=Enum('solid', 'dashed', 'dashdot', 'dotted').tag(refresh_legend=True)
     plotter=ForwardTyped(lambda: Plotter)
 
+    @observe("alpha", "linestyle", "linewidth", "visible")
+    def changer(self, change):
+        if change["type"]=="update":
+            param=change["name"]
+            refresh_legend=get_tag(self, param, "refresh_legend", False)
+            if refresh_legend:
+                temp=self.plotter.show_legend
+                self.plotter.show_legend=False
+            getattr(self.plotter.clts[self.name], "set_"+param)(getattr(self, param))
+            if refresh_legend:
+                self.plotter.show_legend=True
+                self.plotter.show_legend=temp
+            if self.plotter.auto_draw:
+                self.plotter.draw()
 
-    def _default_name(self):
-        return self.yname
+    @observe("edgecolor", "colormap")
+    def color_change(self, change):
+        """intercepts auto case for coloring"""
+        if change["type"]=="update":
+            if self.edgecolor=="auto":
+                temp=self.plotter.show_legend
+                self.plotter.show_legend=False
+                colormap=getattr(cm, self.colormap)
+                length=len(self.plotter.clts[self.name].get_segments())
+                colors = colormap(linspace(0, 1, length))
+                self.plotter.clts[self.name].set_edgecolor(colors)
+                self.plotter.show_legend=True
+                self.plotter.show_legend=temp
+            else:
+                if change["name"]!="colormap":
+                    self.changer(change)
 
-    def set_param(self, param, change, index=-1):
-        if change['type']!='create':
-            setattr(self.rend_list[index], param, change['value'])
-
-    def set_line_param(self, param, change):
-        self.set_param(param, change, index=0)
-
-    def set_scatter_param(self, param, change):
-        self.set_param(param, change, index=1)
-
-    def _observe_line_color(self, change):
-        self.set_line_param('color', change)
-
-    def _observe_marker_size(self, change):
-        self.set_scatter_param('marker_size', change)
-
-    def _observe_marker(self, change):
-        self.set_scatter_param('marker', change)
-
-    def _observe_line_width(self, change):
-        self.set_line_param('line_width', change)
-
-    def _observe_outline_width(self, change):
-        self.set_scatter_param('line_width', change)
-
-    def _observe_outline_color(self, change):
-        self.set_scatter_param('outline_color', change)
-
-    def _observe_inside_color(self, change):
-        self.set_scatter_param('color', change)
-
-    def _observe_line_style(self, change):
-        self.set_line_param('line_style', change)
-
-    def redraw_plot(self):
-        self.draw_plot(name=self.name, zname=self.zname, xname=self.xname)
-
-    def draw_img_plot(self, name, zname, xname=None, yname=None):
-        self.plotter.delete_all_plots()
-        self.name=name
-        self.zname=zname
-        #self.plotter.pd.set_data(zname, z)
-        img_plot = self.plotter.plot.img_plot(self.zname,
-                                              name="img_plot",
-                    colormap=self.colormap)[0]
-#        z_shape=shape(self.plotter.pd.get_data(self.zname))
-        #xdata=img_plot.index.get_data()[0].get_data()
-        #ydata=img_plot.index.get_data()[1].get_data()
-        if xname!=None:
-            xdata=self.plotter.get_data(xname)
-        else:
-            xdata=img_plot.index.get_data()[0].get_data()
-        if yname!=None:
-            ydata=self.plotter.get_data(yname)
-        else:
-            ydata=img_plot.index.get_data()[1].get_data()
-        img_plot.index.set_data(xdata,ydata)
-        img_plot.request_redraw()
-        self.rend_list[2]=img_plot
-
-    def draw_plot(self, name, zname, zdata=None, xname='', xdata=None):
-        if "img_plot" in self.plotter.plot.plots.keys():
-            self.plotter.delete_all_plots()
-        if "{0}_line".format(name) in self.plotter.plot.plots.keys():
-            self.plotter.plot.delplot("{0}_line".format(name))
-        if "{0}_scatter".format(name) in self.plotter.plot.plots.keys():
-            self.plotter.plot.delplot("{0}_scatter".format(name))
-        #if xname==None:
-        #    xname="{0}_x0".format(zname)
-        #    self.plotter.pd.set_data(xname, arange(len(self.plotter.pd.arrays[zname])))
-        self.xname=xname
-        self.zname=zname
-        self.name=name
-        if self.plot_type=='line':
-            self.draw_line_plot()
-        elif self.plot_type=='scatter':
-            self.draw_scatter_plot()
-        elif self.plot_type=='line+scatter':
-            self.draw_line_plot()
-            self.draw_scatter_plot()
-
-#        if data.x_unit:
-#            x_label = "{} [{}]".format(data.x_label, data.x_unit)
-#        else:
-#            x_label = data.x_label
-#        if data.y_unit:
-#            y_label = "{} [{}]".format(data.y_label, data.y_unit)
-#        else:
-#            y_label = data.y_label
-#        plot.x_axis.title = x_label
-#        plot.y_axis.title = y_label
-#        plot.x_axis.tick_label_formatter = lambda x: '%.e'%x
-#        plot.y_axis.tick_label_formatter = lambda x: '%.e'%x
-
-
-    def draw_line_plot(self):
-        renderer=self.plotter.plot.plot( self.zname ,
-           name="{0}_line".format(self.name),
-           type="line",
-           line_width=self.line_width,
-           color=self.line_color,
-           render_style=self.render_style,
-           value_scale=self.plotter.value_scale,
-           index_scale=self.plotter.index_scale
-           )[0]
-        xdata=self.plotter.get_data(self.xname)
-        if xdata!=None:
-                renderer.index.set_data(xdata)
-        renderer.request_redraw()
-        self.rend_list[0]=renderer
-
-    def draw_scatter_plot(self):
-        renderer=self.plotter.plot.plot(self.zname,
-           name="{0}_scatter".format(self.name), #self.zname,
-           type="scatter", #self.xyformat.plot_type,
-           line_width=self.line_width,
-           color=self.inside_color,
-           outline_color=self.outline_color,
-           marker = self.marker,
-           marker_size = self.marker_size,
-           value_scale=self.plotter.value_scale,
-           index_scale=self.plotter.index_scale
-           )[0]
-        xdata=self.plotter.get_data(self.xname)
-        if xdata!=None:
-                renderer.index.set_data(xdata)
-        renderer.request_redraw()
-        self.rend_list[1]=renderer
 
 class AllXYFormat(XYFormat):
     name=Unicode("All")
@@ -236,8 +139,6 @@ class AllXYFormat(XYFormat):
 
 class Plotter(SubAgent):
     base_name="plot"
-    #name=Unicode()
-    #plot_dict=OrderedDict()
     plt_colors=['auto', 'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan', 'magenta', 'orange']
     title=Unicode()
     xlabel=Unicode()
@@ -253,12 +154,10 @@ class Plotter(SubAgent):
     autocolor=Bool(True)
     show_legend=Bool(False)
     append=Bool(True)
+    auto_draw=Bool(False)
     #auto_xlim=Bool(True)
     #auto_ylim=Bool(True)
 
-    def _observe_show_legend(self, change):
-        if self.show_legend:
-            self.axe.legend()
 
 
     xyfs=Dict()
@@ -269,11 +168,12 @@ class Plotter(SubAgent):
     @private_property
     def clts_keys(self):
         return self.clts.keys()
+
     fig=Typed(Figure)
     axe=Typed(Axes)
 
-    plottables=Dict()
-    overall_plot_type=Enum("XY plot", "img plot")
+    #plottables=Dict()
+    #overall_plot_type=Enum("XY plot", "img plot")
 
     plot_type_list=["Line plot", "Scatter plot", "Colormap", "Polygon", "Text"]
 
@@ -285,18 +185,6 @@ class Plotter(SubAgent):
                 "Polygon" : self.poly_plot,
                 "Text" : self.add_text}
 
-#    def __init__(self, **kwargs):
-#        """extends Backbone __init__ to add agent to boss's agent list
-#        and give unique default name."""
-#        super(Plotter, self).__init__(**kwargs)
-#        plot_name=self.name
-#        if plot_name=="":
-#            plot_name=self.base_name
-#        if plot_name in Plotter.plot_dict:
-#            plot_name="{name}__{num}".format(name=plot_name, num=len(Plotter.plot_dict))
-#        self.name=plot_name
-#        Plotter.plot_dict[self.name]=self
-
     def _default_axe(self):
          axe=self.fig.add_subplot(111)
          axe.autoscale_view(True)
@@ -305,44 +193,41 @@ class Plotter(SubAgent):
     def _default_fig(self):
          return Figure()
 
+    def changer(self, change, func, *args, **kwargs):
+        if change["type"]=="update":
+            func(*args, **kwargs)
+            if self.auto_draw:
+                self.draw()
+
     @observe("x_min", "x_max")
     def change_x_lim(self, change):
-        if change["type"]=="update":
-            self.set_xlim(self.x_min, self.x_max)
-            #self.draw()
+        self.changer(change, self.set_xlim, self.x_min, self.x_max)
 
     @observe("y_min", "y_max")
     def change_y_lim(self, change):
-        if change["type"]=="update":
-            self.set_ylim(self.y_min, self.y_max)
-            #self.draw()
+        self.changer(change, self.set_ylim, self.y_min, self.y_max)
 
     def _observe_x_scale(self, change):
-        self.axe.set_xscale(self.x_scale)
-        #if change["type"]=="update":
-            #self.draw()
+        self.changer(change, self.axe.set_xscale, self.x_scale)
 
     def _observe_y_scale(self, change):
-         self.axe.set_yscale(self.y_scale)
-         #if change["type"]=="update":
-            #self.draw()
-
-    def _default_plottables(self):
-         return dict(plotted=[None])
+         self.changer(change, self.axe.set_yscale, self.y_scale)
 
     def _observe_title(self, change):
-        self.axe.set_title(self.title)
-        #if change["type"]=="update":
-        #    self.draw()
+        self.changer(change, self.axe.set_title, self.title)
+
     def _observe_xlabel(self, change):
-        self.axe.set_xlabel(self.xlabel)
-        #if change["type"]=="update":
-        #    self.draw()
+        self.changer(change, self.axe.set_xlabel, self.xlabel)
 
     def _observe_ylabel(self, change):
-        self.axe.set_ylabel(self.ylabel)
-        #if change["type"]=="update":
-        #    self.draw()
+        self.changer(change, self.axe.set_ylabel, self.ylabel)
+
+    def _observe_show_legend(self, change):
+        if self.show_legend:
+            self.changer(change, self.axe.legend().draggable)
+        else:
+            if self.axe.legend_ is not None:
+                self.changer(change, self.axe.legend_.remove)
 
     def _default_xyfs(self):
          xyf=AllXYFormat(plotter=self)
@@ -420,9 +305,15 @@ class Plotter(SubAgent):
                 ylim=(min(data, key = lambda t: t[1])[1], max(data, key = lambda t: t[1])[1])
         self.set_xlim(*xlim)
         self.set_ylim(*ylim)
+        self.xyfs[zname]=XYFormat(plotter=self, name=zname, label=kwargs.get("label", ""), edgecolor=kwargs.get("color", "blue"))
 
     def scatter_plot(self, zname, *args, **kwargs):
+        self.append=kwargs.pop("append", self.append)
+        if not self.append:
+            if zname in self.clts:
+                self.clts[zname].remove()
         self.clts[zname]=self.axe.scatter(*args, **kwargs)
+        self.xyfs[zname]=XYFormat(plotter=self, name=zname, label=kwargs.get("label", ""), edgecolor=kwargs.get("color", "blue"))
 
     def remove_collection(self, zname):
         if zname in self.clts:
@@ -543,10 +434,10 @@ class Plotter(SubAgent):
          self.axe.text(x, y, text, **kwargs)
 
     def remove_texts(self):
+        """removes all texts from axes"""
         self.axe.texts=[]
 
     def draw(self):
-        log_debug("draw called")
         if self.fig.canvas!=None:
             self.fig.canvas.draw()
 
@@ -560,74 +451,74 @@ class Plotter(SubAgent):
         self.y_max=ymax
         self.axe.set_ylim(ymin, ymax)
 
-    def get_data(self, zname, index=None, axis=0):
-        data=[c.to_polygons() for c in self.clt.get_paths()]
-        if index==None:
-            return data
-        if axis==0:
-            return atleast_2d(data)[index, :]
-        return atleast_2d(data)[:, index]
-
-    def add_img_plot(self, zname, zdata, xname=None, xdata=None, yname=None,  ydata=None):
-         self.add_data(zname=zname, zdata=zdata, xname=xname, xdata=xdata, yname=yname, ydata=ydata, overwrite=True, concat=False)
-         print self.pd.get_data(zname)
-         xyf=XYFormat(plotter=self)
-         xyf.draw_img_plot(name='img_plot', zname=zname, xname=xname, yname=yname)
-         self.xyfs.update(**{xyf.name: xyf})
-         self.overall_plot_type="img plot"
-
-    def add_line_plot(self, name, zname, zdata, xname='', xdata=None):
-        #self.add_data(zname=zname, zdata=zdata, xname=xname, xdata=xdata, overwrite=True)
-        self.set_data(zname, zdata)
-        self.set_data(xname, xdata)
-        xyf=XYFormat(plotter=self)
-        zdata=self.get_data(zname)
-        #if 1: #zdata.ndim>1:
-        #    for i, arr in enumerate(self.splitMultiD(zdata, 0)):
-        #        self.add_line_plot(name+str(i), zname+str(i), squeeze(arr), xname, xdata )
-        #else:
-            #self.set_data(zname, zdata)
-            #if xname!=None and xdata!=None:
-            #    self.set_data(xname, xdata, coord='x')
-        xyf.draw_plot(name=name, zname=zname, xname=xname)
-        self.xyfs.update(**{xyf.name: xyf})
-        self.overall_plot_type="XY plot"
-
-    def splitMultiD(self, arr, axis=0):
-        if arr.ndim<2:
-            return atleast_2d(arr)
-        else:
-            return split(arr, arr.shape[axis], axis=axis)
-
-    def gatherMultiD(self, name, arrs, appen=None, concat=True, overwrite=False):
-         if not isinstance(arrs, tuple):
-             arrs=(arrs,)
-         if appen==None:
-             if shape(arrs)==(1,):
-                 appen=True
-             else:
-                 appen=False
-         orig=self.get_data(name)
-         if orig!=None and not overwrite:
-             arrs=(orig,)+arrs
-         if appen:
-             axis=1
-         else:
-             axis=0
-         print arrs[0]==atleast_2d(*arrs)
-         #if ndim(arrs[0])>1:
-         #    concat=False
-
-         if concat:
-             data=concatenate(atleast_2d(*arrs), axis)
-         self.set_data(name, data)
-
-    def add_data(self, zname, zdata, xname=None, xdata=None, yname=None, ydata=None, appen=None, concat=True, overwrite=False):
-         if xname!=None:
-             self.gatherMultiD(xname, xdata, appen=appen, overwrite=overwrite, concat=concat)
-         if yname!=None:
-             self.gatherMultiD(yname, ydata, appen=appen, overwrite=overwrite, concat=concat)
-         self.gatherMultiD(zname, zdata, appen=appen, overwrite=overwrite, concat=concat)
+#    def get_data(self, zname, index=None, axis=0):
+#        data=[c.to_polygons() for c in self.clt.get_paths()]
+#        if index==None:
+#            return data
+#        if axis==0:
+#            return atleast_2d(data)[index, :]
+#        return atleast_2d(data)[:, index]
+#
+#    def add_img_plot(self, zname, zdata, xname=None, xdata=None, yname=None,  ydata=None):
+#         self.add_data(zname=zname, zdata=zdata, xname=xname, xdata=xdata, yname=yname, ydata=ydata, overwrite=True, concat=False)
+#         print self.pd.get_data(zname)
+#         xyf=XYFormat(plotter=self)
+#         xyf.draw_img_plot(name='img_plot', zname=zname, xname=xname, yname=yname)
+#         self.xyfs.update(**{xyf.name: xyf})
+#         self.overall_plot_type="img plot"
+#
+#    def add_line_plot(self, name, zname, zdata, xname='', xdata=None):
+#        #self.add_data(zname=zname, zdata=zdata, xname=xname, xdata=xdata, overwrite=True)
+#        self.set_data(zname, zdata)
+#        self.set_data(xname, xdata)
+#        xyf=XYFormat(plotter=self)
+#        zdata=self.get_data(zname)
+#        #if 1: #zdata.ndim>1:
+#        #    for i, arr in enumerate(self.splitMultiD(zdata, 0)):
+#        #        self.add_line_plot(name+str(i), zname+str(i), squeeze(arr), xname, xdata )
+#        #else:
+#            #self.set_data(zname, zdata)
+#            #if xname!=None and xdata!=None:
+#            #    self.set_data(xname, xdata, coord='x')
+#        xyf.draw_plot(name=name, zname=zname, xname=xname)
+#        self.xyfs.update(**{xyf.name: xyf})
+#        self.overall_plot_type="XY plot"
+#
+#    def splitMultiD(self, arr, axis=0):
+#        if arr.ndim<2:
+#            return atleast_2d(arr)
+#        else:
+#            return split(arr, arr.shape[axis], axis=axis)
+#
+#    def gatherMultiD(self, name, arrs, appen=None, concat=True, overwrite=False):
+#         if not isinstance(arrs, tuple):
+#             arrs=(arrs,)
+#         if appen==None:
+#             if shape(arrs)==(1,):
+#                 appen=True
+#             else:
+#                 appen=False
+#         orig=self.get_data(name)
+#         if orig!=None and not overwrite:
+#             arrs=(orig,)+arrs
+#         if appen:
+#             axis=1
+#         else:
+#             axis=0
+#         print arrs[0]==atleast_2d(*arrs)
+#         #if ndim(arrs[0])>1:
+#         #    concat=False
+#
+#         if concat:
+#             data=concatenate(atleast_2d(*arrs), axis)
+#         self.set_data(name, data)
+#
+#    def add_data(self, zname, zdata, xname=None, xdata=None, yname=None, ydata=None, appen=None, concat=True, overwrite=False):
+#         if xname!=None:
+#             self.gatherMultiD(xname, xdata, appen=appen, overwrite=overwrite, concat=concat)
+#         if yname!=None:
+#             self.gatherMultiD(yname, ydata, appen=appen, overwrite=overwrite, concat=concat)
+#         self.gatherMultiD(zname, zdata, appen=appen, overwrite=overwrite, concat=concat)
 
     @private_property
     def view_window(self):
@@ -638,8 +529,8 @@ class Plotter(SubAgent):
 if __name__=="__main__":
     a=Plotter()
     #print Plotter.plot_dict
-    print dir(a.fig)
-    print #a.fig.tight_layout()#(pad=0.1)
+    #print dir(a.fig)
+    #print #a.fig.tight_layout()#(pad=0.1)
     x = arange(3)+3
     ys = array([x + i for i in arange(5)])
     data=[list(zip(x, y)) for y in ys]

@@ -12,7 +12,7 @@ from enaml.widgets.api import (Window, Container, HGroup, Label, CheckBox, Slide
                                PushButton, ObjectCombo, GroupBox)
 from enaml.layout.api import spacer
 from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params, get_run_params
-from taref.core.fundcore_e import UnitIntField, UnitSpinBox, UnitFloatField, aHGroup, aVGroup
+from taref.core.fundcore_e import UnitIntField, UnitSpinBox, UnitFloatField, aHGroup, aVGroup, mult_unit_factor
 from taref.core.universal import msg
 from atom.api import Property
 
@@ -111,14 +111,21 @@ enamldef BoolVar(Var):
         pass
 
 ##################### INTS ##############################
+def None_passer(value, coercer=float):
+    if value is None:
+        return value
+    return coercer(value)
+
 enamldef UnitIntFieldExt(UnitIntField):
     """integer shown as IntField with units"""
     uvalue:=parent.vvalue
     unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
     unit_factor=int(get_tag(parent.vmodel, parent.vname, "unit_factor", 1))
-    minimum=int(get_tag(parent.vmodel, parent.vname, 'low', -2147483648))
-    maximum=int(get_tag(parent.vmodel, parent.vname, 'high', 2147483647))
+    minimum=None_passer(get_tag(parent.vmodel, parent.vname, 'low'), int)
+    maximum=None_passer(get_tag(parent.vmodel, parent.vname, 'high'), int)
+    unit_func=get_tag(parent.vmodel, parent.vname, "unit_func", mult_unit_factor(unit_factor, int))
+    display_func=get_tag(parent.vmodel, parent.vname, "display_func", None)
 
 enamldef UnitIntVar(Var):
     alias ext
@@ -133,6 +140,9 @@ enamldef UnitSpinBoxExt(UnitSpinBox):
     unit_factor=int(get_tag(parent.vmodel, parent.vname, "unit_factor", 1))
     minimum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'low', -2147483648))
     maximum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'high', 2147483647))
+    unit_func=get_tag(parent.vmodel, parent.vname, "unit_func", mult_unit_factor(unit_factor, int))
+    display_func=get_tag(parent.vmodel, parent.vname, "display_func", None)
+
 
 enamldef UnitSpinBoxVar(Var):
     alias ext
@@ -140,20 +150,17 @@ enamldef UnitSpinBoxVar(Var):
         pass
 
 ##################### FLOATS ####################################################
-def floater(value):
-    if value is None:
-        return value
-    return float(value)
-
 enamldef UnitFloatExt(UnitFloatField):
     """extends Var for float types"""
     uvalue:=parent.vvalue
     unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
     unit_factor=float(get_tag(parent.vmodel, parent.vname, "unit_factor", 1.0))
-    minimum=floater(get_tag(parent.vmodel, parent.vname, 'low'))
-    maximum=floater(get_tag(parent.vmodel, parent.vname, 'high'))
+    minimum=None_passer(get_tag(parent.vmodel, parent.vname, 'low'), float)
+    maximum=None_passer(get_tag(parent.vmodel, parent.vname, 'high'), float)
     read_only=rdonly(parent.vmodel, parent.vname)
+    unit_func=get_tag(parent.vmodel, parent.vname, "unit_func", mult_unit_factor(unit_factor, float))
+    display_func=get_tag(parent.vmodel, parent.vname, "display_func", None)
 
 enamldef UnitFloatVar(Var):
     alias ext
@@ -226,9 +233,6 @@ enamldef UnitFloatRangeVar(Var):
         pass
 
 ################### LISTS #####################################
-
-
-
 enamldef ListScrollExt(ScrollArea):
     """scroll area list"""
     constraints = [height==200]

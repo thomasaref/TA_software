@@ -8,7 +8,7 @@ A core collection of enamldefs including units for ints and floats and non-padde
 """
 from taref.core.log import log_debug
 from enaml.widgets.api import  ( HGroup, Container, GroupBox,  Field, Label, SpinBox,
-                                MultilineField, VGroup, ScrollArea, Window, MainWindow)
+                                MultilineField, VGroup, ScrollArea, Window, MainWindow, PushButton)
 from enaml.core.api import Conditional
 from enaml.validator import IntValidator, FloatValidator
 from enaml.layout.api import spacer
@@ -43,130 +43,142 @@ enamldef aGroupBox(GroupBox):
     """a non-padded GroupBox"""
     padding=0
 
-def None_div(numerator, denominator):
-    if numerator is None:
-        return numerator
-    return numerator/denominator
+enamldef CheckButton(PushButton):
+    """a PushButton that stays checked depending on value. Can be made read only. A substitute for CheckBox"""
+    attr value : bool = False
+    attr read_only : bool = False
+    attr True_text = "True"
+    attr False_text = "False"
+    text << unicode(True_text if value else False_text)
+    checkable = True
+    checked << value
+    clicked ::
+        if not read_only:
+            self.value=self.checked
+        else:
+            self.checked=self.value
 
-enamldef UnitIntField(aHGroup):
-    """ A field that only accept integer inputs and normalizes them by a unit factor"""
+enamldef UnitField(Field):
+    """base for building UnitIntField and UnitFloatField below"""
+    read_only=parent.read_only
+    activated::
+        if not validator.validate(text):
+            if parent.minimum is None:
+                if parent.maximum is None:
+                    parent.uvalue=unit_func.coercer(0)
+                else:
+                    parent.uvalue=parent.maximum
+            else:
+                parent.uvalue=parent.minimum
+    text << unicode(unit_func.inv(uvalue))
+    text :: parent.uvalue=unit_func(text)
+
+class mult_unit_factor(object):
+    def __init__(self, unit_factor=1.0, coercer=float):
+        self.unit_factor=unit_factor
+        self.coercer=coercer
+        self.unit=""
+
+    def __call__(self, text):
+        return self.coercer(text)*self.unit_factor
+
+    def inv(self, value):
+        if value is None:
+            return value
+        return value/self.unit_factor
+
+enamldef UnitHGroup(aHGroup):
+    """shared structure between UnitIntField and UnitFloatField"""
     attr minimum = None
     attr maximum = None
-    attr uvalue : int = 0
-    attr unit_factor : int = 1
-    attr unit = ""
+    attr unit = getattr(unit_func, "unit", "")
     attr show_uvalue : bool = False
-    func calc_uvalue(value, unit_factor):
-        self.uvalue = int(value)*unit_factor
     attr read_only : bool = False
+    attr display_func = None
 
-    Field:
-        read_only=parent.read_only
-        activated::
-            if not validator.validate(text):
-                if parent.minimum is None:
-                    if parent.maximum is None:
-                        parent.uvalue=0
-                    else:
-                        parent.uvalue=parent.maximum
-                else:
-                    parent.uvalue=parent.minimum
-        text << unicode(uvalue/unit_factor)
-        text ::
-            calc_uvalue(text, unit_factor)
-        validator << IntValidator(base=10, minimum=None_div(minimum,unit_factor), maximum=None_div(maximum, unit_factor))
-
-    Label: ul:
+    alias unit_field
+    UnitField: unit_field:
+        pass
+    Label:
         text = unicode(unit)
         visible = unit!=""
-
     Conditional:
         condition = show_uvalue
         Label: vl:
-            text << unicode("({})".format(uvalue)) #get_tag(instrin, name, 'unit', "no unit")
+            text << unicode("({})".format(uvalue))
+    Conditional:
+        condition = display_func is not None
+        Label:
+            text << "["+unicode(display_func(uvalue))+" "+getattr(display_func, "unit", display_func.func_name)+"]"
+
+enamldef UnitIntField(UnitHGroup):
+    """ A field that only accept integer inputs and normalizes them by a unit factor"""
+    attr uvalue : int = 0
+    attr unit_factor : int = 1
+    attr unit_func=mult_unit_factor(unit_factor, int)
+    attr base=10
+    unit_field.validator<< IntValidator(base=base, minimum=unit_func.inv(minimum), maximum=unit_func.inv(maximum))
 
 enamldef UnitSpinBox(aHGroup):
     """A SpinBox for integers with units"""
     attr uvalue : int = 0
     attr unit_factor : int = 1
-    attr unit = ""
+    attr unit_func=mult_unit_factor(unit_factor, int)
+    attr unit = getattr(unit_func, "unit", "")
     attr show_uvalue : bool = False
+    attr display_func = None
     alias maximum : sb.maximum
     alias minimum : sb.minimum
-
-    func calc_uvalue(value, unit_factor):
-        self.uvalue = value*unit_factor
-
     SpinBox: sb:
-        value << uvalue/unit_factor
-        value :: calc_uvalue(value, unit_factor)
-
-    Label: ul:
-        text = unicode(unit)
-        visible = unit!=""
-
-    Conditional:
-        condition = show_uvalue
-        Label: vl:
-            text << unicode("({})".format(uvalue))
-
-
-enamldef UnitFloatField(aHGroup):
-    """a field for floats with units"""
-    attr minimum = None
-    attr maximum = None
-    attr unit_factor : float = 1.0
-    attr allow_exponent : bool = True
-    attr unit = ""
-    attr uvalue : float = 0.0
-    attr show_uvalue : bool = False
-    attr read_only : bool = False
-
-    func calc_uvalue(text, unit_factor):
-        self.uvalue=float(text)*unit_factor
-
-    Field:
-        read_only=parent.read_only
-        activated::
-            if not validator.validate(text):
-                if parent.minimum is None:
-                    if parent.maximum is None:
-                        parent.uvalue=0.0
-                    else:
-                        parent.uvalue=parent.maximum
-                else:
-                    parent.uvalue=parent.minimum
-        text << unicode(uvalue/unit_factor)
-        text :: calc_uvalue(text, unit_factor)
-        validator << FloatValidator(minimum=None_div(minimum, unit_factor), maximum=None_div(maximum,unit_factor), allow_exponent=allow_exponent)
-
+        value << unit_func.inv(uvalue)
+        value :: parent.uvalue=unit_func(value)
     Label:
         text = unicode(unit)
         visible = unit!=""
-
     Conditional:
         condition = show_uvalue
         Label: vl:
             text << unicode("({})".format(uvalue))
+    Conditional:
+        condition = display_func is not None
+        Label:
+            text << "["+unicode(display_func(uvalue))+" "+getattr(display_func, "unit", display_func.func_name)+"]"
 
+enamldef UnitFloatField(UnitHGroup):
+    """a field for floats with units"""
+    attr allow_exponent : bool = True
+    attr unit_factor : float = 1.0
+    attr unit_func=mult_unit_factor(unit_factor, float)
+    attr uvalue : float = 0.0
+    unit_field.validator<<FloatValidator(minimum=unit_func.inv(minimum), maximum=unit_func.inv(maximum), allow_exponent=allow_exponent)
 
 ################ test window ###################
+def sq(value):
+    return value*value
+sq.unit="squared"
+
 enamldef Main(Window):
     """test window"""
     VGroup:
-        aHGroup:
-            UnitFloatField: uff:
-                uvalue = 0.1
-                unit_factor=10.0
-                unit="Hz"
-                show_uvalue=True
-            UnitIntField:
-                uvalue=10
-                show_uvalue=True
-            UnitSpinBox: isb:
-                uvalue=10
-                unit_factor=10
-                maximum = 100000
-                show_uvalue=True
-
+        UnitFloatField: uff:
+            uvalue = 0.1
+            unit_factor=10.0
+            unit="Hz"
+            show_uvalue=True
+            minimum=1.0
+            maximum=10.0
+        UnitIntField:
+            uvalue=10
+            show_uvalue=True
+        UnitSpinBox: isb:
+            uvalue=10
+            unit_factor=10
+            maximum = 100000
+            show_uvalue=True
+        UnitFloatField:
+            uvalue = 0.5
+            #unit_factor=0.25
+            #unit="Hz"
+            show_uvalue=True
+            display_func=sq
 

@@ -14,12 +14,48 @@ from numpy import (sin, cos, sqrt, exp, empty, mean, exp, log10, arange, array, 
                    absolute, dtype, angle, amin, amax, linspace, zeros, shape)
 from numpy.fft import fft, ifft
 from numpy.linalg import eig
+from atom.api import Float
 
 def zero_arr(x):
     return zeros(shape(x))
 
 def dB(x):
-    return 20*log10(absolute(x))
+    return 20.0*log10(absolute(x))
+
+def inv_dB(y):
+    return 10.0**(y/20.0)
+
+def dB_pwr(x):
+    return 10.0*log10(absolute(x))
+
+def inv_dB_pwr(y):
+    return 10.0**(y/10.0)
+
+PREFIX_DICT={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
+           "G":1.0e9, "M":1.0e6, "k":1.0e3,}
+
+def UdBm2lin(unit="mW", unit_factor=1.0):
+    unit_factor=PREFIX_DICT.get(unit[0], unit_factor)
+    def NdBm2lin(y):
+        return 0.001*inv_dB_pwr(y)/unit_factor
+    NdBm2lin.unit=unit
+    return NdBm2lin
+
+dBm2lin=UdBm2lin()
+
+def Ulin2dBm(unit="W", unit_factor=1.0):
+    unit_factor=PREFIX_DICT.get(unit[0], unit_factor)
+    def Nlin2dBm(x):
+        return dB_pwr(x*unit_factor/0.001)
+    Nlin2dBm.unit="dBm"
+    return Nlin2dBm
+lin2dBm=Ulin2dBm()
+
+def dBm_Float(value=-100.0):
+    return Float(value).tag(unit="dBm", display_func=dBm2lin)
+
+def mW_Float(value=1.0e-10):
+    return Float(value).tag(unit="mW", display_func=lin2dBm)
 
 def magphase(y, response="Mag"):
         if dtype("complex128")==y.dtype:
@@ -44,7 +80,7 @@ def sinc(X):
 def sinc_sq(X):
     """sinc squared which doesn't autoinclude pi"""
     return (sinc(X))**2
-    
+
 Tc=1.315 #critical temperature of aluminum
 Delta=200.0e-6*e #gap of aluminum
 

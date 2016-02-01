@@ -17,7 +17,7 @@ with imports():
     from taref.core.log_e import LogWindow
 
 class SubAgent(Backbone):
-    """Adds chief functionality to Backbone"""
+    """Adds functionality for auto showing to Backbone"""
     name=Unicode().tag(private=True, desc="name of agent. This name will be modified to be unique, if necessary")
     desc=Unicode().tag(private=True, desc="optional description of agent")
 
@@ -32,7 +32,7 @@ class SubAgent(Backbone):
     interactive_window=InteractiveWindow()
 
     log_window=LogWindow()
-    
+
     code_window=CodeWindow()
 
     @classmethod
