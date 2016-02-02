@@ -7,13 +7,13 @@ Created on Thu Sep 11 09:53:23 2014
 
 from taref.core.log import log_debug
 from taref.core.shower import shower
-from taref.core.universal import sqze
+from taref.core.universal import sqze, Array
 from taref.core.agent import SubAgent
 from taref.core.atom_extension import private_property, get_tag, tag_Property
 
 from numpy import angle, absolute, dtype, log10, meshgrid, arange, linspace, sin, cos, sqrt, ma, fabs, amax
 from matplotlib import cm
-from numpy import shape, split, squeeze, array, transpose, concatenate, atleast_2d, ndim
+from numpy import shape, split, squeeze, array, transpose, concatenate, atleast_2d, ndim, argmin
 
 from enaml import imports
 
@@ -106,6 +106,8 @@ class XYFormat(Atom):
                 self.plotter.show_legend=True
                 self.plotter.show_legend=temp
 
+#x b.clts["magabs"].set_cmap("rainbow")
+
     @observe("edgecolor", "colormap", "facecolor")
     def color_change(self, change):
         """intercepts auto case for coloring"""
@@ -149,6 +151,7 @@ class mpl_drag_event(object):
         self.pltr=pltr
 
     def __call__(self, event):
+
         xmin, xmax=self.pltr.axe.get_xlim()
         ymin, ymax=self.pltr.axe.get_ylim()
         if xmin!=self.pltr.x_min or xmax!=self.pltr.x_max:
@@ -161,34 +164,52 @@ class mpl_drag_event(object):
             self.pltr.draw()
 
 class mpl_click_event(object):
-    def __init__(self, pltr):
+    def __init__(self, pltr, x=None, y=None):
         self.pltr=pltr
-        self.x=None
-        self.y=None
+        self.ax=self.pltr.ax #fig.add_subplot(211)
+        self.data=self.pltr.alldata
+        self.x=x
+        self.y=y
+        self.line=None
+
 
     def __call__(self, event):
-        if event.dblclick:
-            x=event.xdata
-            y=event.ydata
-            xdist=(self.pltr.x_max-self.pltr.x_min)
-            ydist=(self.pltr.y_max-self.pltr.y_min)
-
-            self.pltr.set_xlim(x-xdist/2.0, x+xdist/2.0)#self.pltr.x_max-1.0*event.step*self.pltr.x_zoom_step)
-            self.pltr.set_ylim(y-ydist/2.0, y+ydist/2.0)#self.pltr.y_min+event.step*self.pltr.y_zoom_step, self.pltr.y_max-1.0*event.step*self.pltr.y_zoom_step)
-            self.pltr.draw()
-        else:
-            if self.x is None:
-                self.x=event.xdata
-                self.y=event.ydata
-                self.pltr.xstart=self.x
-                self.pltr.ystart=self.y
-                self.pltr.drawline=True
+        if event.inaxes is not None:
+            xpos=argmin(absolute(event.xdata-self.x))
+            #ypos=argmin(absolute(event.ydata-self.y))
+            if self.line is None:
+                #self.ax.clear()
+                self.line=self.ax.plot(self.data[xpos, :])[0]
             else:
-                self.pltr.xdist=event.xdata-self.x
-                self.pltr.ydist=event.ydata-self.y
-                self.x=None
-                self.y=None
-                self.pltr.drawline=False
+                self.line.set_ydata(self.data[xpos, :])
+            self.pltr.draw()
+        #xpos=argmin(absolute(event.xdata-self.x))
+        #ypos=argmin(absolute(event.ydata-self.y))
+        #log_debug(xpos, ypos)
+
+        #['__doc__', '__init__', '__module__', '__str__', '_update_enter_leave', 'button', 'canvas', 'dblclick', 'guiEvent', 'inaxes', 'key', 'lastevent', 'name', 'step', 'x', 'xdata', 'y', 'ydata']
+#        if event.dblclick:
+#            x=event.xdata
+#            y=event.ydata
+#            xdist=(self.pltr.x_max-self.pltr.x_min)
+#            ydist=(self.pltr.y_max-self.pltr.y_min)
+#
+#            self.pltr.set_xlim(x-xdist/2.0, x+xdist/2.0)#self.pltr.x_max-1.0*event.step*self.pltr.x_zoom_step)
+#            self.pltr.set_ylim(y-ydist/2.0, y+ydist/2.0)#self.pltr.y_min+event.step*self.pltr.y_zoom_step, self.pltr.y_max-1.0*event.step*self.pltr.y_zoom_step)
+#            self.pltr.draw()
+#        else:
+#            if self.x is None:
+#                self.x=event.xdata
+#                self.y=event.ydata
+#                self.pltr.xstart=self.x
+#                self.pltr.ystart=self.y
+#                self.pltr.drawline=True
+#            else:
+#                self.pltr.xdist=event.xdata-self.x
+#                self.pltr.ydist=event.ydata-self.y
+#                self.x=None
+#                self.y=None
+#                self.pltr.drawline=False
 
 class mpl_scroll_event(object):
     def __init__(self, pltr):
@@ -227,7 +248,7 @@ class Plotter(SubAgent):
     x_max=Float()
     y_min=Float()
     y_max=Float()
-
+    alldata=Array()
     xdist=Float().tag(read_only=True)
     ydist=Float().tag(read_only=True)
 
@@ -255,7 +276,9 @@ class Plotter(SubAgent):
 
     def activated(self):
         self.fig.canvas.mpl_connect('motion_notify_event', mpl_drag_event(self))
-        self.fig.canvas.mpl_connect('button_press_event', mpl_click_event(self))
+        self.fig.canvas.mpl_connect('motion_notify_event', mpl_click_event(self, arange(200), arange(200))) #button_press_event
+
+        #self.fig.canvas.mpl_connect('button_press_event', mpl_click_event(self))
         self.fig.canvas.mpl_connect('scroll_event', mpl_scroll_event(self))
 
     xyfs=Dict()
@@ -269,6 +292,7 @@ class Plotter(SubAgent):
 
     fig=Typed(Figure)
     axe=Typed(Axes)
+    ax=Typed(Axes)
 
     #plottables=Dict()
     #overall_plot_type=Enum("XY plot", "img plot")
@@ -285,6 +309,8 @@ class Plotter(SubAgent):
 
     def _default_axe(self):
          axe=self.fig.add_subplot(111)
+         self.ax=self.fig.add_subplot(211)
+         self.ax.autoscale_view(True)
          axe.autoscale_view(True)
          return axe
 
@@ -417,11 +443,12 @@ class Plotter(SubAgent):
             self.clts[zname].remove()
 
     def colormesh(self, zname, *args, **kwargs):
-        print "yooyoy"
-        log_debug(zname)
         self.clts[zname]=self.axe.pcolormesh(*args, **kwargs)
         self.xyfs[zname]=XYFormat(plotter=self, name=zname)
-        log_debug(self.xyfs)
+        self.alldata=args[0]
+        #self.line_plot(zname+"lines", arange(len(args[0][0])), *args[0])
+        #self.xyfs[zname+"lines"]=XYFormat(plotter=self, name=zname+"lines")
+        #log_debug(args[0])
 
     def poly_plot(self, zname, zdata, zcolor=None):
         if zname not in self.clts:

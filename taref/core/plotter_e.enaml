@@ -266,6 +266,13 @@ enamldef PlotFormat(VGroup):
         PushButton: drawb:
             text = "Draw"
             clicked :: plotr.draw()
+    Label:
+        text << unicode(plotr.xdist)
+    Label:
+        text << unicode(plotr.ydist)
+    Label:
+        text << unicode(plotr.total_dist)
+
 
 #    Label:
 #        text = "add plot test"
@@ -323,11 +330,11 @@ enamldef XYFormat(Form):
         items<<plotr.clts_keys
 #        selected="All"
 
-#    Label:
-#        text = "Color:"
-#    PushButton:
-#        text = "Color"
-#        clicked :: ColorDialog.get_color()
+    Label:
+        text = "Color:"
+    PushButton:
+        text = "Color"
+        clicked :: print ColorDialog.get_color()
 #    Label:
 #        text = 'Redraw plot'
 #    PushButton:
@@ -339,11 +346,11 @@ enamldef XYFormat(Form):
 #    ObjectCombo: it:
 #        items<<plotr.xyfs.keys()
 #        selected="All"
-#    Label:
-#        text = "Plot type:"
-#    ObjectCombo:
-#        items=list(xyf.get_member('plot_type').items)
-#        selected:=xyf.plot_type
+    Label:
+        text = "Plot type:"
+    ObjectCombo:
+        items=list(xyf.get_member('plot_type').items)
+        selected:=xyf.plot_type
 #
     Label:
         text = "Edge color:"
@@ -353,6 +360,18 @@ enamldef XYFormat(Form):
         selected:=xyf.edgecolor
 #        enabled << xyf.plot_type!="scatter"
     Label:
+        text = "Face color:"
+#        enabled << xyf.plot_type!="scatter"
+    ObjectCombo:
+        items=list(xyf.get_member('facecolor').items)
+        selected:=xyf.facecolor
+#        enabled << xyf.plot_type!="scatter"
+    Label:
+        text = "Alpha:"
+    FloatField:
+        value := xyf.alpha
+
+    Label:
         text = "label"
     Field:
         text := xyf.label
@@ -360,10 +379,11 @@ enamldef XYFormat(Form):
         text = "Line Width:"
     FloatField:
         value := xyf.linewidth
-#    Label:
-#        text = "Marker_size:"
-#    FloatField:
-#        value := xyf.marker_size
+    Label:
+        text = "Marker_size:"
+    FloatField:
+        value := xyf.marker_size
+        enabled << xyf.plot_type=="scatter"
     Label:
         text = "Line Style:"
     ObjectCombo:
@@ -380,11 +400,11 @@ enamldef XYFormat(Form):
     ObjectCombo:
         items=list(xyf.get_member('colormap').items)
         selected:=xyf.colormap
-#    Label:
-#        text = "Marker:"
-#    ObjectCombo:
-#        items=list(xyf.get_member('marker').items)
-#        selected:=xyf.marker
+    Label:
+        text = "Marker:"
+    ObjectCombo:
+        items=list(xyf.get_member('marker').items)
+        selected:=xyf.marker
 #    Label:
 #        text = "OutLine Width:"
 #    FloatField:

@@ -152,10 +152,14 @@ class Lyzer(Agent):
 #    @tagged_property(unit="GHz", label="Frequency")
 #    def freq(self, fstart, fstep, sm):
 #        return linspace(fstart, fstart+fstep*(sm-1), sm)
-
+from taref.core.new_plotter import Plotter
 a=Lyzer()
 #a.rd_hdf.read()
 a.read_data()
+b=Plotter()
+#print b.colormap
+b.colormesh("magabs", a.MagAbs)
+print b.xyfs, b.clts
 #print a.Magcom
 print a.probe_frq, a.probe_pwr
 print a.yoko.dtype
@@ -163,5 +167,5 @@ print get_display(a, "probe_pwr")
 #print locals()
 #print globals()
 #print a.sm
-shower(a)#locals_dict=locals())
+shower(b, a)#locals_dict=locals())
 #read_hdf.show()
