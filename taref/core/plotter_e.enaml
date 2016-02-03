@@ -11,8 +11,8 @@ from enaml.layout.api import spacer, hbox
 from enaml.widgets.color_dialog import ColorDialog
 from enaml.stdlib.fields import FloatField
 
-from enaml.core.api import Include, Looper, DynamicTemplate
-from enaml.layout.api import vbox, hbox, align, spacer, HSplitLayout, InsertItem
+from enaml.core.api import Include, Looper, DynamicTemplate, Conditional
+from enaml.layout.api import vbox, hbox, align, spacer, HSplitLayout, InsertItem, grid
 from taref.core.fundcore_e import aHGroup, CheckButton
 from taref.core.atom_extension import get_all_tags, get_type, get_tag
 from atom.api import Float, Int, List, ContainerList, Coerced, Property
@@ -272,6 +272,10 @@ enamldef PlotFormat(VGroup):
         text << unicode(plotr.ydist)
     Label:
         text << unicode(plotr.total_dist)
+    CheckButton:
+        value := plotr.show_cs
+        True_text = "hide CS"
+        False_text = "show CS"
 
 
 #    Label:
@@ -450,6 +454,8 @@ enamldef PlotToolBar(ToolBar):
         text = "XYFormat"
         triggered ::
             xyformat.show()
+            #xyformat.floating=False
+            #xyformat.floating=True
             #show_item(name=plotr.name+'xyformat', area=plot_area, target="plot", ItemType=XYfItem, position='left', OP=InsertItem)
             #item=XYfItem(plot_area)
             #op = InsertBorderItem(item="xyformat", target="xyformat", position='left')
@@ -484,10 +490,48 @@ enamldef PlotToolBar(ToolBar):
 #    attr plotr
 
 enamldef MatPlotContainer(Container):
-        padding = 0
-        MPLCanvas: canvas:
-            figure << plotr.fig
-            toolbar_visible=True
+    #constraints = [mpl.width==h_mpl.width]
+    padding=0
+    constraints = [grid([h_c,  e_c],
+                        [mpl,  v_c,])]#, height==600, width==600]    #padding = 0
+    MPLCanvas: mpl:
+        figure << plotr.fig
+        toolbar_visible=True
+
+    Container: h_c:
+        padding=0
+        visible << plotr.show_cs
+        Conditional:
+            condition<<plotr.show_cs
+
+            MPLCanvas: h_mpl:
+                constraints = [height==200, width==mpl.width]
+                figure << plotr.horiz_fig
+
+    Container: e_c:
+        visible << plotr.show_cs
+        Conditional:
+            condition <<plotr.show_cs
+            VGroup:
+                FloatField: fld1:
+                    text<<unicode(plotr.xcoord)
+                FloatField:
+                    text<<unicode(plotr.ycoord)
+                Label:
+                    text<<unicode(plotr.xind)
+                Label:
+                    text<<unicode(plotr.yind)
+
+    Container: v_c:
+        visible << plotr.show_cs
+        padding=0
+        Conditional:
+            condition <<plotr.show_cs
+            MPLCanvas: v_mpl:
+                constraints = [ width==200]
+                figure << plotr.vert_fig
+                toolbar_visible=True
+
 
 enamldef MatPlotWrap(MatPlotContainer):
     attr plotr
@@ -496,16 +540,38 @@ enamldef PlotMain(MainWindow): pm:
     attr plotr
     name=plotr.name
     destroy_on_close=False
+    activated ::
+        plotr.activated()
+    closed ::
+        self.set_position(self.position())
+        self.set_size(self.size())
+
     #initial_position=(0,0)
+
+#    DockPane:
+#        dock_area="top"
+#        Container:
+#            MPLCanvas: h_mpl:
+#                constraints = [width == mpl.width, height==200]
+#                figure << plotr.horiz_fig
+
+    #alias mpl
+#    Container:
+#        MPLCanvas: mpl:
+#            figure << plotr.fig
+#            toolbar_visible=True
     MatPlotContainer:
         pass
     PlotToolBar:
         pass #pm:=pm
+    alias xyformat
     XYFormatPane: xyformat:
-        pass
+        dock_area="right"
+        visible=False
     #PlotPane:
     #    pt = plotr
     #    dock_area="right"
     alias plot_format
     PlotFormatPane: plot_format:
         pass
+        #floating=True

@@ -167,5 +167,5 @@ print get_display(a, "probe_pwr")
 #print locals()
 #print globals()
 #print a.sm
-shower(b, a)#locals_dict=locals())
+shower( a, b)#locals_dict=locals())
 #read_hdf.show()

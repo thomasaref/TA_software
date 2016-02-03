@@ -36,7 +36,7 @@ class ShowWindow(MainWindow):
     @cached_property
     def window_dict(self):
         return dict([(w.name, w) for w in self.windows])
-        
+
     @cached_property
     def all_wins(self):
         return [w for w in self.windows if w!=self]
@@ -57,12 +57,15 @@ class ShowWindow(MainWindow):
         return OrderedDict([(name, self.all_win_dict[name]) for name in self.all_win_dict if name not in self.agent_win_dict])
 
     def show_and_send_to_front(self, name, win):
+        log_debug(name, win, self.agent_win_dict)
         if win is None:
             agent=self.chief_cls.agent_dict.get(name, None)
+            #agent.get_member("view_window").reset(agent)
             win=get_view_window(agent, AutoAgentView(agent=agent))
+        log_debug(win)
         win.show()
         win.send_to_front()
-        self.get_member("other_win_dict").reset(self)
+        #self.get_member("other_win_dict").reset(self)
 
 enamldef CoreWindow(ShowWindow): sv:
     """extends showWindow to close all windows when the core is closed and define chief_cls"""
@@ -224,7 +227,7 @@ enamldef CoreView(CoreWindow): cv:
 
 enamldef BasicView(CoreView):
     """the most basic view controller of a collection of Atoms without a chief"""
-    title="Show Control"    
+    title="Show Control"
     Conditional:
         condition = getattr(chief_cls, "run_func_dict", {}) != {}
         VGroup:

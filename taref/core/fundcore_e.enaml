@@ -23,6 +23,9 @@ enamldef AgentWindow(MainWindow):
     destroy_on_close=False
     initial_size=getattr(agent, "initial_size", (-1,-1))
     initial_position=getattr(agent, "initial_position", (-1,-1))
+    closed ::
+        self.set_position(self.position())
+        self.set_size(self.size())
 
 enamldef aHGroup(HGroup):
     """a non-padded, non-width-aligning HGroup"""

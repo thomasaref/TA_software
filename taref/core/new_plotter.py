@@ -11,17 +11,18 @@ from taref.core.universal import sqze, Array
 from taref.core.agent import SubAgent
 from taref.core.atom_extension import private_property, get_tag, tag_Property
 
-from numpy import angle, absolute, dtype, log10, meshgrid, arange, linspace, sin, cos, sqrt, ma, fabs, amax
+from numpy import angle, absolute, dtype, log10, meshgrid, arange, linspace, sin, cos, sqrt, ma, fabs, amax, amin
 from matplotlib import cm
 from numpy import shape, split, squeeze, array, transpose, concatenate, atleast_2d, ndim, argmin
 
 from enaml import imports
 
-from atom.api import Atom, Int, Enum, Float, List, Dict, Typed, Unicode, ForwardTyped, Bool, cached_property, observe
+from atom.api import Atom, Int, Enum, Float, List, Dict, Typed, Unicode, ForwardTyped, Bool, cached_property, observe, Value
 from matplotlib.axes import Axes
 from matplotlib.collections import PolyCollection, LineCollection#, QuadMesh, PathCollection
 from matplotlib.figure import Figure
-#from collections import OrderedDict
+from matplotlib.widgets import Cursor
+from collections import OrderedDict
 
 #import matplotlib
 #matplotlib.use('GTKAgg')
@@ -32,7 +33,7 @@ rcParams['xtick.labelsize'] = 9
 rcParams['ytick.labelsize'] = 9
 rcParams['legend.fontsize'] = 9
 
-rcParams['figure.figsize'] = 7.3, 4.2
+#rcParams['figure.figsize'] = 4.3, 4.2
 rcParams['figure.dpi']=150
 rcParams['xtick.major.width']=2
 rcParams['lines.linewidth']=2
@@ -40,6 +41,14 @@ rcParams['xtick.major.size']=4
 rcParams['axes.linewidth']=2
 rcParams['ytick.major.width']=2
 rcParams['ytick.major.size']=4
+
+#adjust matplotlib base cursor
+from matplotlib.backend_bases import cursors
+from matplotlib.backends import backend_qt4
+from PySide.QtCore import Qt
+backend_qt4.cursord[cursors.POINTER] = Qt.CursorShape.CrossCursor
+
+
 #rcParams['lines.antialiased']=False
 #rcParams['patch.antialiased']=False
 #rcParams['path.simplify']=False
@@ -82,6 +91,8 @@ class XYFormat(Atom):
     marker_size = Float(30.0)
     linestyle=Enum('solid', 'dashed', 'dashdot', 'dotted').tag(refresh_legend=True)
     plotter=ForwardTyped(lambda: Plotter)
+
+    clt=Value()
 
     @observe("alpha", "linestyle", "linewidth", "visible", "label")
     def changer(self, change):
@@ -166,23 +177,47 @@ class mpl_drag_event(object):
 class mpl_click_event(object):
     def __init__(self, pltr, x=None, y=None):
         self.pltr=pltr
-        self.ax=self.pltr.ax #fig.add_subplot(211)
+        self.h_axe=self.pltr.horiz_axe
+        self.v_axe=self.pltr.vert_axe
         self.data=self.pltr.alldata
         self.x=x
         self.y=y
-        self.line=None
+        self.h_line=None
+        self.v_line=None
 
 
     def __call__(self, event):
         if event.inaxes is not None:
             xpos=argmin(absolute(event.xdata-self.x))
-            #ypos=argmin(absolute(event.ydata-self.y))
-            if self.line is None:
-                #self.ax.clear()
-                self.line=self.ax.plot(self.data[xpos, :])[0]
+            ypos=argmin(absolute(event.ydata-self.y))
+            self.pltr.xcoord=event.xdata
+            self.pltr.ycoord=event.ydata
+            self.pltr.xind=xpos
+            self.pltr.yind=ypos
+            if self.h_line is None:
+                self.min=amin(self.data)
+                self.max=amax(self.data)
+                self.h_line=self.h_axe.plot(self.data[ypos, :])[0]
+                self.v_line=self.v_axe.plot(self.data[:, xpos], arange(201))[0]
             else:
-                self.line.set_ydata(self.data[xpos, :])
-            self.pltr.draw()
+                h_data=self.data[ypos, :]
+                self.h_line.set_ydata(h_data)
+                self.h_axe.set_ylim(min(h_data), max(h_data))
+                v_data=self.data[:, xpos]
+                self.v_line.set_xdata(v_data)
+                self.v_axe.set_xlim(min(v_data), max(v_data))
+            if self.pltr.horiz_fig.canvas!=None:
+                self.pltr.horiz_fig.canvas.draw()
+            if self.pltr.vert_fig.canvas!=None:
+                self.pltr.vert_fig.canvas.draw()
+
+            #xmin, xmax=self.pltr.axe.get_xlim()
+            #ymin, ymax=self.pltr.axe.get_ylim()
+
+            #self.pltr.line_plot("horiz", [xmin, xmax], [event.ydata, event.ydata], append=False,
+                                #xlim=(xmin, xmax), ylim=(ymin, ymax))
+            #self.pltr.draw()
+
         #xpos=argmin(absolute(event.xdata-self.x))
         #ypos=argmin(absolute(event.ydata-self.y))
         #log_debug(xpos, ypos)
@@ -248,10 +283,17 @@ class Plotter(SubAgent):
     x_max=Float()
     y_min=Float()
     y_max=Float()
+
     alldata=Array()
+
     xdist=Float().tag(read_only=True)
     ydist=Float().tag(read_only=True)
+    xcoord=Float()
+    ycoord=Float()
+    xind=Int()
+    yind=Int()
 
+    show_cs=Bool(False)
     drawline=Bool(False)
     xstart=Float()
     ystart=Float()
@@ -269,10 +311,17 @@ class Plotter(SubAgent):
     show_legend=Bool(False)
     append=Bool(True)
     auto_draw=Bool(False)
-    #tight_layout  a.fig.set_tight_layout(True)
-    #auto_xlim=Bool(True)
-    #auto_ylim=Bool(True)
-    # fig.set_dpi
+    tight_layout=Bool(False)
+
+    def _observe_tight_layout(self, change):
+        self.changer(change, self.fig.set_tight_layout, self.tight_layout)
+
+    auto_xlim=Bool(True)
+    auto_ylim=Bool(True)
+    dpi=Int(150)
+
+    def _observe_dpi(self, change):
+        self.changer(change, self.fig.set_dpi, self.dpi)
 
     def activated(self):
         self.fig.canvas.mpl_connect('motion_notify_event', mpl_drag_event(self))
@@ -281,8 +330,15 @@ class Plotter(SubAgent):
         #self.fig.canvas.mpl_connect('button_press_event', mpl_click_event(self))
         self.fig.canvas.mpl_connect('scroll_event', mpl_scroll_event(self))
 
-    xyfs=Dict()
-    color_index=Int()
+    xyfs=Typed(OrderedDict)
+
+    def _default_xyfs(self):
+        xyfs=OrderedDict()
+        xyfs["All"]=AllXYFormat(plotter=self, name="All")
+        return xyfs
+
+
+    #color_index=Int()
 
     clts=Dict()
 
@@ -290,12 +346,48 @@ class Plotter(SubAgent):
     def clts_keys(self):
         return self.clts.keys()
 
-    fig=Typed(Figure)
-    axe=Typed(Axes)
-    ax=Typed(Axes)
+    @private_property
+    def xyfs_keys(self):
+        return self.xyfs.keys()
 
-    #plottables=Dict()
-    #overall_plot_type=Enum("XY plot", "img plot")
+    @private_property
+    def xyfs_items(self):
+        return self.xyfs.values()
+
+    fig=Typed(Figure).tag(private=True)
+    axe=Typed(Axes).tag(private=True)
+
+    fig_height=Float(1.3).tag(private=True)
+    fig_width=Float(1.2).tag(private=True)
+
+
+    horiz_fig=Typed(Figure).tag(private=True)
+    horiz_axe=Typed(Axes).tag(private=True)
+    vert_fig=Typed(Figure).tag(private=True)
+    vert_axe=Typed(Axes).tag(private=True)
+
+
+    def _default_fig(self):
+         return Figure(figsize=(self.fig_height, self.fig_width))
+
+    def _default_axe(self):
+         axe=self.fig.add_subplot(111)
+         axe.autoscale_view(True)
+         return axe
+
+    def _default_horiz_fig(self):
+        return Figure(figsize=(self.fig_width, 1.0))
+
+    def _default_horiz_axe(self):
+        h_axe=self.horiz_fig.add_subplot(111, sharex=self.axe)
+        return h_axe
+
+    def _default_vert_fig(self):
+        return Figure(figsize=(1.0, self.fig_height))
+
+    def _default_vert_axe(self):
+        h_axe=self.vert_fig.add_subplot(111, sharey=self.axe)
+        return h_axe
 
     plot_type_list=["Line plot", "Scatter plot", "Colormap", "Polygon", "Text"]
 
@@ -307,15 +399,11 @@ class Plotter(SubAgent):
                 "Polygon" : self.poly_plot,
                 "Text" : self.add_text}
 
-    def _default_axe(self):
-         axe=self.fig.add_subplot(111)
-         self.ax=self.fig.add_subplot(211)
-         self.ax.autoscale_view(True)
-         axe.autoscale_view(True)
-         return axe
 
-    def _default_fig(self):
-         return Figure()
+
+    def get_window_height(self):
+        print self.view_window
+
 
     def changer(self, change, func, *args, **kwargs):
         if change["type"]=="update":
@@ -353,14 +441,11 @@ class Plotter(SubAgent):
             if self.axe.legend_ is not None:
                 self.changer(change, self.axe.legend_.remove)
 
-    def _default_xyfs(self):
-         xyf=AllXYFormat(plotter=self)
-         return {"All":xyf}
 
-    def delete_all_plots(self):
-         for key in self.plot.plots.keys():
-                self.plot.delplot(key)
-         self.color_index=0
+#    def delete_all_plots(self):
+#         for key in self.plot.plots.keys():
+#                self.plot.delplot(key)
+#         self.color_index=0
 
 #    def _save(self):
 #         global PlotGraphicsContext
@@ -441,14 +526,19 @@ class Plotter(SubAgent):
     def remove_collection(self, zname):
         if zname in self.clts:
             self.clts[zname].remove()
+            self.clts.pop(zname)
 
     def colormesh(self, zname, *args, **kwargs):
+        self.remove_collection(zname)
         self.clts[zname]=self.axe.pcolormesh(*args, **kwargs)
         self.xyfs[zname]=XYFormat(plotter=self, name=zname)
         self.alldata=args[0]
         #self.line_plot(zname+"lines", arange(len(args[0][0])), *args[0])
         #self.xyfs[zname+"lines"]=XYFormat(plotter=self, name=zname+"lines")
         #log_debug(args[0])
+    def axvline(self, zname, x, **kwargs):
+        self.remove_collection(zname)
+        self.axe.axvline(x, **kwargs)
 
     def poly_plot(self, zname, zdata, zcolor=None):
         if zname not in self.clts:
@@ -807,3 +897,63 @@ if __name__=="__main__":
 #    dd=a.splitMultiD(d)
 #    print a.gatherMultiD(dd)
 
+
+#    @staticmethod
+#    def _pcolorargs(funcname, *args, **kw):
+#        # This takes one kwarg, allmatch.
+#        # If allmatch is True, then the incoming X, Y, C must
+#        # have matching dimensions, taking into account that
+#        # X and Y can be 1-D rather than 2-D.  This perfect
+#        # match is required for Gouroud shading.  For flat
+#        # shading, X and Y specify boundaries, so we need
+#        # one more boundary than color in each direction.
+#        # For convenience, and consistent with Matlab, we
+#        # discard the last row and/or column of C if necessary
+#        # to meet this condition.  This is done if allmatch
+#        # is False.
+#
+#        allmatch = kw.pop("allmatch", False)
+#
+#        if len(args) == 1:
+#            C = np.asanyarray(args[0])
+#            numRows, numCols = C.shape
+#            if allmatch:
+#                X, Y = np.meshgrid(np.arange(numCols), np.arange(numRows))
+#            else:
+#                X, Y = np.meshgrid(np.arange(numCols + 1),
+#                                   np.arange(numRows + 1))
+#            C = cbook.safe_masked_invalid(C)
+#            return X, Y, C
+#
+#        if len(args) == 3:
+#            X, Y, C = [np.asanyarray(a) for a in args]
+#            numRows, numCols = C.shape
+#        else:
+#            raise TypeError(
+#                'Illegal arguments to %s; see help(%s)' % (funcname, funcname))
+#
+#        Nx = X.shape[-1]
+#        Ny = Y.shape[0]
+#        if len(X.shape) != 2 or X.shape[0] == 1:
+#            x = X.reshape(1, Nx)
+#            X = x.repeat(Ny, axis=0)
+#        if len(Y.shape) != 2 or Y.shape[1] == 1:
+#            y = Y.reshape(Ny, 1)
+#            Y = y.repeat(Nx, axis=1)
+#        if X.shape != Y.shape:
+#            raise TypeError(
+#                'Incompatible X, Y inputs to %s; see help(%s)' % (
+#                funcname, funcname))
+#        if allmatch:
+#            if not (Nx == numCols and Ny == numRows):
+#                raise TypeError('Dimensions of C %s are incompatible with'
+#                                ' X (%d) and/or Y (%d); see help(%s)' % (
+#                                    C.shape, Nx, Ny, funcname))
+#        else:
+#            if not (numCols in (Nx, Nx - 1) and numRows in (Ny, Ny - 1)):
+#                raise TypeError('Dimensions of C %s are incompatible with'
+#                                ' X (%d) and/or Y (%d); see help(%s)' % (
+#                                    C.shape, Nx, Ny, funcname))
+#            C = C[:Ny - 1, :Nx - 1]
+#        C = cbook.safe_masked_invalid(C)
+#        return X, Y, C
