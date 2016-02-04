@@ -1,0 +1,163 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Feb  4 14:59:13 2016
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import ( Form, Label, Container, Field, ObjectCombo,
+     MainWindow, PushButton, DockPane, VGroup, HGroup, GroupBox)
+#from enaml.layout.api import spacer, hbox
+from enaml.widgets.color_dialog import ColorDialog
+from enaml.stdlib.fields import FloatField
+
+from enaml.core.api import Conditional, Include
+#from enaml.layout.api import vbox, hbox, align, spacer
+from taref.core.fundcore_e import aHGroup, CheckButton
+from taref.core.log import log_debug
+
+enamldef ColorMap(VGroup):
+    attr plot_format
+    Label:
+        text = "Color Map:"
+    ObjectCombo:
+        items=list(plot_format.get_member('colormap').items)
+        selected:=plot_format.colormap
+
+enamldef LineVGroup(VGroup):
+    attr plot_format
+    Label:
+        text = "Color"
+    ObjectCombo:
+        items=list(plot_format.get_member('color').items)
+        selected:=plot_format.color
+    PushButton:
+        text = "Color Dialog"
+        clicked ::
+            clr=ColorDialog.get_color()
+            if clr is not None:
+                plot_format.custom_color= [clr.red/255.0, clr.green/255.0, clr.blue/255.0, clr.alpha/255.0]
+                plot_format.set_color("color", plot_format.custom_color)
+            plot_format.update_plot()
+    Label:
+        text = "Alpha:"
+    FloatField:
+        value := plot_format.alpha
+
+    Label:
+        text = "label"
+    Field:
+        text := plot_format.label
+    Label:
+        text = "Line Width:"
+    FloatField:
+        value := plot_format.linewidth
+    Label:
+        text = "Line Style:"
+    ObjectCombo:
+        items=list(plot_format.get_member('linestyle').items)
+        selected:=plot_format.linestyle
+enamldef ScatterVGroup(VGroup):
+    attr plot_format
+    Label:
+        text = "Marker size:"
+    FloatField:
+        value := plot_format.marker_size
+        enabled << plot_format.plot_type=="scatter"
+    Label:
+        text = "Edge Color"
+    ObjectCombo:
+        items=list(plot_format.get_member('edgecolor').items)
+        selected:=plot_format.edgecolor
+    Label:
+        text = "Face color"
+    ObjectCombo:
+        items=list(plot_format.get_member('facecolor').items)
+        selected:=plot_format.facecolor
+    Label:
+        text = "Marker"
+    ObjectCombo:
+        items=list(plot_format.get_member('marker').items)
+        selected:=plot_format.marker
+
+def reset_dyn_items(dyn_items, pf):
+    dyn_items.objects=[]
+    #pf=pltr.plot_dict[selected]
+    #log_debug(pf.plot_type in ("colormap", "multiline"))
+    if pf.plot_type in ("colormap", "multiline"):
+        dyn_items.objects.append(ColorMap(plot_format=pf))
+    if pf.plot_type in ("line", "multiline", "scatter"):
+        dyn_items.objects.append(LineVGroup(plot_format=pf))
+    if pf.plot_type in ("scatter",):
+        dyn_items.objects.append(ScatterVGroup(plot_format=pf))
+
+enamldef PlotVGroup(VGroup):
+    attr plot_format<<pltr.plot_dict[it.selected]
+    plot_format :: reset_dyn_items(dyn_items, plot_format)
+    activated :: reset_dyn_items(dyn_items, plot_format)
+
+    Label:
+        text = "Item"
+    ObjectCombo: it:
+        items<<pltr.plot_names
+    CheckButton:
+        value := plot_format.visible
+        True_text="Visible"
+        False_text = "Hidden"
+    Include: dyn_items:
+        pass
+    PushButton:
+        text = "Line to Scatter"
+        visible << plot_format.plot_type == "line"
+        clicked ::
+            parent.plot_format.line2scatter()
+            parent.plot_format=pltr.plot_dict[it.selected]
+    PushButton:
+        text = "Scatter to Line"
+        visible << plot_format.plot_type == "scatter"
+        clicked ::
+            parent.plot_format.scatter2line()
+            parent.plot_format=pltr.plot_dict[it.selected]
+    PushButton:
+        text = "Colormap to Horizontal Lines"
+        visible << plot_format.plot_type == "colormap"
+        clicked ::
+            parent.plot_format.colormap2horizlines()
+            parent.plot_format=pltr.plot_dict[it.selected]
+    PushButton:
+        text = "Colormap to Vertical Lines"
+        visible << plot_format.plot_type == "colormap"
+        clicked ::
+            parent.plot_format.colormap2vertlines()
+            parent.plot_format=pltr.plot_dict[it.selected]
+    PushButton:
+        text = "Horiz Lines to Colormap"
+        visible << plot_format.plot_type == "multiline"
+        clicked ::
+            parent.plot_format.horizlines2colormap()
+            parent.plot_format=pltr.plot_dict[it.selected]
+    PushButton:
+        text = "Vert Lines to Colormap"
+        visible << plot_format.plot_type == "multiline"
+        clicked ::
+            parent.plot_format.vertlines2colormap()
+            parent.plot_format=pltr.plot_dict[it.selected]
+
+
+enamldef PlotFormatPane(DockPane):
+    dock_area="right"
+    title = "Plot Format"
+    PlotVGroup:
+        pass
+
+############### test window #############
+from enaml.widgets.api import MPLCanvas
+enamldef Main(MainWindow):
+    attr pltr
+    alias fig:mpl.figure
+    Container:
+        MPLCanvas: mpl:
+            figure = pltr.figure
+            toolbar_visible=True
+    PlotFormatPane:
+        dock_area="right"

@@ -19,3 +19,5 @@ def get_chief_window(obj, default_view, default_name="Show_Control"):
     if view.title=="":
         view.title=view.name
     return view
+
+
