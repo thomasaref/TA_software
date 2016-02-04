@@ -24,9 +24,6 @@ from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
 from collections import OrderedDict
 
-#import matplotlib
-#matplotlib.use('GTKAgg')
-
 from matplotlib import rcParams
 rcParams['axes.labelsize'] = 14
 rcParams['xtick.labelsize'] = 9
@@ -34,7 +31,7 @@ rcParams['ytick.labelsize'] = 9
 rcParams['legend.fontsize'] = 9
 
 #rcParams['figure.figsize'] = 4.3, 4.2
-rcParams['figure.dpi']=150
+#rcParams['figure.dpi']=150
 rcParams['xtick.major.width']=2
 rcParams['lines.linewidth']=2
 rcParams['xtick.major.size']=4
@@ -68,6 +65,61 @@ mycolors=('auto', 'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan'
 
 mymarkers=(".", ",", "o", "v", "^", "<",">", "1", "2", "3", "4", "8", "s", "p", "*", "h", "H", "+", "x", "D", "d", "|", "_", "$2/3$")
 
+#    @observe("alpha", "linestyle", "linewidth", "visible", "label")
+#    def changer(self, change):
+#        if change["type"]=="update":
+#            param=change["name"]
+#            refresh_legend=get_tag(self, param, "refresh_legend", False)
+#            if refresh_legend:
+#                temp=self.plotter.show_legend
+#                self.plotter.show_legend=False
+#            getattr(self.plotter.clts[self.name], "set_"+param)(getattr(self, param))
+#            if refresh_legend:
+#                self.plotter.show_legend=True
+#                self.plotter.show_legend=temp
+#            if self.plotter.auto_draw:
+#                self.plotter.draw()
+
+class PlotChanger(object):
+    def __init__(self, *args):
+        self.args=args
+        
+    def __call__(self, func):
+        def new_func(obj, change):
+            if change["type"]=="update":
+                param=change["name"]
+                func(obj, param)
+                #refresh_legend=get_tag(obj, param, "refresh_legend", False)
+                #if refresh_legend:
+                #    temp=self.plotter.show_legend
+                #    self.plotter.show_legend=False
+                #getattr(obj.clt, "set_"+param)(getattr(obj, param))
+                #if refresh_legend:
+                #    self.plotter.show_legend=True
+                #    self.plotter.show_legend=temp
+                if obj.plotter.auto_draw:
+                    obj.plotter.draw()
+        return observe(*self.args)(new_func)
+
+def plot_observe(*args):
+    return PlotChanger(*args)
+    
+class PlotFormat(Atom):
+    """base class corresponding to one graph or collection on axes"""
+    name=Unicode()
+    colormap=Enum("jet", "rainbow", "nipy_spectral")
+    append=Bool(True)
+    visible=Bool(True)
+    plotter=ForwardTyped(lambda: Plotter)
+    clt=Value()
+    data=Array()
+
+    #@plot_observe("visible")
+    def plot_set(self, param):
+        """set the clt's parameter to the obj's value using clt's set function"""
+        getattr(self.clt, "set_"+param)(getattr(self, param))
+                    
+        
 class XYFormat(Atom):
     rend_list=List(default=[None, None, None]) #First is line, second is scatter #Typed(BaseXYPlot)
     name=Unicode()
@@ -94,21 +146,17 @@ class XYFormat(Atom):
 
     clt=Value()
 
-    @observe("alpha", "linestyle", "linewidth", "visible", "label")
-    def changer(self, change):
-        if change["type"]=="update":
-            param=change["name"]
-            refresh_legend=get_tag(self, param, "refresh_legend", False)
-            if refresh_legend:
-                temp=self.plotter.show_legend
-                self.plotter.show_legend=False
-            getattr(self.plotter.clts[self.name], "set_"+param)(getattr(self, param))
-            if refresh_legend:
-                self.plotter.show_legend=True
-                self.plotter.show_legend=temp
-            if self.plotter.auto_draw:
-                self.plotter.draw()
-
+    #@plot_observe("alpha", "linestyle", "linewidth", "visible", "label")
+    def simple_changer(self, param):
+        refresh_legend=get_tag(self, param, "refresh_legend", False)
+        if refresh_legend:
+            temp=self.plotter.show_legend
+            self.plotter.show_legend=False
+        getattr(self.clt, "set_"+param)(getattr(self, param))
+        if refresh_legend:
+            self.plotter.show_legend=True
+            self.plotter.show_legend=temp
+            
     def _observe_marker_size(self, change):
         if change["type"]=="update":
                 temp=self.plotter.show_legend
@@ -132,9 +180,9 @@ class XYFormat(Atom):
                 self.plotter.clts[self.name].set_edgecolor(colors)
                 self.plotter.show_legend=True
                 self.plotter.show_legend=temp
-            else:
-                if change["name"]!="colormap":
-                    self.changer(change)
+            #else:
+            #    if change["name"]!="colormap":
+            #        self.changer(change)
 
 
 class AllXYFormat(XYFormat):
@@ -260,6 +308,22 @@ class mpl_scroll_event(object):
         self.pltr.set_ylim(y-ydist/2.0, y+ydist/2.0)#self.pltr.y_min+event.step*self.pltr.y_zoom_step, self.pltr.y_max-1.0*event.step*self.pltr.y_zoom_step)
         self.pltr.draw()
 
+class FigChanger(object):
+    def __init__(self, *args):
+        self.args=args
+        
+    def __call__(self, func):
+        def new_func(obj, change):
+            if change["type"]=="update":
+                param=change["name"]
+                func(obj, param)
+                if obj.plotter.auto_draw:
+                    obj.plotter.draw()
+        return observe(*self.args)(new_func)
+
+def fig_observe(*args):
+    return FigChanger(*args)
+
 class Plotter(SubAgent):
     base_name="plot"
     plt_colors=['auto', 'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan', 'magenta', 'orange']
@@ -267,14 +331,16 @@ class Plotter(SubAgent):
     xlabel=Unicode()
     xlabel_size=Float(14.0)
 
-    def _observe_xlabel_size(self, change):
-        self.changer(change, self.axe.xaxis.label.set_size, self.xlabel_size)
+    #@plot_observe("xlabel_size")
+    def set_xlabel_size(self, change):
+        self.axe.xaxis.label.set_size(self.xlabel_size)
 
     ylabel=Unicode()
     ylabel_size=Float(14.0)
 
-    def _observe_ylabel_size(self, change):
-        self.changer(change, self.axe.yaxis.label.set_size, self.ylabel_size)
+    #@plot_observe("ylabel_size")
+    def set_ylabel_size(self, change):
+        self.axe.yaxis.label.set_size(self.ylabel_size)
 
     x_scale=Enum('linear', 'log')
     y_scale=Enum('linear', 'log')
