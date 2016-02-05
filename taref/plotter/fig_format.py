@@ -4,86 +4,45 @@ Created on Thu Feb  4 12:54:58 2016
 
 @author: thomasaref
 """
+from taref.core.log import log_debug
+from taref.plotter.plotter_backbone import plot_observe, PlotMaster
+from atom.api import Bool, Unicode, Float, Enum, Int, cached_property
 
-from taref.plotter.plotter_backbone import PlotUpdate, plot_observe
-from atom.api import Typed, Bool, Unicode, Float, Enum, Int, cached_property
-from collections import OrderedDict
-from numpy import shape, linspace, arange
+from taref.core.shower import shower
+from taref.core.agent import SubAgent
+from enaml import imports
+with imports():
+    from taref.core.interactive import InteractiveWindow
 
-from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from matplotlib.collections import PolyCollection, LineCollection
+from matplotlib import rcParams
+rcParams['axes.labelsize'] = 14
+rcParams['xtick.labelsize'] = 9
+rcParams['ytick.labelsize'] = 9
+rcParams['legend.fontsize'] = 9
 
-class Fig(PlotUpdate):
-    figure=Typed(Figure)
-    horiz_fig=Typed(Figure)
-    horiz_axe=Typed(Axes)
-    vert_fig=Typed(Figure)
-    vert_axe=Typed(Axes)
+rcParams['xtick.major.width']=2
+rcParams['lines.linewidth']=2
+rcParams['xtick.major.size']=4
+rcParams['axes.linewidth']=2
+rcParams['ytick.major.width']=2
+rcParams['ytick.major.size']=4
 
-    fig_height=Float(1.0)
-    fig_width=Float(1.0)
+#adjust matplotlib base cursor
+from matplotlib.backend_bases import cursors
+from matplotlib.backends import backend_qt4
+from PySide.QtCore import Qt
+backend_qt4.cursord[cursors.POINTER] = Qt.CursorShape.CrossCursor
 
+class Fig(PlotMaster, SubAgent):
+    cid=Int().tag(private=True)
+
+    base_name="plot"
+    title=Unicode()
     tight_layout=Bool(False)
     dpi=Int(150)
 
-    auto_draw=Bool(False)
-
-    def fig_set(self, param):
-        self.simple_set(self.figure, param)
-
-    @plot_observe("tight_layout", "dpi")
-    def figure_update(self, change):
-        self.fig_set(change["name"])
-
-    def _default_figure(self):
-         return Figure(figsize=(self.fig_height, self.fig_width))
-
-    def _default_axe(self):
-         axe=self.fig.add_subplot(111)
-         axe.autoscale_view(True)
-         return axe
-
-    def _default_horiz_fig(self):
-        return Figure(figsize=(self.fig_width, 1.0))
-
-    def _default_horiz_axe(self):
-        h_axe=self.horiz_fig.add_subplot(111, sharex=self.axe)
-        return h_axe
-
-    def _default_vert_fig(self):
-        return Figure(figsize=(1.0, self.fig_height))
-
-    def _default_vert_axe(self):
-        h_axe=self.vert_fig.add_subplot(111, sharey=self.axe)
-        return h_axe
-
-
-
-    def draw(self):
-        if self.fig.canvas!=None:
-            self.fig.canvas.draw()
-            self.get_member("clts_keys").reset(self)
-
-    def set_xlim(self, xmin, xmax):
-        self.x_min=xmin
-        self.x_max=xmax
-        self.axe.set_xlim(xmin, xmax)
-
-    def set_ylim(self, ymin, ymax):
-        self.y_min=ymin
-        self.y_max=ymax
-        self.axe.set_ylim(ymin, ymax)
-
-    #@private_property
-    #def view_window(self):
-    #    with imports():
-    #        from taref.core.plotter_e import PlotMain
-    #    return PlotMain(plotr=self)
-
-class Axe(PlotUpdate):
-    axes=Typed(Axes)
-
+    show_cross_cursor=Bool(False)
     xlabel=Unicode()
     xlabel_size=Float(14.0)
     ylabel=Unicode()
@@ -100,10 +59,40 @@ class Axe(PlotUpdate):
     auto_xlim=Bool(True)
     auto_ylim=Bool(True)
 
-    show_legend=Bool(False)
+    selected=Unicode()
+    show_cross_section=Bool(False)
+
+    def _default_figure(self):
+        return Figure(figsize=(self.fig_height, self.fig_width), dpi=self.dpi, tight_layout=self.tight_layout)
+
+    def figure_set(self, param):
+        self.simple_set(self.figure, param)
+
+    @plot_observe("tight_layout", "dpi")
+    def figure_update(self, change):
+        self.figure_set(change["name"])
+
+
+    def set_xlim(self, xmin, xmax):
+        self.x_min=xmin
+        self.x_max=xmax
+        self.axes.set_xlim(xmin, xmax)
+
+    def set_ylim(self, ymin, ymax):
+        self.y_min=ymin
+        self.y_max=ymax
+        self.axes.set_ylim(ymin, ymax)
+
+    @cached_property
+    def view_window(self):
+        with imports():
+            from fig_format_e import Main
+        view=Main(pltr=self)
+        return view
+
 
     def axes_set(self, param):
-        getattr(self.axes, "set_"+param)(getattr(self, param))
+        self.simple_set(self.axes, param)
 
     @plot_observe("xscale", "yscale", "title", "xlabel", "ylabel")
     def axes_update(self, change):
@@ -125,13 +114,6 @@ class Axe(PlotUpdate):
     def y_lim_update(self, change):
         self.set_ylim(self.y_min, self.y_max)
 
-    def legend(self):
-        self.axes.legend().draggable()
-
-    def legend_remove(self):
-        if self.axes.legend_ is not None:
-            self.axe.legend_.remove()
-
     @plot_observe("show_legend")
     def legend_update(self, change):
         if self.show_legend:
@@ -139,125 +121,160 @@ class Axe(PlotUpdate):
         else:
             self.legend_remove()
 
-    xyfs=Typed(OrderedDict)
+from plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh, multiline_plot
+from taref.core.atom_extension import private_property
 
-    def _default_xyfs(self):
-        xyfs=OrderedDict()
-        xyfs["All"]=AllXYFormat(plotter=self, name="All")
-        return xyfs
+class Plotter(Fig):
+    def line_plot(self, name, *args, **kwargs):
+        line_plot(self, name, *args, **kwargs)
 
-    @cached_property
-    def xyfs_keys(self):
-        return self.xyfs.keys()
+    def vline_plot(self, name, x, **kwargs):
+        vline_plot(self, name, x, **kwargs)
 
-    @cached_property
-    def xyfs_items(self):
-        return self.xyfs.values()
+    def hline_plot(self, name, y, **kwargs):
+        hline_plot(self, name, y, **kwargs)
 
-    def line_plot(self, zname, zdata, *args, **kwargs):
-        """Uses LineCollection for efficient plotting of lines.
-           In kwargs, if raw=True, expects zdata is a list of lists of (x,y) tuples.
-           else if no args are sent, auto calculates x data.
-           otherwise assumes zdata is x data and args[0] is y data.
-           In kwargs, if append=False, data overwrites existing data in self.clts
-           If tuples, xlim or ylim are passed in kwargs, will use those for setting limits"""
+    def scatter_plot(self, name, *args, **kwargs):
+        scatter_plot(self, name, *args, **kwargs)
 
-        xyf=self.xyfs.get(zname, None)
-        if xyf is None:
-            xyf=XYFormat(plotter=self, name=zname, plot_type="line")
-        clt=xyf.clt
+    def colormesh(self, name, *args, **kwargs):
+        colormesh(self, name, *args, **kwargs)
 
-        xlim=kwargs.pop("xlim", None)
-        ylim=kwargs.pop("ylim", None)
+    def multiline_plot(self, name, *args,**kwargs):
+        multiline_plot(self, name, *args,**kwargs)
 
-        if "color" in kwargs:
-            if kwargs["color"]=="auto":
-                kwargs.pop("color")
-                self.autocolor=True
-            else:
-                self.autocolor=False
-        data=[]
-        self.append=kwargs.pop("append", self.append)
-        if self.append:
-            if clt is not None:
-                data=clt.get_segments()
-        data_shape=len(shape(zdata))
-        if data_shape>2:
-            data.extend(zdata)
-        else:
-            if data_shape==2:
-                x=zdata[0]
-                y=zdata[1]
-                data.append(list(zip(x,y)))
-            elif args==():
-                x=arange(len(zdata))
-                y=zdata
-                data.append(list(zip(x,y)))
-            else:
-                x=zdata
-                data.extend([list(zip(x,y)) for y in args])
-        if clt is None:
-            clt=LineCollection(data, **kwargs)
-            self.axe.add_collection(clt)
-        else:
-            clt.set_verts(data)
-            if kwargs!={}:
-                clt.set(**kwargs)
-        if self.autocolor:
-            clt.set_array(arange(len(data)))
-        if "color" in kwargs:
-            clt.set_array(None)
-#        if xlim is None or ylim is None: #try autosetting limits if xlim or ylim not specified
-#            data=sqze(sqze([item.get_segments() for item in self.clts.values() if isinstance(item, LineCollection)]))
-#            if xlim is None:
-#                xlim=(min(data, key = lambda t: t[0])[0], max(data, key = lambda t: t[0])[0])
-#            if ylim is None:
-#                ylim=(min(data, key = lambda t: t[1])[1], max(data, key = lambda t: t[1])[1])
-#        self.set_xlim(*xlim)
-#        self.set_ylim(*ylim)
-        xyf.clt=clt
-        self.xyfs[zname]=xyf #XYFormat(plotter=self, name=zname, plot_type="line", label=kwargs.get("label", ""), edgecolor=kwargs.get("color", "blue"))
+    def savefig(self, dir_path="/Users/thomasaref/Documents/TA_software/", fig_name="test_colormap_plot"):
+        if self.figure.canvas is None:
+            from enaml.qt.qt_application import QtApplication
+            from enaml.application import Application
+            if Application.instance() is None:
+                 app=QtApplication()
+                 print dir(app)
+            self.view_window.show()
+            app.destroy()
+            self.view_window.hide()
+        self.figure.savefig(dir_path+fig_name, dpi=self.dpi, bbox_inches='tight')
 
-    def scatter_plot(self, zname, *args, **kwargs):
-        self.append=kwargs.pop("append", self.append)
-        if not self.append:
-            self.remove_collection(zname)
-        self.clts[zname]=self.axe.scatter(*args, **kwargs)
-        self.xyfs[zname]=XYFormat(plotter=self, name=zname, plot_type="scatter", label=kwargs.get("label", ""), edgecolor=kwargs.get("color", "blue"))
+    @private_property
+    def cls_run_funcs(self):
+        """class or static methods to include in run_func_dict on initialization. Can be overwritten in child classes"""
+        return [self.savefig]
+if __name__=="__main__":
 
-    def remove_collection(self, zname):
-        if zname in self.clts:
-            self.clts[zname].remove()
-            self.clts.pop(zname)
-            self.xyfs[zname].clt.remove()
-            self.xyfs.pop(zname)
+    #pm=PlotMaster()
+    a=Plotter()
+    from numpy import meshgrid, sqrt, linspace
+    n = 300
+    x = linspace(-1.5, 1.5, n)
+    y = linspace(-1.5, 1.5, n*2)
+    X, Y = meshgrid(x, y)
+    Z = sqrt(X**2 + Y**2)
 
-    def colormesh(self, zname, *args, **kwargs):
-        self.remove_collection(zname)
-        clt=self.axe.pcolormesh(*args, **kwargs)
-        self.xyfs[zname]=XYFormat(plotter=self, name=zname, clt=clt)
-        self.alldata=args[0]
-        #self.line_plot(zname+"lines", arange(len(args[0][0])), *args[0])
-        #self.xyfs[zname+"lines"]=XYFormat(plotter=self, name=zname+"lines")
-        #log_debug(args[0])
-    def axvline(self, zname, x, **kwargs):
-        self.remove_collection(zname)
-        self.axe.axvline(x, **kwargs)
+    a.colormesh("colormesh", x, y, Z)
+    #b=Plotter()
+    #a.scatter_plot("scatter", [100,200,300], [100,200,300], marker="<", marker_size=300)
+    a.savefig()
+    #d=CrossCursor(plotter=a)
+    #d.add_cursor()
+    shower()
 
-    def poly_plot(self, zname, zdata, zcolor=None):
-        if zname not in self.clts:
-            clt=PolyCollection(zdata, alpha=0.5, antialiased=True)
-            if zcolor is not None:
-                clt.set_color(zcolor) #colorConverter.to_rgba(zcolor))
-            self.clts[zname]=clt
-            self.axe.add_collection(self.clts[zname])
-        else:
-            self.clts[zname].set_verts(zdata)
-
-    def add_text(self, text, x, y, **kwargs):
-         """adds text at data location x,y"""
-         self.axe.text(x, y, text, **kwargs)
-
-    def remove_texts(self):
-        """removes all texts from axes"""
-        self.axe.texts=[]
+#    def line_plot(self, zname, zdata, *args, **kwargs):
+#        """Uses LineCollection for efficient plotting of lines.
+#           In kwargs, if raw=True, expects zdata is a list of lists of (x,y) tuples.
+#           else if no args are sent, auto calculates x data.
+#           otherwise assumes zdata is x data and args[0] is y data.
+#           In kwargs, if append=False, data overwrites existing data in self.clts
+#           If tuples, xlim or ylim are passed in kwargs, will use those for setting limits"""
+#
+#        xyf=self.xyfs.get(zname, None)
+#        if xyf is None:
+#            xyf=XYFormat(plotter=self, name=zname, plot_type="line")
+#        clt=xyf.clt
+#
+#        xlim=kwargs.pop("xlim", None)
+#        ylim=kwargs.pop("ylim", None)
+#
+#        if "color" in kwargs:
+#            if kwargs["color"]=="auto":
+#                kwargs.pop("color")
+#                self.autocolor=True
+#            else:
+#                self.autocolor=False
+#        data=[]
+#        self.append=kwargs.pop("append", self.append)
+#        if self.append:
+#            if clt is not None:
+#                data=clt.get_segments()
+#        data_shape=len(shape(zdata))
+#        if data_shape>2:
+#            data.extend(zdata)
+#        else:
+#            if data_shape==2:
+#                x=zdata[0]
+#                y=zdata[1]
+#                data.append(list(zip(x,y)))
+#            elif args==():
+#                x=arange(len(zdata))
+#                y=zdata
+#                data.append(list(zip(x,y)))
+#            else:
+#                x=zdata
+#                data.extend([list(zip(x,y)) for y in args])
+#        if clt is None:
+#            clt=LineCollection(data, **kwargs)
+#            self.axe.add_collection(clt)
+#        else:
+#            clt.set_verts(data)
+#            if kwargs!={}:
+#                clt.set(**kwargs)
+#        if self.autocolor:
+#            clt.set_array(arange(len(data)))
+#        if "color" in kwargs:
+#            clt.set_array(None)
+##        if xlim is None or ylim is None: #try autosetting limits if xlim or ylim not specified
+##            data=sqze(sqze([item.get_segments() for item in self.clts.values() if isinstance(item, LineCollection)]))
+##            if xlim is None:
+##                xlim=(min(data, key = lambda t: t[0])[0], max(data, key = lambda t: t[0])[0])
+##            if ylim is None:
+##                ylim=(min(data, key = lambda t: t[1])[1], max(data, key = lambda t: t[1])[1])
+##        self.set_xlim(*xlim)
+##        self.set_ylim(*ylim)
+#        xyf.clt=clt
+#        self.xyfs[zname]=xyf #XYFormat(plotter=self, name=zname, plot_type="line", label=kwargs.get("label", ""), edgecolor=kwargs.get("color", "blue"))
+#
+#    def scatter_plot(self, zname, *args, **kwargs):
+#        self.append=kwargs.pop("append", self.append)
+#        if not self.append:
+#            self.remove_collection(zname)
+#        self.clts[zname]=self.axe.scatter(*args, **kwargs)
+#        self.xyfs[zname]=XYFormat(plotter=self, name=zname, plot_type="scatter", label=kwargs.get("label", ""), edgecolor=kwargs.get("color", "blue"))
+#
+#    def colormesh(self, zname, *args, **kwargs):
+#        self.remove_collection(zname)
+#        clt=self.axe.pcolormesh(*args, **kwargs)
+#        self.xyfs[zname]=XYFormat(plotter=self, name=zname, clt=clt)
+#        self.alldata=args[0]
+#        #self.line_plot(zname+"lines", arange(len(args[0][0])), *args[0])
+#        #self.xyfs[zname+"lines"]=XYFormat(plotter=self, name=zname+"lines")
+#        #log_debug(args[0])
+#    def axvline(self, zname, x, **kwargs):
+#        self.remove_collection(zname)
+#        self.axe.axvline(x, **kwargs)
+#
+#    def poly_plot(self, zname, zdata, zcolor=None):
+#        if zname not in self.clts:
+#            clt=PolyCollection(zdata, alpha=0.5, antialiased=True)
+#            if zcolor is not None:
+#                clt.set_color(zcolor) #colorConverter.to_rgba(zcolor))
+#            self.clts[zname]=clt
+#            self.axe.add_collection(self.clts[zname])
+#        else:
+#            self.clts[zname].set_verts(zdata)
+#
+#    def add_text(self, text, x, y, **kwargs):
+#         """adds text at data location x,y"""
+#         self.axe.text(x, y, text, **kwargs)
+#
+#    def remove_texts(self):
+#        """removes all texts from axes"""
+#        self.axe.texts=[]

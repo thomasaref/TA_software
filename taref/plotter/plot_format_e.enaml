@@ -9,7 +9,7 @@ from enaml.widgets.api import ( Form, Label, Container, Field, ObjectCombo,
      MainWindow, PushButton, DockPane, VGroup, HGroup, GroupBox)
 #from enaml.layout.api import spacer, hbox
 from enaml.widgets.color_dialog import ColorDialog
-from enaml.stdlib.fields import FloatField
+from enaml.stdlib.fields import FloatField, IntField
 
 from enaml.core.api import Conditional, Include
 #from enaml.layout.api import vbox, hbox, align, spacer
@@ -21,8 +21,8 @@ enamldef ColorMap(VGroup):
     Label:
         text = "Color Map:"
     ObjectCombo:
-        items=list(plot_format.get_member('colormap').items)
-        selected:=plot_format.colormap
+        items=list(plot_format.get_member('cmap').items)
+        selected:=plot_format.cmap
 
 enamldef LineVGroup(VGroup):
     attr plot_format
@@ -57,6 +57,7 @@ enamldef LineVGroup(VGroup):
     ObjectCombo:
         items=list(plot_format.get_member('linestyle').items)
         selected:=plot_format.linestyle
+
 enamldef ScatterVGroup(VGroup):
     attr plot_format
     Label:
@@ -80,26 +81,36 @@ enamldef ScatterVGroup(VGroup):
         items=list(plot_format.get_member('marker').items)
         selected:=plot_format.marker
 
+from taref.plotter.events import mpl_cross_section
+
 def reset_dyn_items(dyn_items, pf):
     dyn_items.objects=[]
     #pf=pltr.plot_dict[selected]
     #log_debug(pf.plot_type in ("colormap", "multiline"))
     if pf.plot_type in ("colormap", "multiline"):
         dyn_items.objects.append(ColorMap(plot_format=pf))
-    if pf.plot_type in ("line", "multiline", "scatter"):
+    if pf.plot_type in ("line", "multiline", "scatter", "cross_cursor"):
         dyn_items.objects.append(LineVGroup(plot_format=pf))
     if pf.plot_type in ("scatter",):
         dyn_items.objects.append(ScatterVGroup(plot_format=pf))
 
 enamldef PlotVGroup(VGroup):
     attr plot_format<<pltr.plot_dict[it.selected]
-    plot_format :: reset_dyn_items(dyn_items, plot_format)
-    activated :: reset_dyn_items(dyn_items, plot_format)
+    attr cse = mpl_cross_section(plot_format)
+    plot_format ::
+        cse.pf=plot_format
+        reset_dyn_items(dyn_items, plot_format)
+
+    activated ::
+        pltr.selected=it.selected
+        pltr.figure.canvas.mpl_connect('motion_notify_event', cse)
+        reset_dyn_items(dyn_items, plot_format)
 
     Label:
         text = "Item"
     ObjectCombo: it:
         items<<pltr.plot_names
+        selected :: pltr.selected=self.selected
     CheckButton:
         value := plot_format.visible
         True_text="Visible"
@@ -142,7 +153,14 @@ enamldef PlotVGroup(VGroup):
         clicked ::
             parent.plot_format.vertlines2colormap()
             parent.plot_format=pltr.plot_dict[it.selected]
-
+    FloatField:
+        value << plot_format.xcoord
+    FloatField:
+        value << plot_format.ycoord
+    IntField:
+        value << plot_format.xind
+    IntField:
+        value << plot_format.yind
 
 enamldef PlotFormatPane(DockPane):
     dock_area="right"

@@ -1,0 +1,174 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Feb  5 11:17:54 2016
+
+@author: thomasaref
+"""
+
+from taref.core.log import log_debug
+from enaml.widgets.api import MPLCanvas, HGroup, VGroup, Label, Field, Container, ObjectCombo, PushButton, DockPane, MainWindow
+from enaml.stdlib.fields import FloatField, IntField
+from taref.core.fundcore_e import CheckButton
+from enaml.layout.api import hbox, spacer, grid
+from enaml.core.api import Include
+from taref.plotter.events import mpl_scroll, mpl_dblclick_move
+from plot_format_e import PlotFormatPane
+from plot_format import CrossCursor
+
+enamldef pHGroup(HGroup):
+    """a non-padded, non-width-aligning HGroup"""
+    padding=0
+    align_widths=False
+
+enamldef FigureVGroup(VGroup):
+    pHGroup:
+        Label:
+            text = "Title"
+        Field:
+            text := pltr.title
+    pHGroup:
+        Label:
+            text = "X label"
+        Field:
+            text := pltr.xlabel
+    pHGroup:
+        Label:
+            text = "Y label"
+        Field:
+            text := pltr.ylabel
+    Container:
+        constraints = [hbox(xscalel, xscaleoc, spacer, yscalel, yscaleoc)]
+        Label: xscalel:
+            text = "X axis"
+        ObjectCombo: xscaleoc:
+            items=list(pltr.get_member('xscale').items)
+            selected:=pltr.xscale
+        Label: yscalel:
+            text = "Y axis"
+        ObjectCombo: yscaleoc:
+            items=list(pltr.get_member('yscale').items)
+            selected:=pltr.yscale
+    pHGroup:
+        constraints = [xminf.width==xmaxf.width]
+        Label:
+            text="X min"
+        FloatField: xminf:
+            value:=pltr.x_min
+        Label:
+            text="X max"
+        FloatField: xmaxf:
+            value:=pltr.x_max
+    pHGroup:
+        constraints = [yminf.width==ymaxf.width]
+        Label:
+            text="Y min"
+        FloatField: yminf:
+            value:=pltr.y_min
+        Label:
+            text="Y max"
+        FloatField: ymaxf:
+            value:=pltr.y_max
+    CheckButton:
+        value := pltr.show_legend
+        True_text="Legend"
+        False_text = "No Legend"
+    pHGroup:
+        constraints = [autob.width==drawb.width]
+        CheckButton: autob:
+            value := pltr.auto_draw
+            True_text="Auto draw"
+            False_text = "Manual draw"
+        PushButton: drawb:
+            text = "Draw"
+            clicked :: pltr.draw()
+    CheckButton:
+        value := pltr.tight_layout
+    IntField:
+        value := pltr.dpi
+
+    PushButton:
+        text = "test save"
+        clicked :: pltr.savefig("/Users/thomasaref/Documents/TA_software/", "test_colormap_plot")
+
+    #Label:
+    #    text << unicode(plotr.xdist)
+    #Label:
+    #    text << unicode(plotr.ydist)
+    #Label:
+    #    text << unicode(plotr.total_dist)
+
+    CheckButton:
+        value := pltr.show_cross_section
+        value ::
+            if self.value:
+                hf=MPLCanvas(figure=pltr.horiz_fig, resist_width = 'ignore', resist_height = 'ignore',
+                             constraints = [width >= 100, height >= 100])
+                ec=Container()
+                ec.constraints=[ec.width==200, ec.height==200]
+                vf=MPLCanvas(figure=pltr.vert_fig, resist_width = 'ignore', resist_height = 'ignore',
+                             constraints = [width >= 100, height >= 100])
+                other.objects.extend([hf, ec, vf])
+                mpc.constraints= [grid([hf,  ec],
+                                       [mpl,  vf])]
+
+
+            else:
+                other.objects=[]
+                mpc.constraints=[]
+
+        True_text = "hide CS"
+        False_text = "show CS"
+    CheckButton:
+        value := pltr.show_cross_cursor
+        value ::
+            cc=pltr.plot_dict.get("cross_cursor", None)
+            if self.value:
+                cpf=pltr.plot_dict.get(pltr.selected, None)
+                if cc is None:
+                    cc=CrossCursor(plotter=pltr)
+                    if cpf is not None:
+                        cc.add_cursor(cpf.xcoord, cpf.ycoord)
+                    else:
+                        cc.add_cursor(0,0)
+            if cc is not None:
+                cc.visible=self.value
+                    #if cpf is not None:
+                    #    cc.move_cursor(cpf.xcoord, cpf.ycoord)
+
+
+        True_text = "Hide Cursor"
+        False_text = "Show_Cursor"
+enamldef FigureFormatPane(DockPane):
+    dock_area="left"
+    title = "Figure Format"
+    FigureVGroup:
+        pass
+
+enamldef MatPlotContainer(Container):
+    padding=0
+    alias mpl
+    alias other
+    activated ::
+        pltr.figure.canvas.mpl_connect('scroll_event', mpl_scroll(pltr))
+        pltr.figure.canvas.mpl_connect('button_press_event', mpl_dblclick_move(pltr))
+    Include: other:
+        pass
+    MPLCanvas: mpl:
+        figure << pltr.figure
+        toolbar_visible=True
+        resist_width = 'ignore'
+        resist_height = 'ignore'
+        constraints = [width >= 400, height >= 400]
+
+############### test window #############
+enamldef Main(MainWindow):
+    attr pltr
+    alias mpl : mpc.mpl
+    alias other : mpc.other
+    alias mpc
+    MatPlotContainer: mpc:
+        pass
+    FigureFormatPane:
+        pass
+    PlotFormatPane:
+        pass
