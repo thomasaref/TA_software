@@ -5,7 +5,7 @@ Created on Wed Jan 27 21:41:24 2016
 @author: thomasaref
 """
 import enaml.qt #work around for Qdate error. import order
-from taref.core.usertemps_e import UserInstrView
+#from taref.core.usertemps_e import UserInstrView
 from enaml.core.api import Conditional, DynamicTemplate, Looper
 from enaml.widgets.api import VGroup, PushButton, Container, GroupBox, Label
 from taref.core.var_e import Var
@@ -33,20 +33,12 @@ template DynTypedView(AttrType, spec):
 
 enamldef AgentLooper(Looper):
     attr vmodel=parent.vmodel
-    #iterable=get_main_params(vmodel)
     DynVar:
         vname=loop_item
 
 template InstrView(instr_view):
     instr_view:
         pass
-
-#template InstrView2(instr_view):
-#    Looper:
-#        instr_view:
-#            vname=loop_item
-        #Label:
-        #    text=unicode(instr_view)
 
 enamldef InstrHolder(VGroup):
     attr vmodel=parent.vmodel

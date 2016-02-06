@@ -1,0 +1,115 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Feb 24 11:26:25 2015
+
+@author: thomasaref
+Implemements GUIs for saving and loading files
+"""
+
+from enaml.layout.api import vbox, hbox, spacer, align
+from enaml.widgets.api import (Container, Label, PushButton, Field, ObjectCombo, Window,
+                               FileDialogEx, MultilineField, GroupBox, HGroup, VGroup, Separator)
+from enaml.core.api import Conditional
+from taref.core.atom_extension import get_tag
+from taref.core.fundcore_e import AgentWindow
+
+enamldef DirectoryInterface(VGroup):
+    attr filer
+    attr show_details = filer.show_details
+    attr show_simple = filer.show_simple
+    Conditional:
+        condition=show_details
+        HGroup:
+            padding=0
+            align_widths=False
+            Label:
+                text = 'Base directory'
+            Field:
+                text := filer.base_dir
+            PushButton:
+                text = 'Browse'
+                clicked ::
+                    path = FileDialogEx.get_existing_directory(current_path=filer.base_dir)
+                    if path:
+                        filer.base_dir = path
+        HGroup:
+            padding=0
+            align_widths=False
+            Label:
+                text = "Main dir:"
+            Field:
+                text := filer.main_dir
+            Label:
+                text = "Quality:"
+            ObjectCombo:
+                items = list(filer.get_member('quality').items)
+                selected := filer.quality
+            Conditional:
+                condition = hasattr(filer, "main_file")
+                Label:
+                    text = "File name:"
+                Field: main_file:
+                    constraints = [main_file.width == parent.contents_width/5]
+                    text := filer.main_file
+        Separator:
+            pass
+    Conditional:
+        condition=show_simple
+        HGroup:
+            padding=0
+            align_widths=False
+            Label:
+                text = "Directory:"
+            Field:
+                text:=filer.dir_path
+            PushButton:
+                text = 'Browse'
+                clicked ::
+                    path = FileDialogEx.get_existing_directory(current_path=filer.base_dir)
+                    if path:
+                        filer.dir_path = path
+
+
+
+enamldef FilerInterface(DirectoryInterface):
+    Separator:
+        pass
+    HGroup:
+        padding=0
+        align_widths=False
+        Label:
+            text = "File path:"
+        Field:
+            text:=filer.file_path
+        PushButton:
+            text = 'Browse'
+            clicked :: filer.browse_clicked()
+        Conditional:
+            condition = hasattr(filer, "file_action")
+            PushButton:
+                text = get_tag(filer, "file_action", "button_label", "File Action")
+                clicked :: filer.file_action(filer)
+
+enamldef DirectoryExt(DirectoryInterface):
+    """extension needed to work with instrview. iterable is expected even though nothing is iterating here"""
+    attr iterable
+    attr vmodel = parent.vmodel
+    filer = vmodel
+
+enamldef FilerExt(FilerInterface):
+    """extension needed to work with instrview. iterable is expected even though nothing is iterating here"""
+    attr iterable
+    attr vmodel=parent.vmodel
+    filer = vmodel
+
+enamldef FolderMain(AgentWindow):
+    title="Folder test"
+    alias filer : di.filer
+    DirectoryInterface: di:
+        pass
+
+enamldef FilerMain(AgentWindow):
+    title="Filer test"
+    alias filer : fi.filer
+    FilerInterface: fi:
+        pass

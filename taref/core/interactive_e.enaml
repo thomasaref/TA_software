@@ -8,32 +8,46 @@ Created on Sat Jan 30 13:51:10 2016
 from enaml.widgets.api import DockPane, MultilineField, MainWindow, IPythonConsole, VGroup
 from atom.api import Atom, Float, Unicode, Int, Typed
 
-#class LogIPythonConsole(IPythonConsole):
-#    InOut_index=Int(1)
-#    InOut_text=Unicode("#IPython Log:\n\n")
-#
-#    def text_ev(self):
-#        if len(self.get_var("In"))>self.InOut_index:
-#            self.InOut_index+=1
-#            self.InOut_text+=self.get_var("In")[-1]+"\n"
-#            outstr=self.get_var("Out").get(self.InOut_index-1, None)
-#            if outstr is not None:
-#                self.InOut_text+="#{0}\n".format(outstr)
+class IPythonCatch(Atom):
+    """a stream catching class for use with the IPython window"""
+    ipy_str=Unicode("#IPython Log (Outputs appear with comment # in front)\n\n")
+    code_str=Unicode()
 
+    screen_width=Int(1920)
+    screen_height=Int(1102)
+    ipy_height=Int(100)
+    ipy_width=Int()
+
+    def _default_ipy_width(self):
+        return self.screen_width
+
+    @cached_property
+    def initial_position(self):
+        return (0, self.screen_height-self.ipy_height)
+
+    @cached_property
+    def initial_size(self):
+        return (self.ipy_width, self.ipy_height)
+
+    def write(self, write_str):
+        self.ipy_str+=write_str
+
+ipython_stream=IPythonCatch()
 
 class text_ev(object):
     """decorator class to allow auto update of IPython Log"""
-    def __init__(self, ipc):
-        self.ipc=ipc
+    def __init__(self, ipy_console, ipy_stream):
+        self.ipy_console=ipy_console
+        self.ipy_stream=ipy_stream
         self.InOut_index=1
 
     def __call__(self):
         if len(self.ipc.get_var("In"))>self.InOut_index:
             self.InOut_index+=1
-            self.ipc.InOut_text+=self.ipc.get_var("In")[-1]+"\n"
-            outstr=self.ipc.get_var("Out").get(self.InOut_index-1, None)
+            self.ipy_stream.write(self.ipy_console.get_var("In")[-1]+"\n")
+            outstr=self.ipy_console.get_var("Out").get(self.InOut_index-1, None)
             if outstr is not None:
-                self.ipc.InOut_text+="#{0}\n".format(outstr)
+                self.ipy_stream.write("#{0}\n".format(outstr))
 
 def update_and_return(indict, updict):
     """utility function for one line combination of two dictionaries"""
@@ -45,21 +59,22 @@ enamldef InteractiveWindow(MainWindow): main:
     attr input_dict : dict = {}
     name="ipython"
     title = "IPython"
+    initial_position=ipython_stream.initial_position
+    initial_size=ipython_stream.initial_size
     closed ::
         self.set_size(self.size())
         self.set_position(self.position())
     VGroup:
         alias ipc
         IPythonConsole: ipc:
-            attr InOut_text = "#IPython Log (Outputs appear with comment # in front)\n\n"
+            #attr InOut_text = "#IPython Log (Outputs appear with comment # in front)\n\n"
             activated::
-                #te=text_ev(ipc)
-                self.proxy.text_control.textChanged.connect(text_ev(ipc))
-            initial_ns=update_and_return({"w_dict" : dict([(w.name, w) for w in main.windows])}, input_dict)
+                self.proxy.text_control.textChanged.connect(text_ev(ipy_console=ipc, ipy_stream=ipython_stream))
+            initial_ns=update_and_return({"wd" : dict([(w.name, w) for w in main.windows])}, input_dict)
 
         MultilineField: runtxt:
             read_only=True
-            text<<ipc.InOut_text
+            text<<ipython_stream.ipy_str
 
 enamldef CodeWindow(MainWindow):
     name="run_code"
@@ -70,6 +85,7 @@ enamldef CodeWindow(MainWindow):
     VGroup:
         MultilineField: show_code:
             read_only=True
+            text << ipython_stream.code_str
 
 enamldef Main(InteractiveWindow):
     pass

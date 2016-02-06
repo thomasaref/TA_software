@@ -1,0 +1,80 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Feb  6 15:29:48 2016
+
+@author: thomasaref
+"""
+
+enamldef SimpleSave(HGroup):
+    padding=0
+    align_widths=False
+    Field: save_file_fld:
+        text:=filer.file_path
+    PushButton: browse_save:
+        text = 'Browse'
+        clicked ::
+            path = FileDialogEx.get_save_file_name(current_path=filer.file_path)
+            if path:
+                filer.file_path = path
+                filer.full_save(obj=coder)
+    PushButton: save:
+        text = "Save"
+        clicked ::
+            filer.full_save(obj=coder)
+
+
+enamldef SaveBox(VGroup):
+    padding=0
+    SimpleSave:
+        pass
+    FilerInterface:
+        pass
+
+enamldef SaveWrap(SaveBox):
+    attr filer
+    attr coder: None
+
+
+enamldef SimpleSaveWrap(SimpleSave):
+    attr filer
+
+enamldef ReadSaveWrap(Container):
+    attr save_file
+    attr read_file
+    attr runcode
+    alias save_txt : sw.filer
+    GroupBox: gb:
+        #alias save_text : sw.filer
+        SaveWrap: sw:
+            filer=save_file
+            coder=runcode
+
+    ReadWrap: rw:
+        filer=read_file
+        #rd_ev:: print "read"
+    MultilineField:
+        text << unicode(read_file.data)
+
+enamldef SaveMain(Window):
+    attr save_file
+    attr read_file
+    attr coder
+    title="SaveBox test"
+    VGroup:
+        ReadWrap:
+            #rd_ev:: print "read"
+
+            filer=read_file
+            #clicked :: print "read data"
+        GroupBox: gb:
+            SaveWrap:
+                filer=save_file
+        MultilineField:
+            text := read_file.data_str
+
+
+enamldef SimpleSaveMain(Window):
+    attr filer
+    title="SimpleSave test"
+    SimpleSave:
+        pass

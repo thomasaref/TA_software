@@ -76,6 +76,7 @@ enamldef CoreWindow(ShowWindow): sv:
         sv.get_member("all_wins").reset(sv)
         for w in sv.all_wins:
             w.close()
+            #w.destroy()
 
 enamldef WindowToolBar(ToolBar):
     """a toolbar that lists all windows and links an action to showing them"""

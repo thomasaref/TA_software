@@ -5,14 +5,17 @@ Created on Thu Feb  4 12:54:58 2016
 @author: thomasaref
 """
 from taref.core.log import log_debug
+
+from enaml.qt.qt_application import QtApplication
+
 from taref.plotter.plotter_backbone import plot_observe, PlotMaster
 from atom.api import Bool, Unicode, Float, Enum, Int, cached_property
 
 from taref.core.shower import shower
 from taref.core.agent import SubAgent
 from enaml import imports
-with imports():
-    from taref.core.interactive import InteractiveWindow
+from plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh, multiline_plot
+from taref.core.atom_extension import private_property
 
 from matplotlib.figure import Figure
 from matplotlib import rcParams
@@ -90,7 +93,6 @@ class Fig(PlotMaster, SubAgent):
         view=Main(pltr=self)
         return view
 
-
     def axes_set(self, param):
         self.simple_set(self.axes, param)
 
@@ -121,10 +123,12 @@ class Fig(PlotMaster, SubAgent):
         else:
             self.legend_remove()
 
-from plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh, multiline_plot
-from taref.core.atom_extension import private_property
+
 
 class Plotter(Fig):
+    #pm=Typed(Fig)
+
+
     def line_plot(self, name, *args, **kwargs):
         line_plot(self, name, *args, **kwargs)
 
@@ -144,21 +148,23 @@ class Plotter(Fig):
         multiline_plot(self, name, *args,**kwargs)
 
     def savefig(self, dir_path="/Users/thomasaref/Documents/TA_software/", fig_name="test_colormap_plot"):
+        """saves the figure. if a canvas does not exist, the window will be shown and hidden to create it.
+        if a QtApplication is not active, a temporary one will be created but not run to host the plot"""
         if self.figure.canvas is None:
-            from enaml.qt.qt_application import QtApplication
-            from enaml.application import Application
-            if Application.instance() is None:
+            app=None
+            if QtApplication.instance() is None:
                  app=QtApplication()
-                 print dir(app)
             self.view_window.show()
-            app.destroy()
             self.view_window.hide()
+            if app is not None:
+                app.destroy()
         self.figure.savefig(dir_path+fig_name, dpi=self.dpi, bbox_inches='tight')
 
     @private_property
     def cls_run_funcs(self):
         """class or static methods to include in run_func_dict on initialization. Can be overwritten in child classes"""
         return [self.savefig]
+
 if __name__=="__main__":
 
     #pm=PlotMaster()

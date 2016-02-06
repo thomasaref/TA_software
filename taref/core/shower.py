@@ -9,17 +9,14 @@ from taref.core.shower_backbone import get_view_window
 from taref.core.agent import SubAgent
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
-from enaml.application import Application
-
 
 def shower(*agents, **kwargs):
     """a powerful showing function for any Atom object(s) specified in agents.
     Checks if object has a view_window property and otherwise uses a default view.
     also provides a show control of the objects which can be modified with kwargs"""
 
-
     start_it=False
-    if Application.instance() is None:
+    if QtApplication.instance() is None:
         app = QtApplication()
         start_it=True
 
