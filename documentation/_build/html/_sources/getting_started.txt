@@ -1,0 +1,134 @@
+*******************
+Getting Started
+*******************
+
+The taref package strives to make quick, easy-to-use, auto-display GUIs
+with the option to extend them to custom GUIs at a later date. To do this,
+taref is built on enaml, a programming language extension of python 
+to create declarative user interfaces, and Atom, a framework for 
+creating memory efficient Python objects with enhanced features 
+such as dynamic initialization, validation, and 
+change notification for object attributes (similar to Enthought's Traits)
+Basically,
+taref generates dynamic enaml templates from a minimal information Atom
+class with the option to later substitute the dynamic enaml templates
+used with something more specific for the Atom class.
+
+For example, some code that makes use of taref's shower function might look like this::
+
+    from atom.api import Atom, Float, Unicode
+    from taref.core.shower import shower
+
+    class Test(Atom):
+        a=Float()
+        b=Unicode()
+
+    t=Test()
+    shower(t)
+
+and these few lines of code are all that is needed to produce a simple GUI that shows a and b in our
+Test object t!
+
+So what is happening?
+First, we are an Atom class. Atom class are very similar to python's
+regular classes. Something equivalent to our Test class above would be::
+
+    class Test(object):
+        def __init__(self, a=0.0, b=""):
+            self.a=a
+            self.b=b
+
+However, Atom provides some key advantages to using the above class for GUI making
+First, in the Atom class, the type of a is fixed to being a float so
+the GUI always knows how to display it. The members of Test are likewise fixed
+so that none are added dynamically later.
+Secondly, Atom can detect changes changes to it's members. To see this, we
+look at the following code::
+
+    class Test(Atom):
+        a=Float()
+        b=Unicode()
+
+        def _observe_a(self, change):
+            print change
+
+Now every time variable a is changed, in the GUI or in code,
+it will print out that change.
+The final advantage of Atom is that metadata can be added to the variable.
+For example, ::
+    
+    t.a=4.0
+    t.get_member("a").tag(label="My Float")
+    print t.a 
+    print t.get_member("a").metadata
+
+Combining this with the functionality with the shower function::
+
+    from atom.api import Atom, Float, Unicode
+    from taref.core.shower import shower
+
+    class Test(Atom):
+        a=Float().tag(label="My Float")
+        b=Unicode()
+
+        def _observe_a(self, change):
+            print change
+
+    t=Test()
+    shower(t)
+
+auto creates a GUI where a is now labelled "My Float" and every time a is changed
+it is printed.
+
+There are a number of custom tags defined in taref, such as "label", to give easy access to some
+commonly used features. For example, suppose I wanted b to display as a multiline field rather than
+a single line field::
+
+    class Test(Atom):
+        a=Float().tag(label="My Float")
+        b=Unicode().tag(spec="multiline")
+
+
+In this case the spec tag allows quick access to a multiline field display.
+Now suppose I want full control over the window that Test objects reside in
+using the full power of enaml. I start an enaml file, "test_e.enaml" that looks like this::
+
+    from enaml.widgets.api import MainWindow, Field, Label, HGroup
+
+    enamldef TestWindow(MainWindow):
+        attr test
+        HGroup:
+            Label:
+                text << unicode(test.a)
+            Field:
+                text := b
+
+In my python file, "test.py", I add the necessary pieces::
+
+    from atom.api import Atom, Float, Unicode, cached_property
+    from taref.core.shower import shower
+    from enaml import imports
+    with imports():
+        from test_e import TestWindow
+
+    class Test(Atom):
+        a=Float().tag(label="My Float")
+        b=Unicode()
+
+        def _observe_a(self, change):
+            print change
+
+        @cached_property
+        def view_window(self):
+            return TestWindow(test=self)
+
+    t=Test()
+    shower(t)
+
+and now I have replaced the default dynamic view of Test with a custom one,
+while still keeping it compatible with shower and the rest of taref's framework
+
+
+
+
+    
