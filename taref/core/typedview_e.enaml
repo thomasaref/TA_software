@@ -125,7 +125,22 @@ def unitize(value, unit_factor=1.0):
         return int(value/unit_factor)
     elif type(value)==float:
         return float(value/unit_factor)
+    #elif type(value)==ndarray:
+    #    return
     return value
+
+def unitize_array(arr, unit_factor=1.0):
+    try:
+        return arr/unit_factor
+    except TypeError:
+        return arr
+
+def list2string(arr, separator="\n"):
+    try:
+        return array2string(arr, separator=separator)
+    except AttributeError:
+        return separator.join(arr)
+
 from numpy import array2string
 
 enamldef ListReadOnlyExt(aHGroup):
@@ -133,7 +148,7 @@ enamldef ListReadOnlyExt(aHGroup):
     attr unit = get_tag(parent.vmodel, parent.vname, "unit", "")
     MultilineField:
         read_only=True
-        text<<array2string(parent.parent.vvalue/unit_factor, separator="\n")
+        text<<list2string(unitize_array(parent.parent.vvalue, unit_factor), separator="\n")
     Label:
         text = unicode(unit)
         visible = unit!=""

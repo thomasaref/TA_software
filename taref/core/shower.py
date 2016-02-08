@@ -28,9 +28,9 @@ def shower(*agents, **kwargs):
 
     if start_it:
         chief_cls=kwargs.pop("chief_cls", agents[0] if agents!=() else SubAgent)
-        show_log=kwargs.pop("show_log", True)
-        show_ipy=kwargs.pop("show_ipy", True)
-        show_code=kwargs.pop("show_code", True)
+        show_log=kwargs.pop("show_log", False)
+        show_ipy=kwargs.pop("show_ipy", False)
+        show_code=kwargs.pop("show_code", False)
 
         if hasattr(chief_cls, "log_window"):
             view=chief_cls.log_window

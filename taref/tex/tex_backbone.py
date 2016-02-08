@@ -9,10 +9,10 @@ functions for creating latex documents
 
 from matplotlib.pyplot import savefig, close
 from subprocess import call
-from taref.core.universal import write_text 
+from taref.core.universal import write_text
 
 def compile_tex(dir_path, file_name, cmd="/usr/texbin/pdflatex"):
-    """uses subprocess call to compile and show pdf using pdflatex. 
+    """uses subprocess call to compile and show pdf using pdflatex.
     Might need to check path of pdflatex command with which command in terminal"""
     call([cmd, dir_path+file_name+".tex"])
     call(["open", dir_path+file_name+".pdf"])
@@ -28,9 +28,9 @@ def extract_block(name, str_list):
         if inblock:
             extract_list.append(line)
             if line.startswith("\pye"):
-                return extract_list[1:-1]    
-    return extract_list[1:]    
-    
+                return extract_list[1:-1]
+    return extract_list[1:]
+
 def texwrap(dir_path, file_name, intex):
     """wraps the tex list with the necessary beginning and end and write it to file"""
     tex=[]
@@ -58,17 +58,17 @@ def texwrap(dir_path, file_name, intex):
     tex.append(r"\newcommand{\comment}[1]{}  %used for commenting out blocks of text remove before submit")
     tex.append(r"")
     tex.append(r"")
-    
+
     tex.append(r"\begin{document}")
     tex.append(r"\author{Thomas Aref}")
     tex.append(r"%\inst{3} Department of Microtechnology and Nanoscience (MC2), Chalmers University of Technology, SE-412 96 G\"oteborg, Sweden")
     tex.append(r"\title{Sample TA210715A46 in Speedy 3-10-15 cooldown}")
     tex.append(r"\maketitle")
     tex.append(r"\noindent")
-    
+
     tex.extend(intex)
     tex.append(r"\end{document}")
-    
+
     write_text(dir_path+file_name, tex)
 
 def include_image(tex, dir_path, fig_name, caption="", label=""):
@@ -79,7 +79,7 @@ def include_image(tex, dir_path, fig_name, caption="", label=""):
     tex.append("\\caption{{{}}}".format(caption))
     tex.append("\\label{{{}}}".format(label))
     tex.append(r"\end{figure}")
-        
+
 def include_figure(graph_gen, tex, dir_path, fig_name, caption="", label="", **kwargs):
     """uses the passed function graph_gen and kwargs to generate a figure and save it to the given file path"""
     graph_gen(**kwargs)
@@ -118,7 +118,7 @@ def add_mult_fig(graph_gen, tex, dir_path, fig_name, caption="", label="", width
     tex.append("\\cprotect\\caption{{{}}}".format(caption))
     tex.append(r"\end{subfigure}")
     return "Analysis: \\verb;{0};".format(file_name)
-    
+
 def make_table(tex, table_values, table_format=None):
     """makes a latex table from table values"""
     if table_format is None:
@@ -132,7 +132,7 @@ def make_table(tex, table_values, table_format=None):
         for b in a:
             table_line="{0} & {1}".format(table_line, b)
         table_line=table_line[2:]+r" \\"
-        tex.append(table_line)    
+        tex.append(table_line)
         tex.append(r"\hline")
     tex.append(r"\end{tabular}")
     tex.append(r"")

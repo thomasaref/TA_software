@@ -1,0 +1,49 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Feb  8 11:43:37 2016
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import HGroup, MultilineField, VGroup, Label, Label, PushButton
+from taref.core.fundcore_e import AgentWindow
+
+enamldef TEX_HGroup(HGroup):
+    attr tex
+    HGroup:
+        MultilineField:
+            text := tex.input_tex
+        MultilineField:
+            read_only=True
+            text << tex.output_tex
+
+
+enamldef TEX_Window(AgentWindow):
+    """A simple view for observing a process input text as output"""
+    title="laTeX View"
+    initial_size=(800,800)
+    TEX_HGroup:
+        tex = agent
+    #VGroup:
+    #    HGroup:
+    #        Label:
+    #            text="Redistribute coordinates:"
+    #        PushButton:
+    #            text = "Distribute"
+    #            clicked ::
+    #                jdf.distribute_event()
+
+
+##################### TESTING CODE BELOW #####################
+if __name__=="__main__":
+    from atom.api import Atom, Unicode
+    class tester(Atom):
+        output_jdf=Unicode()
+        input_jdf=Unicode()
+
+        def _observe_input_jdf(self, change):
+            self.output_jdf=self.input_jdf
+    test=tester()
+
+#enamldef Main(JDF_View):
+#    jdf = test
