@@ -11,11 +11,29 @@ from taref.core.fundcore_e import AgentWindow
 enamldef TEX_HGroup(HGroup):
     attr tex
     HGroup:
-        MultilineField:
-            text := tex.input_tex
-        MultilineField:
-            read_only=True
-            text << tex.output_tex
+        VGroup:
+            Label:
+                text = "Source Tex:"
+            MultilineField:
+                text << "\n".join(tex.source_tex)
+        VGroup:
+            Label:
+                text = "Input Texcode:"
+            MultilineField:
+                text := tex.input_tex
+
+        VGroup:
+            Label:
+                text = "Output Tex:"
+            MultilineField:
+                read_only=True
+                text << tex.output_tex
+
+        VGroup:
+            Label:
+                text = "Code:"
+            MultilineField:
+                text := tex.input_code
 
 
 enamldef TEX_Window(AgentWindow):
