@@ -1,0 +1,32 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Feb 10 18:40:24 2016
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import Slider, MPLCanvas
+from enaml.stdlib.slider_transform import FloatTransform
+
+
+enamldef UnitFloatRangeExt(UnitFloatField): uff:
+    """ A form control template specialization for Float members"""
+    uvalue:=parent.vvalue
+    unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
+    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
+    unit_factor=float(get_tag(parent.vmodel, parent.vname, "unit_factor", 1.0))
+    minimum = get_minimum(parent.vmodel, parent.vname)
+    maximum = get_maximum(parent.vmodel, parent.vname)
+    attr tracking : bool = get_tag(parent.vmodel, parent.vname, "tracking", False)
+    attr precision : int = get_tag(parent.vmodel, parent.vname, 'precision', 100)
+    Label: min_lbl:
+            text << str(ft.minimum)
+    Slider: sel_slider:
+        tracking = uff.tracking #get_tag(vmodel, vname, "tracking", False)
+        FloatTransform: ft:
+            minimum = uff.minimum
+            maximum =  uff.maximum
+            value := uff.uvalue
+            precision= uff.precision
+    Label: max_lbl:
+        text << str(ft.maximum)

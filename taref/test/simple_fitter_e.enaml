@@ -1,0 +1,75 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Feb 10 18:40:24 2016
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import Slider, MPLCanvas, MainWindow, HGroup, VGroup, DockPane, Label, Container, PushButton
+from enaml.stdlib.slider_transform import FloatTransform
+from enaml.stdlib.fields import FloatField
+from enaml.layout.api import spacer
+
+def get_tag(obj, name, key, none_value=None):
+    metadata=obj.get_member(name).metadata
+    if metadata is None:
+        return none_value
+    return metadata.get(key, none_value)
+
+def get_minimum(obj, param):
+    low=get_tag(obj, param, "low")
+    if low is not None:
+        return low
+    return obj.get_member(param).validate_mode[1][0]
+
+def get_maximum(obj, param):
+    high=get_tag(obj, param, "high")
+    if high is not None:
+        return high
+    return obj.get_member(param).validate_mode[1][1]
+
+enamldef FloatRangeExt(HGroup):
+    """ A form control template specialization for Float members"""
+    attr uvalue
+    attr vname
+    padding=0
+    align_widths=False
+    trailing_spacer=spacer
+    FloatField:
+        value := uvalue
+    Label: min_lbl:
+            text << str(ft.minimum)
+    Slider: sel_slider:
+        tracking = True
+        FloatTransform: ft:
+            minimum = get_minimum(fitter, vname)
+            maximum =  get_maximum(fitter, vname)
+            value := uvalue
+            precision=1000
+    Label: max_lbl:
+        text << str(ft.maximum)
+
+enamldef FitPane(DockPane):
+    VGroup:
+        Label:
+            text = "a"
+        FloatRangeExt:
+            uvalue := fitter.a
+            vname = "a"
+        Label:
+            text = "b"
+        FloatRangeExt:
+            uvalue := fitter.b
+            vname = "b"
+        PushButton:
+            text = "Autoscale y"
+            clicked :: fitter.autoscale_y()
+
+enamldef Main(MainWindow):
+    attr fitter
+    FitPane:
+        closable=False
+    Container:
+        MPLCanvas:
+            figure = fitter.figure
+            toolbar_visible=True

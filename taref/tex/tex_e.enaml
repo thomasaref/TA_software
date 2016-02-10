@@ -5,35 +5,73 @@ Created on Mon Feb  8 11:43:37 2016
 @author: thomasaref
 """
 
-from enaml.widgets.api import HGroup, MultilineField, VGroup, Label, Label, PushButton
+from enaml.widgets.api import HGroup, MultilineField, VGroup, Label, Label, PushButton, Field, Notebook, Page
 from taref.core.fundcore_e import AgentWindow
 
 enamldef TEX_HGroup(HGroup):
     attr tex
-    HGroup:
-        VGroup:
-            Label:
-                text = "Source Tex:"
-            MultilineField:
-                text << "\n".join(tex.source_tex)
-        VGroup:
-            Label:
-                text = "Input Texcode:"
-            MultilineField:
-                text := tex.input_tex
+    Notebook:
+        Page:
+            closable = False
+            title = "Main"
+            HGroup:
+                VGroup:
+                    Label:
+                        text = "Input Texcode:"
+                    MultilineField:
+                        text := tex.input_code
+                        #text :: print tex.input_list
+                    PushButton:
+                        text = "Run Code"
+                        clicked ::
+                            print "Made tex file"
+                            tex.make_tex_file()
+                            tex.compile_tex()
+                            #tex.process_source_tex()
+                            #tex.get_member("output_tex").reset(tex)
+                    PushButton:
+                        text = "Simulate Tex"
+                        clicked ::
+                            tex.simulate_tex()
 
-        VGroup:
-            Label:
-                text = "Output Tex:"
-            MultilineField:
-                read_only=True
-                text << tex.output_tex
+                VGroup:
 
-        VGroup:
-            Label:
-                text = "Code:"
-            MultilineField:
-                text := tex.input_code
+                    Label:
+                        text = "Output Tex:"
+                    MultilineField:
+                        text := tex.output_tex
+                    PushButton:
+                        text = "Restore Source"
+                        clicked ::
+                            tex.restore_source()
+                    PushButton:
+                        text = "Parse Tex"
+                        clicked ::
+                            tex.process_source()
+
+        Page:
+            closable = False
+            title = "Details"
+            VGroup:
+                Label:
+                    text = "Title:"
+                Field:
+                    text:=tex.tex_title
+
+                Label:
+                    text = "Name:"
+                Field:
+                    text:=tex.user_name
+                Label:
+                    text = "Department"
+                Field:
+                    text:=tex.department
+
+#        VGroup:
+#            Label:
+#                text = "Code:"
+#            MultilineField:
+#                text := tex.input_code
 
 
 enamldef TEX_Window(AgentWindow):

@@ -11,10 +11,26 @@ from matplotlib.pyplot import savefig, close
 from subprocess import call
 from taref.core.universal import write_text
 
+from contextlib import contextmanager
+from os import chdir, getcwd
+
+@contextmanager
+def cd(newdir):
+    prevdir = getcwd()
+    chdir(newdir)
+    try:
+        yield
+    finally:
+        chdir(prevdir)
+
 def compile_tex(dir_path, file_name, cmd="/usr/texbin/pdflatex"):
     """uses subprocess call to compile and show pdf using pdflatex.
     Might need to check path of pdflatex command with which command in terminal"""
-    call([cmd, dir_path+file_name+".tex"])
+    print getcwd()
+    with cd(dir_path):
+        call([cmd, file_name+".tex"])
+    print getcwd()
+#        call(["/usr/texbin/pdflatex", "-output-directory /Users/thomasaref/Documents/TA_software/taref/tex/test_tex/", "/Users/thomasaref/Documents/TA_software/taref/tex/test_tex/tset.tex"])
     call(["open", dir_path+file_name+".pdf"])
 
 def extract_block(name, str_list):
@@ -30,6 +46,7 @@ def extract_block(name, str_list):
             if line.startswith("\pye"):
                 return extract_list[1:-1]
     return extract_list[1:]
+
 
 def texwrap(dir_path, file_name, intex):
     """wraps the tex list with the necessary beginning and end and write it to file"""
@@ -96,15 +113,15 @@ def include_figure(graph_gen, tex, dir_path, fig_name, caption="", label="", **k
 
 def mult_fig_start(tex):
     """starts a multi figure with many subfigures"""
-    tex.append(r"\setcounter{subfigure}{0} % reset figure counter to 0.")
-    tex.append(r"\begin{figure}[ht!]")
-    tex.append(r"\centering")
+    tex.extend([r"\setcounter{subfigure}{0} % reset figure counter to 0.",
+               r"\begin{figure}[ht!]",
+               r"\centering"])
 
 def mult_fig_end(tex, caption):
     """ends a multi figure with many subfigues"""
-    tex.append(r"\label{fig:setup}")
-    tex.append("\\cprotect\\caption{{{}}}".format(caption))
-    tex.append(r"\end{figure}")
+    tex.extend([r"\label{fig:setup}",
+               "\\cprotect\\caption{{{}}}".format(caption),
+               r"\end{figure}"])
 
 def add_mult_fig(graph_gen, tex, dir_path, fig_name, caption="", label="", width=0.49, **kwargs):
     """adds a graph to a multi figure using the function graph_gen and given kwargs"""
