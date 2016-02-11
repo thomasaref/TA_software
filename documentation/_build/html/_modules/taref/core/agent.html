@@ -1,0 +1,194 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taref.core.agent &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for taref.core.agent</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Sat Jul  4 13:03:26 2015</span>
+
+<span class="sd">@author: thomasaref</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c">#from taref.core.log import log_debug</span>
+<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Unicode</span><span class="p">,</span> <span class="n">ContainerList</span>
+<span class="kn">from</span> <span class="nn">taref.core.backbone</span> <span class="kn">import</span> <span class="n">Backbone</span>
+<span class="kn">from</span> <span class="nn">taref.core.atom_extension</span> <span class="kn">import</span> <span class="n">private_property</span><span class="p">,</span> <span class="n">set_log</span><span class="p">,</span> <span class="n">reset_properties</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">taref.core.shower</span> <span class="kn">import</span> <span class="n">shower</span>
+
+<div class="viewcode-block" id="Operative"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative">[docs]</a><span class="k">class</span> <span class="nc">Operative</span><span class="p">(</span><span class="n">Backbone</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Adds functionality for auto showing to Backbone&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&quot;name of agent. This name will be modified to be unique, if necessary&quot;</span><span class="p">)</span>
+    <span class="n">desc</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&quot;optional description of agent&quot;</span><span class="p">)</span>
+
+    <span class="n">base_name</span><span class="o">=</span><span class="s">&quot;operative&quot;</span>
+
+<div class="viewcode-block" id="Operative.show"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.show">[docs]</a>    <span class="k">def</span> <span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">shower</span><span class="p">(</span><span class="o">*</span><span class="p">((</span><span class="bp">self</span><span class="p">,)</span><span class="o">+</span><span class="n">args</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Operative.run_all"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.run_all">[docs]</a>    <span class="k">def</span> <span class="nf">run_all</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;runs all functions added in run_func_dict&quot;. Can be included in cls_run_funcs&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">run_func_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">func</span><span class="o">!=</span><span class="n">cls</span><span class="o">.</span><span class="n">run_all</span><span class="p">:</span>
+                <span class="n">func</span><span class="p">()</span>
+</div>
+    <span class="n">agent_dict</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">()</span>
+    <span class="n">abort</span><span class="o">=</span><span class="bp">False</span>
+
+    <span class="n">run_func_dict</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Operative.add_func"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.add_func">[docs]</a>    <span class="k">def</span> <span class="nf">add_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">funcs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;adds functions to run_func_dict. functions should be a classmethod, a staticmethod</span>
+<span class="sd">        or a separate function that takes no arguments&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">funcs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_func_dict</span><span class="p">[</span><span class="n">func</span><span class="o">.</span><span class="n">func_name</span><span class="p">]</span><span class="o">=</span><span class="n">func</span>
+</div>
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">cls_run_funcs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;class or static methods to include in run_func_dict on initialization. Can be overwritten in child classes&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Operative.activated"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.activated">[docs]</a>    <span class="k">def</span> <span class="nf">activated</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;function that runs when window is activated&quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+</div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;extends Backbone __init__ to add agent to boss&#39;s agent list</span>
+<span class="sd">        and give unique default name.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Operative</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">agent_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="n">agent_name</span><span class="o">==</span><span class="s">&quot;&quot;</span><span class="p">:</span>
+            <span class="n">agent_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_name</span>
+        <span class="k">if</span> <span class="n">agent_name</span> <span class="ow">in</span> <span class="n">Operative</span><span class="o">.</span><span class="n">agent_dict</span><span class="p">:</span>
+            <span class="n">agent_name</span><span class="o">=</span><span class="s">&quot;{name}__{num}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">agent_name</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">Operative</span><span class="o">.</span><span class="n">agent_dict</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="n">agent_name</span>
+        <span class="n">Operative</span><span class="o">.</span><span class="n">agent_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">=</span><span class="bp">self</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_func</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">cls_run_funcs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Spy"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Spy">[docs]</a><span class="k">class</span> <span class="nc">Spy</span><span class="p">(</span><span class="n">Operative</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Spies uses observers to log all changes to params&quot;&quot;&quot;</span>
+    <span class="n">base_name</span><span class="o">=</span><span class="s">&quot;spy&quot;</span>
+
+<div class="viewcode-block" id="Spy.log_changes"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Spy.log_changes">[docs]</a>    <span class="k">def</span> <span class="nf">log_changes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;a simple logger for all changes and to reset properties&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s">&quot;type&quot;</span><span class="p">]</span><span class="o">!=</span><span class="s">&quot;create&quot;</span><span class="p">:</span>
+            <span class="n">set_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">[</span><span class="s">&quot;name&quot;</span><span class="p">],</span> <span class="n">change</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s">&quot;type&quot;</span><span class="p">]</span><span class="o">==</span><span class="s">&quot;update&quot;</span><span class="p">:</span>
+            <span class="n">reset_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Spy.extra_setup"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Spy.extra_setup">[docs]</a>    <span class="k">def</span> <span class="nf">extra_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;adds log_changes observer to all params&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Spy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">extra_setup</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_changes</span><span class="p">)</span>
+</div></div>
+<div class="viewcode-block" id="Agent"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Agent">[docs]</a><span class="k">class</span> <span class="nc">Agent</span><span class="p">(</span><span class="n">Operative</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Agents use primarily setattr to log changes to params&quot;&quot;&quot;</span>
+    <span class="n">base_name</span><span class="o">=</span><span class="s">&quot;agent&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;uses __setattr__ to log changes and reset properties&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Agent</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_params</span><span class="p">:</span>
+            <span class="n">set_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="n">reset_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Agent.extra_setup"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Agent.extra_setup">[docs]</a>    <span class="k">def</span> <span class="nf">extra_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;adds observer for ContainerLists to catch changes not covered by setattr.</span>
+<span class="sd">        extra_setup goes from Spy, not Agent to not add observers&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Agent</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">extra_setup</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">typer</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ContainerList</span><span class="p">,):</span> <span class="c">#Dict update does not generate event so not included</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_changes</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Agent.log_changes"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Agent.log_changes">[docs]</a>    <span class="k">def</span> <span class="nf">log_changes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;a simple logger for changes not of type create or update that also resets properties&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s">&quot;type&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&quot;create&quot;</span><span class="p">,</span> <span class="s">&quot;update&quot;</span><span class="p">):</span>
+            <span class="n">set_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">[</span><span class="s">&quot;name&quot;</span><span class="p">],</span> <span class="n">change</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">])</span>
+            <span class="n">reset_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</div></div>
+<span class="k">if</span> <span class="n">__name__</span><span class="o">==</span><span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">Agent</span><span class="p">()</span>
+    <span class="k">print</span> <span class="n">Agent</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">==</span><span class="n">Agent</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

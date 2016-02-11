@@ -9,31 +9,17 @@ from atom.api import Unicode, ContainerList
 from taref.core.backbone import Backbone
 from taref.core.atom_extension import private_property, set_log, reset_properties
 from collections import OrderedDict
+from taref.core.shower import shower
 
-from enaml import imports
-with imports():
-    from taref.core.agent_e import AutoAgentView, BasicView
-    from taref.core.interactive import InteractiveWindow, CodeWindow
-    from taref.core.log_e import LogWindow
-
-class SubAgent(Backbone):
+class Operative(Backbone):
     """Adds functionality for auto showing to Backbone"""
     name=Unicode().tag(private=True, desc="name of agent. This name will be modified to be unique, if necessary")
     desc=Unicode().tag(private=True, desc="optional description of agent")
 
-    base_name="subagent"
+    base_name="operative"
 
-    @private_property
-    def view_window(self):
-        return AutoAgentView(agent=self)
-
-    chief_window=BasicView()
-
-    interactive_window=InteractiveWindow()
-
-    log_window=LogWindow()
-
-    code_window=CodeWindow()
+    def show(self, *args, **kwargs):
+        shower(*((self,)+args), **kwargs)
 
     @classmethod
     def run_all(cls):
@@ -63,21 +49,20 @@ class SubAgent(Backbone):
         """function that runs when window is activated"""
         pass
 
-
     def __init__(self, **kwargs):
         """extends Backbone __init__ to add agent to boss's agent list
         and give unique default name."""
-        super(SubAgent, self).__init__(**kwargs)
+        super(Operative, self).__init__(**kwargs)
         agent_name=self.name
         if agent_name=="":
             agent_name=self.base_name
-        if agent_name in SubAgent.agent_dict:
-            agent_name="{name}__{num}".format(name=agent_name, num=len(SubAgent.agent_dict))
+        if agent_name in Operative.agent_dict:
+            agent_name="{name}__{num}".format(name=agent_name, num=len(Operative.agent_dict))
         self.name=agent_name
-        SubAgent.agent_dict[self.name]=self
+        Operative.agent_dict[self.name]=self
         self.add_func(*self.cls_run_funcs)
 
-class Spy(SubAgent):
+class Spy(Operative):
     """Spies uses observers to log all changes to params"""
     base_name="spy"
 
@@ -93,7 +78,7 @@ class Spy(SubAgent):
         super(Spy, self).extra_setup(param, typer)
         self.observe(param, self.log_changes)
 
-class Agent(SubAgent):
+class Agent(Operative):
     """Agents use primarily setattr to log changes to params"""
     base_name="agent"
 

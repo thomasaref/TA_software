@@ -4,19 +4,30 @@ Created on Mon Aug 24 12:38:54 2015
 
 @author: thomasaref
 """
-#from taref.core.log import log_debug
+from taref.core.log import f_top#, log_debug
 from taref.core.shower_backbone import get_view_window
-from taref.core.agent import SubAgent
+from taref.core.backbone import Backbone
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
 
 def shower(*agents, **kwargs):
-    """a powerful showing function for any Atom object(s) specified in agents.
-    Checks if object has a view_window property and otherwise uses a default view.
-    also provides a show control of the objects which can be modified with kwargs"""
+    """A powerful showing function for any Atom object(s) specified in agents.
+    Checks if an object has a view_window and otherwise uses a default window for the object.
 
-    start_it=False
-    if QtApplication.instance() is None:
+    Checks kwargs for particular keywords:
+        * ``start_it``: boolean representing whether to go through first time setup prior to starting app
+        * ``app``: defaults to existing QtApplication instance and will default to a new instance if none exists
+        chief_cls: if not included defaults to the first agent and defaults to Backbone if no agents are passed.
+        show_log: shows the log_window of chief_cls if it has one, defaults to not showing
+        show_ipy: shows the interactive_window of chief_cls if it has one, defaults to not showing
+        show_code: shows the code_window of chief_cls if it has one, defaults to not showing
+
+    shower also provides a chief_window (generally for controlling which agents are visible) which defaults to Backbone's chief_window
+    if chief_cls does not have one. attributes of chief_window can be modified with the remaining kwargs"""
+
+    start_it=kwargs.pop("start_it", False)
+    app=kwargs.pop("app", QtApplication.instance())
+    if app is None:
         app = QtApplication()
         start_it=True
 
@@ -27,7 +38,7 @@ def shower(*agents, **kwargs):
         view.show()
 
     if start_it:
-        chief_cls=kwargs.pop("chief_cls", agents[0] if agents!=() else SubAgent)
+        chief_cls=kwargs.pop("chief_cls", agents[0] if agents!=() else Backbone)
         show_log=kwargs.pop("show_log", False)
         show_ipy=kwargs.pop("show_ipy", False)
         show_code=kwargs.pop("show_code", False)
@@ -39,21 +50,15 @@ def shower(*agents, **kwargs):
             if not show_log:
                 view.hide()
 
-        chief_view=getattr(chief_cls, "chief_window", SubAgent.chief_window)
+        chief_view=getattr(chief_cls, "chief_window", Backbone.chief_window)
         chief_view.chief_cls=chief_cls
         for key in kwargs:
             setattr(chief_view, key, kwargs[key])
         chief_view.show()
         if hasattr(chief_cls, "interactive_window"):
-            locals_dict={}
-            from sys import _getframe
-            frame=_getframe()
-            try:
-                locals_dict=(frame.f_back.f_locals)
-            finally:
-                del frame
+            fb=f_top()
             if hasattr(chief_cls, "code_window"):
-                file_location=locals_dict.pop("__file__", "")
+                file_location=fb.f_code.co_filename
                 with open(file_location) as f:
                     showfile=f.read()
                 view=chief_cls.code_window
@@ -63,8 +68,7 @@ def shower(*agents, **kwargs):
                 if not show_code:
                     view.hide()
 
-            locals_dict=dict(([(key, item) for key, item in locals_dict.items() if not key.startswith("_")]))
-
+            locals_dict=dict(([(key, item) for key, item in fb.f_locals.items() if not key.startswith("_")]))
             view=chief_cls.interactive_window
             view.input_dict=locals_dict
             view.show()

@@ -8,13 +8,13 @@ A collection of logging related functions. Configures logging to be output
 points it at a stream and a memory handler and starts logging.
 """
 
-from logging import debug, warning, info, getLogger, StreamHandler, FileHandler, basicConfig, Formatter, INFO, DEBUG, log, addLevelName
+from logging import warning, info, getLogger, StreamHandler, FileHandler, basicConfig, Formatter, INFO, DEBUG, log, addLevelName, INFO #, debug
 from logging.handlers import MemoryHandler
 from atom.api import Atom, Unicode, Int, cached_property
 from sys import exc_info
 from os.path import basename
 
-#redefine DEBUG level so don't catch debug warnings from IPythonConsole in enaml
+#redefine DEBUG level so doesn't catch debug warnings from IPythonConsole in enaml
 
 MYDEBUG=DEBUG+1
 addLevelName(MYDEBUG, "MYDEBUG")
@@ -25,38 +25,49 @@ LOGLEVEL=MYDEBUG #INFO #DEBUG
 
 basicConfig(format=LOGFORMATTER, level=LOGLEVEL)
 
-#from functools import wraps
+
+def f_top_finder(fb):
+    """recursive top frame finder"""
+    if fb.f_back is None:
+        return fb
+    return f_top_finder(fb.f_back)
+
+def f_top_limited(fb, n=100):
+    """limited recursion top frame finder"""
+    for m in range(n):
+        if fb.f_back is None:
+            return fb
+        fb=fb.f_back
+    return fb
+
+def f_top(n=100):
+    """returns the top frame after n steps"""
+    try:
+        raise Exception
+    except:
+        fb=exc_info()[2].tb_frame.f_back
+    return f_top_limited(fb, n)
+
+def msg(*args, **kwargs):
+    """log msg that accepts multiple args with file info"""
+    n=kwargs.pop("n", 1)
+    fb=f_top(n)
+    return "{0} {1} {2}: {3}".format(fb.f_lineno, basename(fb.f_code.co_filename),
+              fb.f_code.co_name, ", ".join([str(arg) for arg in args]))
+
 def new_log_func(func):
     """redefines func so args are incorporated into message and name and line of execution are correct"""
     def new_func(*args, **kwargs):
-        n=kwargs.pop("n", 0)
-        try:
-            raise Exception
-        except:
-            fb=exc_info()[2].tb_frame.f_back
-        for m in range(n):
-            fb=fb.f_back
+        n=kwargs.pop("n", 2) #0
         if func is log:
-            func(MYDEBUG, "{0} {1} {2}: {3}".format(fb.f_lineno, basename(fb.f_code.co_filename),
-                  fb.f_code.co_name, ", ".join([str(arg) for arg in args])), **kwargs)
+            func(MYDEBUG, msg(*args, **{"n":n}), **kwargs)
         else:
-            func("{0} {1} {2}: {3}".format(fb.f_lineno, basename(fb.f_code.co_filename),
-                  fb.f_code.co_name, ", ".join([str(arg) for arg in args])), **kwargs)
+            func(msg(*args, **{"n":n}), **kwargs)
     return new_func
 
 log_debug=new_log_func(log)
 log_info=new_log_func(info)
 log_warning=new_log_func(warning)
-
-def msg(*args):
-    """raises an exception and catches it to get execution information for log entry.
-       also multiple args can be entered"""
-    try:
-        raise Exception
-    except:
-        fb=exc_info()[2].tb_frame.f_back.f_back
-        return "{0} {1} {2}: {3}".format(fb.f_lineno, basename(fb.f_code.co_filename),
-              fb.f_code.co_name, ", ".join([str(arg) for arg in args]))
 
 class StreamCatch(Atom):
     """a stream catching class for use with the log window"""

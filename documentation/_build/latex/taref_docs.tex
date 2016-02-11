@@ -19,7 +19,7 @@
 
 
 \title{taref\_docs Documentation}
-\date{February 07, 2016}
+\date{February 11, 2016}
 \release{1.0}
 \author{Thomas Aref}
 \newcommand{\sphinxlogo}{}
@@ -132,8 +132,1105 @@
 Contents:
 
 
+\chapter{Welcome to taref's documentation!}
+\label{get_started/index::doc}\label{get_started/index:welcome-to-taref-s-documentation}
+Contents:
+
+
+\section{Getting Started}
+\label{get_started/getting_started:getting-started}\label{get_started/getting_started::doc}
+The taref package strives to make quick, easy-to-use, auto-display GUIs
+with the option to extend them to custom GUIs at a later date. To do this,
+taref is built on enaml, a programming language extension to python and framework
+for creating professional user interfaces, and Atom, a framework for
+creating memory efficient Python objects with enhanced features
+such as dynamic initialization, validation, and
+change notification for object attributes (similar in behavior to Enthought's Traits)
+
+Basically,
+taref generates dynamic enaml templates from a minimal information Atom
+class with the option to later substitute these dynamic enaml templates
+\begin{quote}
+
+with enaml written specifically for the class.
+\end{quote}
+
+For example, some code that makes use of taref's shower function might look like this:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{atom.api} \PYG{k+kn}{import} \PYG{n}{Atom}\PYG{p}{,} \PYG{n}{Float}\PYG{p}{,} \PYG{n}{Unicode}
+\PYG{k+kn}{from} \PYG{n+nn}{taref.core.shower} \PYG{k+kn}{import} \PYG{n}{shower}
+
+\PYG{k}{class} \PYG{n+nc}{Test}\PYG{p}{(}\PYG{n}{Atom}\PYG{p}{)}\PYG{p}{:}
+    \PYG{n}{a}\PYG{o}{=}\PYG{n}{Float}\PYG{p}{(}\PYG{p}{)}
+    \PYG{n}{b}\PYG{o}{=}\PYG{n}{Unicode}\PYG{p}{(}\PYG{p}{)}
+
+\PYG{n}{t}\PYG{o}{=}\PYG{n}{Test}\PYG{p}{(}\PYG{p}{)}
+\PYG{n}{shower}\PYG{p}{(}\PYG{n}{t}\PYG{p}{)}
+\end{Verbatim}
+
+and these few lines of code are all that is needed to produce a simple GUI that shows a and b in our
+Test object t!
+
+So what is happening?
+First, we are an Atom class. Atom class are very similar to python's
+regular classes. Something equivalent to our Test class above would be:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{class} \PYG{n+nc}{Test}\PYG{p}{(}\PYG{n+nb}{object}\PYG{p}{)}\PYG{p}{:}
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{a}\PYG{o}{=}\PYG{l+m+mf}{0.0}\PYG{p}{,} \PYG{n}{b}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{a}\PYG{o}{=}\PYG{n}{a}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{b}\PYG{o}{=}\PYG{n}{b}
+\end{Verbatim}
+
+However, Atom provides some key advantages to using the above class for GUI making
+First, in the Atom class, the type of a is fixed to being a float so
+the GUI always knows how to display it. The members of Test are likewise fixed
+so that none are added dynamically later.
+Secondly, Atom can detect changes changes to it's members. To see this, we
+look at the following code:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{class} \PYG{n+nc}{Test}\PYG{p}{(}\PYG{n}{Atom}\PYG{p}{)}\PYG{p}{:}
+    \PYG{n}{a}\PYG{o}{=}\PYG{n}{Float}\PYG{p}{(}\PYG{p}{)}
+    \PYG{n}{b}\PYG{o}{=}\PYG{n}{Unicode}\PYG{p}{(}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}observe\PYGZus{}a}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{change}\PYG{p}{)}\PYG{p}{:}
+        \PYG{k}{print} \PYG{n}{change}
+\end{Verbatim}
+
+Now every time variable a is changed, in the GUI or in code,
+it will print out that change.
+The final advantage of Atom is that metadata can be added to the variable.
+For example,
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n}{t}\PYG{o}{.}\PYG{n}{a}\PYG{o}{=}\PYG{l+m+mf}{4.0}
+\PYG{n}{t}\PYG{o}{.}\PYG{n}{get\PYGZus{}member}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{a}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{o}{.}\PYG{n}{tag}\PYG{p}{(}\PYG{n}{label}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{My Float}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{k}{print} \PYG{n}{t}\PYG{o}{.}\PYG{n}{a}
+\PYG{k}{print} \PYG{n}{t}\PYG{o}{.}\PYG{n}{get\PYGZus{}member}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{a}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{o}{.}\PYG{n}{metadata}
+\end{Verbatim}
+
+Combining this with the functionality with the shower function:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{atom.api} \PYG{k+kn}{import} \PYG{n}{Atom}\PYG{p}{,} \PYG{n}{Float}\PYG{p}{,} \PYG{n}{Unicode}
+\PYG{k+kn}{from} \PYG{n+nn}{taref.core.shower} \PYG{k+kn}{import} \PYG{n}{shower}
+
+\PYG{k}{class} \PYG{n+nc}{Test}\PYG{p}{(}\PYG{n}{Atom}\PYG{p}{)}\PYG{p}{:}
+    \PYG{n}{a}\PYG{o}{=}\PYG{n}{Float}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{tag}\PYG{p}{(}\PYG{n}{label}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{My Float}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{b}\PYG{o}{=}\PYG{n}{Unicode}\PYG{p}{(}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}observe\PYGZus{}a}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{change}\PYG{p}{)}\PYG{p}{:}
+        \PYG{k}{print} \PYG{n}{change}
+
+\PYG{n}{t}\PYG{o}{=}\PYG{n}{Test}\PYG{p}{(}\PYG{p}{)}
+\PYG{n}{shower}\PYG{p}{(}\PYG{n}{t}\PYG{p}{)}
+\end{Verbatim}
+
+auto creates a GUI where a is now labelled ``My Float'' and every time a is changed
+it is printed.
+
+There are a number of custom tags defined in taref, such as ``label'', to give easy access to some
+commonly used features. For example, suppose I wanted b to display as a multiline field rather than
+a single line field:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{class} \PYG{n+nc}{Test}\PYG{p}{(}\PYG{n}{Atom}\PYG{p}{)}\PYG{p}{:}
+    \PYG{n}{a}\PYG{o}{=}\PYG{n}{Float}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{tag}\PYG{p}{(}\PYG{n}{label}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{My Float}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{b}\PYG{o}{=}\PYG{n}{Unicode}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{tag}\PYG{p}{(}\PYG{n}{spec}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{multiline}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\end{Verbatim}
+
+In this case the spec tag allows quick access to a multiline field display.
+Now suppose I want full control over the window that Test objects reside in
+using the full power of enaml. I start an enaml file, ``test\_e.enaml'' that looks like this:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+from enaml.widgets.api import MainWindow, Field, Label, HGroup
+
+enamldef TestWindow(MainWindow):
+    attr test
+    HGroup:
+        Label:
+            text \PYGZlt{}\PYGZlt{} unicode(test.a)
+        Field:
+            text := b
+\end{Verbatim}
+
+In my python file, ``test.py'', I add the necessary pieces:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{atom.api} \PYG{k+kn}{import} \PYG{n}{Atom}\PYG{p}{,} \PYG{n}{Float}\PYG{p}{,} \PYG{n}{Unicode}\PYG{p}{,} \PYG{n}{cached\PYGZus{}property}
+\PYG{k+kn}{from} \PYG{n+nn}{taref.core.shower} \PYG{k+kn}{import} \PYG{n}{shower}
+\PYG{k+kn}{from} \PYG{n+nn}{enaml} \PYG{k+kn}{import} \PYG{n}{imports}
+\PYG{k}{with} \PYG{n}{imports}\PYG{p}{(}\PYG{p}{)}\PYG{p}{:}
+    \PYG{k+kn}{from} \PYG{n+nn}{test\PYGZus{}e} \PYG{k+kn}{import} \PYG{n}{TestWindow}
+
+\PYG{k}{class} \PYG{n+nc}{Test}\PYG{p}{(}\PYG{n}{Atom}\PYG{p}{)}\PYG{p}{:}
+    \PYG{n}{a}\PYG{o}{=}\PYG{n}{Float}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{tag}\PYG{p}{(}\PYG{n}{label}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{My Float}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{b}\PYG{o}{=}\PYG{n}{Unicode}\PYG{p}{(}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}observe\PYGZus{}a}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{change}\PYG{p}{)}\PYG{p}{:}
+        \PYG{k}{print} \PYG{n}{change}
+
+    \PYG{n+nd}{@cached\PYGZus{}property}
+    \PYG{k}{def} \PYG{n+nf}{view\PYGZus{}window}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{p}{:}
+        \PYG{k}{return} \PYG{n}{TestWindow}\PYG{p}{(}\PYG{n}{test}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{p}{)}
+
+\PYG{n}{t}\PYG{o}{=}\PYG{n}{Test}\PYG{p}{(}\PYG{p}{)}
+\PYG{n}{shower}\PYG{p}{(}\PYG{n}{t}\PYG{p}{)}
+\end{Verbatim}
+
+and now I have replaced the default dynamic view of Test with a custom one,
+while still keeping it compatible with the rest of taref's framework!
+
+
+\chapter{Introduction:}
+\label{introduction:introduction}\label{introduction::doc}
+
+\section{Other header}
+\label{introduction:other-header}
+How does this work:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+recognize code
+print \PYGZdq{}yo\PYGZdq{}
+\end{Verbatim}
+
+Maybe
+
+can I see this
+
+
+\chapter{Let's try lists:}
+\label{introduction:reftest}\label{introduction:let-s-try-lists}\begin{itemize}
+\item {} 
+item 1
+
+\item {} 
+item 2
+
+\item {} 
+item 3
+
+\end{itemize}
+\begin{enumerate}
+\item {} 
+item 1
+
+\item {} 
+item 2
+
+\item {} 
+item 3
+
+\end{enumerate}
+
+
+\chapter{Let's try tables:}
+\label{introduction:let-s-try-tables}
+\emph{italics}, \textbf{bold}, or \code{monotype}.
+
+\begin{tabulary}{\linewidth}{|L|L|}
+\hline
+\textsf{\relax 
+Name
+} & \textsf{\relax 
+age
+}\\
+\hline
+item1
+ & 
+12
+\\
+\hline
+item2
+ & 
+42
+\\
+\hline
+item3
+ & 
+3
+\\
+\hline\end{tabulary}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+Introduction:
+==============
+
+*****************
+Other header
+*****************
+
+How does this work::
+
+    recognize code
+    print \PYGZdq{}yo\PYGZdq{}
+
+Maybe
+
+
+can I see this
+
+.. \PYGZus{}reftest:
+
+Let\PYGZsq{}s try lists:
+================
+
+*  item 1
+* item 2
+* item 3
+
+\PYGZsh{}. item 1
+\PYGZsh{}. item 2
+\PYGZsh{}. item 3
+
+Let\PYGZsq{}s try tables:
+=================
+*italics*, **bold**, or {}`{}`monotype{}`{}`.
+
+========  ====
+Name      age
+========  ====
+item1     12
+item2     42
+item3     3
+========  ====
+
+.. literalinclude:: introduction.rst
+
+does a reference work? :ref:{}`reftest{}`
+
+.. function:: enumerate(sequence[, start=0])
+
+   Return an iterator that yields tuples of an index and an item of the
+   *sequence*. (And so on.)
+
+.. autofunction::taref.core.atom\PYGZus{}extension.get\PYGZus{}tag
+\end{Verbatim}
+
+does a reference work? {\hyperref[introduction:reftest]{\emph{\DUspan{}{Let's try lists:}}}}
+\index{enumerate() (built-in function)}
+
+\begin{fulllineitems}
+\phantomsection\label{introduction:enumerate}\pysiglinewithargsret{\bfcode{enumerate}}{\emph{sequence}\optional{, \emph{start=0}}}{}
+Return an iterator that yields tuples of an index and an item of the
+\emph{sequence}. (And so on.)
+
+\end{fulllineitems}
+
+
+
+\chapter{Getting Started}
+\label{getting_started:getting-started}\label{getting_started::doc}
+The taref package strives to make quick, easy-to-use, auto-display GUIs
+with the option to extend them to custom GUIs at a later date. To do this,
+taref is built on enaml, a programming language extension to python and framework
+for creating professional user interfaces, and Atom, a framework for
+creating memory efficient Python objects with enhanced features
+such as dynamic initialization, validation, and
+change notification for object attributes (similar in behavior to Enthought's Traits)
+
+Basically,
+taref generates dynamic enaml templates from a minimal information Atom
+class with the option to later substitute these dynamic enaml templates
+\begin{quote}
+
+with enaml written specifically for the class.
+\end{quote}
+
+For example, some code that makes use of taref's shower function might look like this:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{atom.api} \PYG{k+kn}{import} \PYG{n}{Atom}\PYG{p}{,} \PYG{n}{Float}\PYG{p}{,} \PYG{n}{Unicode}
+\PYG{k+kn}{from} \PYG{n+nn}{taref.core.shower} \PYG{k+kn}{import} \PYG{n}{shower}
+
+\PYG{k}{class} \PYG{n+nc}{Test}\PYG{p}{(}\PYG{n}{Atom}\PYG{p}{)}\PYG{p}{:}
+    \PYG{n}{a}\PYG{o}{=}\PYG{n}{Float}\PYG{p}{(}\PYG{p}{)}
+    \PYG{n}{b}\PYG{o}{=}\PYG{n}{Unicode}\PYG{p}{(}\PYG{p}{)}
+
+\PYG{n}{t}\PYG{o}{=}\PYG{n}{Test}\PYG{p}{(}\PYG{p}{)}
+\PYG{n}{shower}\PYG{p}{(}\PYG{n}{t}\PYG{p}{)}
+\end{Verbatim}
+
+and these few lines of code are all that is needed to produce a simple GUI that shows a and b in our
+Test object t!
+
+So what is happening?
+First, we are an Atom class. Atom class are very similar to python's
+regular classes. Something equivalent to our Test class above would be:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{class} \PYG{n+nc}{Test}\PYG{p}{(}\PYG{n+nb}{object}\PYG{p}{)}\PYG{p}{:}
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{a}\PYG{o}{=}\PYG{l+m+mf}{0.0}\PYG{p}{,} \PYG{n}{b}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{a}\PYG{o}{=}\PYG{n}{a}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{b}\PYG{o}{=}\PYG{n}{b}
+\end{Verbatim}
+
+However, Atom provides some key advantages to using the above class for GUI making
+First, in the Atom class, the type of a is fixed to being a float so
+the GUI always knows how to display it. The members of Test are likewise fixed
+so that none are added dynamically later.
+Secondly, Atom can detect changes changes to it's members. To see this, we
+look at the following code:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{class} \PYG{n+nc}{Test}\PYG{p}{(}\PYG{n}{Atom}\PYG{p}{)}\PYG{p}{:}
+    \PYG{n}{a}\PYG{o}{=}\PYG{n}{Float}\PYG{p}{(}\PYG{p}{)}
+    \PYG{n}{b}\PYG{o}{=}\PYG{n}{Unicode}\PYG{p}{(}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}observe\PYGZus{}a}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{change}\PYG{p}{)}\PYG{p}{:}
+        \PYG{k}{print} \PYG{n}{change}
+\end{Verbatim}
+
+Now every time variable a is changed, in the GUI or in code,
+it will print out that change.
+The final advantage of Atom is that metadata can be added to the variable.
+For example,
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n}{t}\PYG{o}{.}\PYG{n}{a}\PYG{o}{=}\PYG{l+m+mf}{4.0}
+\PYG{n}{t}\PYG{o}{.}\PYG{n}{get\PYGZus{}member}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{a}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{o}{.}\PYG{n}{tag}\PYG{p}{(}\PYG{n}{label}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{My Float}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\PYG{k}{print} \PYG{n}{t}\PYG{o}{.}\PYG{n}{a}
+\PYG{k}{print} \PYG{n}{t}\PYG{o}{.}\PYG{n}{get\PYGZus{}member}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{a}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{o}{.}\PYG{n}{metadata}
+\end{Verbatim}
+
+Combining this with the functionality with the shower function:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{atom.api} \PYG{k+kn}{import} \PYG{n}{Atom}\PYG{p}{,} \PYG{n}{Float}\PYG{p}{,} \PYG{n}{Unicode}
+\PYG{k+kn}{from} \PYG{n+nn}{taref.core.shower} \PYG{k+kn}{import} \PYG{n}{shower}
+
+\PYG{k}{class} \PYG{n+nc}{Test}\PYG{p}{(}\PYG{n}{Atom}\PYG{p}{)}\PYG{p}{:}
+    \PYG{n}{a}\PYG{o}{=}\PYG{n}{Float}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{tag}\PYG{p}{(}\PYG{n}{label}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{My Float}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{b}\PYG{o}{=}\PYG{n}{Unicode}\PYG{p}{(}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}observe\PYGZus{}a}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{change}\PYG{p}{)}\PYG{p}{:}
+        \PYG{k}{print} \PYG{n}{change}
+
+\PYG{n}{t}\PYG{o}{=}\PYG{n}{Test}\PYG{p}{(}\PYG{p}{)}
+\PYG{n}{shower}\PYG{p}{(}\PYG{n}{t}\PYG{p}{)}
+\end{Verbatim}
+
+auto creates a GUI where a is now labelled ``My Float'' and every time a is changed
+it is printed.
+
+There are a number of custom tags defined in taref, such as ``label'', to give easy access to some
+commonly used features. For example, suppose I wanted b to display as a multiline field rather than
+a single line field:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{class} \PYG{n+nc}{Test}\PYG{p}{(}\PYG{n}{Atom}\PYG{p}{)}\PYG{p}{:}
+    \PYG{n}{a}\PYG{o}{=}\PYG{n}{Float}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{tag}\PYG{p}{(}\PYG{n}{label}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{My Float}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{b}\PYG{o}{=}\PYG{n}{Unicode}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{tag}\PYG{p}{(}\PYG{n}{spec}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{multiline}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+\end{Verbatim}
+
+In this case the spec tag allows quick access to a multiline field display.
+Now suppose I want full control over the window that Test objects reside in
+using the full power of enaml. I start an enaml file, ``test\_e.enaml'' that looks like this:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+from enaml.widgets.api import MainWindow, Field, Label, HGroup
+
+enamldef TestWindow(MainWindow):
+    attr test
+    HGroup:
+        Label:
+            text \PYGZlt{}\PYGZlt{} unicode(test.a)
+        Field:
+            text := b
+\end{Verbatim}
+
+In my python file, ``test.py'', I add the necessary pieces:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{atom.api} \PYG{k+kn}{import} \PYG{n}{Atom}\PYG{p}{,} \PYG{n}{Float}\PYG{p}{,} \PYG{n}{Unicode}\PYG{p}{,} \PYG{n}{cached\PYGZus{}property}
+\PYG{k+kn}{from} \PYG{n+nn}{taref.core.shower} \PYG{k+kn}{import} \PYG{n}{shower}
+\PYG{k+kn}{from} \PYG{n+nn}{enaml} \PYG{k+kn}{import} \PYG{n}{imports}
+\PYG{k}{with} \PYG{n}{imports}\PYG{p}{(}\PYG{p}{)}\PYG{p}{:}
+    \PYG{k+kn}{from} \PYG{n+nn}{test\PYGZus{}e} \PYG{k+kn}{import} \PYG{n}{TestWindow}
+
+\PYG{k}{class} \PYG{n+nc}{Test}\PYG{p}{(}\PYG{n}{Atom}\PYG{p}{)}\PYG{p}{:}
+    \PYG{n}{a}\PYG{o}{=}\PYG{n}{Float}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{tag}\PYG{p}{(}\PYG{n}{label}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{My Float}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{b}\PYG{o}{=}\PYG{n}{Unicode}\PYG{p}{(}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}observe\PYGZus{}a}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{change}\PYG{p}{)}\PYG{p}{:}
+        \PYG{k}{print} \PYG{n}{change}
+
+    \PYG{n+nd}{@cached\PYGZus{}property}
+    \PYG{k}{def} \PYG{n+nf}{view\PYGZus{}window}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{p}{:}
+        \PYG{k}{return} \PYG{n}{TestWindow}\PYG{p}{(}\PYG{n}{test}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{p}{)}
+
+\PYG{n}{t}\PYG{o}{=}\PYG{n}{Test}\PYG{p}{(}\PYG{p}{)}
+\PYG{n}{shower}\PYG{p}{(}\PYG{n}{t}\PYG{p}{)}
+\end{Verbatim}
+
+and now I have replaced the default dynamic view of Test with a custom one,
+while still keeping it compatible with the rest of taref's framework!
+
+
+\chapter{taref}
+\label{taref::doc}\label{taref:taref}
+Contents:
+
+
+\section{core}
+\label{core_doc/core:core}\label{core_doc/core::doc}
+Contents:
+
+
+\subsection{atom\_extension}
+\label{core_doc/atom_extension::doc}\label{core_doc/atom_extension:module-taref.core.atom_extension}\label{core_doc/atom_extension:atom-extension}\index{taref.core.atom\_extension (module)}
+Created on Fri Jan 22 19:12:36 2016
+
+@author: thomasaref
+
+A collection of utility functions that extend Atom's functionality, used heavily by taref other modules.
+To maintain compatibility with Atom classes, these are defined as standalone functions rather than extending the class.
+Runtime also seem slightly better as standalone functions than as an extended class
+\index{call\_func() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.call_func}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{call\_func}}{\emph{obj}, \emph{name}, \emph{**kwargs}}{}
+calls a func using keyword assignments. If name corresponds to a Property, calls the get func.
+otherwise, if name\_mangled func ``\_get\_''+name exists, calls that. Finally calls just the name if these are not the case
+
+\end{fulllineitems}
+
+\index{get\_all\_main\_params() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.get_all_main_params}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{get\_all\_main\_params}}{\emph{obj}}{}
+all members in all\_params that are not tagged as sub.
+Convenience function for more easily custom defining main\_params in child classes
+
+\end{fulllineitems}
+
+\index{get\_all\_params() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.get_all_params}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{get\_all\_params}}{\emph{obj}}{}
+all members that are not tagged as private, i.e. not in reserved\_names and will behave as agents.
+order of magnitude faster when combine with private\_property
+
+\end{fulllineitems}
+
+\index{get\_all\_tags() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.get_all_tags}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{get\_all\_tags}}{\emph{obj}, \emph{key}, \emph{key\_value=None}, \emph{none\_value=None}, \emph{search\_list=None}}{}
+returns a list of names of parameters with a certain key\_value
+Shortcut retrieve members with particular metadata. There are several variants based on inputs.
+\begin{itemize}
+\item {} 
+With only obj and key specified, returns all member names who have that key
+
+\item {} 
+with key\_value specified, returns all member names that have that key set to key\_value
+
+\item {} 
+with key\_value and none\_value specified equal, returns all member names that have that key set to key\_value or do not have the tag
+
+\item {} 
+specifying search list limits the members searched
+
+\item {} 
+Finally, if key\_value is none, returns those members not matching none\_value
+
+\end{itemize}
+
+\end{fulllineitems}
+
+\index{get\_inv() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.get_inv}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{get\_inv}}{\emph{obj}, \emph{name}, \emph{value}}{}
+returns the inverse mapped value (meant for an Enum)
+
+\end{fulllineitems}
+
+\index{get\_main\_params() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.get_main_params}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{get\_main\_params}}{\emph{obj}}{}
+returns main\_params if it exists and all possible main params if it does not
+
+\end{fulllineitems}
+
+\index{get\_map() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.get_map}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{get\_map}}{\emph{obj}, \emph{name}, \emph{value=None}, \emph{reset=False}}{}
+gets the mapped value specified by the property mapping and returns the attribute value if it doesn't exist
+gets the map of an Enum defined in the property name\_mapping or tag mapping.
+value can be used to get the map for another value besides the Enum's current one.
+
+\end{fulllineitems}
+
+\index{get\_property\_names() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.get_property_names}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{get\_property\_names}}{\emph{obj}}{}
+returns property names that are in all\_params
+
+\end{fulllineitems}
+
+\index{get\_property\_values() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.get_property_values}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{get\_property\_values}}{\emph{obj}}{}
+returns property values that are in all\_params
+
+\end{fulllineitems}
+
+\index{get\_reserved\_names() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.get_reserved_names}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{get\_reserved\_names}}{\emph{obj}}{}
+reserved names not to perform standard logging and display operations on,
+i.e. members that are tagged as private and will behave as usual Atom members
+
+\end{fulllineitems}
+
+\index{get\_run\_params() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.get_run_params}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{get\_run\_params}}{\emph{f}, \emph{skip\_first=True}}{}
+returns names of parameters a function will call, skips first parameter if skip\_first is True
+
+\end{fulllineitems}
+
+\index{get\_tag() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.get_tag}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{get\_tag}}{\emph{obj}, \emph{name}, \emph{key}, \emph{none\_value=None}}{}
+Shortcut to retrieve metadata from an Atom member which also returns a none\_value if the metadata does not exist.
+This is an easy way to get a tag on a particular member and provide a default if it isn't there.
+
+\end{fulllineitems}
+
+\index{get\_type() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.get_type}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{get\_type}}{\emph{obj}, \emph{name}}{}
+returns type of member with given name, with possible override via tag typer
+
+\end{fulllineitems}
+
+\index{instancemethod (class in taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.instancemethod}\pysiglinewithargsret{\strong{class }\code{taref.core.atom\_extension.}\bfcode{instancemethod}}{\emph{obj}, \emph{name=None}}{}
+disposable decorator object for instancemethods defined outside of Atom class
+
+\end{fulllineitems}
+
+\index{log\_func() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.log_func}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{log\_func}}{\emph{func}, \emph{pname=None}}{}
+logging decorator for Callables that logs call if tag log!=False
+
+\end{fulllineitems}
+
+\index{lowhigh\_check() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.lowhigh_check}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{lowhigh\_check}}{\emph{obj}, \emph{name}, \emph{value}}{}
+can specify low and high tags to keep float or int within a range.
+
+\end{fulllineitems}
+
+\index{private\_property() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.private_property}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{private\_property}}{\emph{fget}}{}
+A decorator which converts a function into a cached Property tagged as private.
+Improves performance greatly over property!
+
+\end{fulllineitems}
+
+\index{reset\_properties() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.reset_properties}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{reset\_properties}}{\emph{obj}}{}
+resets all  properties that are in all\_params
+
+\end{fulllineitems}
+
+\index{set\_all\_tags() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.set_all_tags}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{set\_all\_tags}}{\emph{obj}, \emph{**kwargs}}{}
+Shortcut to use Atom's tag functionality to set metadata on members not marked private, i.e. all\_params. This is an easy way to set the same tag on all params
+
+\end{fulllineitems}
+
+\index{set\_attr() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.set_attr}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{set\_attr}}{\emph{self}, \emph{name}, \emph{value}, \emph{**kwargs}}{}
+utility function for setting tags while setting value
+
+\end{fulllineitems}
+
+\index{set\_log() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.set_log}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{set\_log}}{\emph{obj}, \emph{name}, \emph{value}}{}
+called when parameter of given name is set to value i.e. instr.parameter=value. Customized messages for different types. Also saves data
+
+\end{fulllineitems}
+
+\index{set\_tag() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.set_tag}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{set\_tag}}{\emph{obj}, \emph{name}, \emph{**kwargs}}{}
+sets the tag of a member using Atom's built in tag functionality
+
+\end{fulllineitems}
+
+\index{set\_value\_map() (in module taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.set_value_map}\pysiglinewithargsret{\code{taref.core.atom\_extension.}\bfcode{set\_value\_map}}{\emph{obj}, \emph{name}, \emph{value}}{}
+checks floats and ints for low/high limits and automaps an Enum when setting. Not working for List?
+
+\end{fulllineitems}
+
+\index{tag\_Callable (class in taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.tag_Callable}\pysiglinewithargsret{\strong{class }\code{taref.core.atom\_extension.}\bfcode{tag\_Callable}}{\emph{**kwargs}}{}
+disposable decorator class that returns a Callable tagged with kwargs
+
+\end{fulllineitems}
+
+\index{tag\_Property (class in taref.core.atom\_extension)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/atom_extension:taref.core.atom_extension.tag_Property}\pysiglinewithargsret{\strong{class }\code{taref.core.atom\_extension.}\bfcode{tag\_Property}}{\emph{cached=True}, \emph{**kwargs}}{}
+disposable decorator class that returns a cached Property tagged with kwargs
+
+\end{fulllineitems}
+
+
+
+\subsection{shower}
+\label{core_doc/shower:shower}\label{core_doc/shower:module-taref.core.shower}\label{core_doc/shower::doc}\index{taref.core.shower (module)}
+Created on Mon Aug 24 12:38:54 2015
+
+@author: thomasaref
+\index{shower() (in module taref.core.shower)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/shower:taref.core.shower.shower}\pysiglinewithargsret{\code{taref.core.shower.}\bfcode{shower}}{\emph{*agents}, \emph{**kwargs}}{}
+A powerful showing function for any Atom object(s) specified in agents.
+Checks if an object has a view\_window and otherwise uses a default window for the object.
+\begin{description}
+\item[{Checks kwargs for particular keywords:}] \leavevmode\begin{itemize}
+\item {} 
+\code{start\_it}: boolean representing whether to go through first time setup prior to starting app
+
+\item {} 
+\code{app}: defaults to existing QtApplication instance and will default to a new instance if none exists
+
+\end{itemize}
+
+chief\_cls: if not included defaults to the first agent and defaults to Backbone if no agents are passed.
+show\_log: shows the log\_window of chief\_cls if it has one, defaults to not showing
+show\_ipy: shows the interactive\_window of chief\_cls if it has one, defaults to not showing
+show\_code: shows the code\_window of chief\_cls if it has one, defaults to not showing
+
+\end{description}
+
+shower also provides a chief\_window (generally for controlling which agents are visible) which defaults to Backbone's chief\_window
+if chief\_cls does not have one. attributes of chief\_window can be modified with the remaining kwargs
+
+\end{fulllineitems}
+
+
+
+\subsection{backbone}
+\label{core_doc/backbone:backbone}\label{core_doc/backbone::doc}\label{core_doc/backbone:module-taref.core.backbone}\index{taref.core.backbone (module)}
+Created on Tue Jul  7 21:52:51 2015
+
+@author: thomasaref
+\index{Backbone (class in taref.core.backbone)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone}\pysiglinewithargsret{\strong{class }\code{taref.core.backbone.}\bfcode{Backbone}}{\emph{*args}, \emph{**kwargs}}{}
+Class combining primary functions for viewer operation.
+Extends \_\_init\_\_ to allow extra setup.
+extends \_\_setattr\_\_ to perform low/high check on params
+\index{all\_main\_params (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.all_main_params}\pysigline{\bfcode{all\_main\_params}}
+A Member which behaves similar to a Python property.
+
+\end{fulllineitems}
+
+\index{all\_params (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.all_params}\pysigline{\bfcode{all\_params}}
+A Member which behaves similar to a Python property.
+
+\end{fulllineitems}
+
+\index{app (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.app}\pysigline{\bfcode{app}\strong{ = None}}
+\end{fulllineitems}
+
+\index{call\_func() (taref.core.backbone.Backbone method)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.call_func}\pysiglinewithargsret{\bfcode{call\_func}}{\emph{name}, \emph{**kwargs}}{}
+calls a func using keyword assignments. If name corresponds to a Property, calls the get func.
+otherwise, if name\_mangled func ``\_get\_''+name exists, calls that. Finally calls just the name if these are not the case
+
+\end{fulllineitems}
+
+\index{chief\_window (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.chief_window}\pysigline{\bfcode{chief\_window}\strong{ = \textless{}taref.core.agent\_e.BasicView object\textgreater{}}}
+\end{fulllineitems}
+
+\index{code\_window (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.code_window}\pysigline{\bfcode{code\_window}\strong{ = \textless{}taref.core.interactive\_e.CodeWindow object\textgreater{}}}
+\end{fulllineitems}
+
+\index{extra\_setup() (taref.core.backbone.Backbone method)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.extra_setup}\pysiglinewithargsret{\bfcode{extra\_setup}}{\emph{param}, \emph{typer}}{}
+Performs extra setup during initialization where param is name of parameter and typer is it's Atom type.
+Can be customized in child classes. default extra setup handles units, auto tags low and high for Ranges, and makes Callables into instancemethods
+
+\end{fulllineitems}
+
+\index{instancemethod() (taref.core.backbone.Backbone method)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.instancemethod}\pysiglinewithargsret{\bfcode{instancemethod}}{\emph{func}}{}
+decorator for adding instancemethods defined outside of class
+
+\end{fulllineitems}
+
+\index{interactive\_window (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.interactive_window}\pysigline{\bfcode{interactive\_window}\strong{ = \textless{}taref.core.interactive\_e.InteractiveWindow object\textgreater{}}}
+\end{fulllineitems}
+
+\index{log\_window (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.log_window}\pysigline{\bfcode{log\_window}\strong{ = \textless{}taref.core.log\_e.LogWindow object\textgreater{}}}
+\end{fulllineitems}
+
+\index{main\_params (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.main_params}\pysigline{\bfcode{main\_params}}
+A Member which behaves similar to a Python property.
+
+\end{fulllineitems}
+
+\index{property\_dict (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.property_dict}\pysigline{\bfcode{property\_dict}}
+A Member which behaves similar to a Python property.
+
+\end{fulllineitems}
+
+\index{property\_names (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.property_names}\pysigline{\bfcode{property\_names}}
+A Member which behaves similar to a Python property.
+
+\end{fulllineitems}
+
+\index{property\_values (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.property_values}\pysigline{\bfcode{property\_values}}
+A Member which behaves similar to a Python property.
+
+\end{fulllineitems}
+
+\index{reserved\_names (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.reserved_names}\pysigline{\bfcode{reserved\_names}}
+A Member which behaves similar to a Python property.
+
+\end{fulllineitems}
+
+\index{unit\_dict (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.unit_dict}\pysigline{\bfcode{unit\_dict}\strong{ = \{`c': 0.01, `\%': 0.01, `nm': 1e-09, `G': 1000000000.0, `mm': 0.001, `M': 1000000.0, `k': 1000.0, `m': 0.001, `kHz': 1000.0, `km': 1000.0, `n': 1e-09, `um': 1e-06, `cm': 0.01, `u': 1e-06, `GHz': 1000000000.0, `MHz': 1000000.0, `mW': 0.001\}}}
+\end{fulllineitems}
+
+\index{view\_window (taref.core.backbone.Backbone attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/backbone:taref.core.backbone.Backbone.view_window}\pysigline{\bfcode{view\_window}}
+A Member which behaves similar to a Python property.
+
+\end{fulllineitems}
+
+
+\end{fulllineitems}
+
+
+
+\subsection{agent}
+\label{core_doc/agent:module-taref.core.agent}\label{core_doc/agent::doc}\label{core_doc/agent:agent}\index{taref.core.agent (module)}
+Created on Sat Jul  4 13:03:26 2015
+
+@author: thomasaref
+\index{Agent (class in taref.core.agent)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Agent}\pysiglinewithargsret{\strong{class }\code{taref.core.agent.}\bfcode{Agent}}{\emph{**kwargs}}{}
+Agents use primarily setattr to log changes to params
+\index{base\_name (taref.core.agent.Agent attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Agent.base_name}\pysigline{\bfcode{base\_name}\strong{ = `agent'}}
+\end{fulllineitems}
+
+\index{extra\_setup() (taref.core.agent.Agent method)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Agent.extra_setup}\pysiglinewithargsret{\bfcode{extra\_setup}}{\emph{param}, \emph{typer}}{}
+adds observer for ContainerLists to catch changes not covered by setattr.
+extra\_setup goes from Spy, not Agent to not add observers
+
+\end{fulllineitems}
+
+\index{log\_changes() (taref.core.agent.Agent method)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Agent.log_changes}\pysiglinewithargsret{\bfcode{log\_changes}}{\emph{change}}{}
+a simple logger for changes not of type create or update that also resets properties
+
+\end{fulllineitems}
+
+
+\end{fulllineitems}
+
+\index{Operative (class in taref.core.agent)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Operative}\pysiglinewithargsret{\strong{class }\code{taref.core.agent.}\bfcode{Operative}}{\emph{**kwargs}}{}
+Adds functionality for auto showing to Backbone
+\index{abort (taref.core.agent.Operative attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Operative.abort}\pysigline{\bfcode{abort}\strong{ = False}}
+\end{fulllineitems}
+
+\index{activated() (taref.core.agent.Operative class method)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Operative.activated}\pysiglinewithargsret{\strong{classmethod }\bfcode{activated}}{}{}
+function that runs when window is activated
+
+\end{fulllineitems}
+
+\index{add\_func() (taref.core.agent.Operative method)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Operative.add_func}\pysiglinewithargsret{\bfcode{add\_func}}{\emph{*funcs}}{}
+adds functions to run\_func\_dict. functions should be a classmethod, a staticmethod
+or a separate function that takes no arguments
+
+\end{fulllineitems}
+
+\index{agent\_dict (taref.core.agent.Operative attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Operative.agent_dict}\pysigline{\bfcode{agent\_dict}\strong{ = OrderedDict()}}
+\end{fulllineitems}
+
+\index{base\_name (taref.core.agent.Operative attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Operative.base_name}\pysigline{\bfcode{base\_name}\strong{ = `operative'}}
+\end{fulllineitems}
+
+\index{cls\_run\_funcs (taref.core.agent.Operative attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Operative.cls_run_funcs}\pysigline{\bfcode{cls\_run\_funcs}}
+A Member which behaves similar to a Python property.
+
+\end{fulllineitems}
+
+\index{desc (taref.core.agent.Operative attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Operative.desc}\pysigline{\bfcode{desc}}
+A value of type \emph{unicode}.
+
+By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.
+
+\end{fulllineitems}
+
+\index{name (taref.core.agent.Operative attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Operative.name}\pysigline{\bfcode{name}}
+A value of type \emph{unicode}.
+
+By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.
+
+\end{fulllineitems}
+
+\index{run\_all() (taref.core.agent.Operative class method)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Operative.run_all}\pysiglinewithargsret{\strong{classmethod }\bfcode{run\_all}}{}{}
+runs all functions added in run\_func\_dict''. Can be included in cls\_run\_funcs
+
+\end{fulllineitems}
+
+\index{run\_func\_dict (taref.core.agent.Operative attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Operative.run_func_dict}\pysigline{\bfcode{run\_func\_dict}\strong{ = OrderedDict()}}
+\end{fulllineitems}
+
+\index{show() (taref.core.agent.Operative method)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Operative.show}\pysiglinewithargsret{\bfcode{show}}{\emph{*args}, \emph{**kwargs}}{}
+\end{fulllineitems}
+
+
+\end{fulllineitems}
+
+\index{Spy (class in taref.core.agent)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Spy}\pysiglinewithargsret{\strong{class }\code{taref.core.agent.}\bfcode{Spy}}{\emph{**kwargs}}{}
+Spies uses observers to log all changes to params
+\index{base\_name (taref.core.agent.Spy attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Spy.base_name}\pysigline{\bfcode{base\_name}\strong{ = `spy'}}
+\end{fulllineitems}
+
+\index{extra\_setup() (taref.core.agent.Spy method)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Spy.extra_setup}\pysiglinewithargsret{\bfcode{extra\_setup}}{\emph{param}, \emph{typer}}{}
+adds log\_changes observer to all params
+
+\end{fulllineitems}
+
+\index{log\_changes() (taref.core.agent.Spy method)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/agent:taref.core.agent.Spy.log_changes}\pysiglinewithargsret{\bfcode{log\_changes}}{\emph{change}}{}
+a simple logger for all changes and to reset properties
+
+\end{fulllineitems}
+
+
+\end{fulllineitems}
+
+
+
+\subsection{extra\_setup}
+\label{core_doc/extra_setup::doc}\label{core_doc/extra_setup:module-taref.core.extra_setup}\label{core_doc/extra_setup:extra-setup}\index{taref.core.extra\_setup (module)}
+Created on Mon Jan 25 22:29:11 2016
+
+@author: thomasaref
+\index{extra\_setup() (in module taref.core.extra\_setup)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/extra_setup:taref.core.extra_setup.extra_setup}\pysiglinewithargsret{\code{taref.core.extra\_setup.}\bfcode{extra\_setup}}{\emph{self}, \emph{param}, \emph{typer}}{}
+sets up property\_fs, ranges, and units
+
+\end{fulllineitems}
+
+\index{fset\_maker() (in module taref.core.extra\_setup)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/extra_setup:taref.core.extra_setup.fset_maker}\pysiglinewithargsret{\code{taref.core.extra\_setup.}\bfcode{fset\_maker}}{\emph{obj}, \emph{fget}, \emph{name}}{}
+\end{fulllineitems}
+
+\index{param\_decider() (in module taref.core.extra\_setup)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/extra_setup:taref.core.extra_setup.param_decider}\pysiglinewithargsret{\code{taref.core.extra\_setup.}\bfcode{param\_decider}}{\emph{obj}, \emph{value}, \emph{param}, \emph{pname}}{}
+\end{fulllineitems}
+
+\index{property\_func() (in module taref.core.extra\_setup)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/extra_setup:taref.core.extra_setup.property_func}\pysiglinewithargsret{\code{taref.core.extra\_setup.}\bfcode{property\_func}}{\emph{func}}{}
+\end{fulllineitems}
+
+\index{tagged\_property (class in taref.core.extra\_setup)}
+
+\begin{fulllineitems}
+\phantomsection\label{core_doc/extra_setup:taref.core.extra_setup.tagged_property}\pysiglinewithargsret{\strong{class }\code{taref.core.extra\_setup.}\bfcode{tagged\_property}}{\emph{cached=True}, \emph{**kwargs}}{}
+\end{fulllineitems}
+
+
+
+\subsection{fund\_core\_e}
+\label{core_doc/fund_core_e:fund-core-e}\label{core_doc/fund_core_e::doc}
+
+\section{physics}
+\label{physics_doc/physics:physics}\label{physics_doc/physics::doc}
+Contents:
+
+
+\subsection{fundamentals}
+\label{physics_doc/fundamentals:fundamentals}\label{physics_doc/fundamentals::doc}\label{physics_doc/fundamentals:module-taref.physics.fundamentals}\index{taref.physics.fundamentals (module)}
+Created on Thu Jan 29 21:05:03 2015
+
+@author: thomasaref
+
+Gathers all useful constants and functions in one location. Also initiates a default log\_file.
+\index{sinc() (in module taref.physics.fundamentals)}
+
+\begin{fulllineitems}
+\phantomsection\label{physics_doc/fundamentals:taref.physics.fundamentals.sinc}\pysiglinewithargsret{\code{taref.physics.fundamentals.}\bfcode{sinc}}{\emph{X}}{}
+sinc function which doesn't autoinclude pi
+
+\end{fulllineitems}
+
+\index{sinc\_sq() (in module taref.physics.fundamentals)}
+
+\begin{fulllineitems}
+\phantomsection\label{physics_doc/fundamentals:taref.physics.fundamentals.sinc_sq}\pysiglinewithargsret{\code{taref.physics.fundamentals.}\bfcode{sinc\_sq}}{\emph{X}}{}
+sinc squared which doesn't autoinclude pi
+
+\end{fulllineitems}
+
+
+
 \chapter{Indices and tables}
-\label{index:indices-and-tables}\label{index:welcome-to-taref-docs-s-documentation}\begin{itemize}
+\label{index:indices-and-tables}\begin{itemize}
 \item {} 
 \DUspan{xref,std,std-ref}{genindex}
 
@@ -146,6 +1243,17 @@ Contents:
 \end{itemize}
 
 
+\renewcommand{\indexname}{Python Module Index}
+\begin{theindex}
+\def\bigletter#1{{\Large\sffamily#1}\nopagebreak\vspace{1mm}}
+\bigletter{t}
+\item {\texttt{taref.core.agent}}, \pageref{core_doc/agent:module-taref.core.agent}
+\item {\texttt{taref.core.atom\_extension}}, \pageref{core_doc/atom_extension:module-taref.core.atom_extension}
+\item {\texttt{taref.core.backbone}}, \pageref{core_doc/backbone:module-taref.core.backbone}
+\item {\texttt{taref.core.extra\_setup}}, \pageref{core_doc/extra_setup:module-taref.core.extra_setup}
+\item {\texttt{taref.core.shower}}, \pageref{core_doc/shower:module-taref.core.shower}
+\item {\texttt{taref.physics.fundamentals}}, \pageref{physics_doc/fundamentals:module-taref.physics.fundamentals}
+\end{theindex}
 
 \renewcommand{\indexname}{Index}
 \printindex

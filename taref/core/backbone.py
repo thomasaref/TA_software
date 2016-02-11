@@ -10,11 +10,32 @@ from atom.api import Atom, Property
 from taref.core.atom_extension import (UNIT_DICT, private_property, get_reserved_names, get_all_params,
 get_all_main_params, lowhigh_check, make_instancemethod, get_type)
 from taref.core.extra_setup import extra_setup
+from enaml.qt.qt_application import QtApplication
 
+from enaml import imports
+with imports():
+    from taref.core.agent_e import AutoAgentView, BasicView
+    from taref.core.interactive_e import InteractiveWindow, CodeWindow
+    from taref.core.log_e import LogWindow
 
 class Backbone(Atom):
-    """Class combining primary functions for viewer operation"""
+    """Class combining primary functions for viewer operation.
+    Extends __init__ to allow extra setup.
+    extends __setattr__ to perform low/high check on params"""
     unit_dict=UNIT_DICT
+    app=QtApplication.instance()
+
+    @private_property
+    def view_window(self):
+        return AutoAgentView(agent=self)
+
+    chief_window=BasicView()
+
+    interactive_window=InteractiveWindow()
+
+    log_window=LogWindow()
+
+    code_window=CodeWindow()
 
     @private_property
     def reserved_names(self):
@@ -52,6 +73,8 @@ class Backbone(Atom):
         return self.property_dict.values()
 
     def extra_setup(self, param, typer):
+        """Performs extra setup during initialization where param is name of parameter and typer is it's Atom type.
+        Can be customized in child classes. default extra setup handles units, auto tags low and high for Ranges, and makes Callables into instancemethods"""
         extra_setup(self, param, typer)
 
     def call_func(self, name, **kwargs):

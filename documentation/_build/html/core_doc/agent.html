@@ -1,0 +1,226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>agent &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../index.html" />
+    <link rel="up" title="core" href="core.html" />
+    <link rel="next" title="extra_setup" href="extra_setup.html" />
+    <link rel="prev" title="backbone" href="backbone.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-taref.core.agent">
+<span id="agent"></span><h1>agent<a class="headerlink" href="#module-taref.core.agent" title="Permalink to this headline">¶</a></h1>
+<p>Created on Sat Jul  4 13:03:26 2015</p>
+<p>&#64;author: thomasaref</p>
+<dl class="class">
+<dt id="taref.core.agent.Agent">
+<em class="property">class </em><code class="descclassname">taref.core.agent.</code><code class="descname">Agent</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/agent.html#Agent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.agent.Agent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Agents use primarily setattr to log changes to params</p>
+<dl class="attribute">
+<dt id="taref.core.agent.Agent.base_name">
+<code class="descname">base_name</code><em class="property"> = 'agent'</em><a class="headerlink" href="#taref.core.agent.Agent.base_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.core.agent.Agent.extra_setup">
+<code class="descname">extra_setup</code><span class="sig-paren">(</span><em>param</em>, <em>typer</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/agent.html#Agent.extra_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.agent.Agent.extra_setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds observer for ContainerLists to catch changes not covered by setattr.
+extra_setup goes from Spy, not Agent to not add observers</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.agent.Agent.log_changes">
+<code class="descname">log_changes</code><span class="sig-paren">(</span><em>change</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/agent.html#Agent.log_changes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.agent.Agent.log_changes" title="Permalink to this definition">¶</a></dt>
+<dd><p>a simple logger for changes not of type create or update that also resets properties</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.core.agent.Operative">
+<em class="property">class </em><code class="descclassname">taref.core.agent.</code><code class="descname">Operative</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/agent.html#Operative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.agent.Operative" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds functionality for auto showing to Backbone</p>
+<dl class="attribute">
+<dt id="taref.core.agent.Operative.abort">
+<code class="descname">abort</code><em class="property"> = False</em><a class="headerlink" href="#taref.core.agent.Operative.abort" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="taref.core.agent.Operative.activated">
+<em class="property">classmethod </em><code class="descname">activated</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/agent.html#Operative.activated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.agent.Operative.activated" title="Permalink to this definition">¶</a></dt>
+<dd><p>function that runs when window is activated</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.agent.Operative.add_func">
+<code class="descname">add_func</code><span class="sig-paren">(</span><em>*funcs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/agent.html#Operative.add_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.agent.Operative.add_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds functions to run_func_dict. functions should be a classmethod, a staticmethod
+or a separate function that takes no arguments</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.agent.Operative.agent_dict">
+<code class="descname">agent_dict</code><em class="property"> = OrderedDict()</em><a class="headerlink" href="#taref.core.agent.Operative.agent_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.agent.Operative.base_name">
+<code class="descname">base_name</code><em class="property"> = 'operative'</em><a class="headerlink" href="#taref.core.agent.Operative.base_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.agent.Operative.cls_run_funcs">
+<code class="descname">cls_run_funcs</code><a class="headerlink" href="#taref.core.agent.Operative.cls_run_funcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.agent.Operative.desc">
+<code class="descname">desc</code><a class="headerlink" href="#taref.core.agent.Operative.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.agent.Operative.name">
+<code class="descname">name</code><a class="headerlink" href="#taref.core.agent.Operative.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="taref.core.agent.Operative.run_all">
+<em class="property">classmethod </em><code class="descname">run_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/agent.html#Operative.run_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.agent.Operative.run_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>runs all functions added in run_func_dict&#8221;. Can be included in cls_run_funcs</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.agent.Operative.run_func_dict">
+<code class="descname">run_func_dict</code><em class="property"> = OrderedDict()</em><a class="headerlink" href="#taref.core.agent.Operative.run_func_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.core.agent.Operative.show">
+<code class="descname">show</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/agent.html#Operative.show"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.agent.Operative.show" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.core.agent.Spy">
+<em class="property">class </em><code class="descclassname">taref.core.agent.</code><code class="descname">Spy</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/agent.html#Spy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.agent.Spy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spies uses observers to log all changes to params</p>
+<dl class="attribute">
+<dt id="taref.core.agent.Spy.base_name">
+<code class="descname">base_name</code><em class="property"> = 'spy'</em><a class="headerlink" href="#taref.core.agent.Spy.base_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.core.agent.Spy.extra_setup">
+<code class="descname">extra_setup</code><span class="sig-paren">(</span><em>param</em>, <em>typer</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/agent.html#Spy.extra_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.agent.Spy.extra_setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds log_changes observer to all params</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.agent.Spy.log_changes">
+<code class="descname">log_changes</code><span class="sig-paren">(</span><em>change</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/agent.html#Spy.log_changes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.agent.Spy.log_changes" title="Permalink to this definition">¶</a></dt>
+<dd><p>a simple logger for all changes and to reset properties</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../taref.html">taref</a><ul>
+  <li><a href="core.html">core</a><ul>
+      <li>Previous: <a href="backbone.html" title="previous chapter">backbone</a></li>
+      <li>Next: <a href="extra_setup.html" title="next chapter">extra_setup</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/core_doc/agent.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="../_sources/core_doc/agent.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

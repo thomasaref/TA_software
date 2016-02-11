@@ -10,17 +10,37 @@ from taref.tex.tex_backbone import (texwrap, make_table, mult_fig_start, mult_fi
 
 from collections import OrderedDict
 
-from taref.core.agent import SubAgent as Operative
+from taref.core.agent import Operative
 from taref.core.universal import write_text
+from taref.core.log import f_top, log_debug
+from enaml.qt.qt_application import QtApplication
+
 from enaml import imports
 with imports():
     from tex_e import TEX_Window
 
+class File_Parser(object):
+    def __init__(self, starter, stopper, inblock=False):
+        self.starter=starter
+        self.stopper=stopper
+        self.inblock=inblock
+
+    def __call__(self, line):
+        line=line.strip()
+        if self.starter in line:
+            self.inblock=True
+            self.local_name=line.split(self.starter)[0]
+        elif self.stopper in line:
+            self.inblock=False
+            return True
+        return self.inblock
+
 dir_path="/Users/thomasaref/Documents/TA_software/taref/tex/test_tex/"
-file_name="tset"
-class TEX(Operative):
+file_name="texxy"
+class TEX(Atom):
     #read_file=Typed(Read_File)
     #write_file=Typed(Write_File)
+    local_name=Unicode()
     source_dict=Typed(OrderedDict, ())
     tex_list=List()
     output_tex=Unicode()
@@ -74,7 +94,16 @@ class TEX(Operative):
     def _observe_output_tex(self, change):
         self.tex_list=self.output_tex.split("\n")
 
+    def make_input_code(self):
+        fb=f_top()
+        with open(fb.f_code.co_filename, "r") as f:
+            file_text=f.read()
+        file_reader=File_Parser(".TEX_start", ".TEX_end")
+        self.input_code="\n".join([line for line in file_text.split("\n") if file_reader(line)])
+        self.local_name=file_reader.local_name
+
     def simulate_tex(self):
+        locals()[self.local_name]=self
         self.tex_list=[]
         exec(self.input_code)
         self.output_tex="\n".join(self.tex_list)
@@ -101,15 +130,21 @@ class TEX(Operative):
         compile_tex(dir_path, file_name)
 
     def make_tex_file(self):
-        self.simulate_tex()
+        if QtApplication.instance() is not None:
+            self.process_source()
+            self.simulate_tex()
         write_text(dir_path+file_name+".tex", self.tex_list)
 
-    def start(self, clear=True):
+    def make_and_show(self):
+        self.make_tex_file()
+        self.compile_tex()
+
+    def TEX_start(self, clear=True):
         if clear:
             self.tex_list=[]
         self.extend(self.tex_start)
 
-    def end(self):
+    def TEX_end(self):
         self.extend(self.tex_end)
 
     def ext(self, block_name):

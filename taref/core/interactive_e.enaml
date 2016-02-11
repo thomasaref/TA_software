@@ -6,7 +6,7 @@ Created on Sat Jan 30 13:51:10 2016
 """
 
 from enaml.widgets.api import DockPane, MultilineField, MainWindow, IPythonConsole, VGroup
-from atom.api import Atom, Float, Unicode, Int, Typed
+from atom.api import Atom, Float, Unicode, Int, Typed, cached_property
 
 class IPythonCatch(Atom):
     """a stream catching class for use with the IPython window"""
@@ -42,7 +42,7 @@ class text_ev(object):
         self.InOut_index=1
 
     def __call__(self):
-        if len(self.ipc.get_var("In"))>self.InOut_index:
+        if len(self.ipy_console.get_var("In"))>self.InOut_index:
             self.InOut_index+=1
             self.ipy_stream.write(self.ipy_console.get_var("In")[-1]+"\n")
             outstr=self.ipy_console.get_var("Out").get(self.InOut_index-1, None)

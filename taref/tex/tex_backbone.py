@@ -16,6 +16,7 @@ from os import chdir, getcwd
 
 @contextmanager
 def cd(newdir):
+    """a context manager that changes directory to newdir during it's context and switches back to the starting directory when done"""
     prevdir = getcwd()
     chdir(newdir)
     try:
@@ -26,11 +27,8 @@ def cd(newdir):
 def compile_tex(dir_path, file_name, cmd="/usr/texbin/pdflatex"):
     """uses subprocess call to compile and show pdf using pdflatex.
     Might need to check path of pdflatex command with which command in terminal"""
-    print getcwd()
     with cd(dir_path):
         call([cmd, file_name+".tex"])
-    print getcwd()
-#        call(["/usr/texbin/pdflatex", "-output-directory /Users/thomasaref/Documents/TA_software/taref/tex/test_tex/", "/Users/thomasaref/Documents/TA_software/taref/tex/test_tex/tset.tex"])
     call(["open", dir_path+file_name+".pdf"])
 
 def extract_block(name, str_list):

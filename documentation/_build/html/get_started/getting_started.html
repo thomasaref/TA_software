@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Getting Started &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<p>The taref package strives to make quick, easy-to-use, auto-display GUIs
+with the option to extend them to custom GUIs at a later date. To do this,
+taref is built on enaml, a programming language extension to python and framework
+for creating professional user interfaces, and Atom, a framework for
+creating memory efficient Python objects with enhanced features
+such as dynamic initialization, validation, and
+change notification for object attributes (similar in behavior to Enthought&#8217;s Traits)</p>
+<p>Basically,
+taref generates dynamic enaml templates from a minimal information Atom
+class with the option to later substitute these dynamic enaml templates</p>
+<blockquote>
+<div>with enaml written specifically for the class.</div></blockquote>
+<p>For example, some code that makes use of taref&#8217;s shower function might look like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Unicode</span>
+<span class="kn">from</span> <span class="nn">taref.core.shower</span> <span class="kn">import</span> <span class="n">shower</span>
+
+<span class="k">class</span> <span class="nc">Test</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+    <span class="n">b</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+
+<span class="n">t</span><span class="o">=</span><span class="n">Test</span><span class="p">()</span>
+<span class="n">shower</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and these few lines of code are all that is needed to produce a simple GUI that shows a and b in our
+Test object t!</p>
+<p>So what is happening?
+First, we are an Atom class. Atom class are very similar to python&#8217;s
+regular classes. Something equivalent to our Test class above would be:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Test</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="o">=</span><span class="n">a</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">=</span><span class="n">b</span>
+</pre></div>
+</div>
+<p>However, Atom provides some key advantages to using the above class for GUI making
+First, in the Atom class, the type of a is fixed to being a float so
+the GUI always knows how to display it. The members of Test are likewise fixed
+so that none are added dynamically later.
+Secondly, Atom can detect changes changes to it&#8217;s members. To see this, we
+look at the following code:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Test</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+    <span class="n">b</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_observe_a</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="k">print</span> <span class="n">change</span>
+</pre></div>
+</div>
+<p>Now every time variable a is changed, in the GUI or in code,
+it will print out that change.
+The final advantage of Atom is that metadata can be added to the variable.
+For example,</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">t</span><span class="o">.</span><span class="n">a</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="n">t</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s">&quot;My Float&quot;</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">t</span><span class="o">.</span><span class="n">a</span>
+<span class="k">print</span> <span class="n">t</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">metadata</span>
+</pre></div>
+</div>
+<p>Combining this with the functionality with the shower function:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Unicode</span>
+<span class="kn">from</span> <span class="nn">taref.core.shower</span> <span class="kn">import</span> <span class="n">shower</span>
+
+<span class="k">class</span> <span class="nc">Test</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s">&quot;My Float&quot;</span><span class="p">)</span>
+    <span class="n">b</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_observe_a</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="k">print</span> <span class="n">change</span>
+
+<span class="n">t</span><span class="o">=</span><span class="n">Test</span><span class="p">()</span>
+<span class="n">shower</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>auto creates a GUI where a is now labelled &#8220;My Float&#8221; and every time a is changed
+it is printed.</p>
+<p>There are a number of custom tags defined in taref, such as &#8220;label&#8221;, to give easy access to some
+commonly used features. For example, suppose I wanted b to display as a multiline field rather than
+a single line field:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Test</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s">&quot;My Float&quot;</span><span class="p">)</span>
+    <span class="n">b</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="s">&quot;multiline&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In this case the spec tag allows quick access to a multiline field display.
+Now suppose I want full control over the window that Test objects reside in
+using the full power of enaml. I start an enaml file, &#8220;test_e.enaml&#8221; that looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>from enaml.widgets.api import MainWindow, Field, Label, HGroup
+
+enamldef TestWindow(MainWindow):
+    attr test
+    HGroup:
+        Label:
+            text &lt;&lt; unicode(test.a)
+        Field:
+            text := b
+</pre></div>
+</div>
+<p>In my python file, &#8220;test.py&#8221;, I add the necessary pieces:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Unicode</span><span class="p">,</span> <span class="n">cached_property</span>
+<span class="kn">from</span> <span class="nn">taref.core.shower</span> <span class="kn">import</span> <span class="n">shower</span>
+<span class="kn">from</span> <span class="nn">enaml</span> <span class="kn">import</span> <span class="n">imports</span>
+<span class="k">with</span> <span class="n">imports</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">test_e</span> <span class="kn">import</span> <span class="n">TestWindow</span>
+
+<span class="k">class</span> <span class="nc">Test</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s">&quot;My Float&quot;</span><span class="p">)</span>
+    <span class="n">b</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_observe_a</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="k">print</span> <span class="n">change</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">view_window</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">TestWindow</span><span class="p">(</span><span class="n">test</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+<span class="n">t</span><span class="o">=</span><span class="n">Test</span><span class="p">()</span>
+<span class="n">shower</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and now I have replaced the default dynamic view of Test with a custom one,
+while still keeping it compatible with the rest of taref&#8217;s framework!</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/get_started/getting_started.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="../_sources/get_started/getting_started.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>atom.scalars &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for atom.scalars</h1><div class="highlight"><pre>
+<span class="c">#------------------------------------------------------------------------------</span>
+<span class="c"># Copyright (c) 2013, Nucleic Development Team.</span>
+<span class="c">#</span>
+<span class="c"># Distributed under the terms of the Modified BSD License.</span>
+<span class="c">#</span>
+<span class="c"># The full license is in the file COPYING.txt, distributed with this software.</span>
+<span class="c">#------------------------------------------------------------------------------</span>
+<span class="kn">from</span> <span class="nn">.catom</span> <span class="kn">import</span> <span class="n">Member</span><span class="p">,</span> <span class="n">DefaultValue</span><span class="p">,</span> <span class="n">Validate</span><span class="p">,</span> <span class="n">SetAttr</span>
+
+
+<span class="k">class</span> <span class="nc">Value</span><span class="p">(</span><span class="n">Member</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A member class which supports value initialization.</span>
+
+<span class="sd">    A plain `Value` provides support for default values and factories,</span>
+<span class="sd">    but does not perform any type checking or validation. It serves as</span>
+<span class="sd">    a useful base class for scalar members and can be used for cases</span>
+<span class="sd">    where type checking is not needed (like private attributes).</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialize a Value.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        default : object, optional</span>
+<span class="sd">            The default value for the member. If this is provided, it</span>
+<span class="sd">            should be an immutable value. The value will will not be</span>
+<span class="sd">            copied between owner instances.</span>
+
+<span class="sd">        factory : callable, optional</span>
+<span class="sd">            A callable object which is called with zero arguments and</span>
+<span class="sd">            returns a default value for the member. This will override</span>
+<span class="sd">            any value given by `default`.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_default_value_mode</span><span class="p">(</span><span class="n">DefaultValue</span><span class="o">.</span><span class="n">CallObject</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_default_value_mode</span><span class="p">(</span><span class="n">DefaultValue</span><span class="o">.</span><span class="n">Static</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ReadOnly</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A value which can be assigned once and is then read-only.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ReadOnly</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_setattr_mode</span><span class="p">(</span><span class="n">SetAttr</span><span class="o">.</span><span class="n">ReadOnly</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Constant</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A value which cannot be changed from its default.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Constant</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_setattr_mode</span><span class="p">(</span><span class="n">SetAttr</span><span class="o">.</span><span class="n">Constant</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Callable</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A value which is callable.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Callable</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Callable</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Bool</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A value of type `bool`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Bool</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Bool</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Int</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A value of type `int`.</span>
+
+<span class="sd">    By default, ints are strictly typed.  Pass strict=False to the</span>
+<span class="sd">    constructor to enable int casting for longs and floats.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Int</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Int</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">IntPromote</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Long</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A value of type `long`.</span>
+
+<span class="sd">    By default, ints are promoted to longs. Pass strict=True to the</span>
+<span class="sd">    constructor to enable strict long checking.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="il">0L</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Long</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Long</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">LongPromote</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">FloatRange</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A float value clipped to a range.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">low</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">high</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">low</span> <span class="o">&gt;</span> <span class="n">high</span><span class="p">:</span>
+            <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="n">high</span><span class="p">,</span> <span class="n">low</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">default</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">low</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">default</span> <span class="o">=</span> <span class="n">low</span>
+        <span class="k">elif</span> <span class="n">high</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">default</span> <span class="o">=</span> <span class="n">high</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FloatRange</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">default</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">FloatRange</span><span class="p">,</span> <span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">Range</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; An integer value clipped to a range.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">low</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">high</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">low</span> <span class="o">&gt;</span> <span class="n">high</span><span class="p">:</span>
+            <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="n">high</span><span class="p">,</span> <span class="n">low</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">default</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">low</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">default</span> <span class="o">=</span> <span class="n">low</span>
+        <span class="k">elif</span> <span class="n">high</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">default</span> <span class="o">=</span> <span class="n">high</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Range</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">default</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Range</span><span class="p">,</span> <span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">Float</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A value of type `float`.</span>
+
+<span class="sd">    By default, ints and longs will be promoted to floats. Pass</span>
+<span class="sd">    strict=True to the constructor to enable strict float checking.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Float</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">FloatPromote</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Str</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A value of type `str`.</span>
+
+<span class="sd">    By default, unicode strings will be promoted to plain strings. Pass</span>
+<span class="sd">    strict=True to the constructor to enable strict string checking.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Str</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Str</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">StrPromote</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Unicode</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A value of type `unicode`.</span>
+
+<span class="sd">    By default, plain strings will be promoted to unicode strings. Pass</span>
+<span class="sd">    strict=True to the constructor to enable strict unicode checking.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">u&#39;&#39;</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Unicode</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Unicode</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">UnicodePromote</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

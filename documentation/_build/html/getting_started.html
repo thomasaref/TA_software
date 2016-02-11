@@ -25,6 +25,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="taref_docs 1.0 documentation" href="index.html" />
+    <link rel="next" title="taref" href="taref.html" />
     <link rel="prev" title="Introduction:" href="introduction.html" />
    
   
@@ -42,15 +43,16 @@
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
 <p>The taref package strives to make quick, easy-to-use, auto-display GUIs
 with the option to extend them to custom GUIs at a later date. To do this,
-taref is built on enaml, a programming language extension of python
-to create declarative user interfaces, and Atom, a framework for
+taref is built on enaml, a programming language extension to python and framework
+for creating professional user interfaces, and Atom, a framework for
 creating memory efficient Python objects with enhanced features
 such as dynamic initialization, validation, and
-change notification for object attributes (similar to Enthought&#8217;s Traits)
-Basically,
+change notification for object attributes (similar in behavior to Enthought&#8217;s Traits)</p>
+<p>Basically,
 taref generates dynamic enaml templates from a minimal information Atom
-class with the option to later substitute the dynamic enaml templates
-used with something more specific for the Atom class.</p>
+class with the option to later substitute these dynamic enaml templates</p>
+<blockquote>
+<div>with enaml written specifically for the class.</div></blockquote>
 <p>For example, some code that makes use of taref&#8217;s shower function might look like this:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Unicode</span>
 <span class="kn">from</span> <span class="nn">taref.core.shower</span> <span class="kn">import</span> <span class="n">shower</span>
@@ -160,7 +162,7 @@ enamldef TestWindow(MainWindow):
 </pre></div>
 </div>
 <p>and now I have replaced the default dynamic view of Test with a custom one,
-while still keeping it compatible with shower and the rest of taref&#8217;s framework</p>
+while still keeping it compatible with the rest of taref&#8217;s framework!</p>
 </div>
 
 
@@ -173,6 +175,7 @@ while still keeping it compatible with shower and the rest of taref&#8217;s fram
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="introduction.html" title="previous chapter">Introduction:</a></li>
+      <li>Next: <a href="taref.html" title="next chapter">taref</a></li>
   </ul></li>
 </ul>
 </div>

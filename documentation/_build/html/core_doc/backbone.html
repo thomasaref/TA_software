@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>backbone &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../index.html" />
+    <link rel="up" title="core" href="core.html" />
+    <link rel="next" title="physics" href="../physics_doc/physics.html" />
+    <link rel="prev" title="shower" href="shower.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-taref.core.backbone">
+<span id="backbone"></span><h1>backbone<a class="headerlink" href="#module-taref.core.backbone" title="Permalink to this headline">¶</a></h1>
+<p>Created on Tue Jul  7 21:52:51 2015</p>
+<p>&#64;author: thomasaref</p>
+<dl class="class">
+<dt id="taref.core.backbone.Backbone">
+<em class="property">class </em><code class="descclassname">taref.core.backbone.</code><code class="descname">Backbone</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#Backbone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.Backbone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class combining primary functions for viewer operation.
+Extends __init__ to allow extra setup.
+extends __setattr__ to perform low/high check on params</p>
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.all_main_params">
+<code class="descname">all_main_params</code><a class="headerlink" href="#taref.core.backbone.Backbone.all_main_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.all_params">
+<code class="descname">all_params</code><a class="headerlink" href="#taref.core.backbone.Backbone.all_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.app">
+<code class="descname">app</code><em class="property"> = None</em><a class="headerlink" href="#taref.core.backbone.Backbone.app" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.core.backbone.Backbone.call_func">
+<code class="descname">call_func</code><span class="sig-paren">(</span><em>name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#Backbone.call_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.Backbone.call_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>calls a func using keyword assignments. If name corresponds to a Property, calls the get func.
+otherwise, if name_mangled func &#8220;_get_&#8221;+name exists, calls that. Finally calls just the name if these are not the case</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.chief_window">
+<code class="descname">chief_window</code><em class="property"> = &lt;taref.core.agent_e.BasicView object&gt;</em><a class="headerlink" href="#taref.core.backbone.Backbone.chief_window" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.code_window">
+<code class="descname">code_window</code><em class="property"> = &lt;taref.core.interactive_e.CodeWindow object&gt;</em><a class="headerlink" href="#taref.core.backbone.Backbone.code_window" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.core.backbone.Backbone.extra_setup">
+<code class="descname">extra_setup</code><span class="sig-paren">(</span><em>param</em>, <em>typer</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#Backbone.extra_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.Backbone.extra_setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs extra setup during initialization where param is name of parameter and typer is it&#8217;s Atom type.
+Can be customized in child classes. default extra setup handles units, auto tags low and high for Ranges, and makes Callables into instancemethods</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.backbone.Backbone.instancemethod">
+<code class="descname">instancemethod</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#Backbone.instancemethod"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.Backbone.instancemethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>decorator for adding instancemethods defined outside of class</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.interactive_window">
+<code class="descname">interactive_window</code><em class="property"> = &lt;taref.core.interactive_e.InteractiveWindow object&gt;</em><a class="headerlink" href="#taref.core.backbone.Backbone.interactive_window" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.log_window">
+<code class="descname">log_window</code><em class="property"> = &lt;taref.core.log_e.LogWindow object&gt;</em><a class="headerlink" href="#taref.core.backbone.Backbone.log_window" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.main_params">
+<code class="descname">main_params</code><a class="headerlink" href="#taref.core.backbone.Backbone.main_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.property_dict">
+<code class="descname">property_dict</code><a class="headerlink" href="#taref.core.backbone.Backbone.property_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.property_names">
+<code class="descname">property_names</code><a class="headerlink" href="#taref.core.backbone.Backbone.property_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.property_values">
+<code class="descname">property_values</code><a class="headerlink" href="#taref.core.backbone.Backbone.property_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.reserved_names">
+<code class="descname">reserved_names</code><a class="headerlink" href="#taref.core.backbone.Backbone.reserved_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.unit_dict">
+<code class="descname">unit_dict</code><em class="property"> = {'c': 0.01, '%': 0.01, 'nm': 1e-09, 'G': 1000000000.0, 'mm': 0.001, 'M': 1000000.0, 'k': 1000.0, 'm': 0.001, 'kHz': 1000.0, 'km': 1000.0, 'n': 1e-09, 'um': 1e-06, 'cm': 0.01, 'u': 1e-06, 'GHz': 1000000000.0, 'MHz': 1000000.0, 'mW': 0.001}</em><a class="headerlink" href="#taref.core.backbone.Backbone.unit_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.view_window">
+<code class="descname">view_window</code><a class="headerlink" href="#taref.core.backbone.Backbone.view_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../taref.html">taref</a><ul>
+  <li><a href="core.html">core</a><ul>
+      <li>Previous: <a href="shower.html" title="previous chapter">shower</a></li>
+      <li>Next: <a href="../physics_doc/physics.html" title="next chapter">physics</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/core_doc/backbone.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="../_sources/core_doc/backbone.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

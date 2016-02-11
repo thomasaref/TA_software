@@ -3,16 +3,18 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to taref_docs's documentation!
+Welcome to taref's documentation!
 ======================================
 
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 3
 
-   introduction.rst
-   getting_started.rst
+    Getting Started <get_started/index>
+    introduction.rst
+    getting_started.rst
+    taref.rst
 
 
 Indices and tables

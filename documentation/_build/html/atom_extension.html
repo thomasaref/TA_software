@@ -1,0 +1,278 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>atom_extension &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="index.html" />
+    <link rel="up" title="core" href="core.html" />
+    <link rel="next" title="shower" href="shower.html" />
+    <link rel="prev" title="core" href="core.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-taref.core.atom_extension">
+<span id="atom-extension"></span><h1>atom_extension<a class="headerlink" href="#module-taref.core.atom_extension" title="Permalink to this headline">¶</a></h1>
+<p>Created on Fri Jan 22 19:12:36 2016</p>
+<p>&#64;author: thomasaref</p>
+<p>A collection of utility functions that extend Atom&#8217;s functionality, used heavily by taref other modules.
+To maintain compatibility with Atom classes, these are defined as standalone functions rather than extending the class.
+Runtime also seem slightly better as standalone functions than as an extended class</p>
+<dl class="function">
+<dt id="taref.core.atom_extension.call_func">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">call_func</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#call_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.call_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>calls a func using keyword assignments. If name corresponds to a Property, calls the get func.
+otherwise, if name_mangled func &#8220;_get_&#8221;+name exists, calls that. Finally calls just the name if these are not the case</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.get_all_main_params">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_all_main_params</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#get_all_main_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_all_main_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>all members in all_params that are not tagged as sub.
+Convenience function for more easily custom defining main_params in child classes</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.get_all_params">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_all_params</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#get_all_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_all_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>all members that are not tagged as private, i.e. not in reserved_names and will behave as agents.
+order of magnitude faster when combine with private_property</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.get_all_tags">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_all_tags</code><span class="sig-paren">(</span><em>obj</em>, <em>key</em>, <em>key_value=None</em>, <em>none_value=None</em>, <em>search_list=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#get_all_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_all_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a list of names of parameters with a certain key_value
+Shortcut retrieve members with particular metadata. There are several variants based on inputs.</p>
+<blockquote>
+<div><ul class="simple">
+<li>With only obj and key specified, returns all member names who have that key</li>
+<li>with key_value specified, returns all member names that have that key set to key_value</li>
+<li>with key_value and none_value specified equal, returns all member names that have that key set to key_value or do not have the tag</li>
+<li>specifying search list limits the members searched</li>
+<li>Finally, if key_value is none, returns those members not matching none_value</li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.get_inv">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_inv</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#get_inv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_inv" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the inverse mapped value (meant for an Enum)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.get_main_params">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_main_params</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#get_main_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_main_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns main_params if it exists and all possible main params if it does not</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.get_map">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_map</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em>, <em>value=None</em>, <em>reset=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#get_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>gets the mapped value specified by the property mapping and returns the attribute value if it doesn&#8217;t exist
+gets the map of an Enum defined in the property name_mapping or tag mapping.
+value can be used to get the map for another value besides the Enum&#8217;s current one.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.get_property_names">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_property_names</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#get_property_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_property_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns property names that are in all_params</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.get_property_values">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_property_values</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#get_property_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_property_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns property values that are in all_params</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.get_reserved_names">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_reserved_names</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#get_reserved_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_reserved_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>reserved names not to perform standard logging and display operations on,
+i.e. members that are tagged as private and will behave as usual Atom members</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.get_run_params">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_run_params</code><span class="sig-paren">(</span><em>f</em>, <em>skip_first=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#get_run_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_run_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns names of parameters a function will call, skips first parameter if skip_first is True</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.get_tag">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_tag</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em>, <em>key</em>, <em>none_value=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#get_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shortcut to retrieve metadata from an Atom member which also returns a none_value if the metadata does not exist.
+This is an easy way to get a tag on a particular member and provide a default if it isn&#8217;t there.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.get_type">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_type</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#get_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns type of member with given name, with possible override via tag typer</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.core.atom_extension.instancemethod">
+<em class="property">class </em><code class="descclassname">taref.core.atom_extension.</code><code class="descname">instancemethod</code><span class="sig-paren">(</span><em>obj</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#instancemethod"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.instancemethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>disposable decorator object for instancemethods defined outside of Atom class</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.log_func">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">log_func</code><span class="sig-paren">(</span><em>func</em>, <em>pname=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#log_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.log_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>logging decorator for Callables that logs call if tag log!=False</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.lowhigh_check">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">lowhigh_check</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#lowhigh_check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.lowhigh_check" title="Permalink to this definition">¶</a></dt>
+<dd><p>can specify low and high tags to keep float or int within a range.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.private_property">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">private_property</code><span class="sig-paren">(</span><em>fget</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#private_property"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.private_property" title="Permalink to this definition">¶</a></dt>
+<dd><p>A decorator which converts a function into a cached Property tagged as private.
+Improves performance greatly over property!</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.reset_properties">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">reset_properties</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#reset_properties"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.reset_properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>resets all  properties that are in all_params</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.set_all_tags">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">set_all_tags</code><span class="sig-paren">(</span><em>obj</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#set_all_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.set_all_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shortcut to use Atom&#8217;s tag functionality to set metadata on members not marked private, i.e. all_params. This is an easy way to set the same tag on all params</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.set_attr">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">set_attr</code><span class="sig-paren">(</span><em>self</em>, <em>name</em>, <em>value</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#set_attr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.set_attr" title="Permalink to this definition">¶</a></dt>
+<dd><p>utility function for setting tags while setting value</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.set_log">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">set_log</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#set_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.set_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>called when parameter of given name is set to value i.e. instr.parameter=value. Customized messages for different types. Also saves data</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.set_tag">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">set_tag</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#set_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.set_tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>sets the tag of a member using Atom&#8217;s built in tag functionality</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.set_value_map">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">set_value_map</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#set_value_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.set_value_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>checks floats and ints for low/high limits and automaps an Enum when setting. Not working for List?</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.core.atom_extension.tag_Callable">
+<em class="property">class </em><code class="descclassname">taref.core.atom_extension.</code><code class="descname">tag_Callable</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#tag_Callable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.tag_Callable" title="Permalink to this definition">¶</a></dt>
+<dd><p>disposable decorator class that returns a Callable tagged with kwargs</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.core.atom_extension.tag_Property">
+<em class="property">class </em><code class="descclassname">taref.core.atom_extension.</code><code class="descname">tag_Property</code><span class="sig-paren">(</span><em>cached=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/taref/core/atom_extension.html#tag_Property"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.tag_Property" title="Permalink to this definition">¶</a></dt>
+<dd><p>disposable decorator class that returns a cached Property tagged with kwargs</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="taref.html">taref</a><ul>
+  <li><a href="core.html">core</a><ul>
+      <li>Previous: <a href="core.html" title="previous chapter">core</a></li>
+      <li>Next: <a href="shower.html" title="next chapter">shower</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/atom_extension.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="_sources/atom_extension.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

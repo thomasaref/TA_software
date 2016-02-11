@@ -1,0 +1,12 @@
+*******************
+fund_core_e
+*******************
+
+.. automodule:: taref.core.fund_core_e.enaml
+   :members:
+   :undoc-members:
+
+
+
+
+

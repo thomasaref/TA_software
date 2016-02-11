@@ -3,9 +3,10 @@
 Created on Fri Jan 22 19:12:36 2016
 
 @author: thomasaref
-utility functions that extend Atom
-A collection of functions for using taref's dynamic view. To maintain compatibility with Atom and object
-derived objects, these are defined as standalone functions.
+
+A collection of utility functions that extend Atom's functionality, used heavily by taref other modules.
+To maintain compatibility with Atom classes, these are defined as standalone functions rather than extending the class.
+Runtime also seem slightly better as standalone functions than as an extended class
 """
 
 from atom.api import Property, Callable, Coerced, Enum, Float, Int, Unicode, List, Dict, Str, ContainerList, Range, FloatRange
@@ -64,17 +65,13 @@ def set_tag(obj, name, **kwargs):
     obj.get_member(name).tag(**kwargs)
 
 def set_all_tags(obj, **kwargs):
-    """set all parameters tags using keyword arguments.
-        Shortcut to use Atom's tag functionality to set metadata on members not marked private, i.e. all_params.
-    This is an easy way to set the same tag on all params"""
+    """Shortcut to use Atom's tag functionality to set metadata on members not marked private, i.e. all_params. This is an easy way to set the same tag on all params"""
     for param in get_all_params(obj):
         set_tag(obj, param, **kwargs)
 
 def get_tag(obj, name, key, none_value=None):
-    """returns the tag key of a member name an returns none_value if it does not exist
-        Shortcut to use Atom's retrive particular metadata which returns a none_value if it does not exist.
-    This is an easy way to get a tag on a particular member and provide a default if it isn't there.
-    runs slightly faster in this form"""
+    """Shortcut to retrieve metadata from an Atom member which also returns a none_value if the metadata does not exist.
+       This is an easy way to get a tag on a particular member and provide a default if it isn't there."""
     metadata=obj.get_member(name).metadata
     if metadata is None:
         return none_value
@@ -82,12 +79,12 @@ def get_tag(obj, name, key, none_value=None):
 
 def get_all_tags(obj, key, key_value=None, none_value=None, search_list=None):
     """returns a list of names of parameters with a certain key_value
-        Shortcut retrieve members with particular metadata. There are several variants based on inputs.
-        With only obj and key specified, returns all member names who have that key
-        with key_value specified, returns all member names that have that key set to key_value
-        with key_value and none_value specified equal, returns all member names that have that key set to key_value or do not have the tag
-        specifying search list limits the members searched
-        Finally, if key_value is none, returns those members not matching none_value"""
+       Shortcut retrieve members with particular metadata. There are several variants based on inputs.
+           * With only obj and key specified, returns all member names who have that key
+           * with key_value specified, returns all member names that have that key set to key_value
+           * with key_value and none_value specified equal, returns all member names that have that key set to key_value or do not have the tag
+           * specifying search list limits the members searched
+           * Finally, if key_value is none, returns those members not matching none_value"""
     if search_list is None:
         search_list=obj.members()
     if key_value is None:

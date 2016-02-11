@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taref.core.backbone &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for taref.core.backbone</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Tue Jul  7 21:52:51 2015</span>
+
+<span class="sd">@author: thomasaref</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">Property</span>
+<span class="kn">from</span> <span class="nn">taref.core.atom_extension</span> <span class="kn">import</span> <span class="p">(</span><span class="n">UNIT_DICT</span><span class="p">,</span> <span class="n">private_property</span><span class="p">,</span> <span class="n">get_reserved_names</span><span class="p">,</span> <span class="n">get_all_params</span><span class="p">,</span>
+<span class="n">get_all_main_params</span><span class="p">,</span> <span class="n">lowhigh_check</span><span class="p">,</span> <span class="n">make_instancemethod</span><span class="p">,</span> <span class="n">get_type</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">taref.core.extra_setup</span> <span class="kn">import</span> <span class="n">extra_setup</span>
+<span class="kn">from</span> <span class="nn">enaml.qt.qt_application</span> <span class="kn">import</span> <span class="n">QtApplication</span>
+
+<span class="kn">from</span> <span class="nn">enaml</span> <span class="kn">import</span> <span class="n">imports</span>
+<span class="k">with</span> <span class="n">imports</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">taref.core.agent_e</span> <span class="kn">import</span> <span class="n">AutoAgentView</span><span class="p">,</span> <span class="n">BasicView</span>
+    <span class="kn">from</span> <span class="nn">taref.core.interactive_e</span> <span class="kn">import</span> <span class="n">InteractiveWindow</span><span class="p">,</span> <span class="n">CodeWindow</span>
+    <span class="kn">from</span> <span class="nn">taref.core.log_e</span> <span class="kn">import</span> <span class="n">LogWindow</span>
+
+<div class="viewcode-block" id="Backbone"><a class="viewcode-back" href="../../../core_doc/backbone.html#taref.core.backbone.Backbone">[docs]</a><span class="k">class</span> <span class="nc">Backbone</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class combining primary functions for viewer operation.</span>
+<span class="sd">    Extends __init__ to allow extra setup.</span>
+<span class="sd">    extends __setattr__ to perform low/high check on params&quot;&quot;&quot;</span>
+    <span class="n">unit_dict</span><span class="o">=</span><span class="n">UNIT_DICT</span>
+    <span class="n">app</span><span class="o">=</span><span class="n">QtApplication</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
+
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">view_window</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">AutoAgentView</span><span class="p">(</span><span class="n">agent</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="n">chief_window</span><span class="o">=</span><span class="n">BasicView</span><span class="p">()</span>
+
+    <span class="n">interactive_window</span><span class="o">=</span><span class="n">InteractiveWindow</span><span class="p">()</span>
+
+    <span class="n">log_window</span><span class="o">=</span><span class="n">LogWindow</span><span class="p">()</span>
+
+    <span class="n">code_window</span><span class="o">=</span><span class="n">CodeWindow</span><span class="p">()</span>
+
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">reserved_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">get_reserved_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">all_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">get_all_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">all_main_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">get_all_main_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">main_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;defaults to all members in all_params that are not tagged as sub.</span>
+<span class="sd">        Can be overwritten to allow some minimal custom layout control,</span>
+<span class="sd">        e.g. order of presentation and which members are shown. Use all_main_params to get a list of</span>
+<span class="sd">        all members that could be in main_params&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_main_params</span>
+
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">property_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;returns a dict mapping property_names to property_items&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="n">name</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_params</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="n">name</span><span class="p">))</span> <span class="ow">is</span> <span class="n">Property</span><span class="p">])</span>
+
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">property_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;returns a dict mapping property_names to property_items&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">property_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">property_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;returns a dict mapping property_names to property_items&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">property_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Backbone.extra_setup"><a class="viewcode-back" href="../../../core_doc/backbone.html#taref.core.backbone.Backbone.extra_setup">[docs]</a>    <span class="k">def</span> <span class="nf">extra_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Performs extra setup during initialization where param is name of parameter and typer is it&#39;s Atom type.</span>
+<span class="sd">        Can be customized in child classes. default extra setup handles units, auto tags low and high for Ranges, and makes Callables into instancemethods&quot;&quot;&quot;</span>
+        <span class="n">extra_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Backbone.call_func"><a class="viewcode-back" href="../../../core_doc/backbone.html#taref.core.backbone.Backbone.call_func">[docs]</a>    <span class="k">def</span> <span class="nf">call_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;calls a func using keyword assignments. If name corresponds to a Property, calls the get func.</span>
+<span class="sd">        otherwise, if name_mangled func &quot;_get_&quot;+name exists, calls that. Finally calls just the name if these are not the case&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">property_names</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">property_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">fget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_params</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&quot;_get_&quot;</span><span class="o">+</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&quot;_get_&quot;</span><span class="o">+</span><span class="n">name</span><span class="p">)(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;uses __setattr__ perform lowhigh_check on all_params&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_params</span><span class="p">:</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">lowhigh_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Backbone</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+<span class="c">#    def reset_property(self, name):</span>
+<span class="c">#        self.get_member(name).reset(self)</span>
+<span class="c">#</span>
+<span class="c">#    def reset_properties(self):</span>
+<span class="c">#        &quot;&quot;&quot;resets all  properties&quot;&quot;&quot;</span>
+<span class="c">#        for item in self.property_dict.values():</span>
+<span class="c">#            item.reset(self)</span>
+
+<div class="viewcode-block" id="Backbone.instancemethod"><a class="viewcode-back" href="../../../core_doc/backbone.html#taref.core.backbone.Backbone.instancemethod">[docs]</a>    <span class="k">def</span> <span class="nf">instancemethod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;decorator for adding instancemethods defined outside of class&quot;&quot;&quot;</span>
+        <span class="n">make_instancemethod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;extends __init__ to autoset low and high tags for Range and FloatRange, autoset units for Ints and Floats and allow extra setup&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Backbone</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_params</span><span class="p">:</span>
+            <span class="n">typer</span><span class="o">=</span><span class="n">get_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extra_setup</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

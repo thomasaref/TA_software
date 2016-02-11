@@ -1,0 +1,496 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taref.physics.fundamentals &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for taref.physics.fundamentals</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Thu Jan 29 21:05:03 2015</span>
+
+<span class="sd">@author: thomasaref</span>
+
+<span class="sd">Gathers all useful constants and functions in one location. Also initiates a default log_file.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">scipy.constants</span> <span class="kn">import</span> <span class="n">e</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">hbar</span><span class="p">,</span> <span class="n">k</span> <span class="k">as</span> <span class="n">kB</span><span class="p">,</span> <span class="n">epsilon_0</span> <span class="k">as</span> <span class="n">eps0</span><span class="p">,</span> <span class="n">pi</span>
+<span class="n">c_eta</span> <span class="o">=</span> <span class="mf">0.8</span>
+
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="p">(</span><span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">empty</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">log10</span><span class="p">,</span> <span class="n">arange</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">delete</span><span class="p">,</span>
+                   <span class="n">absolute</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">amin</span><span class="p">,</span> <span class="n">amax</span><span class="p">,</span> <span class="n">linspace</span><span class="p">,</span> <span class="n">zeros</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">numpy.fft</span> <span class="kn">import</span> <span class="n">fft</span><span class="p">,</span> <span class="n">ifft</span>
+<span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">eig</span>
+<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Float</span>
+
+<div class="viewcode-block" id="zero_arr"><a class="viewcode-back" href="../../../physics.html#taref.physics.fundamentals.zero_arr">[docs]</a><span class="k">def</span> <span class="nf">zero_arr</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="dB"><a class="viewcode-back" href="../../../physics.html#taref.physics.fundamentals.dB">[docs]</a><span class="k">def</span> <span class="nf">dB</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mf">20.0</span><span class="o">*</span><span class="n">log10</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="inv_dB"><a class="viewcode-back" href="../../../physics.html#taref.physics.fundamentals.inv_dB">[docs]</a><span class="k">def</span> <span class="nf">inv_dB</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mf">10.0</span><span class="o">**</span><span class="p">(</span><span class="n">y</span><span class="o">/</span><span class="mf">20.0</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="dB_pwr"><a class="viewcode-back" href="../../../physics.html#taref.physics.fundamentals.dB_pwr">[docs]</a><span class="k">def</span> <span class="nf">dB_pwr</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mf">10.0</span><span class="o">*</span><span class="n">log10</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="inv_dB_pwr"><a class="viewcode-back" href="../../../physics.html#taref.physics.fundamentals.inv_dB_pwr">[docs]</a><span class="k">def</span> <span class="nf">inv_dB_pwr</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mf">10.0</span><span class="o">**</span><span class="p">(</span><span class="n">y</span><span class="o">/</span><span class="mf">10.0</span><span class="p">)</span>
+</div>
+<span class="n">PREFIX_DICT</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span><span class="mf">1.0e-9</span><span class="p">,</span> <span class="s">&quot;u&quot;</span><span class="p">:</span><span class="mf">1.0e-6</span><span class="p">,</span> <span class="s">&quot;m&quot;</span><span class="p">:</span><span class="mf">1.0e-3</span><span class="p">,</span> <span class="s">&quot;c&quot;</span><span class="p">:</span><span class="mf">1.0e-2</span><span class="p">,</span>
+           <span class="s">&quot;G&quot;</span><span class="p">:</span><span class="mf">1.0e9</span><span class="p">,</span> <span class="s">&quot;M&quot;</span><span class="p">:</span><span class="mf">1.0e6</span><span class="p">,</span> <span class="s">&quot;k&quot;</span><span class="p">:</span><span class="mf">1.0e3</span><span class="p">,}</span>
+
+<div class="viewcode-block" id="UdBm2lin"><a class="viewcode-back" href="../../../physics.html#taref.physics.fundamentals.UdBm2lin">[docs]</a><span class="k">def</span> <span class="nf">UdBm2lin</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s">&quot;mW&quot;</span><span class="p">,</span> <span class="n">unit_factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="n">unit_factor</span><span class="o">=</span><span class="n">PREFIX_DICT</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">unit_factor</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">NdBm2lin</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mf">0.001</span><span class="o">*</span><span class="n">inv_dB_pwr</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="n">unit_factor</span>
+    <span class="n">NdBm2lin</span><span class="o">.</span><span class="n">unit</span><span class="o">=</span><span class="n">unit</span>
+    <span class="k">return</span> <span class="n">NdBm2lin</span>
+</div>
+<span class="n">dBm2lin</span><span class="o">=</span><span class="n">UdBm2lin</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Ulin2dBm"><a class="viewcode-back" href="../../../physics.html#taref.physics.fundamentals.Ulin2dBm">[docs]</a><span class="k">def</span> <span class="nf">Ulin2dBm</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s">&quot;W&quot;</span><span class="p">,</span> <span class="n">unit_factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="n">unit_factor</span><span class="o">=</span><span class="n">PREFIX_DICT</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">unit_factor</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">Nlin2dBm</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">dB_pwr</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">unit_factor</span><span class="o">/</span><span class="mf">0.001</span><span class="p">)</span>
+    <span class="n">Nlin2dBm</span><span class="o">.</span><span class="n">unit</span><span class="o">=</span><span class="s">&quot;dBm&quot;</span>
+    <span class="k">return</span> <span class="n">Nlin2dBm</span></div>
+<span class="n">lin2dBm</span><span class="o">=</span><span class="n">Ulin2dBm</span><span class="p">()</span>
+
+<div class="viewcode-block" id="dBm_Float"><a class="viewcode-back" href="../../../physics.html#taref.physics.fundamentals.dBm_Float">[docs]</a><span class="k">def</span> <span class="nf">dBm_Float</span><span class="p">(</span><span class="n">value</span><span class="o">=-</span><span class="mf">100.0</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s">&quot;dBm&quot;</span><span class="p">,</span> <span class="n">display_func</span><span class="o">=</span><span class="n">dBm2lin</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="mW_Float"><a class="viewcode-back" href="../../../physics.html#taref.physics.fundamentals.mW_Float">[docs]</a><span class="k">def</span> <span class="nf">mW_Float</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">1.0e-10</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s">&quot;mW&quot;</span><span class="p">,</span> <span class="n">display_func</span><span class="o">=</span><span class="n">lin2dBm</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="magphase"><a class="viewcode-back" href="../../../physics.html#taref.physics.fundamentals.magphase">[docs]</a><span class="k">def</span> <span class="nf">magphase</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">response</span><span class="o">=</span><span class="s">&quot;Mag&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">dtype</span><span class="p">(</span><span class="s">&quot;complex128&quot;</span><span class="p">)</span><span class="o">==</span><span class="n">y</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">response</span><span class="o">==</span><span class="s">&quot;Phase&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">angle</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">response</span><span class="o">==</span><span class="s">&quot;Mag (dB)&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">dB</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">absolute</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y</span>
+</div>
+<div class="viewcode-block" id="normalize"><a class="viewcode-back" href="../../../physics.html#taref.physics.fundamentals.normalize">[docs]</a><span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">amin</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="n">amax</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">-</span><span class="n">amin</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="normalize_1d"><a class="viewcode-back" href="../../../physics.html#taref.physics.fundamentals.normalize_1d">[docs]</a><span class="k">def</span> <span class="nf">normalize_1d</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">amin</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="n">amax</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="o">-</span><span class="n">amin</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="sinc"><a class="viewcode-back" href="../../../physics_doc/fundamentals.html#taref.physics.fundamentals.sinc">[docs]</a><span class="k">def</span> <span class="nf">sinc</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;sinc function which doesn&#39;t autoinclude pi&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">sin</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">/</span><span class="n">X</span>
+</div>
+<div class="viewcode-block" id="sinc_sq"><a class="viewcode-back" href="../../../physics_doc/fundamentals.html#taref.physics.fundamentals.sinc_sq">[docs]</a><span class="k">def</span> <span class="nf">sinc_sq</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;sinc squared which doesn&#39;t autoinclude pi&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">sinc</span><span class="p">(</span><span class="n">X</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span>
+</div>
+<span class="n">Tc</span><span class="o">=</span><span class="mf">1.315</span> <span class="c">#critical temperature of aluminum</span>
+<span class="n">Delta</span><span class="o">=</span><span class="mf">200.0e-6</span><span class="o">*</span><span class="n">e</span> <span class="c">#gap of aluminum</span>
+
+<span class="c">#</span>
+<span class="c">#_material_dict=dict(</span>
+<span class="c">#    LiNbYZ=dict(epsinf=46.0*eps0,</span>
+<span class="c">#                Dvv=2.4e-2,</span>
+<span class="c">#                v=3488.0),</span>
+<span class="c">#    STquartz=dict(epsinf=5.6*eps0,</span>
+<span class="c">#                  Dvv=0.06e-2,</span>
+<span class="c">#                  v=3159.0),</span>
+<span class="c">#    GaAs=dict(epsinf=1.2e-10,</span>
+<span class="c">#              Dvv=0.035e-2,</span>
+<span class="c">#              v=2900.0),</span>
+<span class="c">#    LiNb128=dict(epsinf=56*eps0,</span>
+<span class="c">#                 Dvv=2.7e-2,</span>
+<span class="c">#                 v=3979.0),</span>
+<span class="c">#    LiNbYZX=dict(epsinf=46*eps0,</span>
+<span class="c">#                 Dvv=0.8e-2,</span>
+<span class="c">#                 v=3770.0),</span>
+<span class="c">#    MDCQuartz=dict(Dvv=0.2/2.0/100.0,</span>
+<span class="c">#                      epsinf=5.0e-11,</span>
+<span class="c">#                      v=3642.0),</span>
+<span class="c">#    LiTaZY=dict(Dvv=0.93/2.0/100.0,</span>
+<span class="c">#              epsinf=4.4e-10,</span>
+<span class="c">#              v=3329.0),</span>
+<span class="c">#    LiTaMDC=dict(Dvv=1.54/2.0/100.0,</span>
+<span class="c">#               epsinf=4.4e-10,</span>
+<span class="c">#               v=3370.0))</span>
+<span class="c">#</span>
+<span class="c">#_material=&quot;LiNbYZ&quot;</span>
+<span class="c">#Dvv=_material_dict[_material][&#39;Dvv&#39;]</span>
+<span class="c">#epsinf=_material_dict[_material][&#39;epsinf&#39;]</span>
+<span class="c">#v=_material_dict[_material][&#39;v&#39;]</span>
+<span class="c">#</span>
+<span class="c">#_material_parameters=dict(#material=dict(desc=&quot;material of substrate&quot;),</span>
+<span class="c">#                          c_eta = dict(desc=&quot;The element factor&quot;,</span>
+<span class="c">#                                      check_value=0.8,</span>
+<span class="c">#                                      unit=&quot;for 50% metallization (Datta assuming sqrt(2) cancellation)&quot;,</span>
+<span class="c">#                                      latex=&#39;c_\eta&#39;),</span>
+<span class="c">#                          Dvv = dict(unit=&quot;&quot;,</span>
+<span class="c">#                                     check_value=_material_dict[&quot;LiNbYZ&quot;][&#39;Dvv&#39;],</span>
+<span class="c">#                                     reference=&quot;Morgan pg 9&quot;,</span>
+<span class="c">#                                     desc=&quot;Piezoelectric coupling constant&quot;,</span>
+<span class="c">#                                     aka=&quot;K^2/2&quot;,</span>
+<span class="c">#                                     latex=&quot;\Delta v/v&quot;),</span>
+<span class="c">#                          epsinf=dict(unit=&quot;F/m&quot;,</span>
+<span class="c">#                                      check_value=_material_dict[&quot;LiNbYZ&quot;][&#39;epsinf&#39;],</span>
+<span class="c">#                                      reference=&quot;Morgan pg 9&quot;,</span>
+<span class="c">#                                      aka=&quot;C_S in Datta (50% metalization)&quot;,</span>
+<span class="c">#                                      desc=&quot;Capacitance for one finger pair&quot;,</span>
+<span class="c">#                                      latex=&quot;\epsilon_\infty&quot;),</span>
+<span class="c">#                          v=dict(unit=&quot;m/s&quot;,</span>
+<span class="c">#                                 desc=&quot;propagation velocity of SAW (free surface)&quot;,</span>
+<span class="c">#                                 check_value=_material_dict[&quot;LiNbYZ&quot;][&#39;v&#39;],</span>
+<span class="c">#                                 latex=&quot;v_f&quot;)) # propagation velocity for YZ lithium niobate --- page 9 Morgan&#39;s Book</span>
+<span class="c">#</span>
+<span class="c">#_natural_constants=dict(h=dict(desc=&quot;Planck&#39;s constant&quot;,</span>
+<span class="c">#                              unit=&quot;&quot;,</span>
+<span class="c">#                              check_value = 6.62606957e-34,</span>
+<span class="c">#                              latex= &#39;h&#39;),</span>
+<span class="c">#                       hbar = dict(desc=&quot;Reduced Planck&#39;s constant&quot;,</span>
+<span class="c">#                                   check_value=1.054571726e-34,</span>
+<span class="c">#                                   unit=&#39;&#39;,</span>
+<span class="c">#                                   latex=&#39;\hbar&#39;),</span>
+<span class="c">#                       kB=dict(desc=&quot;Boltzmann&#39;s constant&quot;,</span>
+<span class="c">#                               check_value=1.3806488e-23,</span>
+<span class="c">#                               unit=&#39;&#39;,</span>
+<span class="c">#                               latex=&#39;k_B&#39;),</span>
+<span class="c">#                       e =dict(desc=&quot;charge of an electron&quot;,</span>
+<span class="c">#                               check_value=1.60217657e-19,</span>
+<span class="c">#                               unit=&quot;C&quot;,</span>
+<span class="c">#                               latex=&#39;e&#39;),</span>
+<span class="c">#                       eps0 = dict(desc=&quot;permittivity of free space&quot;,</span>
+<span class="c">#                                   check_value=8.85418782e-12,</span>
+<span class="c">#                                   unit=&quot;F/m&quot;,</span>
+<span class="c">#                                   latex=&#39;\epsilon_0&#39;),</span>
+<span class="c">#                       pi = dict(desc=&quot;ratio of circle&#39;s circumference to diameter&quot;,</span>
+<span class="c">#                                 check_value=3.141592654,</span>
+<span class="c">#                                 unit=&quot;&quot;,</span>
+<span class="c">#                                 latex=&#39;\pi&#39;))</span>
+<span class="c">#_fundamental_functions=dict(cos=dict(desc=&quot;cosine&quot;,</span>
+<span class="c">#                                     latex=&#39;\cos&#39;),</span>
+<span class="c">#                            sin=dict(desc=&quot;sine&quot;,</span>
+<span class="c">#                                     latex=&#39;\sin&#39;),</span>
+<span class="c">#                            exp=dict(desc=&quot;exponent&quot;,</span>
+<span class="c">#                                     latex=&#39;\exp&#39;),</span>
+<span class="c">#                            sqrt=dict(desc=&quot;square root&quot;,</span>
+<span class="c">#                                      latex=&#39;\sqrt&#39;),</span>
+<span class="c">#                            empty=dict(desc=&quot;makes empty array&quot;,</span>
+<span class="c">#                                       latex=&#39;empty&#39;),</span>
+<span class="c">#                            mean=dict(desc=&quot;mean&quot;,</span>
+<span class="c">#                                      latex=&#39;mean&#39;),</span>
+<span class="c">#                            fft=dict(desc=&quot;fast fourier transform&quot;,</span>
+<span class="c">#                                      latex=&#39;fft&#39;),</span>
+<span class="c">#                            ifft=dict(desc=&quot;inverse fast fourier transform&quot;,</span>
+<span class="c">#                                      latex=&#39;fft&#39;),</span>
+<span class="c">#                            absolute=dict(desc=&quot;absolute value&quot;,</span>
+<span class="c">#                                      latex=&#39;|{0}|&#39;),</span>
+<span class="c">#                            angle=dict(desc=&quot;angle of complex number&quot;,</span>
+<span class="c">#                                      latex=&#39;fft&#39;),</span>
+<span class="c">#                            log10=dict(desc=&quot;logarithm base 10&quot;,</span>
+<span class="c">#                                      latex=&#39;\log&#39;))</span>
+<span class="c">#</span>
+<span class="c">#class _func_log(object):</span>
+<span class="c">#    &quot;&quot;&quot;decorator class to allow function logging&quot;&quot;&quot;</span>
+<span class="c">#    def update_log(self, log_str):</span>
+<span class="c">#        log_info(log_str)</span>
+<span class="c">#</span>
+<span class="c">#    def set_run_params(self, arg_count):</span>
+<span class="c">#        self.run_params=list(self.f.func_code.co_varnames[0:arg_count])</span>
+<span class="c">#</span>
+<span class="c">#    def __init__(self, f):</span>
+<span class="c">#        self.f = f</span>
+<span class="c">#        self.set_run_params(self.f.func_code.co_argcount)</span>
+<span class="c">#        self.func_name=self.f.func_name</span>
+<span class="c">#        self.metadata=dict()</span>
+<span class="c">#</span>
+<span class="c">#    def __call__(self, *args, **kwargs):</span>
+<span class="c">#        self.update_log(&quot;RAN: {name}&quot;.format(</span>
+<span class="c">#                 name=self.f.func_name))#, run_params=self.run_params))</span>
+<span class="c">#        return self.f(*args, **kwargs)</span>
+<span class="c">#</span>
+<span class="c">#    def tag(self, **kwargs):</span>
+<span class="c">#        self.metadata.update(**kwargs)</span>
+<span class="c">#</span>
+<span class="c">#    def get_tag(self, key, none_value=&quot;&quot;):</span>
+<span class="c">#        &quot;&quot;&quot;gets tag key of parameter name and returns none_value if tag does not exist. very useful function&quot;&quot;&quot;</span>
+<span class="c">#        try:</span>
+<span class="c">#            return self.metadata[key]</span>
+<span class="c">#        except:</span>
+<span class="c">#            return none_value</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def mean_and_remove_offset(raw_data, offset, dimension=2):</span>
+<span class="c">#    &quot;&quot;&quot;Average over all flux values (it&#39;s a very narrow range)&quot;&quot;&quot;</span>
+<span class="c">#    return mean(raw_data, dimension) - offset</span>
+<span class="c">#mean_and_remove_offset.tag(latex=&quot;mean({0}, {2})-{1}&quot;)</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def dB2amp(trace_dB):</span>
+<span class="c">#    &quot;&quot;&quot;converts dB to amplitude&quot;&quot;&quot;</span>
+<span class="c">#    return 10.0**(trace_dB/20.0)</span>
+<span class="c">#dB2amp.tag(desc=&#39;dB to amplitude&#39;)</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def dB(x):</span>
+<span class="c">#    &quot;&quot;&quot;returns x in dB (factor of 20)&quot;&quot;&quot;</span>
+<span class="c">#    return 20.0*log10(absolute(x))</span>
+<span class="c">#dB.tag(desc=&#39;amplitude to dB&#39;)</span>
+<span class="c">#</span>
+<span class="c">##@_func_log</span>
+<span class="c">##def magphase(y, response=&quot;Mag&quot;):</span>
+<span class="c">##    &quot;returns mag, phase, mag dB respectively&quot;&quot;&quot;</span>
+<span class="c">##    if dtype(&quot;complex128&quot;)==y.dtype:</span>
+<span class="c">##        if response==&quot;Phase&quot;:</span>
+<span class="c">##            return angle(y)</span>
+<span class="c">##        elif response==&quot;Mag (dB)&quot;:</span>
+<span class="c">##            return dB(y)</span>
+<span class="c">##        else:</span>
+<span class="c">##            return absolute(y)</span>
+<span class="c">##    return y</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def flux_parabola(flux_over_flux0, EJmax, EC):</span>
+<span class="c">#    &quot;&quot;&quot;Omega_10 in regular frequency unit&quot;&quot;&quot;</span>
+<span class="c">#    EJ = EJmax*abs(cos(pi*flux_over_flux0))</span>
+<span class="c">#    E0 = -EJ + sqrt(8*EJ*EC)*0.5 - (EC/4)</span>
+<span class="c">#    E1 = -EJ + sqrt(8*EJ*EC)*1.5 - (EC/12.0)*(6+6+3)</span>
+<span class="c">#    return (E1-E0)/h</span>
+<span class="c">#flux_parabola.tag(latex=&quot;&quot;&quot;E_j=E_{Jmax} |\cos(\pi \phi/\phi_0)|</span>
+<span class="c">#E_0=-E_J+(1/2)\sqrt(8 E_J E_C)-E_C/4</span>
+<span class="c">#E_1=-E_J+(3/2)\sqrt(8 E_J E_C)-(E_C/12)(6+6+3)</span>
+<span class="c">#f=(E_1-E_0)/h</span>
+<span class="c">#&quot;&quot;&quot;)</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def detuning(flux_over_flux0, f0):</span>
+<span class="c">#    &quot;&quot;&quot;Per&#39;s definition: The detuning is positive for higher qubit frequency.&quot;&quot;&quot;</span>
+<span class="c">#    d_omega = 2*pi*(f0 - flux_parabola(flux_over_flux0))</span>
+<span class="c">#    return d_omega</span>
+<span class="c">#detuning.tag(latex=&quot;2 \pi (f_0 - (E_1-E_0)/h)&quot;)</span>
+<span class="c">#</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def r_qubit(d_omega, N_in, G, g):</span>
+<span class="c">#    &quot;&quot;&quot; Qubit reflection, for an incoming N_in phonons per second *at the qubit*</span>
+<span class="c">#        This is Per&#39;s expression, but adjusted for Anton&#39;s definition of detuning.&quot;&quot;&quot;</span>
+<span class="c">#    P22 = empty(len(d_omega), len(N_in))</span>
+<span class="c">#    for N_idx in range(0,len(N_in)):</span>
+<span class="c">#        for d_omega_idx in range(1,len(d_omega)):</span>
+<span class="c">#            dw = d_omega(d_omega_idx)</span>
+<span class="c">#            N = N_in(N_idx)</span>
+<span class="c">##            G = Gamma_tot</span>
+<span class="c">##            g = gamma_10</span>
+<span class="c">#            #S21 = S21_0</span>
+<span class="c">#            #S22 = S22_0</span>
+<span class="c">#            #tL = const.theta_L</span>
+<span class="c">#            P22[d_omega_idx, N_idx] = -(G/(2.0*g))*(1+1j**dw/g)/(1 + dw**2/g**2 + 2.0*N/g)</span>
+<span class="c">#            # r(d_omega_idx, N_idx) = (0.5*const.Gamma_ac/const.gamma_10)*(1-1i*d_omega(d_omega_idx)/const.gamma_10)./(1 + (-d_omega(d_omega_idx)./const.gamma_10).^2 +2* N_in(N_idx)/(const.gamma_10));</span>
+<span class="c">#    return P22</span>
+<span class="c">#r_qubit.tag(desc=&#39;qubit reflection&#39;)</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def t_qubit(d_omega, N_in, G, g, x):</span>
+<span class="c">#    &quot;&quot;&quot;Qubit transmission, for an incoming N_in phonons per second. Uses Anton&#39;s</span>
+<span class="c">#       definition of detuning. Computing in regular frequencies&quot;&quot;&quot;</span>
+<span class="c">#    P21 = empty(len(d_omega), len(N_in))</span>
+<span class="c">#    for N_idx in range(len(N_in)):</span>
+<span class="c">#        for d_omega_idx in range(1,len(d_omega)):</span>
+<span class="c">#            dw = d_omega(d_omega_idx)</span>
+<span class="c">#            N = N_in(N_idx)</span>
+<span class="c">##            G = Gamma_tot</span>
+<span class="c">##            g = gamma_10</span>
+<span class="c">##            x = xi</span>
+<span class="c">#</span>
+<span class="c">#            P21[d_omega_idx, N_idx] = -sqrt(2.0*x*(1.0-x))*0.5*G*(g+1j*dw)/(dw**2 + g**2 + 4.0*x*g*N);</span>
+<span class="c">#            #Omega = 2*sqrt(N_in(N_idx)*const.Gamma_el/(2*pi));</span>
+<span class="c">#            #t(d_omega_idx, N_idx) = sqrt(0.5*const.Gamma_ac*const.Gamma_el)*(1i*d_omega(d_omega_idx) - const.Gamma_tot/2)./(d_omega(d_omega_idx).^2 + const.Gamma_tot^2/4 + Omega^2/2);</span>
+<span class="c">#    return P21</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def t_qubit_Omega(d_omega, Omega, G, g):</span>
+<span class="c">#    &quot;&quot;&quot; Qubit transmission, for an incoming N_in phonons per second. Uses Anton&#39;s</span>
+<span class="c">#     definition of detuning. Computing in regular frequencies&quot;&quot;&quot;</span>
+<span class="c">#    P21 = empty(len(d_omega), len(Omega))</span>
+<span class="c">#    for O_idx in range(1,len(Omega)):</span>
+<span class="c">#        for d_omega_idx in range(1,len(d_omega)):</span>
+<span class="c">#            dw = d_omega(d_omega_idx)</span>
+<span class="c">#            #G = Gamma_tot</span>
+<span class="c">#            #g = gamma_10</span>
+<span class="c">#            #x = xi</span>
+<span class="c">#            P21[d_omega_idx, O_idx] = -(g+1j*dw)/(dw**2 + g**2 + (g/G)*Omega(O_idx)**2)</span>
+<span class="c">#            #Omega = 2*sqrt(N_in(N_idx)*const.Gamma_el/(2*pi));</span>
+<span class="c">#            #t(d_omega_idx, N_idx) = sqrt(0.5*const.Gamma_ac*const.Gamma_el)*(1i*d_omega(d_omega_idx) - const.Gamma_tot/2)./(d_omega(d_omega_idx).^2 + const.Gamma_tot^2/4 + Omega^2/2);</span>
+<span class="c">#    return P21</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def S11_IDT(r_qubit, S11_0, S21_0, theta_L, S22_0):</span>
+<span class="c">#    &quot;&quot;&quot;Total reflection seen from the IDT, for a given qubit reflection coefficient (Per&#39;s P21) using Per&#39;s Eq. 12&quot;&quot;&quot;</span>
+<span class="c">#    r_tot = S11_0+ S21_0**2/(exp(-2j*theta_L)/r_qubit - S22_0)</span>
+<span class="c">#    return r_tot</span>
+<span class="c">#S11_IDT.latex=&quot;&quot;</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def S11_IDT_no_IDT_ref(r_qubit, S21_0, theta_L, S22_0):</span>
+<span class="c">#    &quot;&quot;&quot;using Per&#39;s Eq. 12&quot;&quot;&quot;</span>
+<span class="c">#    r_tot = S21_0**2/(exp(-2j*theta_L)/r_qubit - S22_0)</span>
+<span class="c">#    return r_tot</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def S21_gate(t_qubit, r_qubit, T_CT, theta_CT, theta_L, S21_0, S22_0):</span>
+<span class="c">#    &quot;&quot;&quot;Total transmission from gate to IDT (Per&#39;s Eq. 22), for given qubit</span>
+<span class="c">#      transmission and reflection coefficients (Per&#39;s P21 and P22).&quot;&quot;&quot;</span>
+<span class="c">#    t_tot = T_CT*exp(1j*theta_CT) + t_qubit*S21_0*exp(1j*theta_L)/(1 - S22_0*r_qubit*exp(2j*theta_L))</span>
+<span class="c">#    return t_tot</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def S11_IDT_with_qubit(d_omega, P_in, hf0, S21_0):</span>
+<span class="c">#    &quot;&quot;&quot;Total reflection for electrical power P_in applied to the IDT&quot;&quot;&quot;</span>
+<span class="c">#    N_in = S21_0**2*P_in/hf0</span>
+<span class="c">#    r_qub = r_qubit(d_omega, N_in)</span>
+<span class="c">#    r_tot = S11_IDT(r_qub)</span>
+<span class="c">#    return r_tot</span>
+<span class="c">#</span>
+<span class="c">#@_func_log</span>
+<span class="c">#def S21_gate_with_qubit(delta_omega, P_in, hf0):</span>
+<span class="c">#    &quot;&quot;&quot;Total transmission for electrical power P_in applied to the gate&quot;&quot;&quot;</span>
+<span class="c">#    N_in = P_in/hf0</span>
+<span class="c">#    t_qub = t_qubit(delta_omega, N_in)</span>
+<span class="c">#    r_qub = r_qubit(delta_omega, N_in)</span>
+<span class="c">#    t_tot = S21_gate(t_qub, r_qub)</span>
+<span class="c">#    return t_tot</span>
+<span class="c">#</span>
+<span class="c">#_all_dict=dict()</span>
+<span class="c">#_all_dict.update(_material_parameters)</span>
+<span class="c">#_all_dict.update(_natural_constants)</span>
+<span class="c">#_all_dict.update(_fundamental_functions)</span>
+<span class="c">#</span>
+<span class="c">#def _document(_mydict):</span>
+<span class="c">#    _func_list=[]</span>
+<span class="c">#    _var_list=[]</span>
+<span class="c">#    _notdoc_list=[]</span>
+<span class="c">#    _ufunc_list=[]</span>
+<span class="c">#    for key in filter(lambda aname: not aname.startswith(&#39;_&#39;), _mydict.keys()):</span>
+<span class="c">#        value=_mydict[key]</span>
+<span class="c">#        if type(value) not in (type,):# and not isinstance(value, object):</span>
+<span class="c">#            if key not in _all_dict.keys():</span>
+<span class="c">#                if isinstance(value, _func_log):</span>
+<span class="c">##                    print key #+&quot;: &quot;+value.f.func_doc</span>
+<span class="c">#                    _func_list.append(key)</span>
+<span class="c">#                else:</span>
+<span class="c">##                    print key+&quot; not documented!&quot;</span>
+<span class="c">#                    _notdoc_list.append(key)</span>
+<span class="c">#            else:</span>
+<span class="c">#                if type(value) in (float, int, str, unicode):</span>
+<span class="c">##                    print key, value, _all_dict[key]</span>
+<span class="c">#                    _var_list.append(key)</span>
+<span class="c">#                #elif type(value) in (list, ndarray):</span>
+<span class="c">#                #    print value, len(value)</span>
+<span class="c">#                else:</span>
+<span class="c">#                    _ufunc_list.append(key)</span>
+<span class="c">##                    print key, _all_dict[key] #, value.__doc__ #__name__</span>
+<span class="c">#</span>
+<span class="c">#    print &quot;Constants:&quot;</span>
+<span class="c">#    for key in _var_list:</span>
+<span class="c">#        print key, _mydict[key], _all_dict[key][&#39;desc&#39;]</span>
+<span class="c">#</span>
+<span class="c">#    print &quot;\nPredef Functions:&quot;</span>
+<span class="c">#    for key in _ufunc_list:</span>
+<span class="c">#        print key, _all_dict[key][&#39;desc&#39;]</span>
+<span class="c">#    print &quot;\nFunctions:&quot;</span>
+<span class="c">#    for key in _func_list:</span>
+<span class="c">#        print key, _mydict[key].get_tag(&#39;desc&#39;)</span>
+<span class="c">#    print &quot;\nNot documented&quot;</span>
+<span class="c">#    for key in _notdoc_list:</span>
+<span class="c">#        print key</span>
+<span class="c">#</span>
+<span class="c">#</span>
+<span class="c">#                #if isinstance(func, FunctionType):</span>
+<span class="c">#                #    setattr(self, key, log(func))</span>
+<span class="c">#if __name__==&quot;__main__&quot;:</span>
+<span class="c">##    _mydict=locals()</span>
+<span class="c">#    from numpy import ufunc, ndarray</span>
+<span class="c">#    from types import FunctionType</span>
+<span class="c">#    _document(locals())</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
