@@ -1,0 +1,224 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taref.core.log &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for taref.core.log</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Tue Mar 24 16:09:54 2015</span>
+
+<span class="sd">@author: thomasaref</span>
+
+<span class="sd">A collection of logging related functions. Configures logging to be output</span>
+<span class="sd">points it at a stream and a memory handler and starts logging.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">warning</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">getLogger</span><span class="p">,</span> <span class="n">StreamHandler</span><span class="p">,</span> <span class="n">FileHandler</span><span class="p">,</span> <span class="n">basicConfig</span><span class="p">,</span> <span class="n">Formatter</span><span class="p">,</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">DEBUG</span><span class="p">,</span> <span class="n">log</span><span class="p">,</span> <span class="n">addLevelName</span><span class="p">,</span> <span class="n">INFO</span> <span class="c">#, debug</span>
+<span class="kn">from</span> <span class="nn">logging.handlers</span> <span class="kn">import</span> <span class="n">MemoryHandler</span>
+<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">Unicode</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">cached_property</span>
+<span class="kn">from</span> <span class="nn">sys</span> <span class="kn">import</span> <span class="n">exc_info</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">basename</span>
+
+<span class="c">#redefine DEBUG level so doesn&#39;t catch debug warnings from IPythonConsole in enaml</span>
+
+<span class="n">MYDEBUG</span><span class="o">=</span><span class="n">DEBUG</span><span class="o">+</span><span class="mi">1</span>
+<span class="n">addLevelName</span><span class="p">(</span><span class="n">MYDEBUG</span><span class="p">,</span> <span class="s">&quot;MYDEBUG&quot;</span><span class="p">)</span>
+<span class="c">#configure logging</span>
+<span class="n">MEMBUFFER</span><span class="o">=</span><span class="mi">30</span>
+<span class="n">LOGFORMATTER</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%(asctime)s</span><span class="s"> </span><span class="si">%(levelname)s</span><span class="s">  @ </span><span class="si">%(message)s</span><span class="s">&#39;</span>
+<span class="n">LOGLEVEL</span><span class="o">=</span><span class="n">MYDEBUG</span> <span class="c">#INFO #DEBUG</span>
+
+<span class="n">basicConfig</span><span class="p">(</span><span class="n">format</span><span class="o">=</span><span class="n">LOGFORMATTER</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">LOGLEVEL</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="f_top_finder"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.f_top_finder">[docs]</a><span class="k">def</span> <span class="nf">f_top_finder</span><span class="p">(</span><span class="n">fb</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;recursive top frame finder&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">fb</span><span class="o">.</span><span class="n">f_back</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fb</span>
+    <span class="k">return</span> <span class="n">f_top_finder</span><span class="p">(</span><span class="n">fb</span><span class="o">.</span><span class="n">f_back</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="f_top_limited"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.f_top_limited">[docs]</a><span class="k">def</span> <span class="nf">f_top_limited</span><span class="p">(</span><span class="n">fb</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;limited recursion top frame finder&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">fb</span><span class="o">.</span><span class="n">f_back</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fb</span>
+        <span class="n">fb</span><span class="o">=</span><span class="n">fb</span><span class="o">.</span><span class="n">f_back</span>
+    <span class="k">return</span> <span class="n">fb</span>
+</div>
+<div class="viewcode-block" id="f_top"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.f_top">[docs]</a><span class="k">def</span> <span class="nf">f_top</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;returns the top frame after n steps&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">fb</span><span class="o">=</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">tb_frame</span><span class="o">.</span><span class="n">f_back</span>
+    <span class="k">return</span> <span class="n">f_top_limited</span><span class="p">(</span><span class="n">fb</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="msg"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.msg">[docs]</a><span class="k">def</span> <span class="nf">msg</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;log msg that accepts multiple args with file info&quot;&quot;&quot;</span>
+    <span class="n">n</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&quot;n&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">fb</span><span class="o">=</span><span class="n">f_top</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s">&quot;{0} {1} {2}: {3}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fb</span><span class="o">.</span><span class="n">f_lineno</span><span class="p">,</span> <span class="n">basename</span><span class="p">(</span><span class="n">fb</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_filename</span><span class="p">),</span>
+              <span class="n">fb</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_name</span><span class="p">,</span> <span class="s">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]))</span>
+</div>
+<div class="viewcode-block" id="new_log_func"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.new_log_func">[docs]</a><span class="k">def</span> <span class="nf">new_log_func</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;redefines func so args are incorporated into message and name and line of execution are correct&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">new_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">n</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&quot;n&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="c">#0</span>
+        <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="n">log</span><span class="p">:</span>
+            <span class="n">func</span><span class="p">(</span><span class="n">MYDEBUG</span><span class="p">,</span> <span class="n">msg</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span><span class="n">n</span><span class="p">}),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">func</span><span class="p">(</span><span class="n">msg</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span><span class="n">n</span><span class="p">}),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_func</span>
+</div>
+<span class="n">log_debug</span><span class="o">=</span><span class="n">new_log_func</span><span class="p">(</span><span class="n">log</span><span class="p">)</span>
+<span class="n">log_info</span><span class="o">=</span><span class="n">new_log_func</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+<span class="n">log_warning</span><span class="o">=</span><span class="n">new_log_func</span><span class="p">(</span><span class="n">warning</span><span class="p">)</span>
+
+<div class="viewcode-block" id="StreamCatch"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.StreamCatch">[docs]</a><span class="k">class</span> <span class="nc">StreamCatch</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;a stream catching class for use with the log window&quot;&quot;&quot;</span>
+
+    <span class="n">screen_width</span><span class="o">=</span><span class="n">Int</span><span class="p">(</span><span class="mi">1920</span><span class="p">)</span>
+    <span class="n">screen_height</span><span class="o">=</span><span class="n">Int</span><span class="p">(</span><span class="mi">1102</span><span class="p">)</span>
+    <span class="n">log_height</span><span class="o">=</span><span class="n">Int</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">log_width</span><span class="o">=</span><span class="n">Int</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_default_log_width</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">screen_width</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">initial_position</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">screen_height</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">log_height</span><span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">initial_size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_height</span><span class="p">)</span>
+
+    <span class="n">log_str</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+
+<div class="viewcode-block" id="StreamCatch.write"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.StreamCatch.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_str</span><span class="o">=</span><span class="nb">str</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">log_str</span>
+</div>
+<div class="viewcode-block" id="StreamCatch.redirect_stdout"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.StreamCatch.redirect_stdout">[docs]</a>    <span class="k">def</span> <span class="nf">redirect_stdout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">visible</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">sys</span>
+        <span class="k">if</span> <span class="n">visible</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">=</span><span class="bp">self</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">=</span><span class="bp">self</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span> <span class="c">#old_stdout</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">__stderr__</span>
+
+<span class="c">#adds a stream catcher for display and a memory handler for saving</span></div></div>
+<span class="n">log_stream</span><span class="o">=</span><span class="n">StreamCatch</span><span class="p">()</span>
+<span class="n">logger</span><span class="o">=</span><span class="n">getLogger</span><span class="p">()</span>
+<span class="n">display_handler</span><span class="o">=</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">log_stream</span><span class="p">)</span>
+<span class="n">display_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">LOGLEVEL</span><span class="p">)</span>
+<span class="n">display_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">Formatter</span><span class="p">(</span><span class="n">LOGFORMATTER</span><span class="p">))</span>
+<span class="n">display_handler</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;StreamCatch&quot;</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">display_handler</span><span class="p">)</span>
+
+<span class="n">memory_handler</span><span class="o">=</span><span class="n">MemoryHandler</span><span class="p">(</span><span class="n">MEMBUFFER</span><span class="p">)</span>
+<span class="n">memory_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">LOGLEVEL</span><span class="p">)</span>
+<span class="n">memory_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">Formatter</span><span class="p">(</span><span class="n">LOGFORMATTER</span><span class="p">))</span>
+<span class="n">memory_handler</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;MemoryLog&quot;</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">memory_handler</span><span class="p">)</span>
+
+<span class="n">log_info</span><span class="p">(</span><span class="s">&quot;Started logging&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="make_log_file"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.make_log_file">[docs]</a><span class="k">def</span> <span class="nf">make_log_file</span><span class="p">(</span><span class="n">log_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;a&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Points memory handler at a particular file to save the log.&quot;&quot;&quot;</span>
+    <span class="n">file_handler</span> <span class="o">=</span> <span class="n">FileHandler</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">log_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+    <span class="n">file_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">LOGLEVEL</span><span class="p">)</span>
+    <span class="n">file_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">Formatter</span><span class="p">(</span><span class="n">LOGFORMATTER</span><span class="p">))</span>
+    <span class="n">memory_handler</span><span class="o">.</span><span class="n">setTarget</span><span class="p">(</span><span class="n">file_handler</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="remove_log_file"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.remove_log_file">[docs]</a><span class="k">def</span> <span class="nf">remove_log_file</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;closes the log file and removes memory_handler from pointing at it&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">memory_handler</span><span class="o">.</span><span class="n">target</span><span class="p">:</span>
+        <span class="n">old_log_file_path</span><span class="o">=</span><span class="n">memory_handler</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">baseFilename</span>
+        <span class="n">memory_handler</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">memory_handler</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">memory_handler</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">memory_handler</span><span class="o">.</span><span class="n">target</span><span class="o">=</span><span class="bp">None</span>
+        <span class="k">return</span> <span class="n">old_log_file_path</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

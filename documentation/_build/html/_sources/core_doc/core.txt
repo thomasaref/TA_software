@@ -11,6 +11,6 @@ Contents:
     backbone.rst
     agent.rst
     extra_setup.rst
-    fund_core_e.rst
+    log.rst
 
 

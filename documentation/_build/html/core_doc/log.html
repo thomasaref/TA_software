@@ -1,0 +1,234 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>log &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../index.html" />
+    <link rel="up" title="core" href="core.html" />
+    <link rel="next" title="physics" href="../physics_doc/physics.html" />
+    <link rel="prev" title="extra_setup" href="extra_setup.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-taref.core.log">
+<span id="log"></span><h1>log<a class="headerlink" href="#module-taref.core.log" title="Permalink to this headline">¶</a></h1>
+<p>Created on Tue Mar 24 16:09:54 2015</p>
+<p>&#64;author: thomasaref</p>
+<p>A collection of logging related functions. Configures logging to be output
+points it at a stream and a memory handler and starts logging.</p>
+<dl class="class">
+<dt id="taref.core.log.StreamCatch">
+<em class="property">class </em><code class="descclassname">taref.core.log.</code><code class="descname">StreamCatch</code><a class="reference internal" href="../_modules/taref/core/log.html#StreamCatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.log.StreamCatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>a stream catching class for use with the log window</p>
+<dl class="attribute">
+<dt id="taref.core.log.StreamCatch.initial_position">
+<code class="descname">initial_position</code><a class="headerlink" href="#taref.core.log.StreamCatch.initial_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.log.StreamCatch.initial_size">
+<code class="descname">initial_size</code><a class="headerlink" href="#taref.core.log.StreamCatch.initial_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.log.StreamCatch.log_height">
+<code class="descname">log_height</code><a class="headerlink" href="#taref.core.log.StreamCatch.log_height" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>int</cite>.</p>
+<p>By default, ints are strictly typed.  Pass strict=False to the
+constructor to enable int casting for longs and floats.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.log.StreamCatch.log_str">
+<code class="descname">log_str</code><a class="headerlink" href="#taref.core.log.StreamCatch.log_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.log.StreamCatch.log_width">
+<code class="descname">log_width</code><a class="headerlink" href="#taref.core.log.StreamCatch.log_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>int</cite>.</p>
+<p>By default, ints are strictly typed.  Pass strict=False to the
+constructor to enable int casting for longs and floats.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.log.StreamCatch.redirect_stdout">
+<code class="descname">redirect_stdout</code><span class="sig-paren">(</span><em>visible</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/log.html#StreamCatch.redirect_stdout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.log.StreamCatch.redirect_stdout" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.log.StreamCatch.screen_height">
+<code class="descname">screen_height</code><a class="headerlink" href="#taref.core.log.StreamCatch.screen_height" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>int</cite>.</p>
+<p>By default, ints are strictly typed.  Pass strict=False to the
+constructor to enable int casting for longs and floats.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.log.StreamCatch.screen_width">
+<code class="descname">screen_width</code><a class="headerlink" href="#taref.core.log.StreamCatch.screen_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>int</cite>.</p>
+<p>By default, ints are strictly typed.  Pass strict=False to the
+constructor to enable int casting for longs and floats.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.log.StreamCatch.write">
+<code class="descname">write</code><span class="sig-paren">(</span><em>str</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/log.html#StreamCatch.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.log.StreamCatch.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.log.f_top">
+<code class="descclassname">taref.core.log.</code><code class="descname">f_top</code><span class="sig-paren">(</span><em>n=100</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/log.html#f_top"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.log.f_top" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the top frame after n steps</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.log.f_top_finder">
+<code class="descclassname">taref.core.log.</code><code class="descname">f_top_finder</code><span class="sig-paren">(</span><em>fb</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/log.html#f_top_finder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.log.f_top_finder" title="Permalink to this definition">¶</a></dt>
+<dd><p>recursive top frame finder</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.log.f_top_limited">
+<code class="descclassname">taref.core.log.</code><code class="descname">f_top_limited</code><span class="sig-paren">(</span><em>fb</em>, <em>n=100</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/log.html#f_top_limited"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.log.f_top_limited" title="Permalink to this definition">¶</a></dt>
+<dd><p>limited recursion top frame finder</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.log.log_debug">
+<code class="descclassname">taref.core.log.</code><code class="descname">log_debug</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.core.log.log_debug" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="taref.core.log.log_info">
+<code class="descclassname">taref.core.log.</code><code class="descname">log_info</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.core.log.log_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="taref.core.log.log_warning">
+<code class="descclassname">taref.core.log.</code><code class="descname">log_warning</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.core.log.log_warning" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="taref.core.log.make_log_file">
+<code class="descclassname">taref.core.log.</code><code class="descname">make_log_file</code><span class="sig-paren">(</span><em>log_path</em>, <em>mode='a'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/log.html#make_log_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.log.make_log_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Points memory handler at a particular file to save the log.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.log.msg">
+<code class="descclassname">taref.core.log.</code><code class="descname">msg</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/log.html#msg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.log.msg" title="Permalink to this definition">¶</a></dt>
+<dd><p>log msg that accepts multiple args with file info</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.log.new_log_func">
+<code class="descclassname">taref.core.log.</code><code class="descname">new_log_func</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/log.html#new_log_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.log.new_log_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>redefines func so args are incorporated into message and name and line of execution are correct</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.log.remove_log_file">
+<code class="descclassname">taref.core.log.</code><code class="descname">remove_log_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/log.html#remove_log_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.log.remove_log_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>closes the log file and removes memory_handler from pointing at it</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../taref.html">taref</a><ul>
+  <li><a href="core.html">core</a><ul>
+      <li>Previous: <a href="extra_setup.html" title="previous chapter">extra_setup</a></li>
+      <li>Next: <a href="../physics_doc/physics.html" title="next chapter">physics</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/core_doc/log.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="../_sources/core_doc/log.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
