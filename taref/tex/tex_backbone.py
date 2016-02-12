@@ -29,7 +29,7 @@ def compile_tex(dir_path, file_name, cmd="/usr/texbin/pdflatex"):
     Might need to check path of pdflatex command with which command in terminal"""
     with cd(dir_path):
         call([cmd, file_name+".tex"])
-    call(["open", dir_path+file_name+".pdf"])
+        call(["open", file_name+".pdf"])
 
 def extract_block(name, str_list):
     """reads a block in a latex document marked with the commands \pyb and \pye"""

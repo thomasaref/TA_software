@@ -22,7 +22,6 @@ with imports():
 
 class Read_File(Filer):
     read_event=Event()
-    show_data_str=Bool(True)
 
     def _default_show_details(self):
         return False

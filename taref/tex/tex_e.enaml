@@ -5,8 +5,9 @@ Created on Mon Feb  8 11:43:37 2016
 @author: thomasaref
 """
 
-from enaml.widgets.api import HGroup, MultilineField, VGroup, Label, Label, PushButton, Field, Notebook, Page
+from enaml.widgets.api import HGroup, MultilineField, VGroup, Label, Label, PushButton, Field, Notebook, Page, GroupBox
 from taref.core.fundcore_e import AgentWindow
+from taref.filer.filer_e import DirectoryInterface, FilerInterface
 
 enamldef TEX_HGroup(HGroup):
     attr tex
@@ -20,22 +21,19 @@ enamldef TEX_HGroup(HGroup):
                         text = "Input Texcode:"
                     MultilineField:
                         text := tex.input_code
-                        #text :: print tex.input_list
                     PushButton:
                         text = "Run Code"
                         clicked ::
-                            print "Made tex file"
-                            tex.make_tex_file()
-                            tex.compile_tex()
-                            #tex.process_source_tex()
-                            #tex.get_member("output_tex").reset(tex)
+                            tex.make_and_show()
                     PushButton:
                         text = "Simulate Tex"
                         clicked ::
                             tex.simulate_tex()
-
+                    PushButton:
+                        text = "Open PDF"
+                        clicked ::
+                            tex.open_pdf()
                 VGroup:
-
                     Label:
                         text = "Output Tex:"
                     MultilineField:
@@ -45,9 +43,40 @@ enamldef TEX_HGroup(HGroup):
                         clicked ::
                             tex.restore_source()
                     PushButton:
-                        text = "Parse Tex"
+                        text = "Process Source"
                         clicked ::
                             tex.process_source()
+                    PushButton:
+                        text = "Read Source"
+                        clicked ::
+                            tex.read_source()
+
+        Page:
+            closable = False
+            title = "Save/Load"
+            VGroup:
+                Label:
+                    text = "Main Directory:"
+                DirectoryInterface:
+                    filer = tex.folder
+                    show_details = False
+                    PushButton:
+                        clicked :: print tex.folder.dir_path
+                GroupBox:
+                    title = "Read file"
+                    FilerInterface:
+                        filer = tex.read_file
+                        show_details=True
+                        show_simple=False
+                        show_data_str=True
+
+                GroupBox:
+                    title = "Save file"
+                    FilerInterface:
+                        filer = tex.save_file
+                        show_details=True
+                        show_simple=False
+                        show_data_str=True
 
         Page:
             closable = False

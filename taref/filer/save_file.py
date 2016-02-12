@@ -7,23 +7,23 @@ Created on Thu Mar  5 20:50:49 2015
 
 from taref.core.log import  log_info, make_log_file, remove_log_file, log_debug
 from taref.filer.filer import Filer
-from atom.api import cached_property, Unicode, observe, List, Event, Enum, Typed, Int, Bool
-from os.path import exists as os_path_exists, splitext as os_path_splitext, split as os_path_split
+from atom.api import cached_property, Unicode, List, Event, Enum, Typed, Int, Bool
+from os.path import exists as os_path_exists#, splitext as os_path_splitext, split as os_path_split
 from os import makedirs as os_makedirs
-from shutil import move, copyfile
-from inspect import getfile
+from shutil import move#, copyfile
+#from inspect import getfile
 from numpy import ndarray, size
-from taref.core.read_file import Read_HDF5, Read_NP, Read_TXT, Read_DXF
-from collections import OrderedDict
+#from taref.core.read_file import Read_HDF5, Read_NP, Read_TXT, Read_DXF
+#from collections import OrderedDict
 from taref.core.atom_extension import tag_Callable
 
-from taref.filer.HDF5_functions import rewrite_hdf5, File, group, dataset
+from taref.filer.HDF5_functions import rewrite_hdf5, group, dataset#, File
 from taref.core.universal import write_text
-from taref.core.TXTNP_functions import  save_txt_data, save_np_data, save_txt
+#from taref.core.TXTNP_functions import  save_txt_data, save_np_data, save_txt
 
 from enaml import imports
 with imports():
-    from taref.filer.read_file_e import SaveFileExt, SaveFileMain
+    from taref.filer.read_file_e import ReadFileExt, ReadFileMain
 
 class Save_File(Filer):
     buffer_size=Int(100).tag(desc="size of buffer as number of elements in a list/array")
@@ -54,15 +54,18 @@ class Save_File(Filer):
     def log_create(self):
         log_info("save not implemented! file not created at {0}".format(self.file_path))
 
-    def browse_clicked(self):
-        super(Save_File, self).browse_clicked()
-        self.save()
+#    def browse_clicked(self):
+#        super(Save_File, self).browse_clicked()
+#        self.save()
 
     def save(self, data=None, *args, **kwargs):
         self.save_event()
         write_mode=kwargs.pop("write_mode", None)
         if write_mode is not None:
-            self.mode=write_mode
+            self.write_mode=write_mode
+        flush_buffer=kwargs.pop("flush_buffer", None)
+        if flush_buffer is not None:
+            self.flush_buffer=flush_buffer
         if data is None:
             self.flush_buffer=True
         else:
@@ -77,17 +80,17 @@ class Save_File(Filer):
             self.data_buffer=self._default_data_buffer()
             self.flush_buffer=False
         if not self.fixed_mode:
-            self.mode="a"
+            self.write_mode="a"
         self.log_save()
 
     @cached_property
     def view(self):
-        return SaveFileExt
+        return ReadFileExt
 
     @cached_property
     def view_window(self):
         """stand alone for showing save file."""
-        return SaveFileMain(agent=self)
+        return ReadFileMain(agent=self)
 
     def close(self):
         """flushes the butter using save"""
@@ -112,10 +115,10 @@ class Save_File(Filer):
         if not os_path_exists(self.dir_path):
             os_makedirs(self.dir_path)
             log_info("Made directory at: {0}".format(self.dir_path))
-        if not os_path_exists(self.file_path):
+        #if not os_path_exists(self.file_path):
             #if hasattr(self, "save_file"):
             #    self.save_file=self._default_save_file() #self.create_file()
-            make_log_file(self.log_path, mode="w")
+            #make_log_file(self.log_path, mode="w")
 
 #    def save_code(self, obj):
 #        """saves the code containing the passed in object"""
@@ -181,7 +184,7 @@ class Save_HDF5(Save_File):
             namestr="{0}".format(len(self.data_buffer[group_name][name])-1)
             self.data_buffer[group_name][name][namestr].extend(data)
         if size(self.data_buffer[group_name][name][namestr])>self.buffer_size or size(self.data_buffer[group_name][name].keys())>self.buffer_size:
-            self.flush_buffers=True #() #self.do_data_save(data, name, group_name, append)
+            self.flush_buffer=True #() #self.do_data_save(data, name, group_name, append)
 
     @cached_property
     def view_window(self):
@@ -199,16 +202,16 @@ class Save_TXT(Save_File):
         return ".txt"
 
     def log_create(self):
-        log_info("Created txt file at: {0}".format(self.file_path))
+        log_info("Created text file at: {0}".format(self.file_path))
 
     def log_save(self):
-        log_debug("Data saved to txt file at: {0}".format(self.file_path))
+        log_debug("Data saved to text file at: {0}".format(self.file_path))
 
     def direct_save(self, file_path=None, data=None, write_mode="a"):
         """a direct saving option for a pure string that overwrites write_mode"""
         if file_path is not None:
             self.file_path=file_path
-        self.mode=write_mode
+        self.write_mode=write_mode
         if data is not None:
             self.save(text_list=[data])
 
@@ -218,10 +221,10 @@ class Save_TXT(Save_File):
             self.flush_buffer=True
 
     def save_to_file(self):
-        write_text(self.file_path, self.data_buffer, mode=self.mode)
+        write_text(self.file_path, self.data_buffer, mode=self.write_mode)
 
-    def save(self, text_list=None, write_mode=None):
-        super(Save_TXT, self).save(text_list, write_mode=write_mode)
+    def save(self, text_list=None, write_mode=None, flush_buffer=None):
+        super(Save_TXT, self).save(text_list, write_mode=write_mode, flush_buffer=flush_buffer)
 
     #@cached_property
     #def view_window(self):

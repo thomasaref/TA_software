@@ -14,6 +14,10 @@ from taref.core.agent import Operative
 from taref.core.universal import write_text
 from taref.core.log import f_top, log_debug
 from enaml.qt.qt_application import QtApplication
+from taref.filer.filer import Folder
+from taref.filer.read_file import Read_TXT
+from taref.filer.save_file import Save_TXT
+from subprocess import call
 
 from enaml import imports
 with imports():
@@ -37,9 +41,27 @@ class File_Parser(object):
 
 dir_path="/Users/thomasaref/Documents/TA_software/taref/tex/test_tex/"
 file_name="texxy"
-class TEX(Atom):
-    #read_file=Typed(Read_File)
-    #write_file=Typed(Write_File)
+class TEX(Operative):
+    folder=Folder(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data")
+    source_folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data", main_dir="", quality="")
+    read_file=Typed(Read_TXT)
+    save_file=Typed(Save_TXT)
+
+    def __init__(self, **kwargs):
+        source_path=kwargs.pop("source_path", None)
+        super(Operative, self).__init__(**kwargs)
+        self.make_input_code()
+        if source_path is not None:
+            self.read_file.file_path=source_path
+        if self.read_file.main_dir!="":
+            self.read_source()
+
+    def _default_read_file(self):
+        return Read_TXT(folder=self.source_folder, file_suffix=".tex")
+
+    def _default_save_file(self):
+        return Save_TXT(folder=self.folder, file_name="report", file_suffix=".tex", fixed_mode=True)
+
     local_name=Unicode()
     source_dict=Typed(OrderedDict, ())
     tex_list=List()
@@ -126,14 +148,24 @@ class TEX(Atom):
                 self.source_dict[key].append("")
         self.restore_source()
 
+    def read_source(self, file_path=None):
+        if file_path is not None:
+            self.read_file.file_path=file_path
+        self.tex_list=self.read_file.read()
+        self.process_source()
+
     def compile_tex(self):
-        compile_tex(dir_path, file_name)
+        compile_tex(self.save_file.dir_path, self.save_file.file_name)
+
+    def open_pdf(self):
+        call(["open", self.save_file.dir_path+self.save_file.divider+self.save_file.file_name+".pdf"])
 
     def make_tex_file(self):
         if QtApplication.instance() is not None:
             self.process_source()
             self.simulate_tex()
-        write_text(dir_path+file_name+".tex", self.tex_list)
+        self.save_file.save(self.tex_list, write_mode="w", flush_buffer=True)
+        #write_text(dir_path+file_name+".tex", self.tex_list)
 
     def make_and_show(self):
         self.make_tex_file()

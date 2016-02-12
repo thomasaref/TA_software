@@ -9,7 +9,7 @@ from atom.api import Bool, Value, List, Enum, Callable
 from taref.core.agent import Agent
 from taref.core.log import log_info, log_warning, log_debug#, make_log_file
 from taref.core.atom_extension import private_property, set_tag, get_tag, get_type, get_inv, log_func, tag_Callable, get_all_tags, set_all_tags, make_instancemethod
-from taref.core.save_file import Save_HDF5
+from taref.filer.save_file import Save_HDF5
 
 class InstrumentError(Exception):
     pass
@@ -86,7 +86,7 @@ class Instrument(Agent):
         cls.close_all()
         if cls.saving:
             cls.save_file.flush_buffers()
-        
+
     @classmethod
     def boot_all(cls):
         for instr in cls.agent_dict.values():

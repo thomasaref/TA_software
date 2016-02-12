@@ -6,7 +6,7 @@ Created on Tue Feb 24 11:23:43 2015
 """
 
 #from taref.core.log import log_debug
-from atom.api import Atom, Unicode, Enum, observe, cached_property, Bool
+from atom.api import Atom, Unicode, Enum, observe, cached_property, Bool, Typed
 from time import strftime, localtime
 from enaml import imports
 from enaml.widgets.api import FileDialogEx
@@ -18,7 +18,7 @@ class Folder(Atom):
     divider and quality (which can be optional). The main directory defaults to 'S' followed by the year month day and time of saving.
     show_details and show_simple give some control over the GUI display"""
 
-    base_dir=Unicode("/Users/thomasaref/Dropbox/Current stuff/TA_software")
+    base_dir=Unicode("/Users/thomasaref/Dropbox/Current stuff/testDll")
     main_dir=Unicode()
     divider=Unicode("/")
     quality=Enum("discard", "less interesting", "interesting", "")
@@ -58,11 +58,15 @@ class Folder(Atom):
     def view_window(self):
         return FolderMain(filer=self)
 
-class Filer(Folder):
+class Filer(Atom):
     """A generic filing system which extends Folder giving a file name and suffix from which a main_file (combining the two) and a full file_path is constructed"""
-
+    folder=Typed(Folder)
     file_name=Unicode("meas")
     file_suffix=Unicode()
+    show_data_str=Bool(False)
+
+    def _default_folder(self):
+        return Folder()
 
     #log_name=Unicode("record")
     #log_suffix=Unicode(".log")
@@ -79,19 +83,19 @@ class Filer(Folder):
 
     @cached_property
     def file_path(self):
-        return self.dir_path+self.divider+self.main_file
+        return self.folder.dir_path+self.folder.divider+self.main_file
 
     @file_path.setter
     def set_file_path(self, fp_str):
-        self.dir_path, div, self.main_file=fp_str.rpartition(self.divider)
+        self.folder.dir_path, div, self.main_file=fp_str.rpartition(self.folder.divider)
 
     #@cached_property
     #def log_path(self):
     #    return self.dir_path+self.divider+self.log_name+self.log_suffix
 
-    @observe("file_name", "file_suffix", "divider", "quality", "base_dir", "main_dir")#, "log_name", "log_suffix")
+    @observe("file_name", "file_suffix", "folder.dir_path")#, "log_name", "log_suffix")
     def update_properties(self, change):
-        for name in ("dir_path", "main_file", "file_path"):
+        for name in ("main_file", "file_path"):
             self.get_member(name).reset(self)
 
     def browse_clicked(self):

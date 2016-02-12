@@ -14,9 +14,10 @@ from taref.core.atom_extension import get_tag
 from taref.core.fundcore_e import AgentWindow
 
 enamldef DirectoryInterface(VGroup):
-    attr filer
-    attr show_details = filer.show_details
-    attr show_simple = filer.show_simple
+    attr folder
+    attr show_details = folder.show_details
+    attr show_simple = folder.show_simple
+    attr main_file
     Conditional:
         condition=show_details
         HGroup:
@@ -25,34 +26,35 @@ enamldef DirectoryInterface(VGroup):
             Label:
                 text = 'Base directory'
             Field:
-                text := filer.base_dir
+                text := folder.base_dir
             PushButton:
                 text = 'Browse'
                 clicked ::
-                    path = FileDialogEx.get_existing_directory(current_path=filer.base_dir)
+                    path = FileDialogEx.get_existing_directory(current_path=folder.base_dir)
                     if path:
-                        filer.base_dir = path
+                        folder.base_dir = path
         HGroup:
             padding=0
             align_widths=False
             Label:
                 text = "Main dir:"
             Field:
-                text := filer.main_dir
+                text := folder.main_dir
             Label:
                 text = "Quality:"
             ObjectCombo:
-                items = list(filer.get_member('quality').items)
-                selected := filer.quality
+                items = list(folder.get_member('quality').items)
+                selected := folder.quality
             Conditional:
-                condition = hasattr(filer, "main_file")
+                condition = main_file is not None#hasattr(filer, "main_file")
                 Label:
                     text = "File name:"
-                Field: main_file:
-                    constraints = [main_file.width == parent.contents_width/5]
-                    text := filer.main_file
+                Field: main_file_fld:
+                    constraints = [main_file_fld.width == parent.contents_width/5]
+                    text := main_file
         Separator:
             pass
+
     Conditional:
         condition=show_simple
         HGroup:
@@ -61,17 +63,19 @@ enamldef DirectoryInterface(VGroup):
             Label:
                 text = "Directory:"
             Field:
-                text:=filer.dir_path
+                text:=folder.dir_path
             PushButton:
                 text = 'Browse'
                 clicked ::
-                    path = FileDialogEx.get_existing_directory(current_path=filer.base_dir)
+                    path = FileDialogEx.get_existing_directory(current_path=folder.base_dir)
                     if path:
-                        filer.dir_path = path
+                        folder.dir_path = path
 
-
-
-enamldef FilerInterface(DirectoryInterface):
+enamldef FilerInterface(VGroup):
+    attr filer
+    attr show_data_str = filer.show_data_str
+    DirectoryInterface:
+        folder=filer.folder
     Separator:
         pass
     HGroup:
@@ -89,12 +93,17 @@ enamldef FilerInterface(DirectoryInterface):
             PushButton:
                 text = get_tag(filer, "file_action", "button_label", "File Action")
                 clicked :: filer.file_action(filer)
+    Conditional:
+        condition = show_data_str
+        MultilineField:
+            read_only=True
+            text<<filer.data_str
 
 enamldef DirectoryExt(DirectoryInterface):
     """extension needed to work with instrview. iterable is expected even though nothing is iterating here"""
     attr iterable
     attr vmodel = parent.vmodel
-    filer = vmodel
+    folder = vmodel
 
 enamldef FilerExt(FilerInterface):
     """extension needed to work with instrview. iterable is expected even though nothing is iterating here"""
@@ -104,12 +113,10 @@ enamldef FilerExt(FilerInterface):
 
 enamldef FolderMain(AgentWindow):
     title="Folder test"
-    alias filer : di.filer
-    DirectoryInterface: di:
-        pass
+    DirectoryInterface:
+        folder = agent
 
 enamldef FilerMain(AgentWindow):
     title="Filer test"
-    alias filer : fi.filer
     FilerInterface: fi:
-        pass
+        filer = agent
