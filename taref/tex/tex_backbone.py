@@ -86,11 +86,11 @@ def texwrap(dir_path, file_name, intex):
 
     write_text(dir_path+file_name, tex)
 
-def include_image(tex, dir_path, fig_name, caption="", label=""):
+def include_image(tex, relative_path, fig_name, caption="", label=""):
     """inserts th image specified by dir_path and fig_name into the list tex"""
     tex.append(r"\begin{figure}[ht!]")
     tex.append(r"\centering")
-    tex.append("\\includegraphics[width=\\textwidth]{{{}}}".format(fig_name))
+    tex.append("\\includegraphics[width=\\textwidth]{{{}}}".format(relative_path+fig_name))
     tex.append("\\caption{{{}}}".format(caption))
     tex.append("\\label{{{}}}".format(label))
     tex.append(r"\end{figure}")

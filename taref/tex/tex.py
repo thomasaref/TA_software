@@ -41,8 +41,10 @@ class File_Parser(object):
 
 dir_path="/Users/thomasaref/Documents/TA_software/taref/tex/test_tex/"
 file_name="texxy"
+from os.path import relpath
+
 class TEX(Operative):
-    folder=Folder(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data")
+    folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data")
     source_folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data", main_dir="", quality="")
     read_file=Typed(Read_TXT)
     save_file=Typed(Save_TXT)
@@ -53,7 +55,7 @@ class TEX(Operative):
         self.make_input_code()
         if source_path is not None:
             self.read_file.file_path=source_path
-        if self.read_file.main_dir!="":
+        if self.read_file.folder.main_dir!="":
             self.read_source()
 
     def _default_read_file(self):
@@ -228,7 +230,8 @@ class TEX(Operative):
         self.caption=""
 
     def include_image(self, fig_name, caption="", label=""):
-        include_image(self.tex_list, self.dir_path, fig_name, caption, label)
+        relative_path=relpath(self.source_folder.dir_path, self.save_file.folder.dir_path)+self.source_folder.divider
+        include_image(self.tex_list, relative_path, fig_name, caption, label)
 
     @cached_property
     def view_window(self):

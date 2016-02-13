@@ -45,8 +45,9 @@ tx.add(r"\subsection{Qubit values}")
 tx.make_table(qubit_values, r"|p{5 cm}|p{3 cm}|")
 
 tx.mult_fig_start()
-tx.add_mult_fig(tx.add_mult_fig, "test_colormap_plot.png")
+#tx.add_mult_fig(tx.add_mult_fig, "test_colormap_plot.png")
 tx.mult_fig_end()
+tx.include_image("test_colormap_plot.png", "image_include test", "whats the label")
 tx.TEX_end()
 
 #tx.make_tex_file()
