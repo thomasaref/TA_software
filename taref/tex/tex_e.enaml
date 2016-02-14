@@ -7,7 +7,7 @@ Created on Mon Feb  8 11:43:37 2016
 
 from enaml.widgets.api import HGroup, MultilineField, VGroup, Label, Label, PushButton, Field, Notebook, Page, GroupBox
 from taref.core.fundcore_e import AgentWindow
-from taref.filer.filer_e import DirectoryInterface, FilerInterface
+from taref.filer.filer_e import DirectoryInterface, FilerInterface, SimpleFilerInterface
 
 enamldef TEX_HGroup(HGroup):
     attr tex
@@ -55,27 +55,21 @@ enamldef TEX_HGroup(HGroup):
             closable = False
             title = "Save/Load"
             VGroup:
-                Label:
-                    text = "Main Directory:"
-                DirectoryInterface:
-                    folder = tex.folder
-                    show_details = False
-                    PushButton:
-                        clicked :: print tex.folder.dir_path
+                GroupBox:
+                    title = "Source Directory:"
+                    DirectoryInterface:
+                        folder = tex.source_folder
+
                 GroupBox:
                     title = "Read file"
-                    FilerInterface:
+                    SimpleFilerInterface:
                         filer = tex.read_file
-                        #show_details=True
-                        #show_simple=False
-                        #show_data_str=True
+                        show_data_str=True
 
                 GroupBox:
                     title = "Save file"
                     FilerInterface:
                         filer = tex.save_file
-                        show_details=True
-                        show_simple=False
                         show_data_str=True
 
         Page:

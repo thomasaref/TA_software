@@ -5,31 +5,42 @@ Created on Fri Oct  9 17:17:26 2015
 @author: thomasaref
 """
 
-from atom.api import Atom, Unicode, Typed, List, cached_property, Float
-from taref.tex.tex_backbone import (texwrap, make_table, mult_fig_start, mult_fig_end, include_image, compile_tex)
+from atom.api import Unicode, Typed, List, cached_property, Float
+from taref.tex.tex_backbone import (make_table, mult_fig_start, mult_fig_end, include_image, compile_tex)
 
 from collections import OrderedDict
 
 from taref.core.agent import Operative
-from taref.core.universal import write_text
+#from taref.core.universal import write_text
 from taref.core.log import f_top, log_debug
 from enaml.qt.qt_application import QtApplication
 from taref.filer.filer import Folder
 from taref.filer.read_file import Read_TXT
 from taref.filer.save_file import Save_TXT
 from subprocess import call
+from os.path import relpath
 
 from enaml import imports
 with imports():
     from tex_e import TEX_Window
 
 class File_Parser(object):
+    """a callable object for extracting the strings in a list between starter and stopper. For use when parsing text files"""
     def __init__(self, starter, stopper, inblock=False):
+        """starter is the string that marks the beginning of being inblock, stopper is the string that marks the end of being inblock.
+        The local name, preamble and postamble will be extracted during call"""
         self.starter=starter
         self.stopper=stopper
         self.inblock=inblock
+        self.local_name=None
+        self.preamble=[]
+        self.postamble=[]
 
     def __call__(self, line):
+        """meant for use inside a list comprehension. will return True or False depending on if line is inbetween starter and stopper.
+        local name is extracted as the first thing before starter.
+        preamble is the list of lines before starter is reached, (indicated by local_name not being set)
+        postamble is the list of lines after stopper."""
         line=line.strip()
         if self.starter in line:
             self.inblock=True
@@ -37,17 +48,22 @@ class File_Parser(object):
         elif self.stopper in line:
             self.inblock=False
             return True
+        if not self.inblock:
+            if self.local_name is None:
+                self.preamble.append(line)
+            else:
+                self.postamble.append(line)
         return self.inblock
 
-dir_path="/Users/thomasaref/Documents/TA_software/taref/tex/test_tex/"
-file_name="texxy"
-from os.path import relpath
-
 class TEX(Operative):
+    """A laTeX/python report maker. source tex and images are included from the source folder. tex and python are written out to the save_file and save_code.
+    various subfunctions give easy access to including analysis written in python in a laTeX report"""
+
     folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data")
     source_folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data", main_dir="", quality="")
     read_file=Typed(Read_TXT)
     save_file=Typed(Save_TXT)
+    save_code=Typed(Save_TXT)
 
     def __init__(self, **kwargs):
         source_path=kwargs.pop("source_path", None)
@@ -64,7 +80,9 @@ class TEX(Operative):
     def _default_save_file(self):
         return Save_TXT(folder=self.folder, file_name="report", file_suffix=".tex", fixed_mode=True)
 
-    local_name=Unicode()
+    def _default_save_code(self):
+        return Save_TXT(folder=self.save_file.folder, file_name=self.save_file.file_name+"_code", file_suffix=".py", fixed_mode=True)
+
     source_dict=Typed(OrderedDict, ())
     tex_list=List()
     output_tex=Unicode()
@@ -78,7 +96,13 @@ class TEX(Operative):
     fig_width=Float(0.49)
     caption=Unicode()
 
+    @cached_property
+    def file_reader(self):
+        """a stored form of the File_Parser which allows access within various functions of the TEX object"""
+        return File_Parser(".TEX_start", ".TEX_end")
+
     def _default_tex_start(self):
+        """This list specifies the starting preamble for the laTeX document and should contain \begin{document} as well as any packages desired"""
         return [r"\documentclass[12pt,a4paper]{article}",
                 r"\usepackage[top=1 in,  bottom=1 in, left=1 in, right=1 in]{geometry}",
                 r"\usepackage{amsfonts,amssymb,amsmath}",
@@ -113,32 +137,36 @@ class TEX(Operative):
                 r"\noindent"]
 
     def _default_tex_end(self):
+        """this list specifies the ending postamble of the latex document. could include bibtex for example"""
         return [r"\end{document}"]
 
     def _observe_output_tex(self, change):
+        """syncs changes in the output tex of the GUI to tex_list"""
         self.tex_list=self.output_tex.split("\n")
 
     def make_input_code(self):
+        """process the called code to allow access in the GUI and save a copy of the code when saving the laTeX report"""
         fb=f_top()
         with open(fb.f_code.co_filename, "r") as f:
             file_text=f.read()
-        file_reader=File_Parser(".TEX_start", ".TEX_end")
-        self.input_code="\n".join([line for line in file_text.split("\n") if file_reader(line)])
-        self.local_name=file_reader.local_name
+        self.input_code="\n".join([line for line in file_text.split("\n") if self.file_reader(line)])
 
     def simulate_tex(self):
-        locals()[self.local_name]=self
+        """simulates the python code producing the output texlist"""
+        locals()[self.file_reader.local_name]=self
         self.tex_list=[]
         exec(self.input_code)
         self.output_tex="\n".join(self.tex_list)
 
     def restore_source(self):
+        """process the source_dict to make the tex list just show the \pyb/\pye entries in source_dict"""
         self.tex_list=[]
         for key in self.source_dict:
             self.tex_list.extend(self.source_dict[key])
         self.output_tex="\n".join(self.tex_list)
 
     def process_source(self):
+        """process the tex_list to produce the source_dict and then calls restore_source"""
         self.source_dict=OrderedDict()
         for n, line in enumerate(self.tex_list):
             line=line.strip()
@@ -151,43 +179,55 @@ class TEX(Operative):
         self.restore_source()
 
     def read_source(self, file_path=None):
+        """reads a tex file in from read_file and processes it"""
         if file_path is not None:
             self.read_file.file_path=file_path
         self.tex_list=self.read_file.read()
         self.process_source()
 
     def compile_tex(self):
-        compile_tex(self.save_file.dir_path, self.save_file.file_name)
+        """compiles the tex file saved as save_file"""
+        compile_tex(self.save_file.folder.dir_path, self.save_file.file_name)
 
     def open_pdf(self):
-        call(["open", self.save_file.dir_path+self.save_file.divider+self.save_file.file_name+".pdf"])
+        """opens the pdf with the same no suffix name as save_file"""
+        call(["open", self.save_file.nosuffix_file_path+".pdf"])
 
     def make_tex_file(self):
+        """saves the tex file using the latest version of input_code and tex_list if the GUI is active.
+        also saves a copy of the input_code with the preamble and postamble reattached"""
         if QtApplication.instance() is not None:
             self.process_source()
             self.simulate_tex()
         self.save_file.save(self.tex_list, write_mode="w", flush_buffer=True)
-        #write_text(dir_path+file_name+".tex", self.tex_list)
+        self.save_code.save(["\n".join(self.file_reader.preamble), self.input_code, "\n".join(self.file_reader.postamble)], write_mode="w", flush_buffer=True)
 
     def make_and_show(self):
+        """makes the tex file, compiles the tex file and opens the pdf"""
         self.make_tex_file()
         self.compile_tex()
+        self.open_pdf()
 
     def TEX_start(self, clear=True):
+        """starts the tex file and serves as a start marker for self.file_reader"""
         if clear:
             self.tex_list=[]
         self.extend(self.tex_start)
 
     def TEX_end(self):
+        """ends the tex file and serves as a stop marker for self.file_reader"""
         self.extend(self.tex_end)
 
     def ext(self, block_name):
+        """inserts the item corresponding to key block name from source_dict"""
         self.extend(self.source_dict[block_name])
 
     def add(self, inline):
+        """adds tex given by string inline"""
         self.tex_list.append(inline)
 
     def extend(self, inlist):
+        """extends texlist with inlist"""
         self.tex_list.extend(inlist)
 
     def make_table(self, table_values, table_format=None):

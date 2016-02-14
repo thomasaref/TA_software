@@ -85,6 +85,10 @@ class Filer(Atom):
     def file_path(self):
         return self.folder.dir_path+self.folder.divider+self.main_file
 
+    @cached_property
+    def nosuffix_file_path(self):
+        return self.folder.dir_path+self.folder.divider+self.fine_name
+
     @file_path.setter
     def set_file_path(self, fp_str):
         self.folder.dir_path, div, self.main_file=fp_str.rpartition(self.folder.divider)
@@ -95,7 +99,7 @@ class Filer(Atom):
 
     @observe("file_name", "file_suffix", "folder.dir_path")#, "log_name", "log_suffix")
     def update_properties(self, change):
-        for name in ("main_file", "file_path"):
+        for name in ("main_file", "file_path", "nosuffix_file_path"):
             self.get_member(name).reset(self)
 
     def browse_clicked(self):

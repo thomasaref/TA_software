@@ -13,91 +13,120 @@ from enaml.core.api import Conditional
 from taref.core.atom_extension import get_tag
 from taref.core.fundcore_e import AgentWindow
 
+
+enamldef BaseDirHGroup(HGroup):
+    HGroup:
+        padding=0
+        align_widths=False
+        Label:
+            text = 'Base directory'
+        Field:
+            text := folder.base_dir
+        PushButton:
+            text = 'Browse'
+            clicked ::
+                path = FileDialogEx.get_existing_directory(current_path=folder.base_dir)
+                if path:
+                    folder.base_dir = path
+
+enamldef DetailsDirHGroup(HGroup):
+    attr main_file
+    HGroup:
+        padding=0
+        align_widths=False
+        Label:
+            text = "Main dir:"
+        Field:
+            text := folder.main_dir
+        Label:
+            text = "Quality:"
+        ObjectCombo:
+            items = list(folder.get_member('quality').items)
+            selected := folder.quality
+        Conditional:
+            condition = main_file is not None#hasattr(filer, "main_file")
+            Label:
+                text = "File name:"
+            Field: main_file_fld:
+                constraints = [main_file_fld.width == parent.contents_width/5]
+                text := main_file
+
+enamldef SimpleDirHGroup(HGroup):
+    HGroup:
+        padding=0
+        align_widths=False
+        Label:
+            text = "Directory:"
+        Field:
+            text:=folder.dir_path
+        PushButton:
+            text = 'Browse'
+            clicked ::
+                path = FileDialogEx.get_existing_directory(current_path=folder.base_dir)
+                if path:
+                    folder.dir_path = path
+
+
 enamldef DirectoryInterface(VGroup):
     attr folder
-    attr show_details = folder.show_details
-    attr show_simple = folder.show_simple
-    attr main_file
+    alias main_file : ddhg.main_file
+    BaseDirHGroup:
+        pass
+    DetailsDirHGroup: ddhg:
+        pass
+    Separator:
+        pass
+    SimpleDirHGroup:
+        pass
+
+enamldef FilerHGroup(HGroup):
+    padding=0
+    align_widths=False
+    Label:
+        text = "File path:"
+    Field:
+        text:=filer.file_path
+    PushButton:
+        text = 'Browse'
+        clicked :: filer.browse_clicked()
     Conditional:
-        condition=show_details
-        HGroup:
-            padding=0
-            align_widths=False
-            Label:
-                text = 'Base directory'
-            Field:
-                text := folder.base_dir
-            PushButton:
-                text = 'Browse'
-                clicked ::
-                    path = FileDialogEx.get_existing_directory(current_path=folder.base_dir)
-                    if path:
-                        folder.base_dir = path
-        HGroup:
-            padding=0
-            align_widths=False
-            Label:
-                text = "Main dir:"
-            Field:
-                text := folder.main_dir
-            Label:
-                text = "Quality:"
-            ObjectCombo:
-                items = list(folder.get_member('quality').items)
-                selected := folder.quality
-            Conditional:
-                condition = main_file is not None#hasattr(filer, "main_file")
-                Label:
-                    text = "File name:"
-                Field: main_file_fld:
-                    constraints = [main_file_fld.width == parent.contents_width/5]
-                    text := main_file
+        condition = hasattr(filer, "file_action")
+        PushButton:
+            text = get_tag(filer, "file_action", "button_label", "File Action")
+            clicked :: filer.file_action(filer)
+
+enamldef DataStrField(MultilineField):
+    read_only=True
+    text<<filer.data_str
+
+enamldef SimpleFilerInterface(VGroup):
+    attr filer
+    attr show_data_str = filer.show_data_str
+    FilerHGroup:
+        pass
+    Conditional:
+        condition = show_data_str
         Separator:
             pass
-
-    Conditional:
-        condition=show_simple
-        HGroup:
-            padding=0
-            align_widths=False
-            Label:
-                text = "Directory:"
-            Field:
-                text:=folder.dir_path
-            PushButton:
-                text = 'Browse'
-                clicked ::
-                    path = FileDialogEx.get_existing_directory(current_path=folder.base_dir)
-                    if path:
-                        folder.dir_path = path
+        DataStrField:
+            pass
 
 enamldef FilerInterface(VGroup):
     attr filer
     attr show_data_str = filer.show_data_str
     DirectoryInterface:
         folder=filer.folder
+        main_file = filer.main_file
     Separator:
         pass
-    HGroup:
-        padding=0
-        align_widths=False
-        Label:
-            text = "File path:"
-        Field:
-            text:=filer.file_path
-        PushButton:
-            text = 'Browse'
-            clicked :: filer.browse_clicked()
-        Conditional:
-            condition = hasattr(filer, "file_action")
-            PushButton:
-                text = get_tag(filer, "file_action", "button_label", "File Action")
-                clicked :: filer.file_action(filer)
+    FilerHGroup:
+        pass
     Conditional:
         condition = show_data_str
-        MultilineField:
-            read_only=True
-            text<<filer.data_str
+        Separator:
+            pass
+        DataStrField:
+            pass
 
 enamldef DirectoryExt(DirectoryInterface):
     """extension needed to work with instrview. iterable is expected even though nothing is iterating here"""

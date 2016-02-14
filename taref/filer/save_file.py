@@ -112,9 +112,9 @@ class Save_File(Filer):
 
     def makedir(self):
         """creates the directory and data file and log file"""
-        if not os_path_exists(self.dir_path):
-            os_makedirs(self.dir_path)
-            log_info("Made directory at: {0}".format(self.dir_path))
+        if not os_path_exists(self.folder.dir_path):
+            os_makedirs(self.folder.dir_path)
+            log_info("Made directory at: {0}".format(self.folder.dir_path))
         #if not os_path_exists(self.file_path):
             #if hasattr(self, "save_file"):
             #    self.save_file=self._default_save_file() #self.create_file()
@@ -207,14 +207,6 @@ class Save_TXT(Save_File):
     def log_save(self):
         log_debug("Data saved to text file at: {0}".format(self.file_path))
 
-    def direct_save(self, file_path=None, data=None, write_mode="a"):
-        """a direct saving option for a pure string that overwrites write_mode"""
-        if file_path is not None:
-            self.file_path=file_path
-        self.write_mode=write_mode
-        if data is not None:
-            self.save(text_list=[data])
-
     def buffer_save(self, text_list):
         self.data_buffer.extend(text_list)
         if len(self.data_buffer)>=self.buffer_size:
@@ -223,8 +215,10 @@ class Save_TXT(Save_File):
     def save_to_file(self):
         write_text(self.file_path, self.data_buffer, mode=self.write_mode)
 
-    def save(self, text_list=None, write_mode=None, flush_buffer=None):
-        super(Save_TXT, self).save(text_list, write_mode=write_mode, flush_buffer=flush_buffer)
+    def save(self, data=None, write_mode=None, flush_buffer=None):
+        if not isinstance(data, list) and data is not None:
+            data=[unicode(data)]
+        super(Save_TXT, self).save(data, write_mode=write_mode, flush_buffer=flush_buffer)
 
     #@cached_property
     #def view_window(self):

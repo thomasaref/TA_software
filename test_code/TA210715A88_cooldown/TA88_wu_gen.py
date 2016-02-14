@@ -8,29 +8,13 @@ Created on Thu Feb 11 13:33:17 2016
 from taref.tex.tex import TEX
 from taref.core.shower import shower
 
-tx=TEX(source_path="/Users/thomasaref/Dropbox/Current stuff/test_data/source/report.tex")
-#tx.read_file.main_dir="source"
-#tx.read_file.file_name="report"
-#tx.read_file.file_path=
-#tx.read_source()
-#tx.make_input_code()
-#tx.output_tex="""\pyb {summary}
-#    \section{Summary}
-#    This is an attempt at reducing the coupling by changing the spacing of the fingers pairs on the qubit IDT, pushing them to a higher frequency.
-#    The coupling appears reduced by an order of magnitude and the qubit seems to be operating as a qubit.
-#    Unfortunately, the qubit frequency is below the IDT listening/talking frequency so it is never directly on resonance (this could be easily fixed by having less resistive junctions). Speedy was also experiencing quite a bit of trouble with blockages so the temperature was often in the 50-80 mK range.
-#
-#\pye
-#
-#\pyb {second entry}
-#this is the second entry
-#\pye"""#.split("\n")
-#tx.process_source()
-
+tx=TEX(source_path="/Users/thomasaref/Dropbox/Current stuff/test_data/source/TA210715A88_source/TA210715A88_writeup.tex")
+tx.save_file.file_name="TA210715A88_writeup"
+tx.tex_title="Sample TA210715A88 in Lumi 12-10-15 cooldown"
 
 tx.TEX_start()
 tx.ext("summary")
-tx.ext("second entry")
+tx.ext("switch")
 
 qubit_values=[[r"Qubit"                                  ,  r"{}"                             ],
                       [r"Finger type"                            ,  r"double finger"                  ],
@@ -47,7 +31,9 @@ tx.make_table(qubit_values, r"|p{5 cm}|p{3 cm}|")
 tx.mult_fig_start()
 #tx.add_mult_fig(tx.add_mult_fig, "test_colormap_plot.png")
 tx.mult_fig_end()
-tx.include_image("test_colormap_plot.png", "image include test", "whats the label")
+tx.include_image("fridgewiring", "Fridge Wiring", "fridgewiring")
+tx.include_image("switchwiring", "Switch Wiring", "switchwiring")
+#tx.include_image("test_colormap_plot.png", "image include test", "whats the label")
 tx.TEX_end()
 
 #tx.make_tex_file()
