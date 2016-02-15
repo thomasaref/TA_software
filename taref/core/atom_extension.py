@@ -19,9 +19,9 @@ from types import MethodType
 from taref.physics.fundamentals import dB, inv_dB
 
 class inv_dB_func(object):
-    def __init__(self, coercer=float):
+    def __init__(self, coercer=float, unit="inv_dB"):
         self.coercer=coercer
-        self.unit="inv_dB"
+        self.unit=unit
 
     def __call__(self, text):
         return dB(self.coercer(text))
@@ -32,9 +32,10 @@ class inv_dB_func(object):
         return inv_dB(value)
 
 class dB_func(object):
-    def __init__(self, coercer=float):
+    def __init__(self,  unit="dB", format_str=r"{0}", coercer=float):
         self.coercer=coercer
-        self.unit="dB"
+        self.unit=unit
+        self.format_str=format_str
 
     def __call__(self, text):
         return inv_dB(self.coercer(text))
@@ -44,16 +45,90 @@ class dB_func(object):
             return value
         return dB(value)
 
+def mult_unit_maker(unit_factor):
+    def mult_unit_func(value):
+        return value*unit_factor
+    return mult_unit_func
+
+def inv_mult_unit_maker(unit_factor):
+    def inv_mult_unit_func(value):
+        return value/unit_factor
+    return inv_mult_unit_func
+
+def dB_maker():
+    return dB
+
+def inv_dB_maker():
+    return inv_dB
+
+class unit_func(object):
+    def __init__(self, unit="", format_str=None, func_maker=mult_unit_maker, inv_maker=inv_mult_unit_maker, coercer=float, **kwargs):
+        self.unit=unit
+        if format_str is None:
+            format_str=r"{0} "+unit
+        else:
+            format_str=r"{0} "+format_str
+        self.format_str=format_str
+        self.func=func_maker(**kwargs)
+        self.inv_func=inv_maker(**kwargs)
+        self.coercer=coercer
+
+    def __call__(self, text):
+        return self.func(self.coercer(text))
+
+    def inv(self, value):
+        if value is None:
+            return value
+        return self.inv_func(value)
+
 
 _MAPPING_SUFFIX_="_mapping"
-PREFIX_DICT={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
-           "G":1.0e9, "M":1.0e6, "k":1.0e3,}
+
+def generate_unit_dict():
+    PREFIX_DICT={"f":1.0e-15, "p":1.0e-12, "n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2, "":1.0,
+           "k":1.0e3, "M":1.0e6, "G":1.0e9, "T" : 1.0e12 }
+
+    unit_dict={"%": unit_func(unit_factor=1.0/100.0, unit="%", format_str="{0} $\%$"),
+               "dB": unit_func(unit="dB"dB_func(), "inv_dB":inv_dB_func(),
+               }
+    for unit in ("m", "Hz", "W", "F", "Ohm"):
+        if  unit=="Ohm":
+            unit_format = "$\Omega$"
+        else:
+            unit_format = unit
+        for prefix, unit_factor in PREFIX_DICT.iteritems():
+            if prefix=="u":
+                if unit=="Ohm":
+                    format_str="$\mu \Omega$"
+                else:
+                    format_str="$\mu$"+unit_format
+            else:
+                format_str=prefix+unit_format
+            unit_dict[prefix+unit]= mult_unit_factor(unit_factor, prefix+unit, format_str)
+    return unit_dict
+
+myUNIT_DICT=generate_unit_dict()
+
+def united(obj, name, value=None):
+    if value is None:
+        value=getattr(obj, name)
+    unit_func=get_tag(obj, name, "unit_func")
+    if unit_func is None:
+        return value
+    return unit_func.inv(value)
+
+PREFIX_DICT={"f":1.0e-15, "p":1.0e-12, "n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
+           "k":1.0e3, "M":1.0e6, "G":1.0e9, "T" : 1.0e12 }
+
+
 UNIT_DICT={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
            "G":1.0e9, "M":1.0e6, "k":1.0e3,
            "%":1.0/100.0,
            "nm":1.0e-9, "um":1.0e-6, "mm":1.0e-3, "cm":1.0e-2, "km":1.0e3,
            "GHz":1.0e9, "MHz":1.0e6, "kHz":1.0e3,
            "mW" : 1.0e-3,
+           "fF" : 1.0e-15,
+           "kOhm" : 1.0e3
            #"dB":dB_func(), "inv_dB":inv_dB_func(),
 }
 

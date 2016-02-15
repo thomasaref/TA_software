@@ -104,9 +104,9 @@ class Backbone(Atom):
         """decorator for adding instancemethods defined outside of class"""
         make_instancemethod(self, func)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         """extends __init__ to autoset low and high tags for Range and FloatRange, autoset units for Ints and Floats and allow extra setup"""
-        super(Backbone, self).__init__(*args, **kwargs)
         for param in self.all_params:
             typer=get_type(self, param)
             self.extra_setup(param, typer)
+        super(Backbone, self).__init__(**kwargs)

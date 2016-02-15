@@ -5,7 +5,7 @@ Created on Fri Oct  9 17:17:26 2015
 @author: thomasaref
 """
 
-from atom.api import Unicode, Typed, List, cached_property, Float
+from atom.api import Unicode, Typed, List, cached_property, Float, Dict
 from taref.tex.tex_backbone import (make_table, mult_fig_start, mult_fig_end, include_image, compile_tex)
 
 from collections import OrderedDict
@@ -95,6 +95,7 @@ class TEX(Operative):
     tex_end=List()
     fig_width=Float(0.49)
     caption=Unicode()
+    locals_dict=Dict()
 
     @cached_property
     def file_reader(self):
@@ -154,6 +155,8 @@ class TEX(Operative):
     def simulate_tex(self):
         """simulates the python code producing the output texlist"""
         locals()[self.file_reader.local_name]=self
+        for key in self.locals_dict:
+            locals()[key]=self.locals_dict[key]
         self.tex_list=[]
         exec(self.input_code)
         self.output_tex="\n".join(self.tex_list)
@@ -206,7 +209,7 @@ class TEX(Operative):
         """makes the tex file, compiles the tex file and opens the pdf"""
         self.make_tex_file()
         self.compile_tex()
-        self.open_pdf()
+        #self.open_pdf()
 
     def TEX_start(self, clear=True):
         """starts the tex file and serves as a start marker for self.file_reader"""

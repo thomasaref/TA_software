@@ -87,7 +87,7 @@ class Filer(Atom):
 
     @cached_property
     def nosuffix_file_path(self):
-        return self.folder.dir_path+self.folder.divider+self.fine_name
+        return self.folder.dir_path+self.folder.divider+self.file_name
 
     @file_path.setter
     def set_file_path(self, fp_str):

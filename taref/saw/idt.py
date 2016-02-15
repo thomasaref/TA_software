@@ -15,73 +15,74 @@ from atom.api import Float, Int, Enum, cached_property
 from numpy import arange, linspace
 from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
 
+def plot_data(self, zname, **kwargs):
+     """pass in an appropriate kwarg to get zdata for the zname variable back"""
+     xmult=kwargs.pop("xmult", 1.0)
+     zmult=kwargs.pop("zmult", 1.0)
+     label=kwargs.pop("label", "")
+
+     if "xlim" in kwargs:
+         xlim(kwargs["xlim"])
+
+     if "ylim" in kwargs:
+         ylim(kwargs["ylim"])
+
+     zunit=self.get_tag(zname, "unit")
+     zunit_factor=self.get_tag(zname, "unit_factor", 1.0)
+
+     if zunit is None:
+         zlabel_str=zname
+     else:
+         zlabel_str="{0} [{1}]".format(zname, zunit)
+
+     ylabel(kwargs.pop("ylabel", zlabel_str))
+
+     add_legend=kwargs.pop("legend", False)
+
+     title_str=kwargs.pop("title", None)
+     xlabel_str=kwargs.pop("xlabel", None)
+
+     if len(kwargs)==1:
+         xname, xdata=kwargs.popitem()
+         zdata=self.call_func(zname, **{xname:xdata})
+         xunit=self.get_tag(xname, "unit")
+         xunit_factor=self.get_tag(xname, "unit_factor", 1.0)
+     else:
+         xname="#"
+         xdata=arange(len(getattr(self, zname)))
+         xunit=None
+         xunit_factor=1.0#self.get_tag(xname, "unit_factor", 1.0)
+
+     if xlabel_str is None:
+         if xunit is None:
+             xlabel_str=xname
+         else:
+             xlabel_str="{0} [{1}]".format(xname, xunit)
+     xlabel(xlabel_str)
+
+     if title_str is None:
+         title_str="{0} vs {1}".format(zname, xname)
+     title(title_str)
+     #print xdata.shape, zdata.shape
+     plot(xdata/xunit_factor*xmult, zdata/zunit_factor*zmult, label=label)
+
+     if add_legend:
+         legend()
 
 class IDT(Agent):
     """Theoretical description of IDT"""
-    base_name="idt"
-    #main_params=["ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct", 
+    base_name="IDT"
+    #main_params=["ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct",
     #            "material", "Dvv", "K2", "vf", "epsinf"]
 
-    def plot_data(self, zname, **kwargs):
-         """pass in an appropriate kwarg to get zdata for the zname variable back"""
-         xmult=kwargs.pop("xmult", 1.0)
-         zmult=kwargs.pop("zmult", 1.0)
-         label=kwargs.pop("label", "")
 
-         if "xlim" in kwargs:
-             xlim(kwargs["xlim"])
 
-         if "ylim" in kwargs:
-             ylim(kwargs["ylim"])
-
-         zunit=self.get_tag(zname, "unit")
-         zunit_factor=self.get_tag(zname, "unit_factor", 1.0)
-
-         if zunit is None:
-             zlabel_str=zname
-         else:
-             zlabel_str="{0} [{1}]".format(zname, zunit)
-
-         ylabel(kwargs.pop("ylabel", zlabel_str))
-
-         add_legend=kwargs.pop("legend", False)
-
-         title_str=kwargs.pop("title", None)
-         xlabel_str=kwargs.pop("xlabel", None)
-
-         if len(kwargs)==1:
-             xname, xdata=kwargs.popitem()
-             zdata=self.call_func(zname, **{xname:xdata})
-             xunit=self.get_tag(xname, "unit")
-             xunit_factor=self.get_tag(xname, "unit_factor", 1.0)
-         else:
-             xname="#"
-             xdata=arange(len(getattr(self, zname)))
-             xunit=None
-             xunit_factor=1.0#self.get_tag(xname, "unit_factor", 1.0)
-
-         if xlabel_str is None:
-             if xunit is None:
-                 xlabel_str=xname
-             else:
-                 xlabel_str="{0} [{1}]".format(xname, xunit)
-         xlabel(xlabel_str)
-
-         if title_str is None:
-             title_str="{0} vs {1}".format(zname, xname)
-         title(title_str)
-         #print xdata.shape, zdata.shape
-         plot(xdata/xunit_factor*xmult, zdata/zunit_factor*zmult, label=label)
-
-         if add_legend:
-             legend()
-
-    Ga_0=Float(1)
-    f=Float(4.4e9)
+    Ga_0=Float(1).tag(desc="Conductance at center frequency of IDT")
+    f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
 
     ft=Enum("double", "single").tag(desc="finger type of IDT", label="Finger type", show_value=False)
 
-    @tagged_property()
+    @tagged_property(desc="multiplier based on finger type")
     def mult(self):
         return {"double" : 2.0, "single" : 1.0}[self.ft]
 
@@ -119,7 +120,7 @@ class IDT(Agent):
     @K2.fget.setter
     def _get_Dvv(self, K2):
         return K2/2.0
-        
+
     @tagged_property(unit=" F", desc="Total capacitance of IDT", reference="Morgan page 16/145")
     def Ct(self, ft, W, epsinf, Np):
         m={"double" : 1.414213562373, "single" : 1.0}[ft]
@@ -157,7 +158,7 @@ class IDT(Agent):
     def _get_lbda0_get_(self, a, eta, mult):
         return a/eta*2.0*mult
 
-    @tagged_property()
+    @tagged_property(desc="Ga adjusted for frequency f")
     def Ga_f(self, Ga_0, Np, f, f0):
         return Ga_0*sinc_sq(Np*pi*(f-f0)/f0)
 
