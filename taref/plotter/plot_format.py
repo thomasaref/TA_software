@@ -13,7 +13,7 @@ from taref.core.shower import shower
 from taref.core.atom_extension import get_all_tags, get_tag
 from enaml import imports
 with imports():
-    from taref.core.interactive import InteractiveWindow
+    from taref.core.interactive_e import InteractiveWindow
 
 
 

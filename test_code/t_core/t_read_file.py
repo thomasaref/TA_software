@@ -5,7 +5,7 @@ Created on Thu Jan 28 11:41:40 2016
 @author: thomasaref
 """
 
-from taref.core.read_file import Read_HDF5
+from taref.filer.read_file import Read_HDF5
 from taref.core.shower import shower
 from taref.core.atom_extension import tag_Property, get_display, reset_properties
 from taref.core.extra_setup import tagged_property
@@ -17,7 +17,7 @@ inv_dB.unit=""
 #read_hdf=Read_HDF5(file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/Data_1008/TA46_refll_fluxpowswp_4p2GHz4pGHz.hdf5")
 from taref.core.log import log_debug
 log_debug("hi")
-from taref.core.agent import SubAgent, Agent
+from taref.core.agent import Agent
 from atom.api import Float, Typed, Unicode, Int
 from taref.physics.fundamentals import dB
 class Fund(Agent):

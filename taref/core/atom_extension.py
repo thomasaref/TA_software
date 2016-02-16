@@ -16,71 +16,100 @@ from functools import wraps
 from enaml.application import deferred_call
 from threading import Thread
 from types import MethodType
-from taref.physics.fundamentals import dB, inv_dB
+from taref.physics.fundamentals import dB, inv_dB, dB_pwr, inv_dB_pwr
 
-class inv_dB_func(object):
-    def __init__(self, coercer=float, unit="inv_dB"):
-        self.coercer=coercer
-        self.unit=unit
-
-    def __call__(self, text):
-        return dB(self.coercer(text))
-
-    def inv(self, value):
-        if value is None:
-            return value
-        return inv_dB(value)
-
-class dB_func(object):
-    def __init__(self,  unit="dB", format_str=r"{0}", coercer=float):
-        self.coercer=coercer
-        self.unit=unit
-        self.format_str=format_str
-
-    def __call__(self, text):
-        return inv_dB(self.coercer(text))
-
-    def inv(self, value):
-        if value is None:
-            return value
-        return dB(value)
-
-def mult_unit_maker(unit_factor):
-    def mult_unit_func(value):
-        return value*unit_factor
-    return mult_unit_func
-
-def inv_mult_unit_maker(unit_factor):
-    def inv_mult_unit_func(value):
-        return value/unit_factor
-    return inv_mult_unit_func
-
-def dB_maker():
-    return dB
-
-def inv_dB_maker():
-    return inv_dB
+#def mult_unit_maker(unit_factor):
+#    def mult_unit_func(value):
+#        return value*unit_factor
+#    return mult_unit_func
+#
+#def inv_mult_unit_maker(unit_factor):
+#    def inv_mult_unit_func(value):
+#        return value/unit_factor
+#    return inv_mult_unit_func
+#
+#def dB_maker():
+#    return dB
+#
+#def inv_dB_maker():
+#    return inv_dB
 
 class unit_func(object):
-    def __init__(self, unit="", format_str=None, func_maker=mult_unit_maker, inv_maker=inv_mult_unit_maker, coercer=float, **kwargs):
+    def __init__(self, unit="", format_str=None, coercer=float, output_unit=""):
         self.unit=unit
         if format_str is None:
             format_str=r"{0} "+unit
         else:
             format_str=r"{0} "+format_str
         self.format_str=format_str
-        self.func=func_maker(**kwargs)
-        self.inv_func=inv_maker(**kwargs)
         self.coercer=coercer
+        self.output_unit=output_unit
 
-    def __call__(self, text):
-        return self.func(self.coercer(text))
+    def __call__(self, value):
+        return self.func(self.coercer(value))
 
     def inv(self, value):
         if value is None:
             return value
-        return self.inv_func(value)
+        return self.inv_func(self.coercer(value))
 
+
+class mult_unit(unit_func):
+    def __init__(self, unit_factor=None, unit="", format_str=None, coercer=float, output_unit=""):
+        self.unit_factor=unit_factor
+        super(mult_unit, self).__init__(unit=unit, format_str=format_str, coercer=coercer, output_unit=output_unit)
+
+    def __call__(self, value):
+        if self.unit_factor is None:
+            return value
+        return super(mult_unit, self).__call__(value)
+
+    def inv(self, value):
+        if self.unit_factor is None:
+            return value
+        return super(mult_unit, self).inv(value)
+
+    def func(self, value):
+        return value*self.unit_factor
+
+    def inv_func(self, value):
+        return value/self.unit_factor
+
+class dB_unit(unit_func):
+    def func(self, value):
+        return dB(value)
+
+    def inv_func(self, value):
+        return inv_dB(value)
+
+class inv_dB_unit(unit_func):
+    def func(self, value):
+        return inv_dB(value)
+
+    def inv_func(self, value):
+        return dB(value)
+
+class dBm_unit(mult_unit):
+    def func(self, value):
+        return 0.001*inv_dB_pwr(value)/self.unit_factor
+
+    def inv_func(self, value):
+        return dB_pwr(value*self.unit_factor/0.001)
+
+class inv_dBm_unit(mult_unit):
+    def inv_func(self, value):
+        return 0.001*inv_dB_pwr(value)/self.unit_factor
+
+    def func(self, value):
+        return dB_pwr(value*self.unit_factor/0.001)
+
+def dBm_Float(value=-100.0):
+    unit_f=dBm_unit(unit="dBm", output_unit="mW", unit_factor=0.001)
+    uvalue=unit_f(value)
+    return Float(uvalue).tag(unit="dBm", unit_func=unit_f)
+
+def mW_Float(value=1.0e-10):
+    return Float(value).tag(unit="mW", unit_func=inv_dBm_unit(unit="mW", output_unit="dBm", unit_factor=0.001))
 
 _MAPPING_SUFFIX_="_mapping"
 
@@ -88,8 +117,9 @@ def generate_unit_dict():
     PREFIX_DICT={"f":1.0e-15, "p":1.0e-12, "n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2, "":1.0,
            "k":1.0e3, "M":1.0e6, "G":1.0e9, "T" : 1.0e12 }
 
-    unit_dict={"%": unit_func(unit_factor=1.0/100.0, unit="%", format_str="{0} $\%$"),
-               "dB": unit_func(unit="dB"dB_func(), "inv_dB":inv_dB_func(),
+    unit_dict={"%": mult_unit(unit_factor=1.0/100.0, unit="%", format_str=r"$\%$"),
+               "dB": dB_unit(unit="dB"),
+               "inv_dB": inv_dB_unit(unit="inv dB"),
                }
     for unit in ("m", "Hz", "W", "F", "Ohm"):
         if  unit=="Ohm":
@@ -104,18 +134,23 @@ def generate_unit_dict():
                     format_str="$\mu$"+unit_format
             else:
                 format_str=prefix+unit_format
-            unit_dict[prefix+unit]= mult_unit_factor(unit_factor, prefix+unit, format_str)
+            unit_dict[prefix+unit]= mult_unit(unit_factor=unit_factor, unit=prefix+unit, format_str=format_str)
     return unit_dict
 
-myUNIT_DICT=generate_unit_dict()
 
-def united(obj, name, value=None):
+myUNIT_DICT=generate_unit_dict()
+for key in myUNIT_DICT:
+    print myUNIT_DICT[key].unit, myUNIT_DICT[key](1.0), myUNIT_DICT[key].inv(1.0)
+
+def united(obj, name, value=None, inv=False):
     if value is None:
         value=getattr(obj, name)
     unit_func=get_tag(obj, name, "unit_func")
     if unit_func is None:
         return value
-    return unit_func.inv(value)
+    if inv:
+        return unit_func.inv(value)
+    return unit_func(value)
 
 PREFIX_DICT={"f":1.0e-15, "p":1.0e-12, "n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
            "k":1.0e3, "M":1.0e6, "G":1.0e9, "T" : 1.0e12 }

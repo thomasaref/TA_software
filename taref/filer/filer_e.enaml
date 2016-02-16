@@ -130,13 +130,13 @@ enamldef FilerInterface(VGroup):
 
 enamldef DirectoryExt(DirectoryInterface):
     """extension needed to work with instrview. iterable is expected even though nothing is iterating here"""
-    attr iterable
+    #attr iterable
     attr vmodel = parent.vmodel
     folder = vmodel
 
 enamldef FilerExt(FilerInterface):
     """extension needed to work with instrview. iterable is expected even though nothing is iterating here"""
-    attr iterable
+    #attr iterable
     attr vmodel=parent.vmodel
     filer = vmodel
 

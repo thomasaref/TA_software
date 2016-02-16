@@ -11,8 +11,8 @@ from enaml.widgets.api import (Window, Container, HGroup, Label, CheckBox, Slide
                                VGroup, ScrollArea, SpinBox, Form, Field, MultilineField,
                                PushButton, ObjectCombo, GroupBox)
 from enaml.layout.api import spacer
-from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params, get_run_params
-from taref.core.fundcore_e import UnitIntField, UnitSpinBox, UnitFloatField, aHGroup, aVGroup, mult_unit_factor
+from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params, get_run_params, mult_unit
+from taref.core.fundcore_e import UnitIntField, UnitSpinBox, UnitFloatField, aHGroup, aVGroup#, mult_unit_factor
 from taref.core.universal import msg
 from atom.api import Property
 
@@ -121,10 +121,10 @@ enamldef UnitIntFieldExt(UnitIntField):
     uvalue:=parent.vvalue
     unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
-    unit_factor=int(get_tag(parent.vmodel, parent.vname, "unit_factor", 1))
+    unit_factor=get_tag(parent.vmodel, parent.vname, "unit_factor")
     minimum=None_passer(get_tag(parent.vmodel, parent.vname, 'low'), int)
     maximum=None_passer(get_tag(parent.vmodel, parent.vname, 'high'), int)
-    unit_func=get_tag(parent.vmodel, parent.vname, "unit_func", mult_unit_factor(unit_factor, int))
+    unit_func=get_tag(parent.vmodel, parent.vname, "unit_func",  mult_unit(unit_factor=unit_factor, coercer=int))
     display_func=get_tag(parent.vmodel, parent.vname, "display_func", None)
 
 enamldef UnitIntVar(Var):
@@ -137,10 +137,10 @@ enamldef UnitSpinBoxExt(UnitSpinBox):
     uvalue:=parent.vvalue
     unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
-    unit_factor=int(get_tag(parent.vmodel, parent.vname, "unit_factor", 1))
+    unit_factor=get_tag(parent.vmodel, parent.vname, "unit_factor")
     minimum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'low', -2147483648))
     maximum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'high', 2147483647))
-    unit_func=get_tag(parent.vmodel, parent.vname, "unit_func", mult_unit_factor(unit_factor, int))
+    unit_func=get_tag(parent.vmodel, parent.vname, "unit_func", mult_unit(unit_factor=unit_factor, coercer=int))
     display_func=get_tag(parent.vmodel, parent.vname, "display_func", None)
 
 
@@ -155,11 +155,11 @@ enamldef UnitFloatExt(UnitFloatField):
     uvalue:=parent.vvalue
     unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
-    unit_factor=float(get_tag(parent.vmodel, parent.vname, "unit_factor", 1.0))
+    unit_factor=get_tag(parent.vmodel, parent.vname, "unit_factor")
     minimum=None_passer(get_tag(parent.vmodel, parent.vname, 'low'), float)
     maximum=None_passer(get_tag(parent.vmodel, parent.vname, 'high'), float)
     read_only=rdonly(parent.vmodel, parent.vname)
-    unit_func=get_tag(parent.vmodel, parent.vname, "unit_func", mult_unit_factor(unit_factor, float))
+    unit_func=get_tag(parent.vmodel, parent.vname, "unit_func",  mult_unit(unit_factor=unit_factor, coercer=float))
     display_func=get_tag(parent.vmodel, parent.vname, "display_func", None)
 
 enamldef UnitFloatVar(Var):

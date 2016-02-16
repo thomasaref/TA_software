@@ -33,6 +33,7 @@ template DynTypedView(AttrType, spec):
 
 enamldef AgentLooper(Looper):
     attr vmodel=parent.vmodel
+    iterable=get_main_params(vmodel)
     DynVar:
         vname=loop_item
 
@@ -45,7 +46,7 @@ enamldef InstrHolder(VGroup):
     DynamicTemplate:
         base = InstrView
         args=(getattr(vmodel, "view", AgentLooper),)
-        data=dict(iterable=get_main_params(vmodel))
+        #data=dict(iterable=get_main_params(vmodel))
 
 
 ########################## CALLABLE ###############################

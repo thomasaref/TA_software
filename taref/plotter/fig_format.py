@@ -12,7 +12,7 @@ from taref.plotter.plotter_backbone import plot_observe, PlotMaster
 from atom.api import Bool, Unicode, Float, Enum, Int, cached_property
 
 from taref.core.shower import shower
-from taref.core.agent import SubAgent
+from taref.core.agent import Operative
 from enaml import imports
 from plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh, multiline_plot
 from taref.core.atom_extension import private_property
@@ -37,7 +37,7 @@ from matplotlib.backends import backend_qt4
 from PySide.QtCore import Qt
 backend_qt4.cursord[cursors.POINTER] = Qt.CursorShape.CrossCursor
 
-class Fig(PlotMaster, SubAgent):
+class Fig(PlotMaster, Operative):
     cid=Int().tag(private=True)
 
     base_name="plot"
