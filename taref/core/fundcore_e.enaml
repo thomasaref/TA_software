@@ -12,7 +12,7 @@ from enaml.widgets.api import  ( HGroup, Container, GroupBox,  Field, Label, Spi
 from enaml.core.api import Conditional
 from enaml.validator import IntValidator, FloatValidator
 from enaml.layout.api import spacer
-from taref.core.atom_extension import mult_unit
+from taref.physics.units import mult_unit
 
 enamldef aWindow(Window):
     """a Window that is not destroyed on close"""
@@ -69,13 +69,13 @@ enamldef UnitField(Field):
         if not validator.validate(text):
             if parent.minimum is None:
                 if parent.maximum is None:
-                    parent.uvalue=unit_func.coercer(0)
+                    parent.uvalue=unit.coercer(0)
                 else:
                     parent.uvalue=parent.maximum
             else:
                 parent.uvalue=parent.minimum
-    text << unicode(unit_func.inv(uvalue))
-    text :: parent.uvalue=unit_func(text)
+    text << unicode(uvalue/unit)
+    text :: parent.uvalue=text*unit
 
 #class mult_unit_factor(object):
 #    def __init__(self, unit_factor=1.0, coercer=float):
@@ -107,15 +107,15 @@ enamldef UnitHGroup(aHGroup):
     Conditional:
         condition = unit!=""
         Label:
-            text = unicode(unit)
+            text = unicode(unit.unit)
     Conditional:
         condition = show_uvalue
         Label: vl:
-            text << unicode("({})".format(uvalue))
+            text << unicode("({0} {1})".format(uvalue, unit.output_unit))
     Conditional:
         condition = display_func is not None
         Label:
-            text << "["+unicode(display_func(uvalue))+" "+getattr(display_func, "unit", display_func.func_name)+"]"
+            text << display_func.unit+"  ["+unicode(uvalue*display_func)+" "+display_func.output_unit+"]"
 
 enamldef UnitIntField(UnitHGroup):
     """ A field that only accept integer inputs and normalizes them by a unit factor"""
@@ -150,19 +150,22 @@ enamldef UnitSpinBox(aHGroup):
         Label:
             text << "["+unicode(display_func(uvalue))+" "+getattr(display_func, "unit", display_func.func_name)+"]"
 
+from taref.physics.units import unit_func as unit_f, GHz, dBm, mW, unitless
+
 enamldef UnitFloatField(UnitHGroup):
     """a field for floats with units"""
     attr allow_exponent : bool = True
-    attr unit_factor : float
-    attr unit_func=mult_unit(unit_factor=unit_factor, coercer=float)
+    attr unit = unitless#(unit_factor=unit_factor)
+    #attr unit_func=mult_unit(unit_factor=unit_factor, coercer=float)
     attr uvalue : float = 0.0
-    unit_field.validator<<FloatValidator(minimum=unit_func.inv(minimum), maximum=unit_func.inv(maximum), allow_exponent=allow_exponent)
+    unit_field.validator<<FloatValidator(minimum=minimum*unit, #unit_func.inv(minimum),
+                                         maximum=maximum*unit, #unit_func.inv(maximum),
+                                         allow_exponent=allow_exponent)
 
 ################ test window ###################
 
 
 from numpy import sqrt
-from taref.core.atom_extension import unit_func as unit_f
 class sqrd(unit_f):
     def func(self, value):
         return value**2
@@ -178,23 +181,30 @@ enamldef Main(Window):
     """test window"""
     VGroup:
         UnitFloatField: uff:
-            uvalue = 0.1
+            uvalue = 0.1e9
             #unit_factor=10.0
-            unit="Hz"
+            unit=GHz #"Hz"
             show_uvalue=True
-            minimum=1.0
-            maximum=10.0
-        UnitIntField:
-            uvalue=10
-            show_uvalue=True
-        UnitSpinBox: isb:
-            uvalue=10
-            unit_factor=10
-            maximum = 100000
-            show_uvalue=True
+            #minimum=1.0
+            #maximum=10.0
         UnitFloatField:
-            uvalue = unit_func(0.5)
-            unit_func=sqrd(unit=r"^2", format_str=r"$^2$")
+            uvalue = 0.0
+            display_func=dBm #"Hz"
+            show_uvalue=True
+            #minimum=1.0
+            #maximum=10.0
+
+#        UnitIntField:
+#            uvalue=10
+#            show_uvalue=True
+#        UnitSpinBox: isb:
+#            uvalue=10
+#            unit_factor=10
+#            maximum = 100000
+#            show_uvalue=True
+        UnitFloatField:
+            #uvalue = unit_func(0.5)
+            unit=sqrd(unit=r"^2", format_str=r"$^2$")
             #unit_factor=0.25
             #unit="Hz"
             show_uvalue=True

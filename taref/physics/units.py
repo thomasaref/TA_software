@@ -28,16 +28,26 @@ class unit_func(object):
     def __rdiv__(self, value):
         if value is None:
             return value
+        if isinstance(value, unit_func):
+            if value.output_unit==self.output_unit:
+                class new_unit(unit_func):
+                    def func(self, val):
+                        return self.func(value.func(val))
+
+                    def inv_func(self, val):
+                        return self.inv_func(value.inv_func(val))
+
+                return new_unit(unit=self.unit, output_unit=value.output_unit, format_str=value.format_str)
         return self.inv_func(self.coercer(value))
 
     def func(self, value):
         return value
-        
+
     def inv_func(self, value):
         return value
 
 unitless=unit_func()
-    
+
 class mult_unit(unit_func):
     """multiplication returns unit in output_units, division returns output unit in units"""
     def __init__(self, unit_factor=None, unit="", format_str=None, coercer=float, output_unit=""):
@@ -108,15 +118,16 @@ W = mult_unit(1.0,     unit="W",  output_unit="W")
 
 print 1/mW
 print 1.0e-1*mW/dBm
-print -10.0*dBm/mW
-
+dbmw=dBm/mW
+print 0.0*dbmw
+print 0.1/dbmw
 Hz = mult_unit(1.0,    unit="Hz",  output_unit="Hz")
 kHz= mult_unit(1.0e3,  unit="kHz", output_unit="Hz")
 MHz= mult_unit(1.0e6,  unit="MHz", output_unit="Hz")
 GHz= mult_unit(1.0e9,  unit="GHz", output_unit="Hz")
 THz= mult_unit(1.0e12, unit="THz", output_unit="Hz")
 
-unit_tuple=(fm, pm, nm, um, mm, cm, m, km, 
+unit_tuple=(fm, pm, nm, um, mm, cm, m, km,
             dB, dB_pwr, dBm,
             Hz, kHz, MHz, GHz, THz,
             pW, nW, uW, mW, W)
