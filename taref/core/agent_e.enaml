@@ -57,12 +57,10 @@ class ShowWindow(MainWindow):
         return OrderedDict([(name, self.all_win_dict[name]) for name in self.all_win_dict if name not in self.agent_win_dict])
 
     def show_and_send_to_front(self, name, win):
-        log_debug(name, win, self.agent_win_dict)
         if win is None:
             agent=self.chief_cls.agent_dict.get(name, None)
             #agent.get_member("view_window").reset(agent)
             win=get_view_window(agent, AutoAgentView(agent=agent))
-        log_debug(win)
         win.show()
         win.send_to_front()
         #self.get_member("other_win_dict").reset(self)

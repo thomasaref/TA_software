@@ -16,13 +16,13 @@ from taref.physics.fundamentals import dB, inv_dB, dBm2lin, lin2dBm, UdBm2lin, d
 inv_dB.unit=""
 #read_hdf=Read_HDF5(file_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A46_cooldown1/Data_1008/TA46_refll_fluxpowswp_4p2GHz4pGHz.hdf5")
 from taref.core.log import log_debug
-log_debug("hi")
 from taref.core.agent import Agent
 from atom.api import Float, Typed, Unicode, Int
 from taref.physics.fundamentals import dB
+from taref.physics.units import dBm_per_mW, GHz, V, dBm, dB
 class Fund(Agent):
     base_name="Fund"
-    fridge_att=Float(87.0+20.0+5.0).tag(unit="dB")
+    fridge_att=Float(87.0+20.0+5.0).tag(unit=dB)
 
 #fund=Fund()
 
@@ -31,23 +31,23 @@ class Lyzer(Agent):
     #fd=Typed(Fund, ())
 
     powind=Int(4)
-    probe_frq=Float().tag(unit="GHz", label="Probe frequency", read_only=True)
-    probe_pwr=dBm_Float().tag(label="Probe power", read_only=True)
-    yoko=Array().tag(unit="V", plot=True, label="Yoko")
-    pwr=Array().tag(unit="dBm", plot=True)
+    probe_frq=Float().tag(unit=GHz, label="Probe frequency", read_only=True)
+    probe_pwr=Float().tag(label="Probe power", read_only=True, display_unit=dBm_per_mW)
+    yoko=Array().tag(unit=V, plot=True, label="Yoko")
+    pwr=Array().tag(display_unit=dBm, plot=True)
     Magcom=Array().tag(private=True)
-    freq=Array().tag(unit="GHz", plot=True, label="Frequency")
+    freq=Array().tag(unit=GHz, plot=True, label="Frequency")
     comment=Unicode().tag(read_only=True, spec="multiline")
 
-    @tag_Property(unit="dB", plot=True)
+    @tag_Property(display_unit=dB, plot=True)
     def MagdB(self):
-        return dB(self.Magcom[:, :, self.powind])
+        return self.Magcom[:, :, self.powind]/dB
 
-    @tag_Property(unit="?", plot=True)
+    @tag_Property(plot=True)
     def Phase(self):
         return angle(self.Magcom[:, :, self.powind])
 
-    @tag_Property(unit="", plot=True)
+    @tag_Property( plot=True)
     def MagAbs(self):
         return absolute(self.Magcom[:, :, self.powind])
 

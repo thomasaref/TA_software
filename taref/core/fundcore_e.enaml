@@ -12,7 +12,8 @@ from enaml.widgets.api import  ( HGroup, Container, GroupBox,  Field, Label, Spi
 from enaml.core.api import Conditional
 from enaml.validator import IntValidator, FloatValidator
 from enaml.layout.api import spacer
-from taref.physics.units import mult_unit
+from taref.physics.units import unit_func, unitless
+
 
 enamldef aWindow(Window):
     """a Window that is not destroyed on close"""
@@ -62,146 +63,134 @@ enamldef CheckButton(PushButton):
         else:
             self.checked=self.value
 
-enamldef UnitField(Field):
-    """base for building UnitIntField and UnitFloatField below"""
-    read_only=parent.read_only
-    activated::
-        if not validator.validate(text):
-            if parent.minimum is None:
-                if parent.maximum is None:
-                    parent.uvalue=unit.coercer(0)
-                else:
-                    parent.uvalue=parent.maximum
-            else:
-                parent.uvalue=parent.minimum
-    text << unicode(uvalue/unit)
-    text :: parent.uvalue=text*unit
-
-#class mult_unit_factor(object):
-#    def __init__(self, unit_factor=1.0, coercer=float):
-#        self.unit_factor=unit_factor
-#        self.coercer=coercer
-#        self.unit=""
-#
-#    def __call__(self, text):
-#        return self.coercer(text)*self.unit_factor
-#
-#    def inv(self, value):
-#        if value is None:
-#            return value
-#        return value/self.unit_factor
-
-
 enamldef UnitHGroup(aHGroup):
     """shared structure between UnitIntField and UnitFloatField"""
     attr minimum = None
     attr maximum = None
-    attr unit = getattr(unit_func, "unit", "")
+    attr unit : unit_func = unitless
     attr show_uvalue : bool = False
-    attr read_only : bool = False
-    attr display_func = None
+    attr display_unit = None
 
     alias unit_field
-    UnitField: unit_field:
+    alias read_only:unit_field.read_only
+    Field: unit_field:
         pass
     Conditional:
-        condition = unit!=""
+        condition = unit!=unitless
         Label:
             text = unicode(unit.unit)
     Conditional:
         condition = show_uvalue
-        Label: vl:
-            text << unicode("({0} {1})".format(uvalue, unit.output_unit))
-    Conditional:
-        condition = display_func is not None
         Label:
-            text << display_func.unit+"  ["+unicode(uvalue*display_func)+" "+display_func.output_unit+"]"
+            text << unit.show_unit(uvalue)
+    Conditional:
+        condition = display_unit is not None
+        Label:
+            text << "["+display_unit.unit+" "+display_unit.show_unit(uvalue*display_unit)+"]"
 
 enamldef UnitIntField(UnitHGroup):
     """ A field that only accept integer inputs and normalizes them by a unit factor"""
-    attr uvalue : int = 0
-    attr unit_factor : int
-    attr unit_func=mult_unit(unit_factor=unit_factor, coercer=int)
+    attr uvalue = 0
     attr base=10
-    unit_field.validator<< IntValidator(base=base, minimum=unit_func.inv(minimum), maximum=unit_func.inv(maximum))
+    unit_field.validator<< IntValidator(base=base, minimum=minimum, maximum=maximum)
+    unit_field.text << unicode(int(uvalue/unit))
+    unit_field.text :: parent.uvalue=int(int(text)*unit)
+    unit_field.activated::
+        if not validator.validate(text):
+            if parent.minimum is None:
+                if parent.maximum is None:
+                    parent.uvalue=0
+                else:
+                    parent.uvalue=int(parent.maximum*unit)
+            else:
+                parent.uvalue=int(parent.minimum*unit)
 
 enamldef UnitSpinBox(aHGroup):
     """A SpinBox for integers with units"""
-    attr uvalue : int = 0
-    attr unit_factor : int
-    attr unit_func=mult_unit(unit_factor=unit_factor, coercer=int)
-    attr unit = getattr(unit_func, "unit", "")
+    attr uvalue = 0
+    attr unit : unit_func = unitless
     attr show_uvalue : bool = False
-    attr display_func = None
+    attr display_unit = None
     alias maximum : sb.maximum
     alias minimum : sb.minimum
     SpinBox: sb:
-        value << unit_func.inv(uvalue)
-        value :: parent.uvalue=unit_func(value)
-    Label:
-        text = unicode(unit)
-        visible = unit!=""
+        value << int(uvalue/unit)
+        value :: parent.uvalue=int(value*unit)
+    Conditional:
+        condition = unit!=unitless
+        Label:
+            text = unicode(unit.unit)
     Conditional:
         condition = show_uvalue
-        Label: vl:
-            text << unicode("({})".format(uvalue))
-    Conditional:
-        condition = display_func is not None
         Label:
-            text << "["+unicode(display_func(uvalue))+" "+getattr(display_func, "unit", display_func.func_name)+"]"
+            text << unit.show_unit(uvalue)
+    Conditional:
+        condition = display_unit is not None
+        Label:
+            text << "["+display_unit.unit+" "+display_unit.show_unit(uvalue*display_unit)+"]"
 
-from taref.physics.units import unit_func as unit_f, GHz, dBm, mW, unitless
 
 enamldef UnitFloatField(UnitHGroup):
     """a field for floats with units"""
     attr allow_exponent : bool = True
-    attr unit = unitless#(unit_factor=unit_factor)
-    #attr unit_func=mult_unit(unit_factor=unit_factor, coercer=float)
     attr uvalue : float = 0.0
-    unit_field.validator<<FloatValidator(minimum=minimum*unit, #unit_func.inv(minimum),
-                                         maximum=maximum*unit, #unit_func.inv(maximum),
-                                         allow_exponent=allow_exponent)
+    unit_field.validator<<FloatValidator(minimum=minimum, maximum=maximum, allow_exponent=allow_exponent)
+    unit_field.text << unicode(uvalue/unit)
+    unit_field.text :: parent.uvalue=float(text)*unit
+    unit_field.activated::
+        if not validator.validate(text):
+            if parent.minimum is None:
+                if parent.maximum is None:
+                    parent.uvalue=0.0
+                else:
+                    parent.uvalue=parent.maximum*unit
+            else:
+                parent.uvalue=parent.minimum*unit
 
 ################ test window ###################
+from taref.physics.units import GHz, dBm, mW
 
 
 from numpy import sqrt
-class sqrd(unit_f):
+class sqrd(unit_func):
     def func(self, value):
         return value**2
     def inv_func(self, value):
         return sqrt(value)
-
-
-#def sq(value):
-#    return value*value
-#sq.unit="squared"
 
 enamldef Main(Window):
     """test window"""
     VGroup:
         UnitFloatField: uff:
             uvalue = 0.1e9
-            #unit_factor=10.0
-            unit=GHz #"Hz"
+            unit=GHz
             show_uvalue=True
-            #minimum=1.0
-            #maximum=10.0
+            minimum=1.0
+            maximum=10.0
         UnitFloatField:
-            uvalue = 0.0
-            display_func=dBm #"Hz"
+            uvalue = 1.0*dBm/mW
+            unit=dBm/mW #"Hz"
             show_uvalue=True
-            #minimum=1.0
-            #maximum=10.0
+            minimum=-30.0
+            maximum=0.0
+        UnitFloatField:
+            uvalue = 1.0
+            display_unit=dBm/mW #"Hz"
+            show_uvalue=True
+            minimum=-30.0
+            maximum=0.0
 
-#        UnitIntField:
-#            uvalue=10
-#            show_uvalue=True
-#        UnitSpinBox: isb:
-#            uvalue=10
-#            unit_factor=10
-#            maximum = 100000
-#            show_uvalue=True
+        UnitIntField:
+            uvalue=10*GHz
+            show_uvalue=True
+            #unit=GHz
+            minimum=10
+            maximum=20
+        UnitSpinBox: isb:
+            uvalue=10
+            #unit=GHz
+            maximum = 100000
+            show_uvalue=True
         UnitFloatField:
             #uvalue = unit_func(0.5)
             unit=sqrd(unit=r"^2", format_str=r"$^2$")

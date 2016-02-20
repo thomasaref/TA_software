@@ -14,7 +14,7 @@ from taref.core.universal import msg
 from numpy import ndarray
 from taref.core.var_e import (Var, VarVGroup, FieldExt, MultilineExt, BoolExt, UnitIntFieldExt, UnitSpinBoxExt, UnitRangeExt, UnitFloatExt, UnitFloatRangeExt, EnumExt)
 from taref.core.fundcore_e import aHGroup, aVGroup
-
+from taref.physics.units import unitless
 
 ################### DEFAULT ##########################
 template TypedView(AttrType, spec):
@@ -120,18 +120,16 @@ enamldef ListExt(aHGroup):
 enamldef ListSpinBoxVar(Var):
     ListExt: pass
 
-def unitize(value, unit_factor=1.0):
+def unitize(value, unit=unitless):
     if type(value)==int:
-        return int(value/unit_factor)
+        return int(value/unit)
     elif type(value)==float:
-        return float(value/unit_factor)
-    #elif type(value)==ndarray:
-    #    return
+        return float(value/unit)
     return value
 
-def unitize_array(arr, unit_factor=1.0):
+def unitize_array(arr, unit=unitless):
     try:
-        return arr/unit_factor
+        return arr/unit
     except TypeError:
         return arr
 
@@ -141,17 +139,37 @@ def list2string(arr, separator="\n"):
     except AttributeError:
         return separator.join(arr)
 
+def display_unit_array(arr, unit=unitless):
+    try:
+        return arr*unit
+    except TypeError:
+        return arr
+
 from numpy import array2string
 
 enamldef ListReadOnlyExt(aHGroup):
-    attr unit_factor=get_tag(parent.vmodel, parent.vname, "unit_factor", 1.0)
-    attr unit = get_tag(parent.vmodel, parent.vname, "unit", "")
+    attr unit = get_tag(parent.vmodel, parent.vname, "unit", unitless)
+    attr display_unit = get_tag(parent.vmodel, parent.vname, "display_unit", None)
     MultilineField:
         read_only=True
-        text<<list2string(unitize_array(parent.parent.vvalue, unit_factor), separator="\n")
-    Label:
-        text = unicode(unit)
-        visible = unit!=""
+        text<<list2string(unitize_array(parent.parent.vvalue, unit), separator="\n")
+    Conditional:
+        condition = unit!=unitless
+        Label:
+            text = unicode(unit.unit)
+#    Conditional:
+#        condition = show_uvalue
+#        Label:
+#            text << unit.show_unit(uvalue)
+    Conditional:
+        condition = display_unit is not None
+        Label:
+            text << "["+display_unit.unit+"]"
+        MultilineField:
+            read_only=True
+            text<<list2string(display_unit_array(parent.parent.vvalue, display_unit), separator="\n")
+        Label:
+            text << "["+display_unit.output_unit+"]"
 
 template TypedView(AttrType: List, spec):
     """default template for List"""

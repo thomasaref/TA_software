@@ -15,6 +15,8 @@ from taref.core.atom_extension import get_tag, get_type, get_map, get_main_param
 from taref.core.fundcore_e import UnitIntField, UnitSpinBox, UnitFloatField, aHGroup, aVGroup#, mult_unit_factor
 from taref.core.universal import msg
 from atom.api import Property
+from taref.physics.units import unitless
+from enaml.stdlib.slider_transform import FloatTransform
 
 def spacer_eval(vmodel, vname):
      """useful function for modifying spacer of aHGroup"""
@@ -119,13 +121,12 @@ def None_passer(value, coercer=float):
 enamldef UnitIntFieldExt(UnitIntField):
     """integer shown as IntField with units"""
     uvalue:=parent.vvalue
-    unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
+    unit=get_tag(parent.vmodel, parent.vname, "unit", unitless)
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
-    unit_factor=get_tag(parent.vmodel, parent.vname, "unit_factor")
     minimum=None_passer(get_tag(parent.vmodel, parent.vname, 'low'), int)
     maximum=None_passer(get_tag(parent.vmodel, parent.vname, 'high'), int)
-    unit_func=get_tag(parent.vmodel, parent.vname, "unit_func",  mult_unit(unit_factor=unit_factor, coercer=int))
-    display_func=get_tag(parent.vmodel, parent.vname, "display_func", None)
+    display_unit=get_tag(parent.vmodel, parent.vname, "display_unit", None)
+    read_only=rdonly(parent.parent.vmodel, parent.parent.vname)
 
 enamldef UnitIntVar(Var):
     alias ext
@@ -135,13 +136,11 @@ enamldef UnitIntVar(Var):
 enamldef UnitSpinBoxExt(UnitSpinBox):
     """integer shown as SpinBox with units"""
     uvalue:=parent.vvalue
-    unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
+    unit=get_tag(parent.vmodel, parent.vname, "unit", unitless)
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
-    unit_factor=get_tag(parent.vmodel, parent.vname, "unit_factor")
     minimum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'low', -2147483648))
     maximum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'high', 2147483647))
-    unit_func=get_tag(parent.vmodel, parent.vname, "unit_func", mult_unit(unit_factor=unit_factor, coercer=int))
-    display_func=get_tag(parent.vmodel, parent.vname, "display_func", None)
+    display_unit=get_tag(parent.vmodel, parent.vname, "display_func", None)
 
 
 enamldef UnitSpinBoxVar(Var):
@@ -153,14 +152,12 @@ enamldef UnitSpinBoxVar(Var):
 enamldef UnitFloatExt(UnitFloatField):
     """extends Var for float types"""
     uvalue:=parent.vvalue
-    unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
+    unit=get_tag(parent.vmodel, parent.vname, "unit", unitless)
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
-    unit_factor=get_tag(parent.vmodel, parent.vname, "unit_factor")
     minimum=None_passer(get_tag(parent.vmodel, parent.vname, 'low'), float)
     maximum=None_passer(get_tag(parent.vmodel, parent.vname, 'high'), float)
-    read_only=rdonly(parent.vmodel, parent.vname)
-    unit_func=get_tag(parent.vmodel, parent.vname, "unit_func",  mult_unit(unit_factor=unit_factor, coercer=float))
-    display_func=get_tag(parent.vmodel, parent.vname, "display_func", None)
+    read_only=rdonly(parent.parent.vmodel, parent.parent.vname)
+    display_unit=get_tag(parent.vmodel, parent.vname, "display_unit", None)
 
 enamldef UnitFloatVar(Var):
     alias ext
@@ -183,38 +180,35 @@ def get_maximum(obj, param):
 enamldef UnitRangeExt(UnitIntField): uif:
     """a Range control with units"""
     uvalue:=parent.vvalue
-    unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
+    unit=get_tag(parent.vmodel, parent.vname, "unit", unitless)
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
-    unit_factor=int(get_tag(parent.vmodel, parent.vname, "unit_factor", 1))
     minimum = get_minimum(parent.vmodel, parent.vname)
     maximum = get_maximum(parent.vmodel, parent.vname)
     attr tracking : bool = get_tag(parent.vmodel, parent.vname, "tracking", False)
     Label: min_lbl:
-        text << str(sel_slider.minimum/uif.unit_factor)
+        text << str(int(sel_slider.minimum))
     Slider: sel_slider:
         minimum = uif.minimum
         maximum = uif.maximum
         value :=uif.uvalue
         tracking = uif.tracking
     Label: max_lbl:
-        text << str(sel_slider.maximum/uif.unit_factor)
+        text << str(int(sel_slider.maximum))
 
 enamldef UnitRangeVar(Var):
     alias ext
     UnitRangeExt: ext:
         pass
 
-from enaml.stdlib.slider_transform import FloatTransform
 enamldef UnitFloatRangeExt(UnitFloatField): uff:
     """ A form control template specialization for Float members"""
     uvalue:=parent.vvalue
-    unit=get_tag(parent.vmodel, parent.vname, "unit", u"")
+    unit=get_tag(parent.vmodel, parent.vname, "unit", unitless)
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
-    unit_factor=float(get_tag(parent.vmodel, parent.vname, "unit_factor", 1.0))
     minimum = get_minimum(parent.vmodel, parent.vname)
     maximum = get_maximum(parent.vmodel, parent.vname)
     attr tracking : bool = get_tag(parent.vmodel, parent.vname, "tracking", False)
-    attr precision : int = get_tag(parent.vmodel, parent.vname, 'precision', 100)
+    attr precision : int = get_tag(parent.vmodel, parent.vname, 'precision', 1000)
     Label: min_lbl:
             text << str(ft.minimum)
     Slider: sel_slider:
@@ -293,7 +287,7 @@ if __name__=="__main__":
             return self.t_bool
 
 
-        t_int=Int(10).tag(unit_factor=10, show_value=True, unit="x10", low=20, high=50, desc="UnitIntVar with unit, unit_factor and show_value")
+        t_int=Int(10).tag(show_value=True, low=20, high=50, desc="UnitIntVar with unit, unit_factor and show_value")
         t_range=Range(0,5,1)
         def _observe_t_int(self, change):
             self.get_member("t_readonly_int").reset(self)
@@ -303,13 +297,13 @@ if __name__=="__main__":
             return self.t_int
 
         t_float=Float(1).tag(desc="UnitFloatVar for floats with unit, unit_factor, show_value, low and high tags",
-                            unit="/2", unit_factor=0.5, show_value=True, low=3.0, high=5.0)
+                            show_value=True, low=3.0, high=5.0)
         t_floatrange=FloatRange(0.0, 5.0, 1.0).tag(tracking=True)
 
         def _observe_t_float(self, change):
             self.get_member("t_readonly_float").reset(self)
 
-        @tag_Property(desc="demonstrates readonly version of int for readonly property")
+        @tag_Property(desc="demonstrates readonly version of float for readonly property")
         def t_readonly_float(self):
             return self.t_float
 

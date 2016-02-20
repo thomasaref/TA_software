@@ -4,26 +4,34 @@ Created on Wed Feb 17 00:02:26 2016
 
 @author: thomasaref
 """
-#from taref.physics.fundamentals import dB, inv_dB, dB_pwr, inv_dB_pwr
 from taref.core.log import log_debug
 from numpy import log10, absolute
 
 class unit_func(object):
     """base unit, returns value with no operation"""
-    def __init__(self, unit="", format_str=None, coercer=float, output_unit=""):
+    def __init__(self, unit="", format_str=None, output_unit="", output_format_str=None):
         self.unit=unit
         if format_str is None:
             format_str=r"{0} "+unit
         else:
             format_str=r"{0} "+format_str
         self.format_str=format_str
-        self.coercer=coercer
         self.output_unit=output_unit
+        if output_format_str is None:
+            output_format_str=r"{0} "+output_unit
+        else:
+            output_format_str=r"{0} "+output_format_str
+
+    def show_unit(self, value):
+        """a utility function for displaying a value with output unit added on as a string"""
+        if self.output_unit=="":
+            return "({0:g})".format(value)
+        return "({0:g} {1})".format(value, self.output_unit)
 
     def __rmul__(self, value):
         if value is None:
             return value
-        return self.func(self.coercer(value))
+        return self.func(value)
 
     def __rdiv__(self, value):
         if value is None:
@@ -31,14 +39,13 @@ class unit_func(object):
         if isinstance(value, unit_func):
             if value.output_unit==self.output_unit:
                 class new_unit(unit_func):
-                    def func(self, val):
-                        return self.func(value.func(val))
-
-                    def inv_func(self, val):
-                        return self.inv_func(value.inv_func(val))
-
-                return new_unit(unit=self.unit, output_unit=value.output_unit, format_str=value.format_str)
-        return self.inv_func(self.coercer(value))
+                    def func(obj, val):
+                        return self.inv_func(value.func(val))
+                    def inv_func(obj, val):
+                        return value.inv_func(self.func(val))
+                return new_unit(unit=value.unit, output_unit=self.unit,
+                                format_str=value.format_str[4:], output_format_str=self.format_str[4:])
+        return self.inv_func(value)
 
     def func(self, value):
         return value
@@ -50,9 +57,9 @@ unitless=unit_func()
 
 class mult_unit(unit_func):
     """multiplication returns unit in output_units, division returns output unit in units"""
-    def __init__(self, unit_factor=None, unit="", format_str=None, coercer=float, output_unit=""):
+    def __init__(self, unit_factor=None, unit="", format_str=None, output_unit=""):
         self.unit_factor=unit_factor
-        super(mult_unit, self).__init__(unit=unit, format_str=format_str, coercer=coercer, output_unit=output_unit)
+        super(mult_unit, self).__init__(unit=unit, format_str=format_str, output_unit=output_unit)
 
     def __rmul__(self, value):
         if self.unit_factor is None:
@@ -86,8 +93,6 @@ class dB_unit(unit_func):
     def inv_func(self, value):
         return 20.0*log10(absolute(value))
 
-
-
 class dB_pwr_unit(unit_func):
     def func(self, value):
         return 10.0**(value/10.0)
@@ -97,8 +102,6 @@ class dB_pwr_unit(unit_func):
 
 dB=dB_unit(unit="dB", output_unit="")
 dB_pwr=dB_pwr_unit(unit="dB_pwr", output_unit="")
-print  0.5/dB, -6*dB
-print  0.5/dB_pwr, -6*dB_pwr
 
 class dBm_unit(unit_func):
     def func(self, value):
@@ -116,20 +119,30 @@ uW= mult_unit(1.0-6,   unit="mW", output_unit="W")
 mW= mult_unit(1.0e-3,  unit="mW", output_unit="W")
 W = mult_unit(1.0,     unit="W",  output_unit="W")
 
-print 1/mW
-print 1.0e-1*mW/dBm
-dbmw=dBm/mW
-print 0.0*dbmw
-print 0.1/dbmw
+V = mult_unit(1.0,     unit="V",  output_unit="V")
+
 Hz = mult_unit(1.0,    unit="Hz",  output_unit="Hz")
 kHz= mult_unit(1.0e3,  unit="kHz", output_unit="Hz")
 MHz= mult_unit(1.0e6,  unit="MHz", output_unit="Hz")
 GHz= mult_unit(1.0e9,  unit="GHz", output_unit="Hz")
 THz= mult_unit(1.0e12, unit="THz", output_unit="Hz")
 
+dBm_per_mW=dBm/mW
+
 unit_tuple=(fm, pm, nm, um, mm, cm, m, km,
             dB, dB_pwr, dBm,
             Hz, kHz, MHz, GHz, THz,
             pW, nW, uW, mW, W)
 unit_dict=dict([(unit.unit, unit) for unit in unit_tuple])
-print unit_dict
+
+if __name__=="__main__":
+    print  0.5/dB, -6*dB
+    print  0.5/dB_pwr, -6*dB_pwr
+
+    print unit_dict
+    print 1/mW
+    print 1.0e-1*mW/dBm
+    dbmw=dBm/mW
+    print dbmw.unit, dbmw.output_unit, dbmw.format_str
+    print -20*dBm/mW
+    print 0.1/(dBm/mW)

@@ -139,8 +139,8 @@ def generate_unit_dict():
 
 
 myUNIT_DICT=generate_unit_dict()
-for key in myUNIT_DICT:
-    print myUNIT_DICT[key].unit, myUNIT_DICT[key](1.0), myUNIT_DICT[key].inv(1.0)
+#for key in myUNIT_DICT:
+#    print myUNIT_DICT[key].unit, myUNIT_DICT[key](1.0), myUNIT_DICT[key].inv(1.0)
 
 def united(obj, name, value=None, inv=False):
     if value is None:
@@ -168,7 +168,8 @@ UNIT_DICT={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
 }
 
 def get_display(obj, name):
-    return get_tag(obj, name, "display_func")(getattr(obj, name))
+    disp_unit=get_tag(obj, name, "display_unit")
+    return disp_unit.show_unit(getattr(obj, name)*disp_unit)
 
 def set_tag(obj, name, **kwargs):
     """sets the tag of a member using Atom's built in tag functionality"""
