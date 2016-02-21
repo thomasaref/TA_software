@@ -10,17 +10,9 @@ from taref.core.atom_extension import get_tag
 from taref.physics.fundamentals import (eps0, sqrt, pi, Delta, hbar, e, h, kB, ndarray, array, eig, delete,
                                         sin, sinc_sq, linspace, zeros, absolute, cos, arange)
 from taref.core.extra_setup import tagged_property, property_func
-from atom.api import Float, Int, Enum
+from atom.api import Float, Enum
 from taref.core.universal import Array
 from numpy.linalg import eigvalsh, eigvals
-from taref.saw.idt import IDT
-
-def unitize(obj, param):
-    unit=get_tag(obj, param, "unit")
-    if unit is not None:
-        return getattr(obj, param)/unit
-    return getattr(obj, param)
-
 
 class Qubit(Agent):
     """Theoretical description of qubit"""
@@ -43,26 +35,7 @@ class Qubit(Agent):
     def _get_Tc(self, Delta):
         return Delta/(1.764*kB)
 
-    def latex_table(self, param_list=None):
-        if param_list is None:
-            param_list=self.main_params
-        lt = [[self.name,  r"Value",  r"Expression", r"Comment"],]
-        for param in param_list:
-            unit=get_tag(self, param, "unit")
-            format_str=getattr(unit, "format_str", r"{0}")
-            if unit is not None:
-                value=getattr(self, param)/unit
-            else:
-                value=getattr(self, param)
-            tex_str=get_tag(self, param, "tex_str")
-            if tex_str is None:
-                tex_str=param.replace("_", " ")
-            label=get_tag(self, param, "label")
-            if label is not None:
-                tex_str=label+", "+tex_str
-            lt.append([tex_str,  format_str.format(value),
-                       get_tag(self, param, "expression", r"{}"), get_tag(self, param, "desc", r"{}")])
-        return lt
+
 
     base_name="qubit"
     #def _default_main_params(self):
@@ -116,7 +89,6 @@ class Qubit(Agent):
     def EjmaxdivEc(self, Ejmax, Ec):
         return Ejmax/Ec
 
-    flux_over_flux0=Float()
 
     @tagged_property(unit="hGHz")#, unit_factor=1.0e9*h)
     def Ej(self, Ejmax, flux_over_flux0):
@@ -147,7 +119,25 @@ class Qubit(Agent):
         """h*fq=sqrt(8.0*Ej*Ec) - Ec"""
         return ((h*fq+Ec)**2)/(8.0*Ec)
 
+    voltage=Float().tag(unit="V")
+    offset=Float(0.09).tag(unit="V")
+    flux_factor=Float(0.195)
+    #flux_over_flux0=Float()
 
+    @tagged_property()
+    def flux_over_flux0(self, voltage, offset, flux_factor):
+        return (voltage-offset)*flux_factor
+
+    @flux_over_flux0.fget.setter
+    def _get_voltage(self, flux_over_flux0, offset, flux_factor):
+        return flux_over_flux0/flux_factor+offset
+
+    def flux_parabola(self, voltage, offset, flux_factor):
+        flux_over_flux0=self.call_func("flux_over_flux0", voltage=voltage, offset=offset, flux_factor=flux_factor)
+        Ej=self.call_func("Ej", flux_over_flux0=linspace(0,1,10))
+    print t.call_func("fq", Ej=linspace(0,1,10))
+    def detuning(f0, flux_over_flux0):
+        return 2.0*pi*(f0 - flux_parabola(flux_over_flux0))
 
 
     def indiv_EkdivEc(self, ng, Ec, Ej, Nstates, order):
@@ -282,5 +272,8 @@ class Qubit(Agent):
 
 if __name__=="__main__":
     t=Qubit()
-    print t.latex_table()
+    print t.call_func("flux_over_flux0", voltage=linspace(0,1,10))
+    print t.call_func("Ej", flux_over_flux0=linspace(0,1,10))
+    print t.call_func("fq", Ej=linspace(0,1,10))
+
     t.show()

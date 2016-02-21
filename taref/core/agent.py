@@ -62,6 +62,7 @@ class Operative(Backbone):
         Operative.agent_dict[self.name]=self
         self.add_func(*self.cls_run_funcs)
 
+
 class Spy(Operative):
     """Spies uses observers to log all changes to params"""
     base_name="spy"

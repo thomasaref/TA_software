@@ -8,7 +8,7 @@ Created on Tue Jul  7 21:52:51 2015
 
 from atom.api import Atom, Property
 from taref.core.atom_extension import (private_property, get_reserved_names, get_all_params,
-get_all_main_params, lowhigh_check, make_instancemethod, get_type)
+get_all_main_params, lowhigh_check, make_instancemethod, get_type, get_tag)
 from taref.core.extra_setup import extra_setup
 from enaml.qt.qt_application import QtApplication
 from taref.physics.units import UNIT_DICT
@@ -111,3 +111,24 @@ class Backbone(Atom):
             typer=get_type(self, param)
             self.extra_setup(param, typer)
         super(Backbone, self).__init__(**kwargs)
+
+    def latex_table(self, param_list=None):
+        if param_list is None:
+            param_list=self.main_params
+        lt = [[self.name,  r"Value",  r"Expression", r"Comment"],]
+        for param in param_list:
+            unit=get_tag(self, param, "unit")
+            format_str=getattr(unit, "format_str", r"{0}")
+            if unit is not None:
+                value=getattr(self, param)/unit
+            else:
+                value=getattr(self, param)
+            tex_str=get_tag(self, param, "tex_str")
+            if tex_str is None:
+                tex_str=param.replace("_", " ")
+            label=get_tag(self, param, "label")
+            if label is not None:
+                tex_str=label+", "+tex_str
+            lt.append([tex_str,  format_str.format(value),
+                       get_tag(self, param, "expression", r"{}"), get_tag(self, param, "desc", r"{}")])
+        return lt
