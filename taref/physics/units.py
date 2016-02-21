@@ -6,15 +6,16 @@ Created on Wed Feb 17 00:02:26 2016
 """
 from taref.core.log import log_debug
 from numpy import log10, absolute
+from taref.physics.fundamentals import h, e
 
 class unit_func(object):
     """base unit, returns value with no operation"""
     def __init__(self, unit="", format_str=None, output_unit="", output_format_str=None):
         self.unit=unit
         if format_str is None:
-            format_str=r"{0} "+unit
+            format_str=r"{0:g} "+unit
         else:
-            format_str=r"{0} "+format_str
+            format_str=r"{0:g} "+format_str
         self.format_str=format_str
         self.output_unit=output_unit
         if output_format_str is None:
@@ -80,11 +81,13 @@ class mult_unit(unit_func):
 fm= mult_unit(1.0e-15, unit="fm", output_unit="m")
 pm= mult_unit(1.0e-12, unit="pm", output_unit="m")
 nm= mult_unit(1.0e-9,  unit="nm", output_unit="m")
-um= mult_unit(1.0e-6,  unit="um", output_unit="m", format_str=r"{0} $\mu$m")
+um= mult_unit(1.0e-6,  unit="um", output_unit="m", format_str=r"$\mu$m")
 mm= mult_unit(1.0e-3,  unit="mm", output_unit="m")
 cm= mult_unit(0.01,    unit="cm", output_unit="m")
-m=  mult_unit(1.0,     unit="m",  output_unit="m")
+m=  unit_func(unit="m",  output_unit="m")
 km= mult_unit(1.0e3,   unit="km", output_unit="m")
+
+um_sq=mult_unit(unit_factor=1.0e-12, unit="um^2", output_unit="m^2", format_str=r"$\mu$m$^2$")
 
 class dB_unit(unit_func):
     def func(self, value):
@@ -112,28 +115,63 @@ class dBm_unit(unit_func):
 
 dBm=dBm_unit(unit="dBm", output_unit="W")
 
-fW= mult_unit(1.0e-15, unit="mW", output_unit="W")
-pW= mult_unit(1.0e-12, unit="mW", output_unit="W")
-nW= mult_unit(1.0e-9,  unit="mW", output_unit="W")
-uW= mult_unit(1.0-6,   unit="mW", output_unit="W")
+fW= mult_unit(1.0e-15, unit="fW", output_unit="W")
+pW= mult_unit(1.0e-12, unit="pW", output_unit="W")
+nW= mult_unit(1.0e-9,  unit="nW", output_unit="W")
+uW= mult_unit(1.0e-6,   unit="uW", output_unit="W")
 mW= mult_unit(1.0e-3,  unit="mW", output_unit="W")
-W = mult_unit(1.0,     unit="W",  output_unit="W")
+W = unit_func(unit="W",  output_unit="W")
 
-V = mult_unit(1.0,     unit="V",  output_unit="V")
+V = unit_func(unit="V",  output_unit="V")
+eV=mult_unit(unit_factor=1.0*e, unit="eV", output_unit="J")
+ueV=mult_unit(unit_factor=1.0e-6*e, unit="ueV", output_unit="J")
 
-Hz = mult_unit(1.0,    unit="Hz",  output_unit="Hz")
+
+fF= mult_unit(1.0e-15, unit="fF", output_unit="F")
+F = unit_func(unit="F",  output_unit="F")
+
+nA= mult_unit(1.0e-9,  unit="nA", output_unit="A")
+A = unit_func(unit="A",  output_unit="A")
+
+Ohm=  unit_func(unit="Ohm",  output_unit="Ohm")
+kOhm= mult_unit(1.0e3,   unit="kOhm", output_unit="Ohm")
+
+
+m_per_s=unit_func(unit="m/s", output_unit="m/s")
+
+Hz = unit_func(unit="Hz",  output_unit="Hz")
 kHz= mult_unit(1.0e3,  unit="kHz", output_unit="Hz")
 MHz= mult_unit(1.0e6,  unit="MHz", output_unit="Hz")
 GHz= mult_unit(1.0e9,  unit="GHz", output_unit="Hz")
 THz= mult_unit(1.0e12, unit="THz", output_unit="Hz")
 
+hGHz=mult_unit(unit_factor=1.0e9*h, unit="hGHz", output_unit="hHz")
+hHz = unit_func(unit="hHz",  output_unit="hHz")
+
 dBm_per_mW=dBm/mW
 
-unit_tuple=(fm, pm, nm, um, mm, cm, m, km,
-            dB, dB_pwr, dBm,
+K = unit_func(unit="K",  output_unit="K")
+
+percent=mult_unit(1.0/100.0, unit="%", output_unit="", format_str="\%")
+
+UNIT_TUPLE=(fm, pm, nm, um, mm, cm, m, km,
+            um_sq,
+            dB, dB_pwr, dBm, dBm_per_mW,
             Hz, kHz, MHz, GHz, THz,
-            pW, nW, uW, mW, W)
-unit_dict=dict([(unit.unit, unit) for unit in unit_tuple])
+            hHz, hGHz,
+            fW, pW, nW, uW, mW, W,
+            V,
+            eV, ueV,
+            F,fF,
+            Ohm, kOhm,
+            A, nA,
+            m_per_s,
+            K,
+            percent)
+UNIT_DICT=dict([(unit.unit, unit) for unit in UNIT_TUPLE])
+#UNIT_DICT["%"]=percent
+#UNIT_DICT["m/s"]=m_per_s
+#UNIT_DICT["dBm/mW"]=dBm_per_mW
 
 if __name__=="__main__":
     print  0.5/dB, -6*dB

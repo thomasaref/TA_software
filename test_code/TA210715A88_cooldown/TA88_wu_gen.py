@@ -20,7 +20,18 @@ tx.TEX_start()
 tx.ext("summary")
 tx.ext("switch")
 
+tx.add(r"\subsection{Material values}")
+tx.make_table(qdt.latex_table(["material", "epsinf", "vf", "K2", "Dvv"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
+#tx.make_table(idt.latex_table(["material", "epsinf", "vf", "K2", "Dvv"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
+
 tx.add(r"\subsection{Qubit values}")
+tx.make_table(qdt.latex_table(["ft", "Np", "ef", "W", "a", "Rn", "G_f0", "G_f", "Cq", "Ct", "loop_width", "loop_height"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
+tx.add(r"\subsection{More Qubit values}")
+tx.make_table(qdt.latex_table(["f0", "Np", "Ic", "Ejmax", "Ct", "Ec", "EjmaxdivEc", "fq_max",
+                               "fq_max_full", "flux_over_flux0", "loop_area", "Ej", "EjdivEc", "fq"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
+
+#tx.make_table(idt.latex_table(["material", "epsinf", "vf", "K2", "Dvv"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
+
 qubit_values=[[r"QDT"                                    ,  r"Value"                            ],
               [r"Finger type"                            ,  r"{0}".format(qdt.ft)               ],
               [r"Number of finger pairs, $N_{pq}$"       ,  r"{0}".format(qdt.Np)               ],
@@ -63,7 +74,6 @@ calc_qubit=[[r"Calculated values qubit"            ,  r"Value"                  
             [r"Ej/Ec"                              ,  r"{0}".format(qdt.EjdivEc)                   ,  r"Ej/Ec"                               , r"transmon limit"              ],
             [r"Working frequency"                  ,  r"{0} GHz".format(qdt.fq)                    ,  r"$v/(8a_q)$"                          , r"speed over wavelength"       ],
            ]
-tx.make_table(calc_qubit, r"|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|")
 
 tx.add(r"\subsection{Calculated IDT values}")
 calc_idt=[[r"Calculated values IDT"          ,  r"Value"                            ,  r"Expression"                          , r"Comment"                ],

@@ -6,81 +6,63 @@ Created on Mon Feb 15 11:36:10 2016
 """
 
 from taref.core.agent import Agent
-from taref.physics.fundamentals import (eps0, sqrt, pi, Delta, hbar, e, h, ndarray, array, eig, delete,
+from taref.core.atom_extension import get_tag
+from taref.physics.fundamentals import (eps0, sqrt, pi, Delta, hbar, e, h, kB, ndarray, array, eig, delete,
                                         sin, sinc_sq, linspace, zeros, absolute, cos, arange)
 from taref.core.extra_setup import tagged_property, property_func
-from atom.api import Float, Int
+from atom.api import Float, Int, Enum
 from taref.core.universal import Array
 from numpy.linalg import eigvalsh, eigvals
 from taref.saw.idt import IDT
 
 def unitize(obj, param):
-    unit_factor=get_tag(obj, param, "unit_factor")
-    if unit_factor is not None:
-        return getattr(obj, param)/unit_factor
-    unit_func=get_tag(obj, param, "unit_func")
-    if unit_func is not None:
-        return unit_func.inv(getattr(obj, param))
+    unit=get_tag(obj, param, "unit")
+    if unit is not None:
+        return getattr(obj, param)/unit
     return getattr(obj, param)
+
 
 class Qubit(Agent):
     """Theoretical description of qubit"""
+
+    superconductor=Enum("Al")
+
+    def _observe_superconductor(self, change):
+        if self.superconductor=="Al":
+            #self.Tc=1.3157 #critical temperature of aluminum
+            self.Delta=200.0e-6*e #gap of aluminum
+
+    Tc=Float(1.315).tag(desc="Critical temperature of superconductor", unit="K")
+
+    @tagged_property(label="Gap", tex_str=r"$\Delta(0)$", unit="ueV", desc="Superconducting gap 200 ueV for Al",
+                     reference="BCS", expression=r"$1.764 k_B T_c$")
+    def Delta(self, Tc):
+        return 1.764*kB*Tc
+
+    @Delta.fget.setter
+    def _get_Tc(self, Delta):
+        return Delta/(1.764*kB)
 
     def latex_table(self, param_list=None):
         if param_list is None:
             param_list=self.main_params
         lt = [[self.name,  r"Value",  r"Expression", r"Comment"],]
         for param in param_list:
-            lt.append([get_tag(self, param, "label", param),  get_tag(self, param, format_str, r"{0}").format(unitize(self, param)),
-                       get_tag(self, param, "expression", r"{}"), get_tag(self, param, "comment", r"{}")])
-
-              [r"Overlap length, $W$"                    ,  r"{0} $\mu$m".format(qdt.W/1.0e-6)  ],
-              [r"finger width, $a_q$"                    ,  r"{0} nm".format(qdt.a/1.0e-9)      ],
-              [r"DC Junction Normal Resistance"          ,  r"{0} k$\Omega$".format(qdt.Rn)     ],
-              [r"Metallization ratio"                    ,  r"{0}\%".format(qdt.eta)            ],
-              [r"Coupling at IDT center frequency"""     ,  r"{0} GHz".format(qdt.G_f0/1.0e9)   ],
-              [r"Coupling adjusted by $sinc^2$"            ,  r"{0} GHz".format(qdt.G_f)          ],
-              [r"loop width"                             ,  r"{0} um".format(qdt.loop_width)    ],
-              [r"loop height"                            ,  r"{0} um".format(qdt.loop_height)   ],
-             ]
-tx.make_table(qubit_values, r"|p{5 cm}|p{3 cm}|")
-
-tx.add(r"\subsection{IDT values}")
-idt_values=[[r"Talking/Listening IDTs"             ,  r"Value"                                 ],
-            [r"Finger type"                        ,  r"{0}".format(idt.ft)                    ],
-            [r"Number of finger pairs, $N_{p}$"    ,  r"{0}".format(idt.Np)                    ],
-            [r"Overlap length, $W$"                ,  r"{0} $\mu$m".format(idt.W/1.0e-6)       ],
-            [r"finger width, $a$"                  ,  r"{0} nm".format(idt.a/1.0e-9)           ],
-            [r"Metallization ratio"                ,  r"{0}\%".format(idt.eta)                 ]
-           ]
-tx.make_table(idt_values, r"|p{5 cm}|p{3 cm}|")
-
-tx.add(r"\subsection{Calculated qubit values}")
-calc_qubit=[[r"Calculated values qubit"            ,  r"Value"                                     ,  r"Expression"                          , r"Comment"                     ],
-            [r"Center frequency"                   ,  r"{0} GHz".format(qdt.f0)                    ,  r"$v/(8a_q)$"                          , r"speed over wavelength"       ],
-            [r"Gap $\Delta(0)$"                    ,  r"200e-6 eV"                                 ,  r"$1.764 k_B T_c$"                     , r"BCS"                         ],
-            [r"Critical current, $I_c$"            ,  r"{0} nA".format(qdt.Ic/1.0e-9)              ,  r"$\dfrac{\pi \Delta(0)}{2e}$"         , r"Ambegaokar Baratoff formula" ],
-            [r"$E_{Jmax}$"                         ,  r"{0} GHz".format(qdt.Ejmax)                 ,  r"$\dfrac{\hbar I_c}{2e R_n}$"         , r"{}"                          ],
-            [r"Capacitance from fingers $C_q$"     ,  r"{0} fF".format(qdt.Ct/1.0e-15)             ,  r"$\sqrt{2} W N_{pq} \epsilon_\infty$" , r"Morgan chp 1"                ],
-            [r"\(E_c\)"                            ,  r"{0} MHz".format(qdt.Ec)                    ,  r"$\dfrac{e^2}{2 C}$"                  , r"Charging energy"             ],
-            [r"Ejmax/Ec"                           ,  r"{0}".format(qdt.EjmaxdivEc)                ,  r"Ejmax/Ec"                            , r"transmon limit"              ],
-            [r"Estimated max frequency of qubit"   ,  r"{0} GHz".format(qdt.fq_max)                ,  r"{}"                                  , r"full transmon expression"    ],
-            [r"Estimated max frequency of qubit"   ,  r"{0} GHz".format(qdt.fq_max_full)           ,  r"{}"                                  , r"full transmon expression"    ],
-            [r"Estimated flux/flux0"               ,  r"{0}".format(qdt.flux_over_flux0)           ,  r"{}"                                  , r"full transmon expression"    ],
-            [r"loop area"                          ,  r"{0} $\mu$m$^2$".format(qdt.loop_height)    ,  r"{}"                                  , r"Area"                        ],
-            [r"$E_J$"                              ,  r"{0} GHz".format(qdt.Ejmax/1.0e9)           ,  r"$\dfrac{\hbar I_c}{2e R_n}$"         , r"{}"                          ],
-            [r"Ej/Ec"                              ,  r"{0}".format(qdt.EjdivEc)                   ,  r"Ej/Ec"                               , r"transmon limit"              ],
-            [r"Working frequency"                  ,  r"{0} GHz".format(qdt.fq)                    ,  r"$v/(8a_q)$"                          , r"speed over wavelength"       ],
-           ]
-tx.make_table(calc_qubit, r"|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|")
-
-tx.add(r"\subsection{Calculated IDT values}")
-calc_idt=[[r"Calculated values IDT"          ,  r"Value"                            ,  r"Expression"                          , r"Comment"                ],
-          [r"Center frequency"               ,  r"{0} GHz".format(idt.f0)           ,  r"$v/(8a)$"                            , r"speed over wavelength"  ],
-          [r"Capacitance from fingers, $C$"  ,  r"{0} fF".format(idt.Ct/1.0e-15)    ,  r"$\sqrt{2} W N_{p} \epsilon_\infty$"  , r"Morgan chp 1"           ],
-          [r"$Ga0$"                          ,  r"{0} $\Omega$".format(1.0/idt.Ga_0) ,  r"$\dfrac{1}{G_{a0}}$"                  , r"Electrical impedance"  ],
-         ]
-          #[r"F width at half max"            ,  r"115"                 ,  r"Ejmax/Ec"                            , r"transmon limit"         ]]
+            unit=get_tag(self, param, "unit")
+            format_str=getattr(unit, "format_str", r"{0}")
+            if unit is not None:
+                value=getattr(self, param)/unit
+            else:
+                value=getattr(self, param)
+            tex_str=get_tag(self, param, "tex_str")
+            if tex_str is None:
+                tex_str=param.replace("_", " ")
+            label=get_tag(self, param, "label")
+            if label is not None:
+                tex_str=label+", "+tex_str
+            lt.append([tex_str,  format_str.format(value),
+                       get_tag(self, param, "expression", r"{}"), get_tag(self, param, "desc", r"{}")])
+        return lt
 
     base_name="qubit"
     #def _default_main_params(self):
@@ -90,19 +72,18 @@ calc_idt=[[r"Calculated values IDT"          ,  r"Value"                        
     #            "fq", "fq_max", "fq_max_full", "flux_over_flux0", "G_f0", "G_f",
    #             "ng", "Nstates", "EkdivEc"]
 
-    loop_width=Float(1.0e-6).tag(desc="loop width of SQUID", unit="um", format_str=r"{0} $\mu$m")
-    loop_height=Float(1.0e-6).tag(desc="loop height of SQUID", unit="um", format_str=r"{0} $\mu$m")
+    loop_width=Float(1.0e-6).tag(desc="loop width of SQUID", unit="um", label="loop width")
+    loop_height=Float(1.0e-6).tag(desc="loop height of SQUID", unit="um", label="loop height")
 
-    @tagged_property(desc="Area of SQUID loop", unit="um^2", unit_factor=1.0e-12, format_str=r"{0} $\mu$m$^2$",
-                     expression="$width \times height$", comment="Loop width times loop height")
+    @tagged_property(desc="Area of SQUID loop", unit="um^2", expression="$width \times height$", comment="Loop width times loop height", label="loop area")
     def loop_area(self, loop_width, loop_height):
         return loop_width*loop_height
 
-    Cq=Float(1.0e-12).tag(desc="shunt capacitance", unit="fF")
+    Cq=Float(1.0e-12).tag(desc="shunt capacitance", unit="fF", tex_str=r"$C_q$")
 
-    Rn=Float(10.0e3).tag(desc="Normal resistance of SQUID", unit="kOhm")
+    Rn=Float(10.0e3).tag(desc="Normal resistance of SQUID", unit="kOhm", label="DC Junction resistance", tex_str=r"$R_n$")
 
-    @tagged_property(desc="critical current of SQUID", unit="nA")
+    @tagged_property(desc="critical current of SQUID", unit="nA", label="Critical current", tex_str=r"$I_C$")
     def Ic(self, Rn):
         """Ic*Rn=pi*Delta/(2.0*e) #Ambegaokar Baratoff formula"""
         return pi*Delta/(2.0*e)/Rn
@@ -112,7 +93,7 @@ calc_idt=[[r"Calculated values IDT"          ,  r"Value"                        
         """Ic*Rn=pi*Delta/(2.0*e) #Ambegaokar Baratoff formula"""
         return pi*Delta/(2.0*e)/Ic
 
-    @tagged_property(desc="""Max Josephson Energy""", unit="GHz", unit_factor=1.0e9*h)
+    @tagged_property(desc="""Max Josephson Energy""", unit="hGHz")#, unit_factor=1.0e9*h)
     def Ejmax(self, Ic):
         """Josephson energy"""
         return hbar*Ic/(2.0*e)
@@ -122,7 +103,7 @@ calc_idt=[[r"Calculated values IDT"          ,  r"Value"                        
         """inverse Josephson energy"""
         return Ejmax*(2.0*e)/hbar
 
-    @tagged_property(desc="Charging Energy", unit="GHz", unit_factor=1.0e9*h)
+    @tagged_property(desc="Charging Energy", unit="hGHz")#, unit_factor=1.0e9*h)
     def Ec(self, Cq):
         """Charging energy"""
         return e**2/(2.0*Cq)
@@ -137,7 +118,7 @@ calc_idt=[[r"Calculated values IDT"          ,  r"Value"                        
 
     flux_over_flux0=Float()
 
-    @tagged_property(unit="GHz", unit_factor=1.0e9*h)
+    @tagged_property(unit="hGHz")#, unit_factor=1.0e9*h)
     def Ej(self, Ejmax, flux_over_flux0):
         return Ejmax*absolute(cos(pi*flux_over_flux0))
 
@@ -145,11 +126,11 @@ calc_idt=[[r"Calculated values IDT"          ,  r"Value"                        
     def EjdivEc(self, Ej, Ec):
         return Ej/Ec
 
-    @tagged_property(unit="GHz", unit_factor=1.0e9*h)
+    @tagged_property(unit="hGHz", label="fq max")#, unit_factor=1.0e9*h)
     def fq_max(self, Ejmax, Ec):
         return sqrt(8.0*Ejmax*Ec)
 
-    @tagged_property(unit="GHz", unit_factor=1.0e9*h)
+    @tagged_property(unit="hGHz", label="fq max full")#, unit_factor=1.0e9*h)
     def fq_max_full(self, Ejmax, Ec):
         return  h*self._get_fq(Ejmax, Ec)
 
@@ -301,4 +282,5 @@ calc_idt=[[r"Calculated values IDT"          ,  r"Value"                        
 
 if __name__=="__main__":
     t=Qubit()
+    print t.latex_table()
     t.show()

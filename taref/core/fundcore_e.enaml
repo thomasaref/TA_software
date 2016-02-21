@@ -67,7 +67,7 @@ enamldef UnitHGroup(aHGroup):
     """shared structure between UnitIntField and UnitFloatField"""
     attr minimum = None
     attr maximum = None
-    attr unit : unit_func = unitless
+    attr unit  = unitless
     attr show_uvalue : bool = False
     attr display_unit = None
 

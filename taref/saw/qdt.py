@@ -16,20 +16,20 @@ from taref.physics.fundamentals import (eps0, sqrt, pi, Delta, hbar, e, h, ndarr
 class QDT(IDT, Qubit):
     base_name="QDT"
 
-    @tagged_property(desc="""Coupling at IDT center frequency""", unit="GHz")
+    @tagged_property(desc="""Coupling at IDT center frequency""", unit="GHz", label="Coupling at center frequency", tex_str=r"$G_{f0}$")
     def G_f0(self, Np, K2, f0):
         return 0.45*Np*K2*f0
 
-    @tagged_property(desc="""Coupling adjusted by sinc^2""", unit="GHz")
+    @tagged_property(desc="""Coupling adjusted by sinc sq""", unit="GHz", tex_str=r"$G_f$", label="frequency adjusted coupling")
     def G_f(self, G_f0, Np, fq, f0):
         return G_f0*sinc_sq(Np*pi*(fq-f0)/f0)
 
     ng=Float(0.5).tag(desc="charge on gate line")
     Nstates=Int(50).tag(desc="number of states to include in mathieu approximation. More states is better approximation")
     order=Int(3)
-    EkdivEc=Array().tag(unit=" Ec")
+    EkdivEc=Array().tag(unit2="Ec")
 
-    @tagged_property(desc="shunt capacitance of QDT", unit="F")
+    @tagged_property(desc="shunt capacitance of QDT", unit="fF")
     def Cq(self, Ct):
         return Ct
 

@@ -7,10 +7,11 @@ Created on Tue Jul  7 21:52:51 2015
 """
 
 from atom.api import Atom, Property
-from taref.core.atom_extension import (UNIT_DICT, private_property, get_reserved_names, get_all_params,
+from taref.core.atom_extension import (private_property, get_reserved_names, get_all_params,
 get_all_main_params, lowhigh_check, make_instancemethod, get_type)
 from taref.core.extra_setup import extra_setup
 from enaml.qt.qt_application import QtApplication
+from taref.physics.units import UNIT_DICT
 
 from enaml import imports
 with imports():

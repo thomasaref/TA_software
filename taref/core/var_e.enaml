@@ -33,8 +33,8 @@ enamldef Var(aHGroup):
     trailing_spacer=spacer_eval(vmodel, vname)
     alias label : lbl
     Label: lbl:
-        text=get_tag(vmodel, vname, "label", vname)
-        tool_tip=get_tag(vmodel, vname, "desc", "")
+        text=vname
+        tool_tip=get_tag(vmodel, vname, "label", vname)+": "+get_tag(vmodel, vname, "desc", "")
 
 enamldef VarVGroup(VGroup):
     attr vmodel=parent.vmodel

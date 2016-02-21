@@ -7,7 +7,7 @@ Created on Tue Jan  5 01:07:15 2016
 
 from taref.core.log import log_debug
 from taref.physics.fundamentals import sinc_sq, pi, eps0
-from taref.core.atom_extension import private_property
+from taref.core.atom_extension import private_property, get_tag
 from taref.core.extra_setup import tagged_property, property_func
 from taref.core.agent import Agent
 from atom.api import Float, Int, Enum, cached_property
@@ -77,7 +77,7 @@ class IDT(Agent):
 
 
 
-    Ga_0=Float(1).tag(desc="Conductance at center frequency of IDT")
+    Ga_0=Float(1).tag(desc="Conductance at center frequency of IDT", label="G a0")
     f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
 
     ft=Enum("double", "single").tag(desc="finger type of IDT", label="Finger type", show_value=False)
@@ -86,34 +86,34 @@ class IDT(Agent):
     def mult(self):
         return {"double" : 2.0, "single" : 1.0}[self.ft]
 
-    Np=Int(7).tag(desc="number of finger pairs. this should be at least 1", low=1)
+    Np=Int(7).tag(desc="\# of finger pairs", low=1, tex_str=r"$N_p$", label="\# of finger pairs")
 
-    ef=Int(0).tag(desc="number of extra fingers to compensate for edge effect.",
-                    label="# of extra fingers", low=0)
+    ef=Int(0).tag(desc="for edge effect compensation",
+                    label="\# of extra fingers", low=0)
 
     W=Float(25.0e-6).tag(desc="height of finger.", unit="um")
 
     eta=Float(0.5).tag(desc="metalization ratio")
 
-    epsinf=Float(46*eps0).tag(desc="Capacitance of single finger pair per unit length")
+    epsinf=Float(46*eps0).tag(desc="Capacitance of single finger pair per unit length", tex_str=r"$\epsilon_\infty$")
 
-    Dvv=Float(2.4e-2).tag(desc="coupling strength: K^2/2", unit="%")
+    Dvv=Float(2.4e-2).tag(desc="coupling strength", unit="%", tex_str=r"$\Delta v/v$", expression=r"$(v_f-v_m))/v_f$")
 
-    vf=Float(3488.0).tag(desc="speed of SAW", unit=" m/s")
+    vf=Float(3488.0).tag(desc="speed of SAW on free surface", unit="m/s", tex_str=r"$v_f$")
 
     material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz')
 
-    f0=Float(5.0e9).tag(unit="GHz", desc="Center frequency", reference="")
+    f0=Float(5.0e9).tag(unit="GHz", desc="Center frequency of IDT", reference="", tex_str=r"$f_0$", label="Center frequency")
 
     @property_func
     def _get_eta(self, a, g):
          return a/(a+g)
 
-    @tagged_property(desc="periodicity. this should be twice width for 50% metallization")
+    @tagged_property(desc="periodicity. this should be twice width for 50\% metallization")
     def p(self, a, g):
         return a+g
 
-    @tagged_property(desc="coupling strength", unit="%")
+    @tagged_property(desc="coupling strength", unit="%", tex_str=r"K$^2$", expression=r"K$^2=2\Delta v/v$")
     def K2(self, Dvv):
         return Dvv*2.0
 
@@ -121,7 +121,7 @@ class IDT(Agent):
     def _get_Dvv(self, K2):
         return K2/2.0
 
-    @tagged_property(unit=" F", desc="Total capacitance of IDT", reference="Morgan page 16/145")
+    @tagged_property(unit="F", desc="Total capacitance of IDT", reference="Morgan page 16/145")
     def Ct(self, ft, W, epsinf, Np):
         m={"double" : 1.414213562373, "single" : 1.0}[ft]
         return m*W*epsinf*Np
@@ -150,7 +150,7 @@ class IDT(Agent):
            => a=g*eta/(1-eta)"""
         return g*eta/(1.0-eta)
 
-    @tagged_property(desc="width of fingers (um).", unit="um")
+    @tagged_property(desc="width of fingers", unit="um")
     def a(self, eta, lbda0, mult):
         return eta*lbda0/(2.0*mult)
 
@@ -158,7 +158,7 @@ class IDT(Agent):
     def _get_lbda0_get_(self, a, eta, mult):
         return a/eta*2.0*mult
 
-    @tagged_property(desc="Ga adjusted for frequency f")
+    @tagged_property(desc="Ga adjusted for frequency f", label="Ga f")
     def Ga_f(self, Ga_0, Np, f, f0):
         return Ga_0*sinc_sq(Np*pi*(f-f0)/f0)
 
@@ -210,6 +210,8 @@ if __name__=="__main__":
     log_debug(a.get_member("K2").fset)
 
     print a.K2, b.K2
+    for param in a.all_params:
+        print get_tag(a, param, "unit")
     shower(a)
     print a.call_func("eta", a=0.2e-6, g=0.8e-6)#, vf=array([500.0, 600.0]), lbda0=array([0.5e-6, 0.6e-6]))
     a.plot_data("f0", lbda0=linspace(0.1e-6, 1.0e-6, 10000))
