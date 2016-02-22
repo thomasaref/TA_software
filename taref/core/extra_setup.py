@@ -67,6 +67,12 @@ def _setup_units(self, param, typer):
         unit_dict=getattr(self, "unit_dict", UNIT_DICT)
         if unit in unit_dict:
             set_tag(self, param, unit=unit_dict[unit])
+    display_unit=get_tag(self, param, "display_unit")
+    if display_unit is not None:# and get_tag(self, param, "unit_factor") is None and get_tag(self, param, "unit_func") is None:
+        unit_dict=getattr(self, "unit_dict", UNIT_DICT)
+        if display_unit in unit_dict:
+            set_tag(self, param, display_unit=unit_dict[display_unit])
+
 
 def extra_setup(self, param, typer):
     """sets up property_fs, ranges, and units"""

@@ -115,6 +115,13 @@ class Qubit(Agent):
         E1 =  sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0)
         return (E1-E0)/h
 
+    @tagged_property(desc="absolute anharmonicity", unit="hGHz")
+    def anharm(self, Ej, Ec):
+        E0 =  sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0
+        E1 =  sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0)
+        E2 =  sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*2**2+6.0*2+3.0)
+        return (E2-E1)-(E1-E0)
+
     def _get_Ej(self, fq, Ec):
         """h*fq=sqrt(8.0*Ej*Ec) - Ec"""
         return ((h*fq+Ec)**2)/(8.0*Ec)
@@ -134,8 +141,9 @@ class Qubit(Agent):
 
     def flux_parabola(self, voltage, offset, flux_factor):
         flux_over_flux0=self.call_func("flux_over_flux0", voltage=voltage, offset=offset, flux_factor=flux_factor)
-        Ej=self.call_func("Ej", flux_over_flux0=linspace(0,1,10))
-    print t.call_func("fq", Ej=linspace(0,1,10))
+        Ej=self.call_func("Ej", flux_over_flux0=flux_over_flux0)
+        return self._get_fq(Ej, self.Ec)
+
     def detuning(f0, flux_over_flux0):
         return 2.0*pi*(f0 - flux_parabola(flux_over_flux0))
 

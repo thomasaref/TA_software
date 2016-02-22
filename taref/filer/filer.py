@@ -78,6 +78,8 @@ class Filer(Atom):
 
     @main_file.setter
     def set_main_file(self, mf_str):
+        if self.folder.divider in mf_str:
+            self.folder.main_dir, divider, mf_str=mf_str.rpartition(self.folder.divider)
         self.file_name, dot, file_suffix=mf_str.rpartition(".")
         self.file_suffix=dot+file_suffix
 

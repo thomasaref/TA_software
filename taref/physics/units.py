@@ -149,6 +149,7 @@ hGHz=mult_unit(unit_factor=1.0e9*h, unit="hGHz", output_unit="hHz")
 hHz = unit_func(unit="hHz",  output_unit="hHz")
 
 dBm_per_mW=dBm/mW
+dBm_per_mW.unit="dBm/mW"
 
 K = unit_func(unit="K",  output_unit="K")
 

@@ -162,6 +162,7 @@ enamldef MatPlotContainer(Container):
 
 ############### test window #############
 enamldef Main(MainWindow):
+    destroy_on_close=False
     attr pltr
     alias mpl : mpc.mpl
     alias other : mpc.other
