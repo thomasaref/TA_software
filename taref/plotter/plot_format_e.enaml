@@ -89,7 +89,7 @@ def reset_dyn_items(dyn_items, pf):
     #log_debug(pf.plot_type in ("colormap", "multiline"))
     if pf.plot_type in ("colormap", "multiline"):
         dyn_items.objects.append(ColorMap(plot_format=pf))
-    if pf.plot_type in ("line", "multiline", "scatter", "cross_cursor"):
+    if pf.plot_type in ("line", "multiline", "scatter", "cross_cursor", "vline", "hline"):
         dyn_items.objects.append(LineVGroup(plot_format=pf))
     if pf.plot_type in ("scatter",):
         dyn_items.objects.append(ScatterVGroup(plot_format=pf))

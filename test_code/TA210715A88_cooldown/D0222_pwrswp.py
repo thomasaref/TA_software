@@ -6,7 +6,7 @@ Created on Mon Feb 22 10:46:49 2016
 """
 
 from TA88_fundamental import TA88_Read, TA88_Fund, qdt
-from atom.api import Typed, Unicode, Float, observe, FloatRange
+from atom.api import Typed, Unicode, Float, observe, FloatRange, Int
 from h5py import File
 from taref.core.universal import Array
 from numpy import float64, linspace, shape, reshape, squeeze, mean, angle, absolute
@@ -17,7 +17,7 @@ from taref.core.shower import shower
 from taref.core.agent import Operative
 
 class Fitter(Operative):
-     offset=FloatRange(-1.0, 1.0, 0.0).tag(tracking=True)
+     offset=FloatRange(-1.0, 1.0, -0.03).tag(tracking=True)
      flux_factor=FloatRange(0.01, 1.0, 0.2945).tag(tracking=True)
 
      @tag_Property(plot=True, private=True)
@@ -38,40 +38,52 @@ class Fitter(Operative):
              self.plotter.plot_dict["flux_parabola"].clt.set_ydata(self.flux_parabola)
              self.plotter.draw()
 
+     #powind=Int(1)
+
+     #def _observe_powind(self, change):
+     #   if change["type"]=="update":
+     #       a.powind=self.powind
+     #       a.get_member("MagAbs").reset(a)
+     #       if "magabs" in b.plot_dict:
+     #           b.plot_dict["magabs"].clt.set_array(a.MagAbs)
+
 class Lyzer(TA88_Fund):
     rd_hdf=Typed(TA88_Read)
 
     comment=Unicode().tag(read_only=True, spec="multiline")
 
-    rt_atten=Float(60)
+    rt_atten=Float(40)
 
-    rt_gain=Float(26*2)
+    rt_gain=Float(23*2)
 
     frequency=Array().tag(unit="GHz", plot=True, label="Frequency")
     yoko=Array().tag(unit="V", plot=True, label="Yoko")
     Magcom=Array().tag(private=True)
+    pwr=Array()
 
     probe_frq=Float().tag(unit="GHz", label="Probe frequency", read_only=True)
     probe_pwr=Float().tag(label="Probe power", read_only=True, display_unit="dBm/mW")
 
+    powind=Int(1)
 
 
     @tag_Property(display_unit="dB", plot=True)
     def MagdB(self):
-        return self.Magcom[:, :]/dB
+        return self.Magcom[:, :, self.powind]/dB
 
     @tag_Property(plot=True)
     def Phase(self):
-        return angle(self.Magcom[:, :])#-mean(self.Magcom[:, 297:303], axis=1, keepdims=True))
+        return angle(self.Magcom[:, :, self.powind])#-mean(self.Magcom[:, self.powind, 297:303], axis=1, keepdims=True))
 
     @tag_Property( plot=True)
     def MagAbs(self):
         #return absolute(self.Magcom[:, :])
-        return absolute(self.Magcom[:, :])#-mean(self.Magcom[:, 2500:2501], axis=1, keepdims=True))
+        return absolute(self.Magcom[:, :, self.powind])#-mean(self.Magcom[:, self.powind, 0:1], axis=1, keepdims=True))
+
 
 
     def _default_rd_hdf(self):
-        return TA88_Read(main_file="Data_0223/S4A1_TA88_coilswp_4to5GHz.hdf5")
+        return TA88_Read(main_file="Data_0222/S4A1_TA88_powswp.hdf5")
 
     def read_data(self):
         with File(self.rd_hdf.file_path, 'r') as f:
@@ -87,7 +99,10 @@ class Lyzer(TA88_Fund):
             data=f["Data"]["Data"]
             print shape(data)
 #
+            self.pwr=data[0,1,:].astype(float64)
             self.yoko=data[:,0,0].astype(float64)
+
+            print self.yoko
             fstart=f["Traces"]['RS VNA - S21_t0dt'][0][0]
             fstep=f["Traces"]['RS VNA - S21_t0dt'][0][1]
             print shape(Magvec)
@@ -109,8 +124,11 @@ if __name__=="__main__":
     c.yoko=a.yoko[:]
     b=Plotter()
     def magdB_colormesh():
-        b.colormesh("magdB", a.yoko, a.frequency, a.MagdB)
-        b.figure.colorbar(b.axes)
+        #for pwi in range(11):
+        if 1:
+            a.powind=1#pwi
+            a.get_member("MagdB").reset(a)
+            b.colormesh("magdB {}".format(a.pwr[a.powind]-a.rt_atten-a.fridge_atten), a.yoko, a.frequency, a.MagdB)
         b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
         b.set_ylim(4.4e9, 4.5e9)
         b.xlabel="Yoko (V)"
@@ -119,19 +137,19 @@ if __name__=="__main__":
 
     def magabs_colormesh():
         b.colormesh("magabs", a.yoko, a.frequency, a.MagAbs)
-        b.line_plot("flux_parabola", a.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4.0e9, 5.0e9)
-
+        b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+        b.set_ylim(4.4e9, 4.55e9)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
         b.title="Reflection fluxmap"
 
-    def magabs_colormesh2():
-        b.colormesh("magabs", c.flux_parabola, a.frequency, a.MagAbs)
-        b.line_plot("flux_parabola", c.flux_parabola, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4.0e9, 5.0e9)
-        b.set_xlim(4.0e9, 5.0e9)
-
+    def magabs_allcolormesh():
+        for pwi in range(11):
+            a.powind=pwi
+            a.get_member("MagAbs").reset(a)
+            b.colormesh("magabs {}".format(a.pwr[a.powind]-a.rt_atten-a.fridge_atten), a.yoko, a.frequency, a.MagAbs)
+        b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+        b.set_ylim(4.4e9, 4.55e9)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
         b.title="Reflection fluxmap"
@@ -147,36 +165,57 @@ if __name__=="__main__":
         b.title="Reflection fluxmap"
 
     def magabs_cs():
-        b.line_plot("magabs_cs", c.flux_parabola, mean(a.MagAbs[58:59, :], axis=0))
+        #for pwi in range(11):
+        if 1:
+            a.powind=3#pwi
+            a.get_member("MagAbs").reset(a)
+            #b.line_plot("cs {}".format(a.frequency[94]), c.flux_parabola, a.MagAbs[94, :], label="{}".format(a.pwr[a.powind]-a.rt_atten-a.fridge_atten))
+            fqi=94
+            b.line_plot("cs {}".format(a.frequency[fqi]), c.flux_parabola, a.MagAbs[fqi, :], label="cs {}".format(a.frequency[fqi]))
+            if 1:
+                fqi=87
+                b.line_plot("cs {}".format(a.frequency[fqi]), c.flux_parabola, a.MagAbs[fqi, :], label="cs {}".format(a.frequency[fqi]))
+                fqi=59
+                b.line_plot("cs {}".format(a.frequency[fqi]), c.flux_parabola, a.MagAbs[fqi, :], label="cs {}".format(a.frequency[fqi]))
+                fqi=52
+                b.line_plot("cs {}".format(a.frequency[fqi]), c.flux_parabola, a.MagAbs[fqi, :], label="cs {}".format(a.frequency[fqi]))
+                fqi=31
+                b.line_plot("cs {}".format(a.frequency[fqi]), c.flux_parabola, a.MagAbs[fqi, :], label="cs {}".format(a.frequency[fqi]))
+                fqi=23
+                b.line_plot("cs {}".format(a.frequency[fqi]), c.flux_parabola, a.MagAbs[fqi, :], label="cs {}".format(a.frequency[fqi]))
+                fqi=16
+                b.line_plot("cs {}".format(a.frequency[fqi]), c.flux_parabola, a.MagAbs[fqi, :], label="cs {}".format(a.frequency[fqi]))
+                fqi=0
+                b.line_plot("cs {}".format(a.frequency[fqi]), c.flux_parabola, a.MagAbs[fqi, :], label="cs {}".format(a.frequency[fqi]))
+
+
+
+
+    def satatt():
+        powsat=[]
+        for pwi in range(11):
+            a.powind=pwi
+            a.get_member("MagAbs").reset(a)
+            data=a.MagAbs[94, :]
+            powsat.append(max(data)-min(data))
+        b.line_plot("powsat", a.pwr-a.rt_atten-a.fridge_atten, powsat) #a.MagAbs[280, :], label=str(a.pwr[a.powind]))
+
+    def pow_magabs_cs():
+        for pwi in range(11):
+            a.powind=pwi
+            a.get_member("MagdB").reset(a)
+            b.line_plot("cs {}".format(a.frequency[94]), c.flux_parabola, a.MagdB[94, :], label="{}".format(a.pwr[a.powind]-a.rt_atten-a.fridge_atten))
+
         #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
         #b.set_xlim(0, 7e9)
         #b.set_ylim(0, 0.02)
 
-    def magabs_cs2():
-        b.line_plot("magabs_cs1", a.frequency, a.MagAbs[:, 0], label="Off resonance", linewidth=0.4)
-        #b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 20])
-        b.line_plot("magabs_cs2", a.frequency, a.MagAbs[:, 21], label="On resonance", linewidth=0.4)
-
-        b.line_plot("magabs_cs3", a.frequency, a.MagAbs[:, 21]-a.MagAbs[:, 0], label="Difference", linewidth=0.4)
-        #b.line_plot("magabs_cs4", a.frequency, -absolute(a.Magcom[:, 21]-a.Magcom[:,0]))#-mean(self.Magcom[:, 2500:2501], axis=1, keepdims=True))
-
-
-        #b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 22])
-
-    def magdB_cs():
-        b.line_plot("magabs_cs1", a.frequency, a.MagdB[:, 0], label="Off resonance", linewidth=0.4)
-        #b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 20])
-        b.line_plot("magabs_cs2", a.frequency, a.MagdB[:, 21], label="On resonance", linewidth=0.4)
-        b.line_plot("magabs_cs3", a.frequency, a.MagdB[:, 21]-a.MagdB[:, 0], label="Difference", linewidth=0.4)
-
-    print a.yoko[21]
-
     magdB_colormesh()
     #magabs_cs()
-    #magabs_colormesh2()
-    #magabs_cs2()
-    #magdB_cs()
-
+    #pow_magabs_cs()
+    #magabs_colormesh()
+    #magabs_allcolormesh()
+    #satatt()
     shower(b)
 
 
