@@ -71,7 +71,7 @@ class Lyzer(TA88_Fund):
 
 
     def _default_rd_hdf(self):
-        return TA88_Read(main_file="Data_0222/S4A1_TA88_swp_5Vtn5V.hdf5")
+        return TA88_Read(main_file="Data_0223/S4A1_TA88_coilswp_4to5GHz.hdf5")
 
     def read_data(self):
         with File(self.rd_hdf.file_path, 'r') as f:
@@ -111,7 +111,7 @@ if __name__=="__main__":
     def magdB_colormesh():
         b.colormesh("magdB", a.yoko, a.frequency, a.MagdB)
         b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4.4e9, 4.5e9)
+        b.set_ylim(4.0e9, 5.0e9)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
         b.title="Reflection fluxmap"
@@ -134,7 +134,7 @@ if __name__=="__main__":
         b.title="Reflection fluxmap"
 
     def magabs_cs():
-        b.line_plot("magabs_cs", c.flux_parabola, mean(a.MagAbs[58:59, :], axis=0))
+        b.line_plot("magabs_cs", c.flux_parabola, a.MagAbs[903, :])
         #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
         #b.set_xlim(0, 7e9)
         #b.set_ylim(0, 0.02)
@@ -152,6 +152,39 @@ if __name__=="__main__":
     magabs_cs()
     #magabs_colormesh()
     #magabs_cs2()
+    from scipy.optimize import leastsq # Levenberg-Marquadt Algorithm #
+    from numpy import concatenate, polyfit
+
+    def lorentzian(x,p):
+        numerator =  (p[0]**2 )
+        denominator = ( x - (p[1]) )**2 + p[0]**2
+        y = -p[2]*(numerator/denominator)+p[3]
+        return y
+
+    def residuals(p,y,x):
+        err = y - lorentzian(x,p)
+        return err
+
+    #ind_bg_low = (x > min(x)) & (x < 450.0)
+    #ind_bg_high = (x > 590.0) & (x < max(x))
+
+    #x_bg = concatenate((x[ind_bg_low],x[ind_bg_high]))
+    #y_bg = concatenate((y[ind_bg_low],y[ind_bg_high]))
+    #m, c = polyfit(x_bg, y_bg, 1)
+    #background = m*x + c
+    #y_bg_corr = y - background
+
+    # initial values #
+    p = [200e6,4.5e9, 0.02, 0.022]  # [hwhm, peak center, intensity] #
+
+    # optimization #
+    pbest = leastsq(residuals,p,args=(a.MagAbs[903, :], c.flux_parabola), full_output=1)
+    best_parameters = pbest[0]
+    print pbest[0]
+
+    # fit to data #
+    fit = lorentzian(c.flux_parabola,best_parameters)
+    b.line_plot("lorentzian", c.flux_parabola, fit)
 
     shower(b)
 

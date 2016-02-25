@@ -9,7 +9,7 @@ from TA88_fundamental import TA88_Read, TA88_Fund, qdt
 from atom.api import Typed, Unicode, Float, observe, FloatRange
 from h5py import File
 from taref.core.universal import Array
-from numpy import float64, linspace, shape, reshape, squeeze, mean, angle, absolute
+from numpy import float64, linspace, shape, reshape, squeeze, mean, angle, absolute, array
 from taref.core.atom_extension import tag_Property
 from taref.physics.units import dB
 from taref.plotter.fig_format import Plotter
@@ -47,7 +47,7 @@ class Lyzer(TA88_Fund):
 
     rt_gain=Float(26*2)
 
-    frequency=Array().tag(unit="GHz", plot=True, label="Frequency")
+    time=Array().tag( plot=True, label="Time")
     yoko=Array().tag(unit="V", plot=True, label="Yoko")
     Magcom=Array().tag(private=True)
 
@@ -71,7 +71,7 @@ class Lyzer(TA88_Fund):
 
 
     def _default_rd_hdf(self):
-        return TA88_Read(main_file="Data_0222/S4A1_TA88_swp_5Vtn5V.hdf5")
+        return TA88_Read(main_file="Data_0223/S1A1_TA88_time_domain_fluxswp.hdf5")
 
     def read_data(self):
         with File(self.rd_hdf.file_path, 'r') as f:
@@ -80,16 +80,16 @@ class Lyzer(TA88_Fund):
             print f["Instrument config"].keys()
             self.probe_frq=f["Instrument config"]['Rohde&Schwarz Network Analyzer - IP: 169.254.107.192, RS VNA at localhost'].attrs["Start frequency"]
             self.probe_pwr=f["Instrument config"]['Rohde&Schwarz Network Analyzer - IP: 169.254.107.192, RS VNA at localhost'].attrs["Output power"]
-            print f["Instrument config"]['Rohde&Schwarz Network Analyzer - IP: 169.254.107.192, RS VNA at localhost'].attrs
+            print f["Instrument config"]['Rohde&Schwarz Network Analyzer - IP: 169.254.107.192, RS VNA at localhost'].attrs.keys()
 #
             print f["Data"]["Channel names"][:]
-            Magvec=f["Traces"]["RS VNA - S21"]#[:]
+            Magvec=f["Traces"]["Digitizer 1 - Trace"]#[:]
             data=f["Data"]["Data"]
             print shape(data)
 #
             self.yoko=data[:,0,0].astype(float64)
-            fstart=f["Traces"]['RS VNA - S21_t0dt'][0][0]
-            fstep=f["Traces"]['RS VNA - S21_t0dt'][0][1]
+            tstart=f["Traces"]['Digitizer 1 - Trace_t0dt'][0][0]
+            tstep=f["Traces"]['Digitizer 1 - Trace_t0dt'][0][1]
             print shape(Magvec)
             sm=shape(Magvec)[0]
             sy=shape(data)
@@ -97,62 +97,69 @@ class Lyzer(TA88_Fund):
             print s
             Magcom=Magvec[:,0,:]+1j*Magvec[:,1,:]
             Magcom=reshape(Magcom, s, order="F")
-            self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
+            self.time=linspace(tstart, tstart+tstep*(sm-1), sm)
             print shape(Magcom)
-            self.Magcom=squeeze(Magcom)
+            Magcom=squeeze(Magcom)
+            self.Magcom=Magcom.transpose()
             #Magabs=Magcom[:, :, :]-mean(Magcom[:, 197:200, :], axis=1, keepdims=True)
 
+
+a=Lyzer()
+a.read_data()
+c=Fitter()
+c.yoko=a.yoko[:]
+b=Plotter()
+def magdB_colormesh():
+    b.colormesh("magdB", a.time*1e6, a.yoko,  a.MagdB)
+    #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+    #b.set_ylim(4.4e9, 4.5e9)
+    b.xlabel="Yoko (V)"
+    b.ylabel="Frequency (Hz)"
+    b.title="Reflection fluxmap"
+
+def magabs_colormesh():
+    b.colormesh("magabs", a.time*1e6, a.yoko, a.MagAbs)
+    #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+    #b.set_ylim(4.4e9, 4.5e9)
+    b.xlabel="Time (us)"
+    b.ylabel="Magnitude (abs)"
+    b.title="Reflection vs time"
+#c.plotter=b
+
+def phase_colormesh():
+    b.colormesh("phase", a.yoko, a.frequency, a.Phase)
+    b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+    b.set_ylim(4e9, 5e9)
+    b.xlabel="Yoko (V)"
+    b.ylabel="Frequency (Hz)"
+    b.title="Reflection fluxmap"
+
+def magabs_cs():
+    b.line_plot("magabs_cs", c.flux_parabola, mean(a.MagAbs[58:59, :], axis=0))
+    #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+    #b.set_xlim(0, 7e9)
+    #b.set_ylim(0, 0.02)
+
+def magabs_cs2():
+    b.line_plot("magabs_cs", a.time*1e6, a.MagAbs[ 0, :], label="Off resonance")
+    b.line_plot("magabs_cs2", a.time*1e6, a.MagAbs[181, :], label="On resonance")
+    b.xlabel="Time (us)"
+    b.ylabel="Magnitude (abs)"
+    b.title="Reflection time cross section"
+
+def time_speed():
+    print qdt.vf
+    t=array([8.7e-8, 2.64e-7, 3.79e-7, 4.35e-7, 6.6e-7])-8.7e-8
+    b.scatter_plot("spd", t*1e6, [0.0, 600.0, 1000.0, 1200.0, 2000.0], label="Reflections")
+    b.line_plot("spd_fit", t*1e6,  (t*qdt.vf)*1e6, label="t*3488")
+
 if __name__=="__main__":
-    a=Lyzer()
-    a.read_data()
-    c=Fitter()
-    c.yoko=a.yoko[:]
-    b=Plotter()
-    def magdB_colormesh():
-        b.colormesh("magdB", a.yoko, a.frequency, a.MagdB)
-        b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4.4e9, 4.5e9)
-        b.xlabel="Yoko (V)"
-        b.ylabel="Frequency (Hz)"
-        b.title="Reflection fluxmap"
-
-    def magabs_colormesh():
-        b.colormesh("magabs", a.yoko, a.frequency, a.MagAbs)
-        b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4.4e9, 4.5e9)
-        b.xlabel="Yoko (V)"
-        b.ylabel="Frequency (Hz)"
-        b.title="Reflection fluxmap"
-    c.plotter=b
-
-    def phase_colormesh():
-        b.colormesh("phase", a.yoko, a.frequency, a.Phase)
-        b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4e9, 5e9)
-        b.xlabel="Yoko (V)"
-        b.ylabel="Frequency (Hz)"
-        b.title="Reflection fluxmap"
-
-    def magabs_cs():
-        b.line_plot("magabs_cs", c.flux_parabola, mean(a.MagAbs[58:59, :], axis=0))
-        #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        #b.set_xlim(0, 7e9)
-        #b.set_ylim(0, 0.02)
-
-    def magabs_cs2():
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 2500])
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 3121])
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 3127])
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 3128])
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 3129])
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 3130])
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 3131])
-
     #magdB_colormesh()
-    magabs_cs()
-    #magabs_colormesh()
+    #magabs_cs()
+    magabs_colormesh()
     #magabs_cs2()
-
-    shower(b)
+    #time_speed()
+    b.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data/")
+    #shower(b)
 
 

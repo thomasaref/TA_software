@@ -7,7 +7,7 @@ Created on Thu Feb  4 12:51:21 2016
 from taref.core.log import log_debug
 from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names
 from taref.core.universal import Array
-from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict
+from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict, Instance
 from numpy import linspace, arange, asanyarray
 from taref.core.shower import shower
 from taref.core.atom_extension import get_all_tags, get_tag
@@ -19,6 +19,7 @@ with imports():
 
 from matplotlib.collections import PolyCollection, LineCollection, QuadMesh, PathCollection
 from matplotlib.lines import Line2D
+from matplotlib.colorbar import Colorbar
 
 class PlotFormat(PlotUpdate):
     """base class corresponding to one graph or collection on axes"""
@@ -264,6 +265,14 @@ class ColormeshFormat(PlotFormat):
     cmap=Enum(*colormap_names).tag(former="cmap")
     zdata=Array()
 
+    colorbar=Instance(Colorbar)
+
+    def set_clim(self, vmin, vmax):
+        self.clt.set_clim(vmin, vmax)
+
+    def _default_colorbar(self):
+        self.plotter.figure.colorbar(self.clt)
+
     @plot_observe("cmap")
     def colormap_update(self, change):
         self.plot_set(change["name"])
@@ -302,6 +311,7 @@ class ColormeshFormat(PlotFormat):
 def colormesh(plotter, name, *args, **kwargs):
     pl0t=ColormeshFormat(name=name, plotter=plotter)
     pl0t.pcolormesh(*args, **kwargs)
+    pl0t.colorbar
     return pl0t
 
 class MultiLineFormat(LineFormat, ColormeshFormat):
