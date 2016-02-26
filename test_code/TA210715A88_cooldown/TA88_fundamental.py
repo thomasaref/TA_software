@@ -63,7 +63,7 @@ if __name__=="__main__":
         b.vline_plot("listen", 4.475e9, alpha=0.3, color="black")
         b.vline_plot("listent", 4.55e9, alpha=0.3, color="black")
         b.vline_plot("listenb", 4.4e9, alpha=0.3, color="black")
-    if 1:
+    if 0:
         freq=4.475e9
         f0=linspace(5e9, 6e9, 1000)
         G_f=(1.0/sqrt(2.0))*0.5*qdt.Np*qdt.K2*f0*absolute(sinc(qdt.Np*pi*(freq-f0)/f0))
@@ -76,5 +76,66 @@ if __name__=="__main__":
         #b.vline_plot("listent", 4.55e9, alpha=0.3, color="black")
         #b.vline_plot("listenb", 4.4e9, alpha=0.3, color="black")
 
+    if 1:
+        from numpy import pi, linspace, sin, amax, argmin, argmax
+        Np=qdt.Np
+        f0=5.35e9
+        freq=linspace(4e9, 5e9, 1000)
+
+        def R_full(f_listen=4.3e9):
+            w_listen=2*pi*f_listen
+            epsinf=qdt.epsinf
+            W=qdt.W
+            Dvv=qdt.Dvv
+            w0=2*pi*f0
+
+            fq=linspace(4e9, 5e9, 20)
+
+            wq=2.0*pi*fq
+
+            X=Np*pi*(f_listen-f0)/f0
+            Ga0=3.11*w0*epsinf*W*Dvv*Np**2
+            C=sqrt(2.0)*Np*W*epsinf
+            L=1/(C*(wq**2.0))
+
+            Ga=Ga0*(sin(X)/X)**2.0
+            Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+
+            #b.line_plot("Ba", fq, Ba)
+            #b.line_plot("Ga", fq, Ga)
+            #print Ga, Ba, w_listen*C
+            return Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L))
+        #R=Ga/(Ga+1j*w_listen*C+1/(1j*w_listen*L))
+            #b.line_plot("semiclassical", fq, absolute(R)**2, label=str(f_listen))
+        #b.line_plot("semiclassical", fq, Ba)
+
+        temp=[]
+        t2=[]
+        qfreq=[]
+        for f in freq:
+            X2=36*pi*(f-4.4e9)/4.4e9
+            wrap=(sin(X2)/X2)**2
+            R=absolute(R_full(f))**2
+            #qfreq.append(freq[argmax(R)])
+            imax=argmax(R)
+            print imax
+            f1=freq[argmin(absolute(R[0:imax]-0.5))]
+            f2=freq[argmin(absolute(R[imax:-1]-0.5))]
+            t2.append(f2-f1)
+            temp.append(R)
+
+        b.line_plot("coup", freq, t2)
+        #b.colormesh("R_full", freq, freq, temp)
+        #R_full(4.2500001e9)
+        #R_full(4.3000001e9)
+        #R_full(4.3500001e9)
+        #fq=linspace(4e9, 5e9, 1000)
+        #X=Np*pi*(fq-f0)/f0
+        #Ga=(sin(X)/X)**2.0
+        #Ba=(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+        #b.line_plot("Ga", fq, Ga)
+        #b.line_plot("Ba", fq, Ba)
+        #sqrt(1/(C))/2*p
+        #b.line_plot("semiclassical", fq, absolute(R)/amax(absolute(R)))
     b.show()
     qdt.show()
