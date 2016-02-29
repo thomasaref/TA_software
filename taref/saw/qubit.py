@@ -82,6 +82,10 @@ class Qubit(Agent):
         return e**2/(2.0*Cq)
 
     @Ec.fget.setter
+    def _get_Cq(self, Ec):
+        return e**2/(2.0*Ec)
+
+    @Ec.fget.setter
     def _get_Ejmax(self, Ec, EjmaxdivEc):
         return EjmaxdivEc*Ec
 

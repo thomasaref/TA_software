@@ -126,6 +126,11 @@ class IDT(Agent):
         m={"double" : 1.414213562373, "single" : 1.0}[ft]
         return m*W*epsinf*Np
 
+    @Ct.fget.setter
+    def _get_epsinf(self, Ct):
+        m={"double" : 1.414213562373, "single" : 1.0}[self.ft]
+        return Ct/(m*self.W*self.Np)
+
     @tagged_property(unit="um", desc="Center wavelength", reference="")
     def lbda0(self, vf, f0):
         return vf/f0

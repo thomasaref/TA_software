@@ -78,7 +78,9 @@ class Lyzer(TA45_Fund):
     @tag_Property( plot=True)
     def MagAbs(self):
         #return absolute(self.Magcom[:, :])
-        return absolute(self.Magcom[self.frqind, :, :]-mean(self.Magcom[self.frqind, :, 299:300], axis=1, keepdims=True))
+        bg=(mean(self.Magcom[self.frqind, :, 0:1], axis=1, keepdims=True)+mean(self.Magcom[self.frqind, :, 299:300], axis=1, keepdims=True))/2.0
+
+        return absolute(self.Magcom[self.frqind, :, :]-bg) #mean(self.Magcom[self.frqind, :, 299:300], axis=1, keepdims=True))
 
 
 
