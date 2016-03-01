@@ -139,8 +139,8 @@ if __name__=="__main__":
 
         #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
 
-    magabs_cs()
-    #magabs_colormesh()
+    #magabs_cs()
+    magabs_colormesh()
     #phase_colormesh()
     #magdB_colormesh()
     shower(b)

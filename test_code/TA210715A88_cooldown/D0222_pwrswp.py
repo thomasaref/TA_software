@@ -5,20 +5,38 @@ Created on Mon Feb 22 10:46:49 2016
 @author: thomasaref
 """
 
-from TA88_fundamental import TA88_Read, TA88_Fund, qdt
+from TA88_fundamental import TA88_Read, TA88_Fund, qdt, idt
 from atom.api import Typed, Unicode, Float, observe, FloatRange, Int
 from h5py import File
 from taref.core.universal import Array
-from numpy import float64, linspace, shape, reshape, squeeze, mean, angle, absolute
+from numpy import float64, linspace, shape, reshape, squeeze, mean, angle, absolute, log10, cos, pi, sin
 from taref.core.atom_extension import tag_Property
 from taref.physics.units import dB
 from taref.plotter.fig_format import Plotter
 from taref.core.shower import shower
 from taref.core.agent import Operative
+from taref.physics.fundamentals import hbar, e
 
 class Fitter(Operative):
      offset=FloatRange(-1.0, 1.0, -0.03).tag(tracking=True)
      flux_factor=FloatRange(0.01, 1.0, 0.2945).tag(tracking=True)
+
+     extra_atten=FloatRange(0.0, 30.0, 0.0).tag(tracking=True)
+
+     @tag_Property(plot=True, private=True)
+     def PdBm_from_Ic(self):
+         flux_over_flux0=(a.yoko-self.offset)*self.flux_factor
+         Ej=qdt.Ejmax*absolute(cos(pi*flux_over_flux0))
+         I=Ej*(2.0*e)/hbar
+         mu_q=0.8*qdt.K2*qdt.Np*sin(pi*qdt.Np*(4.5e9-qdt.f0)/qdt.f0)/sin(pi*(4.5e9-qdt.f0)/qdt.f0)
+         gm=2*mu_q*qdt.W*qdt.epsinf*2*pi*qdt.f0/qdt.K2
+         phi=I/gm #=gm*phi
+
+         mu=0.8*qdt.K2*idt.Np
+         V=phi/mu
+         Pwatts=(V**2)/50.0
+         PdBm=10.0*log10(Pwatts/0.001)+self.extra_atten
+         return PdBm
 
      @tag_Property(plot=True, private=True)
      def flux_parabola(self):
@@ -31,11 +49,15 @@ class Fitter(Operative):
 
      plotter=Typed(Plotter).tag(private=True)
 
-     @observe("offset", "flux_factor")
+     @observe("offset", "flux_factor", "extra_atten")
      def update_plot(self, change):
          if change["type"]=="update":
-             self.get_member("flux_parabola").reset(self)
-             self.plotter.plot_dict["flux_parabola"].clt.set_ydata(self.flux_parabola)
+             if "flux_parabola" in self.plotter.plot_dict:
+                 self.get_member("flux_parabola").reset(self)
+                 self.plotter.plot_dict["flux_parabola"].clt.set_ydata(self.flux_parabola)
+             if "PdBm_from_Ic" in self.plotter.plot_dict:
+                 self.get_member("PdBm_from_Ic").reset(self)
+                 self.plotter.plot_dict["PdBm_from_Ic"].clt.set_ydata(self.PdBm_from_Ic)
              self.plotter.draw()
 
      #powind=Int(1)
@@ -65,6 +87,7 @@ class Lyzer(TA88_Fund):
     probe_pwr=Float().tag(label="Probe power", read_only=True, display_unit="dBm/mW")
 
     powind=Int(1)
+    frqind=Int()
 
 
     @tag_Property(display_unit="dB", plot=True)
@@ -80,6 +103,10 @@ class Lyzer(TA88_Fund):
         #return absolute(self.Magcom[:, :])
         return absolute(self.Magcom[:, :, self.powind])#-mean(self.Magcom[:, self.powind, 0:1], axis=1, keepdims=True))
 
+    @tag_Property( plot=True)
+    def MagAbsPow(self):
+        #return absolute(self.Magcom[:, :])
+        return absolute(self.Magcom[self.frqind, :, :])#-mean(self.Magcom[:, self.powind, 0:1], axis=1, keepdims=True))
 
 
     def _default_rd_hdf(self):
@@ -136,9 +163,12 @@ if __name__=="__main__":
         b.title="Reflection fluxmap"
 
     def magabs_colormesh():
-        b.colormesh("magabs", a.yoko, a.frequency, a.MagAbs)
-        b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4.4e9, 4.55e9)
+        #b.colormesh("magabs", a.yoko, a.frequency, a.MagAbs)
+        b.colormesh("magabs", a.yoko, a.pwr-a.rt_atten-a.fridge_atten, a.MagAbsPow.transpose())
+
+        #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+        b.line_plot("PdBm_from_Ic", a.yoko, c.PdBm_from_Ic, color="orange", alpha=0.4)
+        b.set_ylim(-130, -90)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
         b.title="Reflection fluxmap"
@@ -210,10 +240,10 @@ if __name__=="__main__":
         #b.set_xlim(0, 7e9)
         #b.set_ylim(0, 0.02)
 
-    magdB_colormesh()
+    #magdB_colormesh()
     #magabs_cs()
     #pow_magabs_cs()
-    #magabs_colormesh()
+    magabs_colormesh()
     #magabs_allcolormesh()
     #satatt()
     shower(b)

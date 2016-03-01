@@ -67,11 +67,11 @@ class Lyzer(TA45_Fund):
     @tag_Property( plot=True)
     def MagAbs(self):
         #return absolute(self.Magcom[:, :])
-        return absolute(self.Magcom[:, :])#-mean(self.Magcom[:, 297:300], axis=1, keepdims=True))
+        return absolute(self.Magcom[:, :]-mean(self.Magcom[:, 499:501], axis=1, keepdims=True))
 
 
     def _default_rd_hdf(self):
-        return TA45_Read(main_file="Data_0227/S4A4_TA45_SC1316_testswp2.hdf5")
+        return TA45_Read(main_file="Data_0227/S4A4_TA45_wide_flux_sweep2.hdf5")
 
     def read_data(self):
         with File(self.rd_hdf.file_path, 'r') as f:

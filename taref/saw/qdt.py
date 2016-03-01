@@ -38,6 +38,8 @@ class QDT(IDT, Qubit):
     def _get_Ct(self, Cq):
         return Cq
 
+
+
 if __name__=="__main__":
     a=QDT()
     a.show()
