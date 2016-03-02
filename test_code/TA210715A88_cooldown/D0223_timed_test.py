@@ -118,7 +118,9 @@ def magdB_colormesh():
     b.title="Reflection fluxmap"
 
 def magabs_colormesh():
-    b.colormesh("magabs", a.time*1e6, a.yoko, a.MagAbs)
+    flux_over_flux0=qdt.call_func("flux_over_flux0", voltage=a.yoko, offset=c.offset, flux_factor=c.flux_factor)
+
+    b.colormesh("magabs", a.time*1e6, flux_over_flux0, a.MagAbs)
     #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
     #b.set_ylim(4.4e9, 4.5e9)
     b.xlabel="Time (us)"
@@ -151,15 +153,15 @@ def time_speed():
     print qdt.vf
     t=array([8.7e-8, 2.64e-7, 3.79e-7, 4.35e-7, 6.6e-7])-8.7e-8
     b.scatter_plot("spd", t*1e6, [0.0, 600.0, 1000.0, 1200.0, 2000.0], label="Reflections")
-    b.line_plot("spd_fit", t*1e6,  (t*qdt.vf)*1e6, label="t*3488")
+    b.line_plot("spd_fit", t*1e6,  (t*qdt.vf)*1e6, label="(3488 m/s)t")
 
 if __name__=="__main__":
     #magdB_colormesh()
     #magabs_cs()
-    magabs_colormesh()
+    #magabs_colormesh()
     #magabs_cs2()
-    #time_speed()
-    b.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data/")
-    #shower(b)
+    time_speed()
+    #b.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data/")
+    shower(b)
 
 

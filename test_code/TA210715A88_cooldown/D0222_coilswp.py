@@ -58,7 +58,10 @@ class Lyzer(TA88_Fund):
 
     @tag_Property(display_unit="dB", plot=True)
     def MagdB(self):
-        return self.Magcom[:, :]/dB
+        bg=(mean(self.Magcom[:, 3372:33973], axis=1, keepdims=True)+mean(self.Magcom[:, 1662:1663], axis=1, keepdims=True))/2.0
+        #return absolute(self.Magcom[:, :]-bg) #mean(self.Magcom[:, 1659:1660], axis=1, keepdims=True))
+
+        return (self.Magcom-bg)/dB
 
     @tag_Property(plot=True)
     def Phase(self):
@@ -67,7 +70,10 @@ class Lyzer(TA88_Fund):
     @tag_Property( plot=True)
     def MagAbs(self):
         #return absolute(self.Magcom[:, :])
-        return absolute(self.Magcom[:, :])#-mean(self.Magcom[:, 2500:2501], axis=1, keepdims=True))
+        bg=(mean(self.Magcom[:, 3372:33973], axis=1, keepdims=True)+mean(self.Magcom[:, 1662:1663], axis=1, keepdims=True))/2.0
+        bg=mean(self.Magcom[:, 2499:2501], axis=1, keepdims=True)
+
+        return absolute(self.Magcom[:, :]-bg) #mean(self.Magcom[:, 1659:1660], axis=1, keepdims=True))
 
 
     def _default_rd_hdf(self):
@@ -105,6 +111,8 @@ class Lyzer(TA88_Fund):
 if __name__=="__main__":
     a=Lyzer()
     a.read_data()
+    print a.comment
+    print a.probe_pwr
     c=Fitter()
     c.yoko=a.yoko[:]
     b=Plotter()
@@ -112,13 +120,14 @@ if __name__=="__main__":
         b.colormesh("magdB", a.yoko, a.frequency, a.MagdB)
         b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
         b.set_ylim(4.4e9, 4.5e9)
+        b.plot_dict["magdB"].set_clim(-65, -35)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
         b.title="Reflection fluxmap"
 
     def magabs_colormesh():
         b.colormesh("magabs", a.yoko, a.frequency, a.MagAbs)
-        b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+        #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
         b.set_ylim(4.4e9, 4.5e9)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
@@ -134,7 +143,11 @@ if __name__=="__main__":
         b.title="Reflection fluxmap"
 
     def magabs_cs():
-        b.line_plot("magabs_cs", c.flux_parabola, mean(a.MagAbs[58:59, :], axis=0))
+        b.line_plot("magabs_cs", c.flux_parabola[800:2500]*1e-9, a.MagAbs[63, 800:2500])
+        b.ylabel="$|\Delta S_{1 2} |$"
+        b.xlabel="Qubit Frequency (Hz)"
+        b.title="Transmission cross-section"
+
         #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
         #b.set_xlim(0, 7e9)
         #b.set_ylim(0, 0.02)
@@ -150,6 +163,39 @@ if __name__=="__main__":
 
     #magdB_colormesh()
     magabs_cs()
+    from scipy.optimize import leastsq # Levenberg-Marquadt Algorithm #
+
+    def lorentzian(x,p):
+        numerator =  (p[0]**2 )
+        denominator = ( x - (p[1]) )**2 + p[0]**2
+        y = p[2]*(numerator/denominator)+p[3]
+        return y
+
+    def residuals(p,y,x):
+        err = y - lorentzian(x,p)
+        return err
+
+    #ind_bg_low = (x > min(x)) & (x < 450.0)
+    #ind_bg_high = (x > 590.0) & (x < max(x))
+
+    #x_bg = concatenate((x[ind_bg_low],x[ind_bg_high]))
+    #y_bg = concatenate((y[ind_bg_low],y[ind_bg_high]))
+    #m, c = polyfit(x_bg, y_bg, 1)
+    #background = m*x + c
+    #y_bg_corr = y - background
+
+    # initial values #
+    p = [200e6,4.5e9, 0.02, 0.0007]  # [hwhm, peak center, intensity] #
+
+    # optimization #
+    offset=0.001
+    pbest = leastsq(residuals,p,args=(a.MagAbs[63, 1294:1545]-offset, c.flux_parabola[1294:1545]), full_output=1)
+    best_parameters = pbest[0]
+    print pbest[0]
+
+    # fit to data #
+    fit = lorentzian(c.flux_parabola[800:2500], best_parameters)
+    b.line_plot("lorentzian", c.flux_parabola[800:2500]*1e-9, fit+offset)
     #magabs_colormesh()
     #magabs_cs2()
 

@@ -17,7 +17,7 @@ from taref.core.shower import shower
 from taref.core.agent import Operative
 
 class Fitter(Operative):
-     offset=FloatRange(-1.0, 1.0, -0.015).tag(tracking=True)
+     offset=FloatRange(-1.0, 1.0, -0.037).tag(tracking=True)
      flux_factor=FloatRange(0.01, 1.0, 0.2945).tag(tracking=True)
 
      @tag_Property(plot=True, private=True)
@@ -67,7 +67,7 @@ class Lyzer(TA88_Fund):
     @tag_Property( plot=True)
     def MagAbs(self):
         #return absolute(self.Magcom[:, :])
-        return absolute(self.Magcom[:, :])#-mean(self.Magcom[:, 2500:2501], axis=1, keepdims=True))
+        return absolute(self.Magcom[:, :])#-mean(self.Magcom[:, 599:600], axis=1, keepdims=True))
 
 
     def _default_rd_hdf(self):
@@ -117,9 +117,10 @@ if __name__=="__main__":
         b.title="Reflection fluxmap"
 
     def magabs_colormesh():
-        b.colormesh("magabs", a.yoko, a.frequency, a.MagAbs)
-        b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4.4e9, 4.5e9)
+        flux_over_flux0=qdt.call_func("flux_over_flux0", voltage=a.yoko, offset=c.offset, flux_factor=c.flux_factor)
+        b.colormesh("magabs", flux_over_flux0, a.frequency*1e-9, a.MagAbs)
+        #b.line_plot("flux_parabola", flux_over_flux0, c.flux_parabola, color="orange", alpha=0.4)
+        #b.set_ylim(4.4e9, 4.5e9)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
         b.title="Reflection fluxmap"
@@ -134,23 +135,36 @@ if __name__=="__main__":
         b.title="Reflection fluxmap"
 
     def magabs_cs():
-        b.line_plot("magabs_cs", c.flux_parabola, a.MagAbs[903, :])
+        b.line_plot("magabs_cs", c.flux_parabola*1e-9, a.MagAbs[903, :])
+        b.xlabel="Qubit Frequency (GHz)"
+        b.ylabel="$|S_{2_1}|$"
+        b.title="Transmission cross-section"
         #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
         #b.set_xlim(0, 7e9)
         #b.set_ylim(0, 0.02)
 
     def magabs_cs2():
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 2500])
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 3121])
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 3127])
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 3128])
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 3129])
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 3130])
-        b.line_plot("magabs_cs", a.frequency, a.MagAbs[:, 3131])
+        #b.line_plot("magabs_cs", a.frequency*1e-9, a.MagAbs[:, 362])
+        #b.line_plot("magabs_cs", a.frequency*1e-9, a.MagAbs[:, 0])
+        bg=mean(a.Magcom[:, 0:50], axis=1)
+        from scipy.signal import deconvolve
+        from numpy import polydiv
+        #from numpy import
+        print shape(deconvolve(a.Magcom[:, 362], bg)[1])
+        print shape(a.frequency[1:]*1e-9)
+        b.line_plot("magabs_sub", a.frequency[:]*1e-9,  absolute(mean(a.Magcom[:, 342:382], axis=1))-absolute(bg)+0.02)#a.MagAbs[756:1093, 0])+0.02)
+        #b.line_plot("magabs_sub", a.frequency[:]*1e-9,  absolute(deconvolve(a.Magcom[:, 360], bg)[1]))#a.MagAbs[756:1093, 0])+0.02)
+        #b.line_plot("magabs_sub", a.frequency[:]*1e-9,  absolute(deconvolve(a.Magcom[:, 374], bg)[1]))#a.MagAbs[756:1093, 0])+0.02)
+        #newabs=[]
+        #for ind in range(601):
+        #    newabs.append(absolute(a.Magcom[:, ind]-bg))
+        #b.colormesh("magabs", a.frequency, a.yoko, newabs)
+        #b.line_plot("magabs_sub", a.frequency[:]*1e-9, absolute(a.Magcom[:, 362]/bg))#a.MagAbs[756:1093, 0])+0.02)
+        #b.line_plot("magabs_sub", a.frequency[:]*1e-9, absolute(a.Magcom[:, 366]/bg))#a.MagAbs[756:1093, 0])+0.02)
 
     #magdB_colormesh()
-    magabs_cs()
-    #magabs_colormesh()
+    #magabs_cs()
+    magabs_colormesh()
     #magabs_cs2()
     from scipy.optimize import leastsq # Levenberg-Marquadt Algorithm #
     from numpy import concatenate, polyfit
@@ -182,9 +196,10 @@ if __name__=="__main__":
     best_parameters = pbest[0]
     print pbest[0]
 
+    print a.frequency[903]
     # fit to data #
     fit = lorentzian(c.flux_parabola,best_parameters)
-    b.line_plot("lorentzian", c.flux_parabola, fit)
+    b.line_plot("lorentzian", c.flux_parabola*1e-9, fit)
 
     shower(b)
 

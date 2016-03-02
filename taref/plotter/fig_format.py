@@ -20,9 +20,9 @@ from taref.core.atom_extension import private_property
 from matplotlib.figure import Figure
 from matplotlib import rcParams
 rcParams['axes.labelsize'] = 14
-rcParams['xtick.labelsize'] = 9
-rcParams['ytick.labelsize'] = 9
-rcParams['legend.fontsize'] = 9
+rcParams['xtick.labelsize'] = 14
+rcParams['ytick.labelsize'] = 14
+rcParams['legend.fontsize'] = 14
 
 rcParams['xtick.major.width']=2
 rcParams['lines.linewidth']=2
