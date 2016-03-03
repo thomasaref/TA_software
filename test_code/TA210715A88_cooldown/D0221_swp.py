@@ -15,6 +15,7 @@ from taref.physics.units import dB
 from taref.plotter.fig_format import Plotter
 from taref.core.shower import shower
 from taref.core.agent import Operative
+from taref.core.log import log_debug
 
 class Fitter(Operative):
      offset=FloatRange(-1.0, 1.0, -0.04).tag(tracking=True)
@@ -96,10 +97,12 @@ class Lyzer(TA88_Fund):
             s=(sm, sy[0], sy[2])
             print s
             Magcom=Magvec[:,0,:]+1j*Magvec[:,1,:]
+
             Magcom=reshape(Magcom, s, order="F")
             self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
             print shape(Magcom)
             self.Magcom=squeeze(Magcom)
+
             #Magabs=Magcom[:, :, :]-mean(Magcom[:, 197:200, :], axis=1, keepdims=True)
 
 if __name__=="__main__":
@@ -138,7 +141,85 @@ if __name__=="__main__":
         #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
 
     #magabs_cs()
-    magdB_colormesh()
+    #magdB_colormesh()
+    from numpy import exp, pi, sqrt, sin, log10, log
+
+    b.line_plot("off res", a.frequency, 10.0*log10(absolute(a.Magcom[:, 300])), linewidth=0.5)
+
+    f=linspace(4.0e9, 5.0e9, 5000)
+
+    class Fitter2(Operative):
+        base_name="fitter"
+        vf=FloatRange(3000.0, 4000.0, 3488.0).tag(tracking=True)
+        tD=FloatRange(0.0, 2000.0, 500.0).tag(tracking=True)
+        ZS=FloatRange(10.0, 100.0, 44.38).tag(tracking=True)
+        epsinf=FloatRange(1.0, 10.0, 2.989).tag(tracking=True)
+        K2=FloatRange(0.01, 0.1, 0.02458).tag(tracking=True)
+        f0=FloatRange(4.0, 5.0, 4.447).tag(tracking=True)
+        Cc=FloatRange(0.00001, 100.0, 26.5).tag(tracking=True)
+        bg=FloatRange(-50.0, 0.0, -24.0).tag(tracking=True)
+        apwr=Float(1.9)
+        avalue=FloatRange(0.0, 1.0, 0.0).tag(tracking=True)
+
+        @tag_Property(plot=True, private=True)
+        def R(self):
+
+             w=2*pi*f
+             vf=self.vf
+             lbda=vf/f
+             att=(self.avalue*(f/1.0e9)**self.apwr)*1.0e6/vf*log(10.0)/20.0
+             k=2*pi/lbda+1.0j*att
+             tL=k*self.tD*1.0e-6
+             ZL=self.ZS
+             GL=1.0/ZL
+             epsinf=self.epsinf*1.0e-10
+             W=25.0e-6
+             Dvv=self.K2/2.0
+             f0=self.f0*1.0e9
+             w0=2*pi*f0
+             Np=36
+             X=Np*pi*(f-f0)/f0
+             Ga0=3.11*w0*epsinf*W*Dvv*Np**2
+             Ct=sqrt(2.0)*Np*W*epsinf
+             Cc=self.Cc*1.0e-15
+             #VcdivV=self.VcdivV
+             #L=1/(C*(wq**2.0))
+
+             Ga=Ga0*(sin(X)/X)**2.0
+             Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+
+             Y=Ga+1.0j*Ba+1.0j*w*Ct
+             Y1=Y
+             Y2=Y[:]
+             Y3=1.0j*w*Cc
+             S33Full=(Y2+1/ZL-ZL*(Y1*Y3+Y2*Y3+Y1*Y2)-Y1)/(2*Y3+Y2+1.0/ZL+ZL*(Y1*Y3+Y2*Y3+Y1*Y2)+Y1)
+
+             S11=Ga/(Ga+1.0j*Ba+1.0j*w*Ct+1.0/ZL)#+1.0j*(VcdivV)*w*Cc)
+             S33= S33Full#(1/ZL-Y)/(1/ZL+Y)
+             S13=1.0j*sqrt(2*Ga*GL)/(Ga+1.0j*Ba+ 1.0j*w*Ct+1.0/ZL)#+1.0j*(VcdivV)*w*Cc)
+
+             S11q=Ga/(Ga+1.0j*Ba+1.0j*w*Ct+1.0/ZL)#+1.0j*(VcdivV)*w*Cc)
+             S13q=1.0j*sqrt(2*Ga*GL)/(Ga+1.0j*Ba+ 1.0j*w*Ct+1.0/ZL)
+
+             #S21C=2.0/(2.0+1.0/(1.0j*w*Cc*ZL))
+             S21C=2.0*Y3/(2.0*Y3+Y2+Y1+1/ZL+ZL*(Y1*Y3+Y2*Y3+Y1*Y2))
+             crosstalk=S21C*S13q*S13/(exp(-1.0j*tL)-S11*exp(1.0j*tL)*S11q)
+
+             return S33 + S13**2/(exp(-2.0j*tL)/S11q-S11)+crosstalk
+
+        plotter=Typed(Plotter).tag(private=True)
+
+        @observe("vf", "tD", "ZS", "epsinf", "K2", "f0", "Cc", "apwr", "avalue", "bg")
+        def update_plot(self, change):
+            if change["type"]=="update":
+                 self.get_member("R").reset(self)
+                 self.plotter.plot_dict["R_theory"].clt.set_ydata(20.0*log10(absolute(self.R))+self.bg)
+                 self.plotter.draw()
+
+    d=Fitter2()
+    b.line_plot("R_theory", f, 20.0*log10(absolute(d.R))+d.bg, linewidth=0.5)
+    d.plotter=b
+
     shower(b)
 
 
