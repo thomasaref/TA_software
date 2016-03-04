@@ -197,6 +197,24 @@ if __name__=="__main__":
     # fit to data #
     fit = lorentzian(c.flux_parabola,best_parameters)
     b.line_plot("lorentzian", c.flux_parabola*1e-9, fit)
+
+    p = [200e6,4.5e9, -0.02, 0.022]  # [hwhm, peak center, intensity] #
+
+    def lorentzian(x,p):
+        numerator =  (p[0]**2 )
+        denominator = ( x - (p[1]) )**2 + p[0]**2
+        y = p[2]*(numerator/denominator)**2+p[3]
+        return y
+
+    def residuals(p,y,x):
+        err = y - lorentzian(x,p)
+        return err
+    pbest = leastsq(residuals,p,args=(mean(a.MagAbs[:, 96:102], axis=1), c.flux_parabola), full_output=1)
+    best_parameters = pbest[0]
+    print pbest[0]
+    fit = lorentzian(c.flux_parabola,best_parameters)
+    b.line_plot("lorentzian", c.flux_parabola*1e-9, fit)
+
     class Fitter2(Operative):
       frequency=FloatRange(4.4, 4.5, 4.4622).tag(tracking=True)
       offset=FloatRange(0.00, 1.0e-2, 0.0).tag(tracking=True)

@@ -102,15 +102,26 @@ class Lyzer(TA88_Fund):
             self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
             print shape(Magcom)
             self.Magcom=squeeze(Magcom)
-
+        with File("/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A45_cooldown270216/Data_0227/S4A4_TA88_wideSC1116unswitched.hdf5", "r") as f:
+            Magvec=f["Traces"]["RS VNA - S21"]
+            fstart=f["Traces"]['RS VNA - S21_t0dt'][0][0]
+            fstep=f["Traces"]['RS VNA - S21_t0dt'][0][1]
+            sm=shape(Magvec)[0]
+            s=(sm, 1, 1)
+            Magcom=Magvec[:,0,:]+1j*Magvec[:,1,:]
+            Magcom=reshape(Magcom, s, order="F")
+            frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
+            Magcom=squeeze(Magcom)
+        return frequency, Magcom
             #Magabs=Magcom[:, :, :]-mean(Magcom[:, 197:200, :], axis=1, keepdims=True)
 
 if __name__=="__main__":
     a=Lyzer()
-    a.read_data()
+    bgf, bgmc=a.read_data()
     c=Fitter()
     c.yoko=a.yoko[:]
     b=Plotter()
+    #b.line_plot("bg", bgf, bgmc/dB)
     def magdB_colormesh():
         b.colormesh("magdB", a.yoko, a.frequency, a.MagdB)
         b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
@@ -157,9 +168,11 @@ if __name__=="__main__":
         K2=FloatRange(0.01, 0.1, 0.02458).tag(tracking=True)
         f0=FloatRange(4.0, 5.0, 4.447).tag(tracking=True)
         Cc=FloatRange(0.00001, 100.0, 26.5).tag(tracking=True)
-        bg=FloatRange(-50.0, 0.0, -24.0).tag(tracking=True)
+        bg_off=FloatRange(-50.0, 0.0, -24.0).tag(tracking=True)
+        bg_slope=FloatRange(-10.0, 10.0, 0.0).tag(tracking=True)
         apwr=Float(1.9)
         avalue=FloatRange(0.0, 1.0, 0.0).tag(tracking=True)
+        Lk=FloatRange(0.00001, 100.0, 1.0).tag(tracking=True)
 
         @tag_Property(plot=True, private=True)
         def R(self):
@@ -184,22 +197,22 @@ if __name__=="__main__":
              Cc=self.Cc*1.0e-15
              #VcdivV=self.VcdivV
              #L=1/(C*(wq**2.0))
-
+             Lk=self.Lk*Np*1e-9
              Ga=Ga0*(sin(X)/X)**2.0
              Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
 
-             Y=Ga+1.0j*Ba+1.0j*w*Ct
+             Y=Ga+1.0j*Ba+1.0j*w*Ct+1.0/(1.0j*w*Lk)
              Y1=Y
              Y2=Y[:]
              Y3=1.0j*w*Cc
              S33Full=(Y2+1/ZL-ZL*(Y1*Y3+Y2*Y3+Y1*Y2)-Y1)/(2*Y3+Y2+1.0/ZL+ZL*(Y1*Y3+Y2*Y3+Y1*Y2)+Y1)
 
-             S11=Ga/(Ga+1.0j*Ba+1.0j*w*Ct+1.0/ZL)#+1.0j*(VcdivV)*w*Cc)
+             S11=Ga/(Ga+1.0j*Ba+1.0j*w*Ct+1.0/ZL+1.0/(1.0j*w*Lk))#+1.0j*(VcdivV)*w*Cc)
              S33= S33Full#(1/ZL-Y)/(1/ZL+Y)
-             S13=1.0j*sqrt(2*Ga*GL)/(Ga+1.0j*Ba+ 1.0j*w*Ct+1.0/ZL)#+1.0j*(VcdivV)*w*Cc)
+             S13=1.0j*sqrt(2*Ga*GL)/(Ga+1.0j*Ba+ 1.0j*w*Ct+1.0/ZL+1.0/(1.0j*w*Lk))#+1.0j*(VcdivV)*w*Cc)
 
-             S11q=Ga/(Ga+1.0j*Ba+1.0j*w*Ct+1.0/ZL)#+1.0j*(VcdivV)*w*Cc)
-             S13q=1.0j*sqrt(2*Ga*GL)/(Ga+1.0j*Ba+ 1.0j*w*Ct+1.0/ZL)
+             S11q=Ga/(Ga+1.0j*Ba+1.0j*w*Ct+1.0/ZL+1.0/(1.0j*w*Lk))#+1.0j*(VcdivV)*w*Cc)
+             S13q=1.0j*sqrt(2*Ga*GL)/(Ga+1.0j*Ba+ 1.0j*w*Ct+1.0/ZL+1.0/(1.0j*w*Lk))
 
              #S21C=2.0/(2.0+1.0/(1.0j*w*Cc*ZL))
              S21C=2.0*Y3/(2.0*Y3+Y2+Y1+1/ZL+ZL*(Y1*Y3+Y2*Y3+Y1*Y2))
@@ -209,15 +222,15 @@ if __name__=="__main__":
 
         plotter=Typed(Plotter).tag(private=True)
 
-        @observe("vf", "tD", "ZS", "epsinf", "K2", "f0", "Cc", "apwr", "avalue", "bg")
+        @observe("vf", "tD", "ZS", "epsinf", "K2", "f0", "Cc", "apwr", "avalue", "bg_off", "Lk", "bg_slope")
         def update_plot(self, change):
             if change["type"]=="update":
                  self.get_member("R").reset(self)
-                 self.plotter.plot_dict["R_theory"].clt.set_ydata(20.0*log10(absolute(self.R))+self.bg)
+                 self.plotter.plot_dict["R_theory"].clt.set_ydata(20.0*log10(absolute(self.R))+self.bg_off+self.bg_slope*f*1e-9)
                  self.plotter.draw()
 
     d=Fitter2()
-    b.line_plot("R_theory", f, 20.0*log10(absolute(d.R))+d.bg, linewidth=0.5)
+    b.line_plot("R_theory", f, 20.0*log10(absolute(d.R))+d.bg_off, linewidth=0.5)
     d.plotter=b
 
     shower(b)

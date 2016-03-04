@@ -213,12 +213,15 @@ if __name__=="__main__":
         K2=FloatRange(0.01, 0.1, 0.02458).tag(tracking=True)
         f0=FloatRange(4.0, 5.0, 4.447).tag(tracking=True)
         Cc=FloatRange(0.00001, 100.0, 26.5).tag(tracking=True)
-        bg=FloatRange(0.0, 1.0, 1.0).tag(tracking=True)
+        bg_height=FloatRange(0.0, 1.0, 0.1).tag(tracking=True)
+        bg_offset=FloatRange(-1.0, 1.0, 0.0).tag(tracking=True)
+
         apwr=Float(1.9)
         avalue=FloatRange(0.0, 1.0, 0.0).tag(tracking=True)
 
         phase_0=FloatRange(-pi, pi, 0.0).tag(tracking=True)
         ed=FloatRange(0.00001, 100.0, 0.2).tag(tracking=True)
+        Lk=FloatRange(0.00001, 100.0, 1.0).tag(tracking=True)
 
         @tag_Property(private=True)
         def flatten(self):
@@ -259,22 +262,22 @@ if __name__=="__main__":
              Cc=self.Cc*1.0e-15
              #VcdivV=self.VcdivV
              #L=1/(C*(wq**2.0))
-
+             Lk=self.Lk*Np*1e-9
              Ga=Ga0*(sin(X)/X)**2.0
              Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
 
-             Y=Ga+1.0j*Ba+1.0j*w*Ct
+             Y=Ga+1.0j*Ba+1.0j*w*Ct+1.0/(1.0j*w*Lk)
              Y1=Y
              Y2=Y[:]
              Y3=1.0j*w*Cc
              S33Full=(Y2+1/ZL-ZL*(Y1*Y3+Y2*Y3+Y1*Y2)-Y1)/(2*Y3+Y2+1.0/ZL+ZL*(Y1*Y3+Y2*Y3+Y1*Y2)+Y1)
 
-             S11=Ga/(Ga+1.0j*Ba+1.0j*w*Ct+1.0/ZL)#+1.0j*(VcdivV)*w*Cc)
+             S11=Ga/(Ga+1.0j*Ba+1.0j*w*Ct+1.0/ZL+1.0/(1.0j*w*Lk))#+1.0j*(VcdivV)*w*Cc)
              S33= S33Full#(1/ZL-Y)/(1/ZL+Y)
-             S13=1.0j*sqrt(2*Ga*GL)/(Ga+1.0j*Ba+ 1.0j*w*Ct+1.0/ZL)#+1.0j*(VcdivV)*w*Cc)
+             S13=1.0j*sqrt(2*Ga*GL)/(Ga+1.0j*Ba+ 1.0j*w*Ct+1.0/ZL+1.0/(1.0j*w*Lk))#+1.0j*(VcdivV)*w*Cc)
 
-             S11q=Ga/(Ga+1.0j*Ba+1.0j*w*Ct+1.0/ZL)#+1.0j*(VcdivV)*w*Cc)
-             S13q=1.0j*sqrt(2*Ga*GL)/(Ga+1.0j*Ba+ 1.0j*w*Ct+1.0/ZL)
+             S11q=Ga/(Ga+1.0j*Ba+1.0j*w*Ct+1.0/ZL+1.0/(1.0j*w*Lk))#+1.0j*(VcdivV)*w*Cc)
+             S13q=1.0j*sqrt(2*Ga*GL)/(Ga+1.0j*Ba+ 1.0j*w*Ct+1.0/ZL+1.0/(1.0j*w*Lk))
 
              #S21C=2.0/(2.0+1.0/(1.0j*w*Cc*ZL))
              S21C=2.0*Y3/(2.0*Y3+Y2+Y1+1/ZL+ZL*(Y1*Y3+Y2*Y3+Y1*Y2))
@@ -287,19 +290,19 @@ if __name__=="__main__":
 
         plotter=Typed(Plotter).tag(private=True)
 
-        @observe("vf", "tD", "ZS", "epsinf", "K2", "f0", "Cc", "apwr", "avalue", "bg", "ed", "phase_0")
+        @observe("vf", "tD", "ZS", "epsinf", "K2", "f0", "Cc", "apwr", "avalue", "bg_height", "bg_offset", "ed", "phase_0", "Lk")
         def update_plot(self, change):
             if change["type"]=="update":
                  self.get_member("R").reset(self)
-                 self.plotter.plot_dict["R_theory"].clt.set_ydata(d.bg*angle(self.R))
-                 self.get_member("flatten").reset(self)
-                 self.plotter.plot_dict["DB_cs"].clt.set_ydata(self.flatten)
+                 self.plotter.plot_dict["R_theory"].clt.set_ydata(d.bg_height*absolute(d.R)**2+d.bg_offset)
+                 #self.get_member("flatten").reset(self)
+                 #self.plotter.plot_dict["DB_cs"].clt.set_ydata(self.flatten)
                  self.plotter.draw()
 
     d=Fitter2()
 
-    b.line_plot("DB_cs", a.frequency, d.flatten, linewidth=0.5)
-    b.line_plot("R_theory", f, d.bg*angle(d.R), linewidth=0.5)
+    b.line_plot("DB_cs", a.frequency, a.MagAbs[:, 600], linewidth=0.5)
+    b.line_plot("R_theory", f, d.bg_height*absolute(d.R)**2+d.bg_offset, linewidth=0.5)
     d.plotter=b
     shower(b)
 
