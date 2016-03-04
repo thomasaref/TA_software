@@ -17,8 +17,8 @@ from taref.core.shower import shower
 from taref.core.agent import Operative
 
 class Fitter(Operative):
-     offset=FloatRange(-1.0, 1.0, -0.015).tag(tracking=True)
-     flux_factor=FloatRange(0.01, 1.0, 0.2945).tag(tracking=True)
+     offset=FloatRange(-1.0, 1.0, -0.036).tag(tracking=True)
+     flux_factor=FloatRange(0.01, 1.0, qdt.flux_factor).tag(tracking=True)
 
      @tag_Property(plot=True, private=True)
      def flux_parabola(self):
@@ -35,7 +35,7 @@ class Fitter(Operative):
      def update_plot(self, change):
          if change["type"]=="update":
              self.get_member("flux_parabola").reset(self)
-             self.plotter.plot_dict["flux_parabola"].clt.set_ydata(self.flux_parabola)
+             self.plotter.plot_dict["magabs_flux"].clt.set_xdata(self.flux_parabola*1e-9)
              self.plotter.draw()
 
 class Lyzer(TA88_Fund):
@@ -126,7 +126,7 @@ def magabs_colormesh():
     b.xlabel="Time (us)"
     b.ylabel="Magnitude (abs)"
     b.title="Reflection vs time"
-#c.plotter=b
+c.plotter=b
 
 def phase_colormesh():
     b.colormesh("phase", a.yoko, a.frequency, a.Phase)
@@ -159,8 +159,67 @@ if __name__=="__main__":
     #magdB_colormesh()
     #magabs_cs()
     #magabs_colormesh()
+    #b.line_plot("magabs_flux", c.flux_parabola, mean(a.MagAbs[:, 30:40], axis=1))
+    b.line_plot("magabs_flux", c.flux_parabola*1e-9, mean(a.MagAbs[:, 72:85], axis=1))
+    b.vline_plot('freq', 4.4622)
+    b.line_plot("magabs_flux", c.flux_parabola*1e-9, mean(a.MagAbs[:, 96:102], axis=1))
+
+    from scipy.optimize import leastsq # Levenberg-Marquadt Algorithm #
+
+    def lorentzian(x,p):
+        numerator =  (p[0]**2 )
+        denominator = ( x - (p[1]) )**2 + p[0]**2
+        y = p[2]*(numerator/denominator)+p[3]
+        return y
+
+    def residuals(p,y,x):
+        err = y - lorentzian(x,p)
+        return err
+
+    #ind_bg_low = (x > min(x)) & (x < 450.0)
+    #ind_bg_high = (x > 590.0) & (x < max(x))
+
+    #x_bg = concatenate((x[ind_bg_low],x[ind_bg_high]))
+    #y_bg = concatenate((y[ind_bg_low],y[ind_bg_high]))
+    #m, c = polyfit(x_bg, y_bg, 1)
+    #background = m*x + c
+    #y_bg_corr = y - background
+
+    # initial values #
+    p = [200e6,4.5e9, 0.02, 0.022]  # [hwhm, peak center, intensity] #
+
+    # optimization #
+    pbest = leastsq(residuals,p,args=(mean(a.MagAbs[:, 72:85], axis=1), c.flux_parabola), full_output=1)
+    best_parameters = pbest[0]
+    print pbest[0]
+
+    #print a.frequency[903]
+    # fit to data #
+    fit = lorentzian(c.flux_parabola,best_parameters)
+    b.line_plot("lorentzian", c.flux_parabola*1e-9, fit)
+    class Fitter2(Operative):
+      frequency=FloatRange(4.4, 4.5, 4.4622).tag(tracking=True)
+      offset=FloatRange(0.00, 1.0e-2, 0.0).tag(tracking=True)
+      height=FloatRange(0.00, 1.0e-2, 0.0).tag(tracking=True)
+      width=FloatRange(10.0, 500.0, 50.0).tag(tracking=True)
+
+      @tag_Property(plot=True, private=True)
+      def lorenz(self):
+         return lorentzian(c.flux_parabola, [self.width*1e6, self.frequency*1e9, self.height, self.offset])
+
+      @observe("frequency", "offset", "width", "height")
+      def update_plot(self, change):
+         if change["type"]=="update":
+             self.get_member("lorenz").reset(self)
+             b.plot_dict["lorenz"].clt.set_ydata(self.lorenz)
+             b.draw()
+    d=Fitter2()
+    bp=[  7.11932128e+07,   4.44542932e+09,   1.62596541e-04,  2.26753425e-05]
+    fit2 = lorentzian(c.flux_parabola, bp)
+    b.line_plot("lorenz", c.flux_parabola*1e-9, fit2)
+
     #magabs_cs2()
-    time_speed()
+    #time_speed()
     #b.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data/")
     shower(b)
 
