@@ -96,7 +96,7 @@ class Fig(PlotMaster, Operative):
     def axes_set(self, param):
         self.simple_set(self.axes, param)
 
-    @plot_observe("xscale", "yscale", "title", "xlabel", "ylabel")
+    @plot_observe("xscale", "yscale", "title", "xlabel", "ylabel", immediate_update=True)
     def axes_update(self, change):
         self.axes_set(change["name"])
 

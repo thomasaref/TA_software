@@ -85,7 +85,7 @@ class Backbone(Atom):
             return self.property_dict[name].fget(self, **kwargs)
         elif name in self.all_params and hasattr(self, "_get_"+name):
             return getattr(self, "_get_"+name)(self, **kwargs)
-        return getattr(self, name)(self, **kwargs)
+        return getattr(self, name)(**kwargs)
 
     def __setattr__(self, name, value):
         """uses __setattr__ perform lowhigh_check on all_params"""

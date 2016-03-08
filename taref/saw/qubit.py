@@ -131,9 +131,8 @@ class Qubit(Agent):
         return ((h*fq+Ec)**2)/(8.0*Ec)
 
     voltage=Float().tag(unit="V")
-    offset=Float(0.09).tag(unit="V")
+    offset=Float(0.09).tag(unit="V", log=False)
     flux_factor=Float(0.195)
-    #flux_over_flux0=Float()
 
     @tagged_property()
     def flux_over_flux0(self, voltage, offset, flux_factor):
@@ -143,13 +142,14 @@ class Qubit(Agent):
     def _get_voltage(self, flux_over_flux0, offset, flux_factor):
         return flux_over_flux0/flux_factor+offset
 
-    def flux_parabola(self, voltage, offset, flux_factor):
+    #@tagged_property()
+    def flux_parabola(self, voltage, offset, flux_factor, Ec):
         flux_over_flux0=self.call_func("flux_over_flux0", voltage=voltage, offset=offset, flux_factor=flux_factor)
         Ej=self.call_func("Ej", flux_over_flux0=flux_over_flux0)
-        return self._get_fq(Ej, self.Ec)
+        return self._get_fq(Ej=Ej, Ec=Ec)
 
-    def detuning(f0, flux_over_flux0):
-        return 2.0*pi*(f0 - flux_parabola(flux_over_flux0))
+    def detuning(self, f0, flux_over_flux0):
+        return 2.0*pi*(f0 - self.call_func("flux_parabola", flux_over_flux0))
 
 
     def indiv_EkdivEc(self, ng, Ec, Ej, Nstates, order):

@@ -18,12 +18,16 @@ class PlotObserver(object):
     def __init__(self, *args, **kwargs):
         self.args=args
         self.update_legend=kwargs.get("update_legend", False)
+        self.immediate_update=kwargs.get("immediate_update", False)
 
     def __call__(self, func):
         def new_func(obj, change):
             if change["type"]=="update":
                 func(obj, change)
                 obj.update_plot(self.update_legend)
+            elif change["type"]=="create":
+                if self.immediate_update:
+                    func(obj, change)
         return observe(*self.args)(new_func)
 
 def plot_observe( *args, **kwargs):

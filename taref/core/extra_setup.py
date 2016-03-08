@@ -29,7 +29,6 @@ class tagged_property(tag_Property):
         return super(tagged_property, self).__call__(property_func(func))
 
 def param_decider(obj, value, param, pname):
-    log_debug(param, pname)
     if param==pname:
         return value
     return getattr(obj, param)

@@ -23,6 +23,14 @@ enamldef ColorMap(VGroup):
     ObjectCombo:
         items=list(plot_format.get_member('cmap').items)
         selected:=plot_format.cmap
+    Label:
+        text = "vmin:"
+    FloatField:
+        value:=plot_format.vmin
+    Label:
+        text = "vmax:"
+    FloatField:
+        value:=plot_format.vmax
 
 enamldef LineVGroup(VGroup):
     attr plot_format

@@ -164,7 +164,7 @@ if __name__=="__main__":
 
     #magdB_colormesh()
     #magabs_cs()
-    #magabs_colormesh()
+    magabs_colormesh()
     #magabs_cs2()
     from scipy.optimize import leastsq # Levenberg-Marquadt Algorithm #
     from numpy import concatenate, polyfit
@@ -301,8 +301,8 @@ if __name__=="__main__":
 
     d=Fitter2()
 
-    b.line_plot("DB_cs", a.frequency, a.MagAbs[:, 600], linewidth=0.5)
-    b.line_plot("R_theory", f, d.bg_height*absolute(d.R)**2+d.bg_offset, linewidth=0.5)
+    #b.line_plot("DB_cs", a.frequency, a.MagAbs[:, 600], linewidth=0.5)
+    #b.line_plot("R_theory", f, d.bg_height*absolute(d.R)**2+d.bg_offset, linewidth=0.5)
     d.plotter=b
     shower(b)
 

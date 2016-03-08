@@ -6,7 +6,7 @@ Created on Mon Feb 22 10:46:49 2016
 """
 
 from TA88_fundamental import TA88_Read, TA88_Fund, qdt
-from atom.api import Typed, Unicode, Float, observe, FloatRange
+from atom.api import Typed, Unicode, Float, observe, FloatRange, Int
 from h5py import File
 from taref.core.universal import Array
 from numpy import float64, linspace, shape, reshape, squeeze, mean, angle, absolute, array
@@ -56,6 +56,9 @@ class Lyzer(TA88_Fund):
     time=Array().tag( plot=True, label="Time")
     yoko=Array().tag(unit="V", plot=True, label="Yoko")
     Magcom=Array().tag(private=True)
+    pwr=Array().tag(plot=True, label="Power")
+
+    pind=Int()
 
     probe_frq=Float().tag(unit="GHz", label="Probe frequency", read_only=True)
     probe_pwr=Float().tag(label="Probe power", read_only=True, display_unit="dBm/mW")
@@ -70,44 +73,51 @@ class Lyzer(TA88_Fund):
 
     @tag_Property(plot=True)
     def Phase(self):
-        return angle(self.Magcom[:, :])#-mean(self.Magcom[:, 297:303], axis=1, keepdims=True))
+        return angle(self.Magcom[:, :, self.pind].transpose())#-mean(self.Magcom[:, 297:303], axis=1, keepdims=True))
 
     @tag_Property( plot=True)
     def MagAbs(self):
         #return absolute(self.Magcom[:, :])
-        return absolute(self.Magcom[:, :])#-mean(self.Magcom[:, 2500:2501], axis=1, keepdims=True))
+        print self.pwr[self.pind]
+        return absolute(self.Magcom[:, :, self.pind].transpose()-mean(self.Magcom[:, 99:100, self.pind].transpose(), axis=1, keepdims=True))
 
 
     def _default_rd_hdf(self):
-        return TA88_Read(main_file="Data_0223/S1A1_TA88_time_domain_fluxswp.hdf5")
+        return TA88_Read(main_file="Data_0225/S1A1A4_TA88_time_domain_powers.hdf5")
 
     def read_data(self):
         with File(self.rd_hdf.file_path, 'r') as f:
-            #print f["Traces"].keys()
+            print f["Traces"].keys()
             self.comment=f.attrs["comment"]
             #print f["Instrument config"]["Anritsu 68377C Signal generator - GPIB: 8, Pump3 at localhost"].attrs.keys()
             self.probe_frq=f["Instrument config"]["Anritsu 68377C Signal generator - GPIB: 8, Pump3 at localhost"].attrs["Frequency"]
             self.probe_pwr=f["Instrument config"]["Anritsu 68377C Signal generator - GPIB: 8, Pump3 at localhost"].attrs["Power"]
 
-            #print f["Data"]["Channel names"][:]
+            print f["Data"]["Channel names"][:]
             Magvec=f["Traces"]["Digitizer 1 - Trace"]#[:]
+            #Magvec=f["Traces"]["Digitizer2 - Trace"]#[:]
+
             data=f["Data"]["Data"]
-            #print shape(data)
+            print shape(data)
 #
             self.yoko=data[:,0,0].astype(float64)
+            self.pwr=data[0,1,:].astype(float64)
+            print self.pwr
+
             tstart=f["Traces"]['Digitizer 1 - Trace_t0dt'][0][0]
             tstep=f["Traces"]['Digitizer 1 - Trace_t0dt'][0][1]
-            #print shape(Magvec)
+            print shape(Magvec)
             sm=shape(Magvec)[0]
             sy=shape(data)
             s=(sm, sy[0], sy[2])
-            #print s
+            print s
             Magcom=Magvec[:,0,:]+1j*Magvec[:,1,:]
             Magcom=reshape(Magcom, s, order="F")
             self.time=linspace(tstart, tstart+tstep*(sm-1), sm)
-            #print shape(Magcom)
+            print shape(Magcom)
             Magcom=squeeze(Magcom)
-            self.Magcom=Magcom.transpose()
+            self.Magcom=Magcom[:]#.transpose()
+            print shape(self.Magcom)
             #Magabs=Magcom[:, :, :]-mean(Magcom[:, 197:200, :], axis=1, keepdims=True)
 
 
@@ -123,7 +133,8 @@ def magdB_colormesh():
     b.ylabel="Frequency (Hz)"
     b.title="Reflection fluxmap"
 
-def magabs_colormesh():
+def magabs_colormesh(pwi=0):
+    a.pind=pwi
     flux_over_flux0=qdt.call_func("flux_over_flux0", voltage=a.yoko, offset=c.offset, flux_factor=c.flux_factor)
 
     b.colormesh("magabs", a.time*1e6, flux_over_flux0, a.MagAbs)
@@ -133,10 +144,11 @@ def magabs_colormesh():
     b.ylabel="Magnitude (abs)"
     b.title="Reflection vs time"
 
-def phase_colormesh():
-    b.colormesh("phase", a.yoko, a.frequency, a.Phase)
-    b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-    b.set_ylim(4e9, 5e9)
+def phase_colormesh(pwi=0):
+    a.pind=pwi
+    b.colormesh("phase", a.time*1e-6, a.yoko, a.Phase)
+    #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+    #b.set_ylim(4e9, 5e9)
     b.xlabel="Yoko (V)"
     b.ylabel="Frequency (Hz)"
     b.title="Reflection fluxmap"
@@ -160,13 +172,16 @@ def time_speed():
     b.scatter_plot("spd", t*1e6, [0.0, 600.0, 1000.0, 1200.0, 2000.0], label="Reflections")
     b.line_plot("spd_fit", t*1e6,  (t*qdt.vf)*1e6, label="(3488 m/s)t")
 
-def magabs_cs_fit():
-    b.line_plot("magabs_flux", c.flux_parabola*1e-9, mean(a.MagAbs[:, 72:85], axis=1), label="first reflection")
+def magabs_cs_fit(pwi=0):
+    a.pind=pwi
+    a.get_member("MagAbs").reset(a)
     #b.vline_plot('freq', 4.4622)
-    b.line_plot("magabs_flux", c.flux_parabola*1e-9, mean(a.MagAbs[:, 96:102], axis=1), label="first transmission")
+    #b.line_plot("magabs_flux", c.flux_parabola*1e-9, mean(a.MagAbs[:, 96:102], axis=1), label="first transmission")
 
     def lorentzian(x,p):
-        return p[2]/(1.0+((x-p[1])/p[0])**2)+p[3]
+        return p[2]*(1.0/(1.0+((x-p[1])/p[0])**2))+p[3]
+
+        return p[2]*(1.0-1.0/(1.0+((x-p[1])/p[0])**2))+p[3]
 
     def residuals(p,y,x):
         err = y - lorentzian(x,p)
@@ -174,45 +189,54 @@ def magabs_cs_fit():
 
     p = [200e6,4.5e9, 0.02, 0.022]
 
+    #pbest = leastsq(residuals,p,args=(mean(a.MagAbs[:, 66:78], axis=1), c.flux_parabola), full_output=1)
+
     pbest = leastsq(residuals,p,args=(mean(a.MagAbs[:, 72:85], axis=1), c.flux_parabola), full_output=1)
     best_parameters = pbest[0]
     print best_parameters
-    b.line_plot("lorentzian", c.flux_parabola*1e-9, lorentzian(c.flux_parabola,best_parameters), label="fit 1st R")
+    if 1:
+        #b.line_plot("magabs_flux", c.flux_parabola*1e-9, mean(a.MagAbs[:, 66:78], axis=1), label="first reflection")
 
-    def lorentzian_sq(x,p):
-        return p[2]*(1.0-1.0/(1.0+((x-p[1])/p[0])**2))+p[3]
+        b.line_plot("magabs_flux", c.flux_parabola*1e-9, mean(a.MagAbs[:, 72:83], axis=1), label="first reflection")
+        b.line_plot("lorentzian", c.flux_parabola*1e-9, lorentzian(c.flux_parabola,best_parameters), label="fit 1st R")
 
-    def residuals_sq(p,y,x):
-        err = y - lorentzian_sq(x,p)
-        return err
+    return best_parameters
 
-    p = [200e6,4.5e9, 0.02, 0.022]
+    if 0:
+        def lorentzian_sq(x,p):
+            return p[2]*(1.0-1.0/(1.0+((x-p[1])/p[0])**2))+p[3]
 
-    pbest = leastsq(residuals_sq, p, args=(mean(a.MagAbs[:, 96:102], axis=1), c.flux_parabola), full_output=1)
-    best_parameters = pbest[0]
-    print pbest[0]
-    b.line_plot("lorentzian", c.flux_parabola*1e-9,  lorentzian_sq(c.flux_parabola,best_parameters), label="fit 1st T")
+        def residuals_sq(p,y,x):
+            err = y - lorentzian_sq(x,p)
+            return err
 
-    b.xlabel=" Qubit Frequency (GHz)"
-    b.ylabel="Magnitude (abs)"
-    b.title="Reflection vs qubit frequency cross sections"
+        p = [200e6,4.5e9, 0.02, 0.022]
 
-    class Fitter2(Fitter):
-      frequency=FloatRange(4.4, 4.5, 4.4622).tag(tracking=True)
-      offset=FloatRange(0.00, 1.0e-2, 0.0).tag(tracking=True)
-      height=FloatRange(0.00, 1.0e-2, 0.0).tag(tracking=True)
-      width=FloatRange(10.0, 500.0, 50.0).tag(tracking=True)
+        pbest = leastsq(residuals_sq, p, args=(mean(a.MagAbs[:, 96:102], axis=1), c.flux_parabola), full_output=1)
+        best_parameters = pbest[0]
+        print pbest[0]
+        b.line_plot("lorentzian", c.flux_parabola*1e-9,  lorentzian_sq(c.flux_parabola,best_parameters), label="fit 1st T")
 
-      @tag_Property(plot=True, private=True)
-      def lorenz(self):
-         return lorentzian(c.flux_parabola, [self.width*1e6, self.frequency*1e9, self.height, self.offset])
+        b.xlabel=" Qubit Frequency (GHz)"
+        b.ylabel="Magnitude (abs)"
+        b.title="Reflection vs qubit frequency cross sections"
 
-      @observe("frequency", "offset", "width", "height")
-      def update_plot(self, change):
-         if change["type"]=="update":
-             self.get_member("lorenz").reset(self)
-             b.plot_dict["lorenz"].clt.set_ydata(self.lorenz)
-             b.draw()
+        class Fitter2(Fitter):
+          frequency=FloatRange(4.4, 4.5, 4.4622).tag(tracking=True)
+          offset=FloatRange(0.00, 1.0e-2, 0.0).tag(tracking=True)
+          height=FloatRange(0.00, 1.0e-2, 0.0).tag(tracking=True)
+          width=FloatRange(10.0, 500.0, 50.0).tag(tracking=True)
+
+          @tag_Property(plot=True, private=True)
+          def lorenz(self):
+             return lorentzian(c.flux_parabola, [self.width*1e6, self.frequency*1e9, self.height, self.offset])
+
+          @observe("frequency", "offset", "width", "height")
+          def update_plot(self, change):
+             if change["type"]=="update":
+                 self.get_member("lorenz").reset(self)
+                 b.plot_dict["lorenz"].clt.set_ydata(self.lorenz)
+                 b.draw()
     #d=Fitter2()
     #bp=[  7.11932128e+07,   4.44542932e+09,   1.62596541e-04,  2.26753425e-05]
     #fit2 = lorentzian(c.flux_parabola, bp)
@@ -221,8 +245,15 @@ def magabs_cs_fit():
 if __name__=="__main__":
     #magdB_colormesh()
     #magabs_cs()
-    #magabs_colormesh()
-    magabs_cs_fit()
+    #magabs_colormesh(8)
+    #phase_colormesh(8)
+    print magabs_cs_fit(8)
+    #ws=[]
+    #for n in range((len(a.pwr)-4)):
+    #    ps=magabs_cs_fit(n)
+    #    ws.append(ps[2]-ps[3])
+    #print ws
+    #b.line_plot("width", a.pwr[:-4], ws)
     #b.line_plot("magabs_flux", c.flux_parabola, mean(a.MagAbs[:, 30:40], axis=1))
 
 

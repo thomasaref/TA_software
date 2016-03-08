@@ -264,11 +264,17 @@ class ColormeshFormat(PlotFormat):
     clt=Typed(QuadMesh)
     cmap=Enum(*colormap_names).tag(former="cmap")
     zdata=Array()
+    vmin=Float()
+    vmax=Float()
 
     colorbar=Instance(Colorbar)
 
     def set_clim(self, vmin, vmax):
         self.clt.set_clim(vmin, vmax)
+
+    @plot_observe("vmin", "vmax")
+    def clim_update(self, change):
+        self.set_clim(self.vmin, self.vmax)
 
     def _default_colorbar(self):
         self.plotter.figure.colorbar(self.clt)

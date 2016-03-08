@@ -5,7 +5,7 @@ Created on Mon Feb 22 10:46:49 2016
 @author: thomasaref
 """
 
-from TA88_fundamental import TA88_Read, TA88_Fund, qdt
+from TA45_fundamental import TA45_Read, TA45_Fund, qdt
 from atom.api import Typed, Unicode, Float, observe, FloatRange
 from h5py import File
 from taref.core.universal import Array
@@ -38,14 +38,14 @@ class Fitter1(Fitter):
              b.plot_dict["magabs_flux"].clt.set_xdata(self.flux_parabola*1e-9)
              b.draw()
 
-class Lyzer(TA88_Fund):
+class Lyzer(TA45_Fund):
     base_name="lyzer"
 
     @private_property
     def main_params(self):
         return ["comment", "rt_atten", "rt_gain", "probe_frq", "probe_pwr", "actual_pwr"]
 
-    rd_hdf=Typed(TA88_Read)
+    rd_hdf=Typed(TA45_Read)
 
     comment=Unicode().tag(read_only=True, spec="multiline")
 
@@ -79,7 +79,7 @@ class Lyzer(TA88_Fund):
 
 
     def _default_rd_hdf(self):
-        return TA88_Read(main_file="Data_0223/S1A1_TA88_time_domain_fluxswp.hdf5")
+        return TA45_Read(main_file="Data_0305/S1A1_TA45_time_flux_sweep_long.hdf5")
 
     def read_data(self):
         with File(self.rd_hdf.file_path, 'r') as f:
@@ -92,7 +92,7 @@ class Lyzer(TA88_Fund):
             #print f["Data"]["Channel names"][:]
             Magvec=f["Traces"]["Digitizer 1 - Trace"]#[:]
             data=f["Data"]["Data"]
-            #print shape(data)
+            print shape(data)
 #
             self.yoko=data[:,0,0].astype(float64)
             tstart=f["Traces"]['Digitizer 1 - Trace_t0dt'][0][0]
@@ -101,7 +101,7 @@ class Lyzer(TA88_Fund):
             sm=shape(Magvec)[0]
             sy=shape(data)
             s=(sm, sy[0], sy[2])
-            #print s
+            print s
             Magcom=Magvec[:,0,:]+1j*Magvec[:,1,:]
             Magcom=reshape(Magcom, s, order="F")
             self.time=linspace(tstart, tstart+tstep*(sm-1), sm)
@@ -126,7 +126,7 @@ def magdB_colormesh():
 def magabs_colormesh():
     flux_over_flux0=qdt.call_func("flux_over_flux0", voltage=a.yoko, offset=c.offset, flux_factor=c.flux_factor)
 
-    b.colormesh("magabs", a.time*1e6, flux_over_flux0, a.MagAbs)
+    b.colormesh("magabs",  a.time*1e6, flux_over_flux0[:-3], a.MagAbs[:-3])
     #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
     #b.set_ylim(4.4e9, 4.5e9)
     b.xlabel="Time (us)"
@@ -161,37 +161,37 @@ def time_speed():
     b.line_plot("spd_fit", t*1e6,  (t*qdt.vf)*1e6, label="(3488 m/s)t")
 
 def magabs_cs_fit():
-    b.line_plot("magabs_flux", c.flux_parabola*1e-9, mean(a.MagAbs[:, 72:85], axis=1), label="first reflection")
+    b.line_plot("magabs_flux", c.flux_parabola[:-3]*1e-9, mean(a.MagAbs[:-3, 76:90], axis=1), label="first reflection")
     #b.vline_plot('freq', 4.4622)
-    b.line_plot("magabs_flux", c.flux_parabola*1e-9, mean(a.MagAbs[:, 96:102], axis=1), label="first transmission")
+    b.line_plot("magabs_flux", c.flux_parabola[:-3]*1e-9, mean(a.MagAbs[:-3, 109:230], axis=1), label="first transmission")
 
     def lorentzian(x,p):
-        return p[2]/(1.0+((x-p[1])/p[0])**2)+p[3]
+        return p[2]*(1.0-1.0/(1.0+((x-p[1])/p[0])**2))+p[3]
 
     def residuals(p,y,x):
         err = y - lorentzian(x,p)
         return err
 
-    p = [200e6,4.5e9, 0.02, 0.022]
+    p = [20e6,4.5e9, -0.002, 0.002]
 
-    pbest = leastsq(residuals,p,args=(mean(a.MagAbs[:, 72:85], axis=1), c.flux_parabola), full_output=1)
+    pbest = leastsq(residuals,p,args=(mean(a.MagAbs[108:231, 76:90], axis=1), c.flux_parabola[108:231]), full_output=1)
     best_parameters = pbest[0]
     print best_parameters
-    b.line_plot("lorentzian", c.flux_parabola*1e-9, lorentzian(c.flux_parabola,best_parameters), label="fit 1st R")
+    b.line_plot("lorentzian", c.flux_parabola[108:231]*1e-9, lorentzian(c.flux_parabola[108:231],best_parameters), label="fit 1st R")
 
-    def lorentzian_sq(x,p):
-        return p[2]*(1.0-1.0/(1.0+((x-p[1])/p[0])**2))+p[3]
+    #def lorentzian_sq(x,p):
+    #    return p[2]*(1.0-1.0/(1.0+((x-p[1])/p[0])**2))+p[3]
 
-    def residuals_sq(p,y,x):
-        err = y - lorentzian_sq(x,p)
-        return err
+    #def residuals_sq(p,y,x):
+    #    err = y - lorentzian_sq(x,p)
+    #    return err
 
-    p = [200e6,4.5e9, 0.02, 0.022]
+    p = [20e6,4.5e9, -0.002, 0.0022]
 
-    pbest = leastsq(residuals_sq, p, args=(mean(a.MagAbs[:, 96:102], axis=1), c.flux_parabola), full_output=1)
+    pbest = leastsq(residuals, p, args=(mean(a.MagAbs[108:231, 109:230], axis=1), c.flux_parabola[108:231]), full_output=1)
     best_parameters = pbest[0]
     print pbest[0]
-    b.line_plot("lorentzian", c.flux_parabola*1e-9,  lorentzian_sq(c.flux_parabola,best_parameters), label="fit 1st T")
+    b.line_plot("lorentzian", c.flux_parabola[108:231]*1e-9,  lorentzian(c.flux_parabola[108:231],best_parameters), label="fit 1st T")
 
     b.xlabel=" Qubit Frequency (GHz)"
     b.ylabel="Magnitude (abs)"
