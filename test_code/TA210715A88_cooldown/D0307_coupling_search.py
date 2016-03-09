@@ -212,9 +212,9 @@ if __name__=="__main__":
                 if 1:#absolute(best_parameters[1]-a.frequency[n])<2e8:
                     freqs.append(a.frequency[n])
                     freq_diffs.append(absolute(best_parameters[1]-a.frequency[n]))
-                    widths.append(absolute(best_parameters[0])/absolute(best_parameters[2]))
+                    widths.append(absolute(best_parameters[0]))
                     fano.append(absolute(best_parameters[4]))
-        if 1:
+        if 0:
             widths2=[]
             freqs2=[]
             freq_diffs2=[]
@@ -226,7 +226,7 @@ if __name__=="__main__":
                 pbest = leastsq(residuals3,p,args=(magabs[n, :], flux_par[:]), full_output=1)
                 best_parameters = pbest[0]
                 print best_parameters
-                if n==539 or n==554:#n % 10:
+                if 0:#n==539 or n==554:#n % 10:
                     b.line_plot("magabs_flux", flux_par*1e-9, (magabs[n, :]-best_parameters[3])/best_parameters[2], label="{}".format(n), linewidth=0.2)
                     #b.line_plot("lorentzian", flux_par*1e-9, lorentzian3(flux_par,best_parameters), label="fit {}".format(n), linewidth=0.5)
                 if 1:#absolute(best_parameters[1]-frq[n])<1.5e8:
@@ -234,7 +234,7 @@ if __name__=="__main__":
                     freq_diffs2.append(absolute(best_parameters[1]-frq[n]))
                     widths2.append(absolute(best_parameters[0]))
 
-        #b.line_plot("widths", freqs, widths)
+        b.line_plot("widths", freqs, widths)
         #b.line_plot("widths2", freqs2, widths2, color="red")
         #b.line_plot("fano", freqs, fano)
         Np=9
@@ -263,7 +263,7 @@ if __name__=="__main__":
                     b.draw()
 
         d=Fitter3()
-        #b.line_plot("G_f", freq, d.G_f)
+        b.line_plot("G_f", freq, d.G_f)
 
     #magabs_cs()
     #magdB_colormesh()
