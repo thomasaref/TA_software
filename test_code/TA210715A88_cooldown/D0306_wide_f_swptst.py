@@ -71,11 +71,11 @@ class Lyzer(TA88_Fund):
     @tag_Property( plot=True)
     def MagAbs(self):
         #return absolute(self.Magcom[:, :])
-        return absolute(self.Magcom[:, :]-mean(self.Magcom[:, 169:171], axis=1, keepdims=True))
+        return absolute(self.Magcom[:, :]-mean(self.Magcom[:, 249:251], axis=1, keepdims=True))
 
 
     def _default_rd_hdf(self):
-        return TA88_Read(main_file="Data_0306/S4A4_TA88_wide_f_flux_swp_overnight.hdf5")
+        return TA88_Read(main_file="Data_0306/S4A4_TA88_wide_f_flux_swp.hdf5")
 
     def read_data(self):
         with File(self.rd_hdf.file_path, 'r') as f:
@@ -97,30 +97,20 @@ class Lyzer(TA88_Fund):
             print shape(Magvec)
             sm=shape(Magvec)[0]
             sy=shape(data)
-            s=(sm, sy[0], 1)#sy[2])
+            s=(sm,  sy[0], 1)
             print s
-            Magcom=Magvec[:,0, 0:341]+1j*Magvec[:,1, 0:341]
+            Magcom=Magvec[:,0,:]+1j*Magvec[:,1, :]
 
-            Magcom=reshape(Magcom, s, order="F")
+            #Magcom=reshape(Magcom, s, order="F")
             self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
             print shape(Magcom)
             self.Magcom=squeeze(Magcom)
-        with File("/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A45_cooldown270216/Data_0227/S4A4_TA88_wideSC1116unswitched.hdf5", "r") as f:
-            Magvec=f["Traces"]["RS VNA - S21"]
-            fstart=f["Traces"]['RS VNA - S21_t0dt'][0][0]
-            fstep=f["Traces"]['RS VNA - S21_t0dt'][0][1]
-            sm=shape(Magvec)[0]
-            s=(sm, 1, 1)
-            Magcom=Magvec[:,0,:]+1j*Magvec[:,1,:]
-            Magcom=reshape(Magcom, s, order="F")
-            frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
-            Magcom=squeeze(Magcom)
-        return frequency, Magcom
+
             #Magabs=Magcom[:, :, :]-mean(Magcom[:, 197:200, :], axis=1, keepdims=True)
 
 if __name__=="__main__":
     a=Lyzer()
-    bgf, bgmc=a.read_data()
+    a.read_data()
     c=Fitter()
     c.yoko=a.yoko[:]
     b=Plotter()
@@ -134,9 +124,9 @@ if __name__=="__main__":
         b.title="Reflection fluxmap"
 
     def magabs_colormesh():
-        #b.colormesh("magabs", a.yoko, a.frequency, a.MagAbs)
+        b.colormesh("magabs", a.yoko, a.frequency, a.MagAbs)
         b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4e9, 5.85e9)
+        #b.set_ylim(4e9, 5.85e9)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
         b.title="Reflection fluxmap"
@@ -159,12 +149,12 @@ if __name__=="__main__":
         b.title="Reflection fluxmap"
 
     def magabs_cs():
-        b.line_plot("magabs_cs", c.flux_parabola, a.MagAbs[471, :])
+        b.line_plot("magabs_cs", a.frequency, absolute(a.Magcom[:, 250]))
         #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
 
     #magabs_cs()
-    magdB_colormesh()
-    #magabs_colormesh()
+    #magdB_colormesh()
+    magabs_colormesh()
     if 1:
         from numpy import exp, pi, sqrt, sin, log10, log, argmax, array, cos
         class Fitter2(Operative):
@@ -246,7 +236,7 @@ if __name__=="__main__":
 
     #b.scatter_plot("fluxtry", a.frequency, c.flux_parabola[argmax(array(d.R).transpose(), axis=1)])
     #b.colormesh("fluxtry", a.yoko, a.frequency, array(d.R[0]).transpose()+array(d.R[1]).transpose())
-    b.colormesh("fluxtry2", a.yoko, a.frequency, array(d.R[0]).transpose())
+    #b.colormesh("fluxtry2", a.yoko, a.frequency, array(d.R[0]).transpose())
 
     #b.line_plot("fluxtry",  a.frequency, d.R)#.transpose())
     #b.line_plot("fluxtry",  a.frequency, d.R[1])#.transpose())

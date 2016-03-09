@@ -154,7 +154,7 @@ if __name__=="__main__":
         b.title="Reflection fluxmap"
 
     def magabs_cs():
-        b.line_plot("magabs_cs", c.flux_parabola, a.MagAbs[471, :])
+        b.line_plot("magabs_cs", a.frequency, absolute(a.Magcom[:, 170]))
         #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
 
 
@@ -191,9 +191,9 @@ if __name__=="__main__":
 
         b.line_plot("blah", freq, 2.5*G_f)
         return best_parameters
-    #magabs_cs()
+    magabs_cs()
     #magdB_colormesh()
-    magabs_colormesh()
+    #magabs_colormesh()
     #magabs_cs_fit()
     if 1:
         from numpy import exp, pi, sqrt, sin, log10, log, argmax, array, cos

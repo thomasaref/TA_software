@@ -9,7 +9,7 @@ from TA88_fundamental import TA88_Read, TA88_Fund, qdt
 from atom.api import Typed, Unicode, Float, observe, FloatRange, Int
 from h5py import File
 from taref.core.universal import Array
-from numpy import float64, linspace, shape, reshape, squeeze, mean, angle, absolute
+from numpy import float64, linspace, shape, reshape, squeeze, mean, angle, absolute, sin, pi
 from taref.core.atom_extension import tag_Property
 from taref.physics.units import dB
 from taref.plotter.fig_format import Plotter
@@ -17,10 +17,11 @@ from taref.core.shower import shower
 from taref.core.agent import Operative
 from taref.core.log import log_debug
 from taref.physics.fundamentals import e, h
+from scipy.optimize import leastsq
 
 class Fitter(Operative):
-     offset=FloatRange(-1.0, 1.0, -0.04).tag(tracking=True)
-     flux_factor=FloatRange(0.01, 1.0, 0.2945).tag(tracking=True)
+     offset=FloatRange(-1.0, 1.0, -0.035).tag(tracking=True)
+     flux_factor=FloatRange(0.01, 1.0, 0.2925).tag(tracking=True)
 
      @tag_Property(plot=True, private=True)
      def flux_parabola(self):
@@ -62,7 +63,7 @@ class Lyzer(TA88_Fund):
 
     @tag_Property(display_unit="dB", plot=True)
     def MagdB(self):
-        return self.Magcom[:, :]/dB
+        return self.Magcom[:, :]/dB-mean(self.Magcom[:, 169:171], axis=1, keepdims=True)/dB
 
     @tag_Property(plot=True)
     def Phase(self):
@@ -71,11 +72,11 @@ class Lyzer(TA88_Fund):
     @tag_Property( plot=True)
     def MagAbs(self):
         #return absolute(self.Magcom[:, :])
-        return absolute(self.Magcom[:, :]-mean(self.Magcom[:, 169:171], axis=1, keepdims=True))
+        return absolute(self.Magcom[:, :]-mean(self.Magcom[:, 165:175], axis=1, keepdims=True))
 
 
     def _default_rd_hdf(self):
-        return TA88_Read(main_file="Data_0306/S4A4_TA88_wide_f_flux_swp_overnight.hdf5")
+        return TA88_Read(main_file="Data_0307/S1A4_TA88_wide_f_flux_swp2.hdf5")
 
     def read_data(self):
         with File(self.rd_hdf.file_path, 'r') as f:
@@ -99,7 +100,7 @@ class Lyzer(TA88_Fund):
             sy=shape(data)
             s=(sm, sy[0], 1)#sy[2])
             print s
-            Magcom=Magvec[:,0, 0:341]+1j*Magvec[:,1, 0:341]
+            Magcom=Magvec[:,0, :]+1j*Magvec[:,1, :]
 
             Magcom=reshape(Magcom, s, order="F")
             self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
@@ -127,27 +128,21 @@ if __name__=="__main__":
     #b.line_plot("bg", bgf, bgmc/dB)
     def magdB_colormesh():
         b.colormesh("magdB", a.yoko, a.frequency, a.MagdB)
-        b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4e9, 5.85e9)
+        #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+        #b.set_ylim(4e9, 5.85e9)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
         b.title="Reflection fluxmap"
 
     def magabs_colormesh():
-        #b.colormesh("magabs", a.yoko, a.frequency, a.MagAbs)
-        b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4e9, 5.85e9)
+        b.colormesh("magabs", a.yoko, a.frequency, a.MagAbs)
+        #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+        #b.line_plot("flux_parabola", c.flux_parabola, c.flux_parabola, color="orange", alpha=0.4)
+
+        b.set_ylim(4e9, 8e9)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
         b.title="Reflection fluxmap"
-    def magabs_colormesh2():
-        b.colormesh("magabs", c.flux_parabola, a.frequency, a.MagAbs)
-        b.line_plot("flux_parabola", c.flux_parabola, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4e9, 5.85e9)
-        b.xlabel="Qubit Frequency (Hz)"
-        b.ylabel="Frequency (Hz)"
-        b.title="Reflection fluxmap"
-
     c.plotter=b
 
     def phase_colormesh():
@@ -159,12 +154,47 @@ if __name__=="__main__":
         b.title="Reflection fluxmap"
 
     def magabs_cs():
-        b.line_plot("magabs_cs", c.flux_parabola, a.MagAbs[471, :])
+        b.line_plot("magabs_cs", a.frequency, absolute(a.Magcom[:, 170]))
         #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
 
+
+    def magabs_cs_fit():
+        def lorentzian(x,p):
+            return p[2]/(1.0+((x-p[1])/p[0])**2)+p[3]
+
+        def residuals(p,y,x):
+            err = y - lorentzian(x,p)
+            return err
+
+        p = [200e6,4.5e9, 0.02, 0.022]
+
+        indices=[range(67, 107+1), range(50, 59+1), range(111, 127+1), range(161, 173+1)]#, [186]]
+        widths=[]
+        freqs=[]
+        for ind_list in indices:
+            for n in ind_list:
+                pbest = leastsq(residuals,p,args=(a.MagAbs[n, 170:], c.flux_parabola[170:]), full_output=1)
+                best_parameters = pbest[0]
+                print best_parameters
+                if 0:
+                    b.line_plot("magabs_flux", c.flux_parabola[170:]*1e-9, a.MagAbs[n, 170:], label="{}".format(n), linewidth=0.2)
+                    b.line_plot("lorentzian", c.flux_parabola*1e-9, lorentzian(c.flux_parabola,best_parameters), label="fit {}".format(n), linewidth=0.2)
+                freqs.append(a.frequency[n])
+                widths.append(absolute(best_parameters[0]))
+        b.scatter_plot("widths", freqs, widths)
+        Np=9
+        K2=0.048
+        f0=5.37e9
+        freq=linspace(3e9, 7e9, 1000)
+        #G_f=0.5*Np*K2*f0*(sin(Np*pi*(freq-f0)/f0)/(Np*sin(pi*(freq-f0)/f0)))**2
+        G_f=0.5*Np*K2*f0*(sin(Np*pi*(freq-f0)/f0)/(Np*pi*(freq-f0)/f0))**2
+
+        b.line_plot("blah", freq, 2.5*G_f)
+        return best_parameters
     #magabs_cs()
-    magdB_colormesh()
-    #magabs_colormesh()
+    #magdB_colormesh()
+    magabs_colormesh()
+    #magabs_cs_fit()
     if 1:
         from numpy import exp, pi, sqrt, sin, log10, log, argmax, array, cos
         class Fitter2(Operative):
@@ -208,8 +238,8 @@ if __name__=="__main__":
                  #Lk=self.Lk*Np*1e-9
                  Ga=Ga0*(sin(X)/X)**2.0
                  Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
-                 lamb=Np*1e9*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
-
+                 lamb=1e9*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+                 return lamb
 
                  flux_over_flux0=(a.yoko-c.offset)*c.flux_factor
                  R=[]
@@ -246,9 +276,9 @@ if __name__=="__main__":
 
     #b.scatter_plot("fluxtry", a.frequency, c.flux_parabola[argmax(array(d.R).transpose(), axis=1)])
     #b.colormesh("fluxtry", a.yoko, a.frequency, array(d.R[0]).transpose()+array(d.R[1]).transpose())
-    b.colormesh("fluxtry2", a.yoko, a.frequency, array(d.R[0]).transpose())
+    #b.colormesh("fluxtry2", a.yoko, a.frequency, array(d.R[1]).transpose())
 
-    #b.line_plot("fluxtry",  a.frequency, d.R)#.transpose())
+    #b.line_plot("fluxtry",  a.frequency+1.05e9, a.frequency)#.transpose())
     #b.line_plot("fluxtry",  a.frequency, d.R[1])#.transpose())
 
     if 0:

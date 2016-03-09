@@ -72,7 +72,7 @@ class Lyzer(TA88_Fund):
     @tag_Property( plot=True)
     def MagAbs(self):
         #return absolute(self.Magcom[:, :])
-        return absolute(self.Magcom[:, :])#-mean(self.Magcom[:, 0:1], axis=1, keepdims=True))
+        return absolute(self.Magcom[:, :])**2#-mean(self.Magcom[:, 0:1], axis=1, keepdims=True))
 
 
     def _default_rd_hdf(self):
@@ -106,7 +106,7 @@ class Lyzer(TA88_Fund):
             self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
             print shape(Magcom)
             self.Magcom=squeeze(Magcom)
-        with File("/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Data_0223/S4A1_TA88_coilswp_4to5GHz.hdf5", "r") as f:
+        with File("/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Data_0308/S1A4_TA88_coupling_search_midpeak.hdf5", "r") as f:
             Magvec=f["Traces"]["RS VNA - S21"]#[:]
             data=f["Data"]["Data"]
             yoko=data[:,0,0].astype(float64)
@@ -133,7 +133,7 @@ class Lyzer(TA88_Fund):
             Magcom=squeeze(Magcom)
         return frequency, Magcom
             #Magabs=Magcom[:, :, :]-mean(Magcom[:, 197:200, :], axis=1, keepdims=True)
-from numpy import array
+from numpy import array, log10
 if __name__=="__main__":
     a=Lyzer()
     frq, yok, mag=a.read_data()
@@ -179,7 +179,10 @@ if __name__=="__main__":
             return p[2]*(1.0-1.0/(1.0+((x-p[1])/p[0])**2))+p[3]
 
         def lorentzian2(x, p):
-            return p[2]*(1.0-((p[4]*p[0]+x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]
+            return p[2]*(((p[4]*p[0]+x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]
+
+        def lorentzian3(x, p):
+            return p[2]*(((p[4]*p[0]/6.2+(x-p[1])*2*pi)**2)/(p[0]**2+(p[4]*p[0]/6.2+x-p[1])**2))+p[3]
 
         def residuals(p,y,x):
             err = y - lorentzian(x,p)
@@ -188,47 +191,52 @@ if __name__=="__main__":
         def residuals2(p,y,x):
             return y - lorentzian2(x,p)
 
-        p = [200e6,4.5e9, 0.02, 0.022, 0.00001]
+        def residuals3(p,y,x):
+            return y - lorentzian3(x,p)
+
+        p = [200e6,4.5e9, 0.002, 0.022, 0.1]
 
         indices=[range(81, 120+1), range(137, 260+1), range(269, 320+1), range(411, 449+1)]#, [490]]#, [186]]
         widths=[]
         freqs=[]
         freq_diffs=[]
+        fano=[]
         for ind_list in indices:
             for n in ind_list:
-                pbest = leastsq(residuals2,p,args=(a.MagAbs[n, :], c.flux_parabola[:]), full_output=1)
+                pbest = leastsq(residuals3, p, args=(a.MagAbs[n, :], c.flux_parabola[:]), full_output=1)
                 best_parameters = pbest[0]
                 print best_parameters
-                if n % 10==0:
+                if 0: #n % 10==0:
                     b.scatter_plot("magabs_flux", c.flux_parabola[:]*1e-9, a.MagAbs[n, :], label="{}".format(n), linewidth=0.2, marker_size=0.8)
-                    b.line_plot("lorentzian", c.flux_parabola*1e-9, lorentzian2(c.flux_parabola,best_parameters), label="fit {}".format(n), linewidth=0.5)
+                    b.line_plot("lorentzian", c.flux_parabola*1e-9, lorentzian3(c.flux_parabola,best_parameters), label="fit {}".format(n), linewidth=0.5)
                 if 1:#absolute(best_parameters[1]-a.frequency[n])<2e8:
                     freqs.append(a.frequency[n])
                     freq_diffs.append(absolute(best_parameters[1]-a.frequency[n]))
-                    widths.append(absolute(best_parameters[0]))
-        if 0:
+                    widths.append(absolute(best_parameters[0])/absolute(best_parameters[2]))
+                    fano.append(absolute(best_parameters[4]))
+        if 1:
             widths2=[]
             freqs2=[]
             freq_diffs2=[]
-            flux_over_flux0=qdt.call_func("flux_over_flux0", voltage=yok, offset=-0.037, flux_factor=0.2945)
+            flux_over_flux0=qdt.call_func("flux_over_flux0", voltage=yok, offset=-0.037, flux_factor=0.2925)
             Ej=qdt.call_func("Ej", flux_over_flux0=flux_over_flux0)
             flux_par=qdt._get_fq(Ej, qdt.Ec)
-            magabs=absolute(mag)
-            for n in range(756,1087+1):
-                pbest = leastsq(residuals2,p,args=(magabs[n, :], flux_par[:]), full_output=1)
+            magabs=absolute(mag)**2
+            for n in range(len(frq)):
+                pbest = leastsq(residuals3,p,args=(magabs[n, :], flux_par[:]), full_output=1)
                 best_parameters = pbest[0]
                 print best_parameters
-                if n % 10:
-                    b.scatter_plot("magabs_flux", flux_par*1e-9, magabs[n, :], label="{}".format(n), linewidth=0.2, markersize=0.5)
-                    b.line_plot("lorentzian", flux_par*1e-9, lorentzian2(c.flux_parabola,best_parameters), label="fit {}".format(n), linewidth=0.5)
-                if absolute(best_parameters[1]-frq[n])<1.5e8:
+                if n==539 or n==554:#n % 10:
+                    b.line_plot("magabs_flux", flux_par*1e-9, (magabs[n, :]-best_parameters[3])/best_parameters[2], label="{}".format(n), linewidth=0.2)
+                    #b.line_plot("lorentzian", flux_par*1e-9, lorentzian3(flux_par,best_parameters), label="fit {}".format(n), linewidth=0.5)
+                if 1:#absolute(best_parameters[1]-frq[n])<1.5e8:
                     freqs2.append(frq[n])
                     freq_diffs2.append(absolute(best_parameters[1]-frq[n]))
                     widths2.append(absolute(best_parameters[0]))
 
-        #b.scatter_plot("widths", freqs, widths)
-        #b.scatter_plot("widths2", freqs2, widths2, color="red")
-
+        #b.line_plot("widths", freqs, widths)
+        #b.line_plot("widths2", freqs2, widths2, color="red")
+        #b.line_plot("fano", freqs, fano)
         Np=9
         K2=0.048
         #f0=5.37e9
