@@ -63,20 +63,20 @@ class Lyzer(TA88_Fund):
 
     @tag_Property(display_unit="dB", plot=True)
     def MagdB(self):
-        return self.Magcom[:, :]/dB-mean(self.Magcom[:, 169:171], axis=1, keepdims=True)/dB
+        return self.Magcom[:, :]/dB#-mean(self.Magcom[:, 169:171], axis=1, keepdims=True)/dB
 
     @tag_Property(plot=True)
     def Phase(self):
-        return angle(self.Magcom[:, :]-mean(self.Magcom[:, 169:170], axis=1, keepdims=True))
+        return angle(self.Magcom[:, :]-mean(self.Magcom[:, 990:1010], axis=1, keepdims=True))
 
     @tag_Property( plot=True)
     def MagAbs(self):
         #return absolute(self.Magcom[:, :])
-        return absolute(self.Magcom[:, :])**2#-mean(self.Magcom[:, 0:1], axis=1, keepdims=True))
+        return absolute(self.Magcom[:, :]-mean(self.Magcom[:, 620:700], axis=1, keepdims=True))
 
 
     def _default_rd_hdf(self):
-        return TA88_Read(main_file="Data_0307/S1A4_TA88_coupling_search.hdf5")
+        return TA88_Read(main_file="Data_0309/S1A4_TA88_wide_f_lowpwr_overnight.hdf5")
 
     def read_data(self):
         with File(self.rd_hdf.file_path, 'r') as f:
@@ -106,21 +106,6 @@ class Lyzer(TA88_Fund):
             self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
             print shape(Magcom)
             self.Magcom=squeeze(Magcom)
-        with File("/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Data_0308/S1A4_TA88_coupling_search_midpeak.hdf5", "r") as f:
-            Magvec=f["Traces"]["RS VNA - S21"]#[:]
-            data=f["Data"]["Data"]
-            yoko=data[:,0,0].astype(float64)
-            fstart=f["Traces"]['RS VNA - S21_t0dt'][0][0]
-            fstep=f["Traces"]['RS VNA - S21_t0dt'][0][1]
-            sm=shape(Magvec)[0]
-            sy=shape(data)
-            s=(sm, sy[0], 1)#sy[2])
-            Magcom=Magvec[:,0, :]+1j*Magvec[:,1, :]
-            Magcom=reshape(Magcom, s, order="F")
-            frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
-            Magcom=squeeze(Magcom)
-            return frequency, yoko, Magcom
-
         with File("/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A45_cooldown270216/Data_0227/S4A4_TA88_wideSC1116unswitched.hdf5", "r") as f:
             Magvec=f["Traces"]["RS VNA - S21"]
             fstart=f["Traces"]['RS VNA - S21_t0dt'][0][0]
@@ -133,29 +118,28 @@ class Lyzer(TA88_Fund):
             Magcom=squeeze(Magcom)
         return frequency, Magcom
             #Magabs=Magcom[:, :, :]-mean(Magcom[:, 197:200, :], axis=1, keepdims=True)
-from numpy import array, log10, fft
+
 if __name__=="__main__":
     a=Lyzer()
-    frq, yok, mag=a.read_data()
+    bgf, bgmc=a.read_data()
     c=Fitter()
     c.yoko=a.yoko[:]
     b=Plotter()
-    #b.colormesh("magabs2", yok, frq, absolute(mag))
     #b.line_plot("bg", bgf, bgmc/dB)
     def magdB_colormesh():
         b.colormesh("magdB", a.yoko, a.frequency, a.MagdB)
-        b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4e9, 5.85e9)
+        #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+        #b.set_ylim(4e9, 5.85e9)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
         b.title="Reflection fluxmap"
 
     def magabs_colormesh():
         b.colormesh("magabs", a.yoko, a.frequency, a.MagAbs)
-        b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
+        #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
         #b.line_plot("flux_parabola", c.flux_parabola, c.flux_parabola, color="orange", alpha=0.4)
 
-        b.set_ylim(4e9, 5.85e9)
+        #b.set_ylim(4e9, 8e9)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
         b.title="Reflection fluxmap"
@@ -164,119 +148,54 @@ if __name__=="__main__":
     def phase_colormesh():
         b.colormesh("phase", a.yoko, a.frequency, a.Phase)
         b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
-        b.set_ylim(4e9, 5e9)
+        #b.set_ylim(4e9, 5e9)
         b.xlabel="Yoko (V)"
         b.ylabel="Frequency (Hz)"
         b.title="Reflection fluxmap"
 
     def magabs_cs():
-        b.line_plot("magabs_cs", c.flux_parabola, a.MagAbs[471, :])
+        b.line_plot("magabs_cs", a.frequency, absolute(a.Magcom[:, 170]))
         #b.line_plot("flux_parabola", c.yoko, c.flux_parabola, color="orange", alpha=0.4)
 
 
     def magabs_cs_fit():
         def lorentzian(x,p):
-            return p[2]*(1.0-1.0/(1.0+((x-p[1])/p[0])**2))+p[3]
-
-        def lorentzian2(x, p):
-            return p[2]*(((p[4]*p[0]+x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]
-
-        def lorentzian3(x, p):
-            return p[2]*(((p[4]*p[0]/6.2+(x-p[1])*2*pi)**2)/(p[0]**2+(p[4]*p[0]/6.2+x-p[1])**2))+p[3]
+            return p[2]/(1.0+((x-p[1])/p[0])**2)+p[3]
 
         def residuals(p,y,x):
             err = y - lorentzian(x,p)
             return err
 
-        def residuals2(p,y,x):
-            return y - lorentzian2(x,p)
+        p = [200e6,4.5e9, 0.02, 0.022]
 
-        def residuals3(p,y,x):
-            return y - lorentzian3(x,p)
-
-        p = [200e6,4.5e9, 0.002, 0.022, 0.1]
-
-        indices=[range(81, 120+1), range(137, 260+1), range(269, 320+1), range(411, 449+1)]#, [490]]#, [186]]
+        indices=[range(67, 107+1), range(50, 59+1), range(111, 127+1), range(161, 173+1)]#, [186]]
         widths=[]
         freqs=[]
-        freq_diffs=[]
-        fano=[]
         for ind_list in indices:
             for n in ind_list:
-                pbest = leastsq(residuals3, p, args=(a.MagAbs[n, :], c.flux_parabola[:]), full_output=1)
+                pbest = leastsq(residuals,p,args=(a.MagAbs[n, 170:], c.flux_parabola[170:]), full_output=1)
                 best_parameters = pbest[0]
                 print best_parameters
-                if 0: #n % 10==0:
-                    b.scatter_plot("magabs_flux", c.flux_parabola[:]*1e-9, a.MagAbs[n, :], label="{}".format(n), linewidth=0.2, marker_size=0.8)
-                    b.line_plot("lorentzian", c.flux_parabola*1e-9, lorentzian3(c.flux_parabola,best_parameters), label="fit {}".format(n), linewidth=0.5)
-                if 1:#absolute(best_parameters[1]-a.frequency[n])<2e8:
-                    freqs.append(a.frequency[n])
-                    freq_diffs.append(absolute(best_parameters[1]-a.frequency[n]))
-                    widths.append(absolute(best_parameters[0]))
-                    fano.append(absolute(best_parameters[4]))
-        if 1:
-            widths2=[]
-            freqs2=[]
-            freq_diffs2=[]
-            fano2=[]
-            flux_over_flux0=qdt.call_func("flux_over_flux0", voltage=yok, offset=-0.037, flux_factor=0.2925)
-            Ej=qdt.call_func("Ej", flux_over_flux0=flux_over_flux0)
-            flux_par=qdt._get_fq(Ej, qdt.Ec)
-            magabs=absolute(mag)**2
-            for n in range(len(frq)):
-                pbest = leastsq(residuals3,p,args=(magabs[n, :], flux_par[:]), full_output=1)
-                best_parameters = pbest[0]
-                print best_parameters
-                if 0:#n==539 or n==554:#n % 10:
-                    b.line_plot("magabs_flux", flux_par*1e-9, (magabs[n, :]-best_parameters[3])/best_parameters[2], label="{}".format(n), linewidth=0.2)
-                    #b.line_plot("lorentzian", flux_par*1e-9, lorentzian3(flux_par,best_parameters), label="fit {}".format(n), linewidth=0.5)
-                if 1:#absolute(best_parameters[1]-frq[n])<1.5e8:
-                    freqs2.append(frq[n])
-                    freq_diffs2.append(absolute(best_parameters[1]-frq[n]))
-                    widths2.append(absolute(best_parameters[0]))
-                    fano2.append(absolute(best_parameters[4]))
-
-        b.line_plot("widths", freqs, widths, label="-110 dBm")
-        b.line_plot("widths2", freqs2, widths2, color="red", label="-130 dBm")
-        vf=3488.0
-        #pi*vf/2*x=D
-        #b.line_plot("fft", #frq[318:876]*fft.fftfreq(len(frq[318:876]), d=frq[1]-frq[0]),
-        #absolute(fft.fft(widths2[318:876])))
-        #b.line_plot("fano", freqs, fano)
-        #b.line_plot("fano", freqs2, fano2)
-
+                if 0:
+                    b.line_plot("magabs_flux", c.flux_parabola[170:]*1e-9, a.MagAbs[n, 170:], label="{}".format(n), linewidth=0.2)
+                    b.line_plot("lorentzian", c.flux_parabola*1e-9, lorentzian(c.flux_parabola,best_parameters), label="fit {}".format(n), linewidth=0.2)
+                freqs.append(a.frequency[n])
+                widths.append(absolute(best_parameters[0]))
+        b.scatter_plot("widths", freqs, widths)
         Np=9
         K2=0.048
-        #f0=5.37e9
-        freq=linspace(4e9, 5e9, 1000)
+        f0=5.37e9
+        freq=linspace(3e9, 7e9, 1000)
         #G_f=0.5*Np*K2*f0*(sin(Np*pi*(freq-f0)/f0)/(Np*sin(pi*(freq-f0)/f0)))**2
-        #b.scatter_plot("freq_test", freqs, freq_diffs)
+        G_f=0.5*Np*K2*f0*(sin(Np*pi*(freq-f0)/f0)/(Np*pi*(freq-f0)/f0))**2
 
-        class Fitter3(Operative):
-            base_name="fitter"
-            mult=FloatRange(0.001, 5.0, 0.82).tag(tracking=True)
-            f0=FloatRange(4.0, 6.0, 5.348).tag(tracking=True)
-            offset=FloatRange(0.0, 100.0, 18.0).tag(tracking=True)
-
-            @tag_Property(plot=True, private=True)
-            def G_f(self):
-                f0=self.f0*1.0e9
-                return self.offset*1e6+self.mult*0.5*Np*K2*f0*(sin(Np*pi*(freq-f0)/f0)/(Np*pi*(freq-f0)/f0))**2
-
-            @observe("f0", "mult", "offset")
-            def update_plot(self, change):
-                if change["type"]=="update":
-                    self.get_member("G_f").reset(self)
-                    b.plot_dict["G_f"].clt.set_ydata(self.G_f)
-                    b.draw()
-
-        d=Fitter3()
-        b.line_plot("G_f", freq, d.G_f, label="theory")
-
+        b.line_plot("blah", freq, 2.5*G_f)
+        return best_parameters
     #magabs_cs()
     #magdB_colormesh()
-    #magabs_colormesh()
-    magabs_cs_fit()
+    #phase_colormesh()
+    magabs_colormesh()
+    #magabs_cs_fit()
     if 1:
         from numpy import exp, pi, sqrt, sin, log10, log, argmax, array, cos
         class Fitter2(Operative):
