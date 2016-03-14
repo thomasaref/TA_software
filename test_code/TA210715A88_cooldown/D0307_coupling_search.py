@@ -133,7 +133,7 @@ class Lyzer(TA88_Fund):
             Magcom=squeeze(Magcom)
         return frequency, Magcom
             #Magabs=Magcom[:, :, :]-mean(Magcom[:, 197:200, :], axis=1, keepdims=True)
-from numpy import array, log10, fft
+from numpy import array, log10, fft, exp
 if __name__=="__main__":
     a=Lyzer()
     frq, yok, mag=a.read_data()
@@ -182,7 +182,34 @@ if __name__=="__main__":
             return p[2]*(((p[4]*p[0]+x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]
 
         def lorentzian3(x, p):
-            return p[2]*(((p[4]*p[0]/6.2+(x-p[1])*2*pi)**2)/(p[0]**2+(p[4]*p[0]/6.2+x-p[1])**2))+p[3]
+            return p[2]*(((p[4]*p[0]/6.28+(x-p[1])*2*pi)**2)/(p[0]**2+(p[4]*p[0]/6.28+x-p[1])**2))+p[3]
+            #return p[2]*(((p[4]*p[0]/6.28+(x-p[1])*2*pi)**2)/(p[0]**2+(p[4]*p[0]/6.28+x-p[1])**2))+p[3]
+        def onebounce(x,p):
+            w=2*pi*x
+            k=2.0*pi*x/3488.0
+            Cc=0.0
+            D=500.0e-6
+            D1=300.0e-6
+            D2=200.0e-6
+            S12q=((p[4]*p[0]/6.28+(x-p[1])*2*pi)**2)/(p[0]**2+(p[4]*p[0]/6.28+x-p[1])**2)
+            S11q=1.0/(p[0]**2+(p[4]*p[0]/6.28+x-p[1])**2)
+            S11=p[5]
+            return p[2]*absolute(exp(1.0j*k*D)*S12q*(1+exp(2.0j*k*D1)*S11q*S11+exp(2.0j*k*D2)*S11q*S11+
+            exp(2.0j*k*D)*S11**2*S12q**2)+2.0j*w*Cc*50.0)**2+p[3]
+
+        def allbounces(x,p):
+            w=2*pi*x
+            k=2.0*pi*x/3488.0
+            Cc=0.0
+            D=500.0e-6
+            D1=300.0e-6
+            D2=200.0e-6
+
+            return p[2]*absolute(exp(1.0j*k*D)*S12q*(-2.0
+                +1.0/(1.0-exp(2.0j*k*D1)*S11q*S11) 
+                +1.0/(1.0- exp(2.0j*k*D2)*S11q*S11)
+                +1.0/(1- exp(2.0j*k*D)*S11**2*S12q**2))
+                +2.0j*w*Cc*50.0)
 
         def residuals(p,y,x):
             err = y - lorentzian(x,p)
@@ -192,9 +219,10 @@ if __name__=="__main__":
             return y - lorentzian2(x,p)
 
         def residuals3(p,y,x):
+            #return y - onebounce(x,p)
             return y - lorentzian3(x,p)
 
-        p = [200e6,4.5e9, 0.002, 0.022, 0.1]
+        p = [200e6,4.5e9, 0.002, 0.022, 0.1, 0.1]
 
         indices=[range(81, 120+1), range(137, 260+1), range(269, 320+1), range(411, 449+1)]#, [490]]#, [186]]
         widths=[]
@@ -236,17 +264,38 @@ if __name__=="__main__":
                     widths2.append(absolute(best_parameters[0]))
                     fano2.append(absolute(best_parameters[4]))
 
-        b.line_plot("widths", freqs, widths, label="-110 dBm")
-        b.line_plot("widths2", freqs2, widths2, color="red", label="-130 dBm")
+        b.scatter_plot("widths", freqs, widths, label="-110 dBm")
+        b.scatter_plot("widths2", freqs2, widths2, color="red", label="-130 dBm")
         vf=3488.0
+        p=[1.0001, 0.5, 0.3, 1.0e-15, 0.001]
+        Np=9
+        K2=0.048
+        f0=5.348e9
+        def fourier(x, p):
+            w=2*pi*x
+            k=2.0*pi*x/3488.0
+            D=500.0e-6
+            D1=300.0e-6
+            D2=200.0e-6
+            G_f=0.5*Np*K2*f0*(sin(Np*pi*(x-f0)/f0)/(Np*pi*(x-f0)/f0))**2
+
+            return G_f*absolute(exp(1.0j*k*D)*p[0]*(1+exp(2.0j*k*D1)*(p[1]+1.0j*p[2])+exp(2.0j*k*D2)*(p[1]+1.0j*p[2]))
+            +2.0j*w*p[3]*50.0)+p[4]
+            #exp(2.0j*k*D)*(p[1]+1.0j*p[2]))+
+
+           
+        def resid(p,y,x):
+            #return y - onebounce(x,p)
+            return y - fourier(x,p)
+        pbest=leastsq(resid, p, args=(absolute(widths2[318:876]), frq[318:876]), full_output=1)
+        print pbest[0]
+        b.line_plot("fourier", frq, fourier(frq, pbest[0]))
         #pi*vf/2*x=D
         #b.line_plot("fft", #frq[318:876]*fft.fftfreq(len(frq[318:876]), d=frq[1]-frq[0]),
         #absolute(fft.fft(widths2[318:876])))
         #b.line_plot("fano", freqs, fano)
         #b.line_plot("fano", freqs2, fano2)
 
-        Np=9
-        K2=0.048
         #f0=5.37e9
         freq=linspace(4e9, 5e9, 1000)
         #G_f=0.5*Np*K2*f0*(sin(Np*pi*(freq-f0)/f0)/(Np*sin(pi*(freq-f0)/f0)))**2

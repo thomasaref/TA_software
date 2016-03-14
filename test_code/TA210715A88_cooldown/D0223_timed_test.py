@@ -160,6 +160,8 @@ def time_speed():
     b.scatter_plot("spd", t*1e6, [0.0, 600.0, 1000.0, 1200.0, 2000.0], label="Reflections")
     b.line_plot("spd_fit", t*1e6,  (t*qdt.vf)*1e6, label="(3488 m/s)t")
 
+from numpy import pi
+
 def magabs_cs_fit():
     b.line_plot("magabs_flux", c.flux_parabola*1e-9, mean(a.MagAbs[:, 72:85], axis=1), label="first reflection")
     #b.vline_plot('freq', 4.4622)
@@ -171,13 +173,30 @@ def magabs_cs_fit():
     def residuals(p,y,x):
         err = y - lorentzian(x,p)
         return err
+        
+    def firstbounce(x, p):
+        #return p[2]*(1.0-((p[4]+(x-p[1])/p[0])**2)/(1.0+((x-p[1])/p[0])**2))+p[3]
 
-    p = [200e6,4.5e9, 0.02, 0.022]
+        return p[2]/(1.0+(p[4]+(x-p[1])*2*pi/p[0])**2)+p[3]
 
-    pbest = leastsq(residuals,p,args=(mean(a.MagAbs[:, 72:85], axis=1), c.flux_parabola), full_output=1)
+#        def lorentzian3(x, p):
+#            return p[2]*(((p[4]*p[0]/6.28+(x-p[1])*2*pi)**2)/(p[0]**2+(p[4]*p[0]/6.28+x-p[1])**2))+p[3]
+
+    def residuals2(p, y, x):
+        return y-firstbounce(x, p)
+
+    def secondbounce(x, p):
+        return p[2]*(((p[4]+(x-p[1])*2*pi/p[0])**2)/(1.0+(p[4]+(x-p[1])*2*pi/p[0])**2))**2+p[3]
+
+    def residuals3(p, y, x):
+        return y-secondbounce(x, p)
+        
+    p = [100e6,4.5e9, 0.0011, 1.4e-2, -4e-2]
+
+    pbest = leastsq(residuals2,p,args=(mean(a.MagAbs[:, 72:85], axis=1), c.flux_parabola), full_output=1)
     best_parameters = pbest[0]
     print best_parameters
-    b.line_plot("lorentzian", c.flux_parabola*1e-9, lorentzian(c.flux_parabola,best_parameters), label="fit 1st R")
+    b.line_plot("first", c.flux_parabola*1e-9, firstbounce(c.flux_parabola,best_parameters), label="fit 1st R")
 
     def lorentzian_sq(x,p):
         return p[2]*(1.0-1.0/(1.0+((x-p[1])/p[0])**2))+p[3]
@@ -186,12 +205,13 @@ def magabs_cs_fit():
         err = y - lorentzian_sq(x,p)
         return err
 
-    p = [200e6,4.5e9, 0.02, 0.022]
+    #p = [200e6,4.5e9, 0.02, 0.022]
+    #p = [100e6,4.5e9, 0.0011, 1.4e-2, -4e-2]
 
-    pbest = leastsq(residuals_sq, p, args=(mean(a.MagAbs[:, 96:102], axis=1), c.flux_parabola), full_output=1)
-    best_parameters = pbest[0]
+    #pbest = leastsq(residuals3, p, args=(mean(a.MagAbs[:, 96:102], axis=1), c.flux_parabola), full_output=1)
+    #best_parameters = pbest[0]
     print pbest[0]
-    b.line_plot("lorentzian", c.flux_parabola*1e-9,  lorentzian_sq(c.flux_parabola,best_parameters), label="fit 1st T")
+    b.line_plot("second", c.flux_parabola*1e-9,  secondbounce(c.flux_parabola,best_parameters), label="fit 1st T")
 
     b.xlabel=" Qubit Frequency (GHz)"
     b.ylabel="Magnitude (abs)"
@@ -201,19 +221,31 @@ def magabs_cs_fit():
       frequency=FloatRange(4.4, 4.5, 4.4622).tag(tracking=True)
       offset=FloatRange(0.00, 1.0e-2, 0.0).tag(tracking=True)
       height=FloatRange(0.00, 1.0e-2, 0.0).tag(tracking=True)
-      width=FloatRange(10.0, 500.0, 50.0).tag(tracking=True)
+      width=FloatRange(10.0, 2000.0, 50.0).tag(tracking=True)
+      fano=FloatRange(-1000.0, 1000.0, 0.0).tag(tracking=True)
+
+      @tag_Property(private=True)
+      def firstbounce(self):
+          return firstbounce(c.flux_parabola, [self.width*1e6, self.frequency*1e9, self.height, self.offset, self.fano])
+
+      @tag_Property(private=True)
+      def secondbounce(self):
+          return secondbounce(c.flux_parabola, [self.width*1e6, self.frequency*1e9, self.height, self.offset, self.fano])
 
       @tag_Property(plot=True, private=True)
       def lorenz(self):
          return lorentzian(c.flux_parabola, [self.width*1e6, self.frequency*1e9, self.height, self.offset])
 
-      @observe("frequency", "offset", "width", "height")
+      @observe("frequency", "offset", "width", "height", "fano")
       def update_plot(self, change):
          if change["type"]=="update":
-             self.get_member("lorenz").reset(self)
-             b.plot_dict["lorenz"].clt.set_ydata(self.lorenz)
+             self.get_member("firstbounce").reset(self)
+             self.get_member("secondbounce").reset(self)
+             #b.plot_dict["lorenz"].clt.set_ydata(self.lorenz)
+             b.plot_dict["first"].clt.set_ydata(self.firstbounce)
+             b.plot_dict["second"].clt.set_ydata(self.secondbounce)
              b.draw()
-    #d=Fitter2()
+    d=Fitter2()
     #bp=[  7.11932128e+07,   4.44542932e+09,   1.62596541e-04,  2.26753425e-05]
     #fit2 = lorentzian(c.flux_parabola, bp)
     #b.line_plot("lorenz", c.flux_parabola*1e-9, fit2)

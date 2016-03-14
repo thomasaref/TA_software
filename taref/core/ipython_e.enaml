@@ -1,0 +1,157 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Jan 30 13:51:10 2016
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import DockPane, MultilineField, MainWindow, IPythonConsole, VGroup, PushButton
+from atom.api import Atom, Float, Unicode, Int, Typed, cached_property
+from taref.core.log import log_debug
+
+class IPythonCatch(Atom):
+    """a stream catching class for use with the IPython window"""
+    ipy_str=Unicode("#IPython Log (Outputs appear with comment # in front)\n\n")
+    code_str=Unicode()
+
+    screen_width=Int(1920)
+    screen_height=Int(1102)
+    ipy_height=Int(100)
+    ipy_width=Int()
+
+    def _default_ipy_width(self):
+        return self.screen_width
+
+    @cached_property
+    def initial_position(self):
+        return (0, self.screen_height-self.ipy_height)
+
+    @cached_property
+    def initial_size(self):
+        return (self.ipy_width, self.ipy_height)
+
+    def write(self, write_str):
+        self.ipy_str+=write_str
+
+ipython_stream=IPythonCatch()
+
+class text_ev(object):
+    """decorator class to allow auto update of IPython Log"""
+    def __init__(self, ipy_console, ipy_stream):
+        self.ipy_console=ipy_console
+        self.ipy_stream=ipy_stream
+        self.InOut_index=1
+
+    def __call__(self):
+        if len(self.ipy_console.get_var("In"))>self.InOut_index:
+            self.InOut_index+=1
+            self.ipy_stream.write(self.ipy_console.get_var("In")[-1]+"\n")
+            outstr=self.ipy_console.get_var("Out").get(self.InOut_index-1, None)
+            if outstr is not None:
+                self.ipy_stream.write("#{0}\n".format(outstr))
+
+def update_and_return(indict, updict):
+    """utility function for one line combination of two dictionaries"""
+    indict.update(updict)
+    return indict
+
+enamldef InteractiveWindow(MainWindow): main:
+    destroy_on_close=False
+    attr input_dict : dict = {}
+    name="ipython"
+    title = "IPython"
+    #initial_position=ipython_stream.initial_position
+    #initial_size=ipython_stream.initial_size
+    closed ::
+        self.set_size(self.size())
+        self.set_position(self.position())
+    VGroup:
+        alias ipc
+        MultilineField: ipc:
+            pass
+            #text :: 
+            #    if do.checked:
+            #        log_debug(self.text)
+            #attr InOut_text = "#IPython Log (Outputs appear with comment # in front)\n\n"
+            #activated::
+            #    self.proxy.text_control.textChanged.connect(text_ev(ipy_console=ipc, ipy_stream=ipython_stream))
+            #initial_ns=update_and_return({"wd" : dict([(w.name, w) for w in main.windows])}, input_dict)
+
+        MultilineField: runtxt:
+            read_only=True
+            text<<ipython_stream.ipy_str
+        PushButton: do:
+                text = "Run"
+                #checkable = True
+                #checked = True #get_tag(vmodel, vname, "do", False)
+                clicked :: #set_tag(vmodel, vname, do=self.checked)
+                    log_debug(ipc.field_text())
+                    locals()[self.file_reader.local_name]=self
+                    for key in self.locals_dict:
+                        locals()[key]=self.locals_dict[key]
+                    self.tex_list=[]
+                    exec(self.input_code)
+                    
+
+enamldef CodeWindow(MainWindow):
+    name="run_code"
+    title="Run Code"
+    destroy_on_close=False
+    initial_size=(1000,500)
+    alias show_code
+    VGroup:
+        MultilineField: show_code:
+            read_only=True
+            text << ipython_stream.code_str
+
+enamldef Main(InteractiveWindow):
+    pass
+
+#from taref.core.log import log_info, log_warning, log_stream
+
+#enamldef InteractiveWindow(MainWindow): main:
+#    attr input_dict : dict = {}
+#    title = "Interactive taref editor"
+#    ToolBar:
+#        dock_area="left"
+#        Action:
+#            text = "Run"
+#            triggered::
+#                try:
+#                    exec(runtxt.field_text())
+#                except Exception as e:
+#                    log_warning(e)
+#        Action:
+#            separator = True
+#        Action:
+#            separator = True
+#        Action:
+#            text = "Append:"
+#        Action:
+#            separator = True
+#        Action:
+#            text = "History"
+#            triggered::
+#                runtxt.text=runtxt.field_text()+"\n"+"\n".join(ipc.get_var("In"))
+#        Action:
+#            text = "Output"
+#            triggered::
+#                out_list=["\nOut={"]
+#                for key, item in ipc.get_var("Out").iteritems():
+#                    out_list.append("{key} : {item},".format(key=key, item=item))
+#                out_list.append("}")
+#                runtxt.text=runtxt.field_text()+"\n"+"\n".join(out_list)
+#    alias runtxt
+#    VGroup:
+#        MultilineField: runtxt:
+#            text<<ipc.InOut_text
+#    alias ipc
+#    DockPane:
+#        closable = False
+#        dock_area="bottom"
+#        HGroup:
+#            IPythonConsole: ipc:
+#                initial_ns=update_and_return(dict(windows=main.windows), input_dict)
+#            MultilineField:
+#                read_only=True
+#                text<<log_stream.log_str

@@ -32,7 +32,7 @@ class Backbone(Atom):
 
     chief_window=BasicView()
 
-    interactive_window=InteractiveWindow()
+    #interactive_window=InteractiveWindow()
 
     log_window=LogWindow()
 

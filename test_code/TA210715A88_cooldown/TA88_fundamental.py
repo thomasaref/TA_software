@@ -76,7 +76,7 @@ if __name__=="__main__":
         #b.vline_plot("listent", 4.55e9, alpha=0.3, color="black")
         #b.vline_plot("listenb", 4.4e9, alpha=0.3, color="black")
 
-    if 1:
+    if 0:
         from numpy import pi, linspace, sin, amax, argmin, argmax
         Np=qdt.Np
         f0=5.35e9
@@ -137,5 +137,5 @@ if __name__=="__main__":
         #b.line_plot("Ba", fq, Ba)
         #sqrt(1/(C))/2*p
         #b.line_plot("semiclassical", fq, absolute(R)/amax(absolute(R)))
-    b.show()
+    #b.show()
     qdt.show()
