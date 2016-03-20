@@ -51,7 +51,7 @@ class Lyzer(TA88_Fund):
     on_res_ind=Int()
     start_ind=Int()
     stop_ind=Int()
-    filt_ind=Int(50)
+    filt_ind=Int(58)
 
     fit_type=Enum("Transmission", "Reflection")
 
@@ -109,7 +109,7 @@ class Lyzer(TA88_Fund):
 
     @tag_Property(plot=True)
     def MagcomFilt(self):
-        return array([self.ifft_peak(n) for n in range(len(self.yoko))])
+        #return array([self.ifft_peak(n) for n in range(len(self.yoko))])
         return array([self.fft_filter(n) for n in range(len(self.yoko))]).transpose()
 
     def ifft_peak(self, n):
@@ -120,6 +120,8 @@ class Lyzer(TA88_Fund):
         #return self.Magcom[:, n]
         myifft=fft.ifft(self.Magcom[:,n])
         myifft[self.filt_ind:-self.filt_ind]=0.0
+        #myifft[:20]=0.0
+        #myifft[-20:]=0.0
         return fft.fft(myifft)
 
     def magabs_colormesh(self, plotter=None):
@@ -199,6 +201,9 @@ class S4A1_Midpeak(Lyzer):
     def _default_fit_type(self):
         return "Transmission"
 
+    def _default_on_res_ind(self):
+        return 263
+
 class S1A4_Midpeak(Lyzer):
     def _default_name(self):
         return "S1A4_midpeak"
@@ -249,11 +254,16 @@ if __name__=="__main__":
     a.plot_widths(b3)
     a1=S4A1_Midpeak()
     a1.read_data()
-    a1.plot_widths(b3)
+    #a1.filt_compare(a1.start_ind, b1)
+    #a1.filt_compare(a1.on_res_ind, b2)
+    #a1.magabs_colormesh(b)
+    #a1.magabsfilt_colormesh(b)
+
+    #a1.plot_widths(b3)
     a2=S1A4_Midpeak()
     a2.read_data()
     a2.ifft_plot(bb)
-    a2.plot_widths(b3)
+    #a2.plot_widths(b3)
 
 
     #a3=S4A4_Midpeak()

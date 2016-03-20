@@ -7,11 +7,16 @@ Created on Mon Feb 15 14:08:41 2016
 
 from taref.saw.qdt import QDT
 from taref.saw.idt import IDT
-from taref.core.atom_extension import get_tag
+from taref.core.atom_extension import get_tag, tag_Property
 from taref.filer.read_file import Read_HDF5
 from taref.filer.filer import Folder
 from taref.core.agent import Agent
-from atom.api import Float
+from atom.api import Float, Unicode, Typed, Int, Callable, Enum
+from taref.core.universal import Array
+from numpy import array, log10, fft, exp, float64, linspace, shape, reshape, squeeze, mean, angle, absolute, sin, pi
+from h5py import File
+from scipy.optimize import leastsq
+from taref.core.log import log_debug
 
 class TA88_Read(Read_HDF5):
     def _default_folder(self):
@@ -20,7 +25,6 @@ class TA88_Read(Read_HDF5):
 class TA88_Fund(Agent):
     fridge_atten=Float(60)
     fridge_gain=Float(45)
-
 
 qdt=QDT(material='LiNbYZ',
         ft="double",
@@ -39,6 +43,169 @@ idt=IDT(material='LiNbYZ',
         W=25.0e-6,
         eta=0.5,
         a=96.0e-9)
+
+def lorentzian(x,p):
+    return p[2]*(((x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]
+
+def residuals(p,y,x):
+    return y - lorentzian(x,p)
+
+def refl_lorentzian(x,p):
+    return p[2]*(p[0]**2/(p[0]**2+(x-p[1])**2))+p[3]
+
+def refl_residuals(p,y,x):
+    return y - refl_lorentzian(x,p)
+
+def fano(x, p):
+    return p[2]*(((p[4]*p[0]+x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]
+
+def refl_fano(x, p):
+    return p[2]*(1.0-((p[4]*p[0]+x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]
+
+def fano_residuals(p,y,x):
+    return y - fano(x,p)
+
+def refl_fano_residuals(p,y,x):
+    return y - refl_fano(x,p)
+
+class Lyzer(TA88_Fund):
+
+    def _default_main_params(self):
+        return ["rt_atten", "fridge_atten", "fridge_gain", "rt_gain", "comment", "flux_factor", "offset", "fit_type",
+                "on_res_ind", "start_ind", "stop_ind", "filt_start_ind", "filt_end_ind"]
+
+    rd_hdf=Typed(TA88_Read)
+    rt_atten=Float(40)
+    rt_gain=Float(23*2)
+    comment=Unicode().tag(read_only=True, spec="multiline")
+    frequency=Array().tag(unit="GHz", plot=True, label="Frequency")
+    yoko=Array().tag(unit="V", plot=True, label="Yoko")
+    Magcom=Array()#.tag()
+    offset=Float(-0.035)
+    flux_factor=Float(0.2925)
+
+    on_res_ind=Int()
+    start_ind=Int()
+    stop_ind=Int()
+    filt_end_ind=Int(58)
+    filt_start_ind=Int(5)
+
+    fit_func=Callable(fano).tag(private=True)
+    resid_func=Callable(fano_residuals).tag(private=True)
+
+    fit_type=Enum("Transmission", "Reflection")
+
+    @tag_Property(plot=True)
+    def flux_par(self):
+        flux_over_flux0=qdt.call_func("flux_over_flux0", voltage=self.yoko, offset=self.offset, flux_factor=self.flux_factor)
+        Ej=qdt.call_func("Ej", flux_over_flux0=flux_over_flux0)
+        return qdt._get_fq(Ej, qdt.Ec)
+
+    @tag_Property()
+    def p_guess(self):
+        return [200e6,4.5e9, 0.002, 0.022, 0.1]
+
+    def fft_filter(self, n):
+        myifft=fft.ifft(self.Magcom[:,n])
+        myifft[self.filt_end_ind:-self.filt_end_ind]=0.0
+        if self.filt_start_ind!=0:
+            myifft[:self.filt_start_ind]=0.0
+            myifft[-self.filt_start_ind:]=0.0
+        return fft.fft(myifft)
+
+    @tag_Property(plot=True)
+    def MagAbs(self):
+        return absolute(self.Magcom)
+
+    @tag_Property(plot=True)
+    def MagAbsFilt(self):
+        return absolute(self.MagcomFil)
+
+    @tag_Property(plot=True)
+    def MagAbsFilt_sq(self):
+        return self.MagAbsFilt**2
+
+    @tag_Property(plot=True)
+    def MagcomFilt(self):
+        return array([self.fft_filter(n) for n in range(len(self.yoko))]).transpose()
+
+    def magabs_colormesh(self, plotter=None):
+        if plotter is None:
+            plotter=self.plotter
+        plotter.colormesh("magabs_{}".format(self.name), self.yoko, self.frequency, self.MagAbs)
+        plotter.set_ylim(min(self.frequency), max(self.frequency))
+        plotter.set_xlim(min(self.yoko), max(self.yoko))
+        plotter.xlabel="Yoko (V)"
+        plotter.ylabel="Frequency (Hz)"
+        plotter.title="Magabs fluxmap {}".format(self.name)
+
+    def ifft_plot(self, plotter=None):
+        if plotter is None:
+            plotter=self.plotter
+        plotter.line_plot("ifft_{}".format(self.name), absolute(fft.ifft(self.Magcom[:,self.on_res_ind])))
+        plotter.line_plot("ifft_{}".format(self.name), absolute(fft.ifft(self.Magcom[:,self.start_ind])))
+        plotter.line_plot("ifft_{}".format(self.name), absolute(fft.ifft(self.Magcom[:,self.stop_ind])))
+
+    def filt_compare(self, ind, plotter=None):
+        if plotter is None:
+            plotter=self.plotter
+        plotter.line_plot("magabs_{}".format(self.name), self.frequency, self.MagAbs[:, ind], label="MagAbs (unfiltered)")
+        plotter.line_plot("magabs_{}".format(self.name), self.frequency, self.MagAbsFilt[:, ind], label="MagAbs (filtered)")
+
+    def magabsfilt_colormesh(self, plotter=None):
+        if plotter is None:
+            plotter=self.plotter
+        plotter.colormesh("magabsfilt_{}".format(self.name), self.yoko, self.frequency, self.MagAbsFilt)
+        plotter.set_ylim(min(self.frequency), max(self.frequency))
+        plotter.set_xlim(min(self.yoko), max(self.yoko))
+        plotter.xlabel="Yoko (V)"
+        plotter.ylabel="Frequency (Hz)"
+        plotter.title="Magabs fluxmap {}".format(self.name)
+
+
+    def read_data(self):
+        with File(self.rd_hdf.file_path, 'r') as f:
+            Magvec=f["Traces"]["RS VNA - S21"]
+            data=f["Data"]["Data"]
+            self.comment=f.attrs["comment"]
+            self.yoko=data[:,0,0].astype(float64)
+            fstart=f["Traces"]['RS VNA - S21_t0dt'][0][0]
+            fstep=f["Traces"]['RS VNA - S21_t0dt'][0][1]
+            sm=shape(Magvec)[0]
+            sy=shape(data)
+            print sy
+            s=(sm, sy[0], 1)#sy[2])
+            Magcom=Magvec[:,0, :]+1j*Magvec[:,1, :]
+            Magcom=reshape(Magcom, s, order="F")
+            self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
+            self.Magcom=squeeze(Magcom)
+            self.stop_ind=len(self.yoko)-1
+
+    def full_fano_fit(self):
+        p = [200e6,4.5e9, 0.002, 0.022, 0.1]
+        #fit_func, resid_func=fano_dict[self.fit_type]
+        var=self.MagAbsFilt**2
+        flux_par=self.flux_par
+        freqs=self.frequency
+        log_debug("started fano fitting")
+        fit_params=[self.fano_fit(n, var, flux_par, freqs, resid_func, p)  for n in range(len(self.frequency))]
+        fit_params=array(zip(*fit_params))
+        log_debug("ended fano fitting")
+        return fit_params
+
+    def plot_widths(self, plotter):
+        fit_params=self.full_fano_fit()
+        #print shape(zip(*fit_params))
+        plotter.scatter_plot("widths_{}".format(self.name), fit_params[0, :], absolute(fit_params[1, :]), color="red", label="-130 dBm")
+
+    def fano_fit(self, n, var, flux_par, frq, resid_func, p):
+        pbest= leastsq(self.resid_func, p, args=(self.MagAbsFilt_sq[n, :], self.flux_par), full_output=1)
+        best_parameters = pbest[0]
+        #log_debug(best_parameters)
+        if 0:#n==539 or n==554:#n % 10:
+            b.line_plot("magabs_flux", self.flux_par*1e-9, (self.MagAbsFilt_sq[n, :], label="{}".format(n), linewidth=0.2)
+            b.line_plot("lorentzian", self.flux_par*1e-9, self.fit_func(self.flux_par,best_parameters), label="fit {}".format(n), linewidth=0.5)
+        return (frq[n], best_parameters[0], best_parameters[1]-frq[n], best_parameters[2], best_parameters[3])
 
 if __name__=="__main__":
     print get_tag(qdt, "a", "unit")
