@@ -202,9 +202,9 @@ class Lyzer(TA88_Fund):
         pbest= leastsq(self.resid_func, p, args=(self.MagAbsFilt_sq[n, :], self.flux_par), full_output=1)
         best_parameters = pbest[0]
         #log_debug(best_parameters)
-        if 0:#n==539 or n==554:#n % 10:
-            b.line_plot("magabs_flux", self.flux_par*1e-9, (self.MagAbsFilt_sq[n, :], label="{}".format(n), linewidth=0.2)
-            b.line_plot("lorentzian", self.flux_par*1e-9, self.fit_func(self.flux_par,best_parameters), label="fit {}".format(n), linewidth=0.5)
+        #if 0:#n==539 or n==554:#n % 10:
+            #b.line_plot("magabs_flux", self.flux_par*1e-9, (self.MagAbsFilt_sq[n, :], label="{}".format(n), linewidth=0.2)
+            #b.line_plot("lorentzian", self.flux_par*1e-9, self.fit_func(self.flux_par,best_parameters), label="fit {}".format(n), linewidth=0.5)
         return (frq[n], best_parameters[0], best_parameters[1]-frq[n], best_parameters[2], best_parameters[3])
 
 if __name__=="__main__":

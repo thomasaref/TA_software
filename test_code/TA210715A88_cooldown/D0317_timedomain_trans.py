@@ -296,9 +296,9 @@ def magabs_cs_fit(pwi=0):
 if __name__=="__main__":
     #magdB_colormesh()
     #magabs_cs()
-    #magabstime_colormesh()#25)
+    magabstime_colormesh()#25)
     #phase_colormesh(8)
-    print magabs_cs_fit(8)
+    #print magabs_cs_fit(8)
     #ws=[]
     #for n in range((len(a.pwr)-4)):
     #    ps=magabs_cs_fit(n)

@@ -51,7 +51,7 @@ class Lyzer(TA88_Fund):
     on_res_ind=Int()
     start_ind=Int()
     stop_ind=Int()
-    filt_ind=Int(58)
+    filt_ind=Int(52)
 
     fit_type=Enum("Transmission", "Reflection")
 
@@ -120,8 +120,8 @@ class Lyzer(TA88_Fund):
         #return self.Magcom[:, n]
         myifft=fft.ifft(self.Magcom[:,n])
         myifft[self.filt_ind:-self.filt_ind]=0.0
-        #myifft[:20]=0.0
-        #myifft[-20:]=0.0
+        myifft[:5]=0.0
+        myifft[-5:]=0.0
         return fft.fft(myifft)
 
     def magabs_colormesh(self, plotter=None):
@@ -242,22 +242,22 @@ if __name__=="__main__":
     a=S1A1_Midpeak()
     a.read_data()
     b=Plotter()
-    a.magabs_colormesh(b)
-    a.magabsfilt_colormesh(b)
+    #a.magabs_colormesh(b)
+    #a.magabsfilt_colormesh(b)
     bb=Plotter()
     a.ifft_plot(bb)
     b1=Plotter()
-    a.filt_compare(a.start_ind, b1)
+    #a.filt_compare(a.start_ind, b1)
     b2=Plotter()
-    a.filt_compare(a.on_res_ind, b2)
+    #a.filt_compare(a.on_res_ind, b2)
     b3=Plotter()
-    a.plot_widths(b3)
+    #a.plot_widths(b3)
     a1=S4A1_Midpeak()
     a1.read_data()
-    #a1.filt_compare(a1.start_ind, b1)
-    #a1.filt_compare(a1.on_res_ind, b2)
-    #a1.magabs_colormesh(b)
-    #a1.magabsfilt_colormesh(b)
+    a1.filt_compare(a1.start_ind, b1)
+    a1.filt_compare(a1.on_res_ind, b2)
+    a1.magabs_colormesh(b)
+    a1.magabsfilt_colormesh(b)
 
     #a1.plot_widths(b3)
     a2=S1A4_Midpeak()
