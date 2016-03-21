@@ -33,6 +33,7 @@ class Operative(Backbone):
 
     run_func_dict=OrderedDict()
 
+    plotter_dict=OrderedDict()
     def add_func(self, *funcs):
         """adds functions to run_func_dict. functions should be a classmethod, a staticmethod
         or a separate function that takes no arguments"""
