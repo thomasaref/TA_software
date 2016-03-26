@@ -174,15 +174,39 @@ class S4A1_Wide(TransLyzer):
         tlist.extend(range(411, 449+1))
         tlist.extend(range(485, 498+1))
         return tlist#, [490]]#, [186]]
+class S3A4_Wide(TransLyzer):
+    def _default_name(self):
+        return "S3A4_wide"
 
+    def _default_rd_hdf(self):
+           return TA88_Read(main_file="Data_0322/S3A4A1_TA88_gate_wide_frq_fluxswp.hdf5")
     #@tag_Property(plot=True, sub=True)
     #def MagAbsFilt(self):
     #    return absolute(self.MagcomFilt-mean(self.MagcomFilt[0:1, :], axis=0, keepdims=True))
+
+    def read_data(self):
+        with File(self.rd_hdf.file_path, 'r') as f:
+            print f["Traces"].keys()
+            Magvec=f["Traces"]["VNA - S11"]
+            data=f["Data"]["Data"]
+            self.comment=f.attrs["comment"]
+            self.yoko=data[:,0,0].astype(float64)
+            fstart=f["Traces"]['VNA - S11_t0dt'][0][0]
+            fstep=f["Traces"]['VNA - S11_t0dt'][0][1]
+            sm=shape(Magvec)[0]
+            sy=shape(data)
+            print sy
+            s=(sm, sy[0], 1)#sy[2])
+            Magcom=Magvec[:,0, :]+1j*Magvec[:,1, :]
+            Magcom=reshape(Magcom, s, order="F")
+            self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
+            self.Magcom=squeeze(Magcom)
+            self.stop_ind=len(self.yoko)-1
 if __name__=="__main__":
     slow=0#False
     wp=Plotter()
 
-    if 1:
+    if 0:
         s4a1_mp=S4A1_Midpeak(filt_start_ind=5, filt_end_ind=52, on_res_ind=260)
         s4a1_mp.read_data()
         #b1=Plotter()
@@ -195,7 +219,7 @@ if __name__=="__main__":
         if slow:
             s4a1_mp.plot_widths(wp)
 
-    if 1:
+    if 0:
         s1a4_mp=S1A4_Midpeak(filt_start_ind=5, filt_end_ind=52, on_res_ind=219)
         s1a4_mp.read_data()
         #s1a4_mp.magabs_colormesh("colormesh S1A4")
@@ -207,7 +231,7 @@ if __name__=="__main__":
         if slow:
             s1a4_mp.plot_widths(wp)
 
-    if 1:
+    if 0:
         ps4a1=S4A1_pulse(f_ind=25, on_res_ind=260)#filt_start_ind=5, filt_end_ind=52, on_res_ind=219)
         ps4a1.read_data()
         ps4a1.magabs_colormesh("S4A1 time magabs")
@@ -218,7 +242,7 @@ if __name__=="__main__":
         if slow:
             ps4a1.plot_widths(wp)
         print ps4a1.probe_pwr
-    if 1:
+    if 0:
         s1a1_mp=S1A1_Midpeak(filt_start_ind=33, filt_end_ind=58, on_res_ind=260)
         s1a1_mp.read_data()
         s1a1_mp.magabs_colormesh("S1A1 magabs")
@@ -231,10 +255,12 @@ if __name__=="__main__":
             s1a1_mp.plot_widths(wp)
 
     if 1:
-        s4a4_w=S4A4_Wide(filt_start_ind=80, filt_end_ind=116, on_res_ind=240)
+        s4a4_w=S4A4_Wide(filt_start_ind=0, filt_end_ind=240, on_res_ind=240) #80, 116
         s4a4_w.read_data()
         s4a4_w.magabs_colormesh("S4A4 magabs")
         s4a4_w.magabsfilt_colormesh("filtcolormesh S4A4")
+        s4a4_w.magdBfilt_colormesh("filtdB S1A1 wide")
+        s4a4_w.magdBfiltbgsub_colormesh("filtdBbgsub S1A1 wide")
         #a2.filt_compare(a2.start_ind, bb2)
         #s1a1_mp.filt_compare("filt_compare_off_res", s1a1_mp.start_ind)
         #s1a1_mp.filt_compare("filt_compare_on_res", s1a1_mp.on_res_ind)
@@ -243,11 +269,13 @@ if __name__=="__main__":
         if slow:
             s4a4_w.plot_widths(wp)
 
-    if 1:
-        s1a1_w=S1A1_Wide(filt_start_ind=140, filt_end_ind=240, on_res_ind=240)
+    if 0:
+        s1a1_w=S1A1_Wide(filt_start_ind=0, filt_end_ind=240, on_res_ind=240) #140, 240
         s1a1_w.read_data()
         s1a1_w.magabs_colormesh("S1A1 magabs")
         s1a1_w.magabsfilt_colormesh("filtcolormesh S1A1 wide")
+        s1a1_w.magdBfilt_colormesh("filtdB S1A1 wide")
+        s1a1_w.magdBfiltbgsub_colormesh("filtdBbgsub S1A1 wide")
         #a2.filt_compare(a2.start_ind, bb2)
         #s1a1_mp.filt_compare("filt_compare_off_res", s1a1_mp.start_ind)
         #s1a1_mp.filt_compare("filt_compare_on_res", s1a1_mp.on_res_ind)
@@ -255,7 +283,7 @@ if __name__=="__main__":
 
         if slow:
             s1a1_w.plot_widths(wp)
-    if 1:
+    if 0:
         s1a4_w=S1A4_Wide(filt_start_ind=90, filt_end_ind=190, on_res_ind=238)
         s1a4_w.read_data()
         #s1a4_w.magabs_colormesh("S1A4 wide magabs")
@@ -270,7 +298,7 @@ if __name__=="__main__":
         if slow:
             s1a4_w.plot_widths(wp)
 
-    if 1:
+    if 0:
         s4a1_w=S4A1_Wide(filt_start_ind=90, filt_end_ind=190, on_res_ind=238)
         s4a1_w.read_data()
         s4a1_w.magabs_colormesh("S4A1 wide magabs")
@@ -282,6 +310,23 @@ if __name__=="__main__":
 
         if slow:
             s4a1_w.plot_widths(wp)
+
+    if 1:
+        s3a4_w=S3A4_Wide(filt_start_ind=170, filt_end_ind=495, on_res_ind=490)
+        s3a4_w.read_data()
+        s3a4_w.magabs_colormesh("S3A1 wide magabs")
+        s3a4_w.magabsfilt_colormesh("filtcolormesh S4A1 wide")
+        s3a4_w.magdBfilt_colormesh("filtdB S1A4 wide")
+        s3a4_w.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
+        #a2.filt_compare(a2.start_ind, bb2)
+        #s1a1_mp.filt_compare("filt_compare_off_res", s1a1_mp.start_ind)
+        #s1a1_mp.filt_compare("filt_compare_on_res", s1a1_mp.on_res_ind)
+        s3a4_w.ifft_plot("ifft_S1A4 wide")
+        s3a4_w.ifft_dif_plot("ifft__dif_S1A4 wide")
+
+        #if slow:
+        #    s4a1_w.plot_widths(wp)
+
     Np=9
     K2=0.048
     freq=linspace(4e9, 5e9, 1000)

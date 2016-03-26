@@ -175,6 +175,12 @@ class Lyzer(TA88_Fund):
         plotter.line_plot("ifft_{}".format(self.name), absolute(fft.ifft(self.Magcom[:,self.stop_ind])))
 
     @plots
+    def ifft_dif_plot(self, plotter):
+        plotter.line_plot("ifft_dif1_{}".format(self.name), absolute(absolute(fft.ifft(self.Magcom[:,self.start_ind]))-absolute(fft.ifft(self.Magcom[:,self.on_res_ind]))))
+        plotter.line_plot("ifft_dif2_{}".format(self.name), absolute(absolute(fft.ifft(self.Magcom[:,self.stop_ind]))-absolute(fft.ifft(self.Magcom[:,self.on_res_ind]))))
+        plotter.line_plot("ifft_dif3_{}".format(self.name), absolute(absolute(fft.ifft(self.Magcom[:,self.stop_ind]))-absolute(fft.ifft(self.Magcom[:,self.start_ind]))))
+
+    @plots
     def filt_compare(self, ind, plotter=None):
         plotter.line_plot("magabs_{}".format(self.name), self.frequency, self.MagAbs[:, ind], label="MagAbs (unfiltered)")
         plotter.line_plot("magabs_{}".format(self.name), self.frequency, self.MagAbsFilt[:, ind], label="MagAbs (filtered)")
