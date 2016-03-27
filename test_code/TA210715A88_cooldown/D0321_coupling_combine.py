@@ -174,6 +174,7 @@ class S4A1_Wide(TransLyzer):
         tlist.extend(range(411, 449+1))
         tlist.extend(range(485, 498+1))
         return tlist#, [490]]#, [186]]
+
 class S3A4_Wide(TransLyzer):
     def _default_name(self):
         return "S3A4_wide"
@@ -184,15 +185,17 @@ class S3A4_Wide(TransLyzer):
     #def MagAbsFilt(self):
     #    return absolute(self.MagcomFilt-mean(self.MagcomFilt[0:1, :], axis=0, keepdims=True))
 
+    port_name=Unicode('S11')
+    VNA_name=Unicode("VNA")
     def read_data(self):
         with File(self.rd_hdf.file_path, 'r') as f:
             print f["Traces"].keys()
-            Magvec=f["Traces"]["VNA - S11"]
+            Magvec=f["Traces"][self.VNA_name+" - {0}".format(self.port_name)]
             data=f["Data"]["Data"]
             self.comment=f.attrs["comment"]
             self.yoko=data[:,0,0].astype(float64)
-            fstart=f["Traces"]['VNA - S11_t0dt'][0][0]
-            fstep=f["Traces"]['VNA - S11_t0dt'][0][1]
+            fstart=f["Traces"][self.VNA_name+' - {0}_t0dt'.format(self.port_name)][0][0]
+            fstep=f["Traces"][self.VNA_name+' - {0}_t0dt'.format(self.port_name)][0][1]
             sm=shape(Magvec)[0]
             sy=shape(data)
             print sy
@@ -202,6 +205,21 @@ class S3A4_Wide(TransLyzer):
             self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
             self.Magcom=squeeze(Magcom)
             self.stop_ind=len(self.yoko)-1
+
+class S3A4_Midpeak(S3A4_Wide):
+    def _default_name(self):
+        return "S3A4_midpeak"
+
+    def  _default_rd_hdf(self):
+        return TA88_Read(main_file="Data_0326/S3A4A1_gate_fluxswp_midpeak.hdf5")
+
+class S3A1_Midpeak(S3A4_Wide):
+    def _default_name(self):
+        return "S3A1_midpeak"
+
+    def  _default_rd_hdf(self):
+        return TA88_Read(main_file="Data_0326/S3A4A1_gate_fluxswp_midpeak.hdf5")
+
 if __name__=="__main__":
     slow=0#False
     wp=Plotter()
@@ -254,7 +272,7 @@ if __name__=="__main__":
         if slow:
             s1a1_mp.plot_widths(wp)
 
-    if 1:
+    if 0:
         s4a4_w=S4A4_Wide(filt_start_ind=0, filt_end_ind=240, on_res_ind=240) #80, 116
         s4a4_w.read_data()
         s4a4_w.magabs_colormesh("S4A4 magabs")
@@ -311,7 +329,7 @@ if __name__=="__main__":
         if slow:
             s4a1_w.plot_widths(wp)
 
-    if 1:
+    if 0:
         s3a4_w=S3A4_Wide(filt_start_ind=170, filt_end_ind=495, on_res_ind=490)
         s3a4_w.read_data()
         s3a4_w.magabs_colormesh("S3A1 wide magabs")
@@ -326,6 +344,39 @@ if __name__=="__main__":
 
         #if slow:
         #    s4a1_w.plot_widths(wp)
+    if 1:
+        s3a4_mp=S3A4_Midpeak(filt_start_ind=40, filt_end_ind=48, on_res_ind=260, VNA_name='TA VNA2') #20, 35
+        s3a4_mp.read_data()
+        s3a4_mp.magabs_colormesh("S3A4 midpeak magabs")
+        s3a4_mp.magabsfilt_colormesh("filtcolormesh S3A4 mp")
+        s3a4_mp.magdBfilt_colormesh("filtdB S1A4 wide")
+        s3a4_mp.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
+        #a2.filt_compare(a2.start_ind, bb2)
+        s3a4_mp.filt_compare("filt_compare_off_res", s3a4_mp.start_ind)
+        s3a4_mp.filt_compare("filt_compare_on_res", s3a4_mp.on_res_ind)
+        s3a4_mp.ifft_plot("ifft_S3A4 midpeak")
+        s3a4_mp.ifft_dif_plot("ifft__dif_S1A4 wide")
+        #print self.agent_dict.iter
+        print s3a4_mp.get_agents(Operative)
+        print isinstance(s3a4_mp, Operative)
+        print isinstance(s3a4_mp, TransLyzer)
+        print isinstance(s3a4_mp, TransTimeLyzer)
+
+        #print dir(s3a4_mp.agent_dict["ifft_S3A4 midpeak"])
+        print s3a4_mp.plots
+
+    if 1:
+        s3a1_mp=S3A1_Midpeak(filt_start_ind=40, filt_end_ind=48, on_res_ind=260, VNA_name='TA VNA2', port_name='S21') #29, 40
+        s3a1_mp.read_data()
+        s3a1_mp.magabs_colormesh("S3A4 midpeak magabs")
+        s3a1_mp.magabsfilt_colormesh("filtcolormesh S3A4 mp")
+        s3a1_mp.magdBfilt_colormesh("filtdB S1A4 wide")
+        s3a1_mp.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
+        #a2.filt_compare(a2.start_ind, bb2)
+        s3a1_mp.filt_compare("filt_compare_off_res", s3a1_mp.start_ind)
+        s3a1_mp.filt_compare("filt_compare_on_res", s3a1_mp.on_res_ind)
+        s3a1_mp.ifft_plot("ifft_S1A4 wide")
+        s3a1_mp.ifft_dif_plot("ifft__dif_S1A4 wide")
 
     Np=9
     K2=0.048

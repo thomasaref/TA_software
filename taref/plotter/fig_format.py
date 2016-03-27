@@ -128,7 +128,6 @@ class Fig(PlotMaster, Operative):
 class Plotter(Fig):
     #pm=Typed(Fig)
 
-
     def line_plot(self, name, *args, **kwargs):
         line_plot(self, name, *args, **kwargs)
 
@@ -164,6 +163,7 @@ class Plotter(Fig):
     def cls_run_funcs(self):
         """class or static methods to include in run_func_dict on initialization. Can be overwritten in child classes"""
         return [self.savefig]
+
 
 if __name__=="__main__":
 

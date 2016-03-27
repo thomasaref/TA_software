@@ -19,6 +19,7 @@ class Operative(Backbone):
     base_name="operative"
 
     def show(self, *args, **kwargs):
+        """shortcut to shower which defaults to shower(self)"""
         shower(*((self,)+args), **kwargs)
 
     @classmethod
@@ -28,12 +29,23 @@ class Operative(Backbone):
             if func!=cls.run_all:
                 func()
 
+    @private_property
+    def plots(self):
+        return OrderedDict([(name, agent) for (name, agent) in self.agent_dict.iteritems() if agent.base_name=="plot"])
+
+    def get_agents(self, *AgentTypes):
+        """returns an OrderedDict of all agents in agent_dict of a particular AgentTypes.
+        AgentType defaults to just type of self if no args are passed"""
+        if AgentTypes is ():
+            AgentTypes=(type(self),)
+        return OrderedDict([(name, agent) for (name, agent) in self.agent_dict.iteritems()
+                              if any(isinstance(agent, s) for s in AgentTypes)])
+
     agent_dict=OrderedDict()
     abort=False
 
     run_func_dict=OrderedDict()
 
-    plotter_dict=OrderedDict()
     def add_func(self, *funcs):
         """adds functions to run_func_dict. functions should be a classmethod, a staticmethod
         or a separate function that takes no arguments"""

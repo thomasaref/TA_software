@@ -45,7 +45,6 @@ class Instrument(Agent):
     base_name="instrument"
     busy=False
     saving=False
-    abort=False
     int_progress=0
     save_file=Save_HDF5()
 
@@ -58,7 +57,13 @@ class Instrument(Agent):
 
     @private_property
     def progress(self):
+        """Property that notifies of changes in progress"""
         return self.int_progress
+
+    @private_property
+    def instruments(self):
+        """OrderedDict of just Instruments"""
+        return self.get_agents(Instrument)
 
     session=Value().tag(private=True, desc="a link to the session of the instrument. useful particularly for dll-based instruments")
     status=Enum( "Closed", "Active").tag(private=True, desc="a description of if the instrument is active or not, i.e. has been booted")

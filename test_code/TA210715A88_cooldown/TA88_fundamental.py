@@ -136,6 +136,10 @@ class Lyzer(TA88_Fund):
         return fft.fft(myifft)
 
     @tag_Property(plot=True, sub=True)
+    def MagdB(self):
+        return 10.0*log10(self.MagAbs)
+
+    @tag_Property(plot=True, sub=True)
     def MagAbs(self):
         return absolute(self.Magcom)
 
@@ -182,8 +186,8 @@ class Lyzer(TA88_Fund):
 
     @plots
     def filt_compare(self, ind, plotter=None):
-        plotter.line_plot("magabs_{}".format(self.name), self.frequency, self.MagAbs[:, ind], label="MagAbs (unfiltered)")
-        plotter.line_plot("magabs_{}".format(self.name), self.frequency, self.MagAbsFilt[:, ind], label="MagAbs (filtered)")
+        plotter.line_plot("magabs_{}".format(self.name), self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)")
+        plotter.line_plot("magabs_{}".format(self.name), self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)")
 
     @plots
     def magabsfilt_colormesh(self, plotter):

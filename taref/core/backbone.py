@@ -60,17 +60,17 @@ class Backbone(Atom):
 
     @private_property
     def property_dict(self):
-        """returns a dict mapping property_names to property_items"""
+        """returns a dict mapping property_names to Property items"""
         return dict([(name, self.get_member(name)) for name in self.all_params if type(self.get_member(name)) is Property])
 
     @private_property
     def property_names(self):
-        """returns a dict mapping property_names to property_items"""
+        """returns property_dict.keys() (cached)"""
         return self.property_dict.keys()
 
     @private_property
     def property_values(self):
-        """returns a dict mapping property_names to property_items"""
+        """returns property dict.values() (cached)"""
         return self.property_dict.values()
 
     def extra_setup(self, param, typer):
@@ -93,20 +93,20 @@ class Backbone(Atom):
             value=lowhigh_check(self, name, value)
         super(Backbone, self).__setattr__(name, value)
 
-#    def reset_property(self, name):
-#        self.get_member(name).reset(self)
-#
-#    def reset_properties(self):
-#        """resets all  properties"""
-#        for item in self.property_dict.values():
-#            item.reset(self)
+    #def reset_property(self, name):
+    #    self.get_member(name).reset(self)
+
+    #def reset_properties(self):
+    #    """resets all Properties in main_params"""
+    #    for item in self.property_dict.values():
+    #        item.reset(self)
 
     def instancemethod(self, func):
-        """decorator for adding instancemethods defined outside of class"""
+        """decorator for adding instancemethods defined outside of class (meant for Callables)"""
         make_instancemethod(self, func)
 
     def __init__(self, **kwargs):
-        """extends __init__ to autoset low and high tags for Range and FloatRange, autoset units for Ints and Floats and allow extra setup"""
+        """extends __init__ to allow extra setup for all params"""
         for param in self.all_params:
             typer=get_type(self, param)
             self.extra_setup(param, typer)
