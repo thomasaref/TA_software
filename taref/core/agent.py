@@ -33,12 +33,14 @@ class Operative(Backbone):
     def plots(self):
         return OrderedDict([(name, agent) for (name, agent) in self.agent_dict.iteritems() if agent.base_name=="plot"])
 
-    def get_agents(self, *AgentTypes):
+    @classmethod
+    def get_agents(cls, *AgentTypes):
         """returns an OrderedDict of all agents in agent_dict of a particular AgentTypes.
         AgentType defaults to just type of self if no args are passed"""
+        print cls, type(cls)
         if AgentTypes is ():
-            AgentTypes=(type(self),)
-        return OrderedDict([(name, agent) for (name, agent) in self.agent_dict.iteritems()
+            AgentTypes=(cls,) #(type(cls),)
+        return OrderedDict([(name, agent) for (name, agent) in cls.agent_dict.iteritems()
                               if any(isinstance(agent, s) for s in AgentTypes)])
 
     agent_dict=OrderedDict()

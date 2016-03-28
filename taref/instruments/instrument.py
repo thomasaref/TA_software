@@ -45,6 +45,7 @@ class Instrument(Agent):
     base_name="instrument"
     busy=False
     saving=False
+    abort=False
     int_progress=0
     save_file=Save_HDF5()
 
@@ -57,13 +58,7 @@ class Instrument(Agent):
 
     @private_property
     def progress(self):
-        """Property that notifies of changes in progress"""
         return self.int_progress
-
-    @private_property
-    def instruments(self):
-        """OrderedDict of just Instruments"""
-        return self.get_agents(Instrument)
 
     session=Value().tag(private=True, desc="a link to the session of the instrument. useful particularly for dll-based instruments")
     status=Enum( "Closed", "Active").tag(private=True, desc="a description of if the instrument is active or not, i.e. has been booted")
@@ -100,8 +95,10 @@ class Instrument(Agent):
     @classmethod
     def close_all(cls):
         for instr in cls.agent_dict.values():
-            instr.close()
-
+            try:
+                instr.close()
+            except AttributeError as e:
+                print e
     @booter
     def booter(self):
         pass
@@ -116,7 +113,12 @@ class Instrument(Agent):
             log_info("BOOTED: {0}".format(self.name))
             self.status="Active"
             self.booter(**kwargs)
+            self.postboot()
 
+    def postboot(self):
+        """allows extra setup after instrument is booted"""
+        pass
+    
     def close(self,  **kwargs):
         """Close the instrument using closer function if it exists"""
         if self.status=="Active":
@@ -170,6 +172,7 @@ class Instrument(Agent):
 
                 setattr(self, name, value)
                 set_tag(self, name, send_now=temp)
+                return value
             else:
                 log_warning("WARNING: {instr} {name} get_cmd doesn't exist".format(instr=self.name, name=name))
         else:

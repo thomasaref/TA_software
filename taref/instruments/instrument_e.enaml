@@ -11,7 +11,7 @@ from taref.core.agent_e import CoreView
 from taref.core.instrview_e import InstrView, InstrHolder, DynVar
 from taref.core.log import log_debug
 from taref.core.fundcore_e import AgentWindow, aHGroup
-from taref.core.atom_extension import get_run_params, get_tag, set_tag
+from taref.core.atom_extension import get_run_params, get_tag, set_tag, get_main_params
 
 enamldef InstrVar(DynVar):
     Conditional:
@@ -42,6 +42,7 @@ enamldef InstrVar(DynVar):
 
 enamldef InstrLooper(Looper):
     attr vmodel=parent.vmodel
+    iterable=get_main_params(vmodel)
     InstrVar:
         vname=loop_item
 
@@ -75,7 +76,7 @@ enamldef ControlView(CoreView):
 
 enamldef BootExt(aHGroup):
     """Boot function display"""
-    trailing_spacer=spacer
+    trailing_spacer=None #spacer
     PushButton: pb:
         text << 'Boot' if instr.status=="Closed" else 'Active'
         clicked ::
@@ -93,7 +94,7 @@ enamldef BootExt(aHGroup):
 
 enamldef CloseExt(aHGroup):
     """Close function display"""
-    trailing_spacer=spacer
+    trailing_spacer=None #spacer
     PushButton: pb:
         text << 'Close' if instr.status=="Active" else 'Closed'
         clicked :: instr.close()
@@ -155,7 +156,8 @@ enamldef InstrumentNotebook(Notebook):
         name="bootclose"
         title="Boot/Close"
         VGroup:
-            BootExt:
+            #constraints = [be.width>=500]
+            BootExt: be:
                 pass
             CloseExt:
                 pass

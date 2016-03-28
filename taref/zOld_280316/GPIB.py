@@ -79,7 +79,7 @@ class GPIB_Instrument(Instrument):
             self.receive("response")
 
     command=Unicode().tag(sub=True, GPIB_writes="{command}", send_now=False, do=True)
-    resp_delay=Float(0.0).tag(sub=True, unit2="s", desc="delay between command and response", do=True)
+    resp_delay=Float(0.0).tag(sub=True, unit=" s", desc="delay between command and response", do=True)
     response=Unicode().tag(sub=True, get_cmd=GPIB_read, spec="multiline", do=True)
 
     @booter
@@ -87,8 +87,8 @@ class GPIB_Instrument(Instrument):
         start_GPIB(self, self.address, self.delay, self.timeout, self.reset, self.selftest, self.lock, self.send_end, self.identify, self.clear)
 
     address=Unicode("GPIB0::22::INSTR").tag(sub=True, label = "GPIB Address")
-    delay=Float(0).tag(sub=True, unit2="s", desc="delay between GPIB commands")
-    timeout=Float(5).tag(sub=True, unit2="s", desc="timeout")
+    delay=Float(0).tag(sub=True, unit=" s", desc="delay between GPIB commands")
+    timeout=Float(5).tag(sub=True, unit=" s", desc="timeout")
 
     @tag_Callable(sub=True)
     def reset(self):
