@@ -345,7 +345,8 @@ if __name__=="__main__":
         #if slow:
         #    s4a1_w.plot_widths(wp)
     if 1:
-        s3a4_mp=S3A4_Midpeak(filt_start_ind=40, filt_end_ind=48, on_res_ind=260, VNA_name='TA VNA2') #20, 35
+        s3a4_mp=S3A4_Midpeak(filt_start_ind=20, filt_end_ind=35, on_res_ind=260, VNA_name='TA VNA2',
+                  rd_hdf=TA88_Read(main_file="Data_0327/S3A4A1_gate_fluxswp_midpeak_0dBm.hdf5")) #20, 35
         s3a4_mp.read_data()
         s3a4_mp.magabs_colormesh("S3A4 midpeak magabs")
         s3a4_mp.magabsfilt_colormesh("filtcolormesh S3A4 mp")
@@ -366,7 +367,9 @@ if __name__=="__main__":
         print s3a4_mp.plots
 
     if 1:
-        s3a1_mp=S3A1_Midpeak(filt_start_ind=40, filt_end_ind=48, on_res_ind=260, VNA_name='TA VNA2', port_name='S21') #29, 40
+
+        s3a1_mp=S3A1_Midpeak(filt_start_ind=28, filt_end_ind=40, on_res_ind=260, VNA_name='TA VNA2', port_name='S21',
+                             rd_hdf=TA88_Read(main_file="Data_0327/S3A4A1_gate_fluxswp_midpeak_0dBm.hdf5")) #29, 40
         s3a1_mp.read_data()
         s3a1_mp.magabs_colormesh("S3A4 midpeak magabs")
         s3a1_mp.magabsfilt_colormesh("filtcolormesh S3A4 mp")
