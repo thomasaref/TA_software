@@ -1,0 +1,21 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Mar 28 21:37:35 2016
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import Window, Field, CheckBox, VGroup, PushButton, ProgressBar
+
+enamldef Main(Window):
+    attr obj
+    VGroup:
+        Field:
+            text := obj.a
+            #enabled << not obj.int_busy
+        CheckBox:
+            checked <<obj.busy
+        CheckBox:
+            checked := obj.abort
+        ProgressBar:
+            value<<obj.prog
