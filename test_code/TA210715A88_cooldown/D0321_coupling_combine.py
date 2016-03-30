@@ -344,7 +344,7 @@ if __name__=="__main__":
 
         #if slow:
         #    s4a1_w.plot_widths(wp)
-    if 1:
+    if 0:
         s3a4_mp=S3A4_Midpeak(filt_start_ind=20, filt_end_ind=35, on_res_ind=260, VNA_name='TA VNA2',
                   rd_hdf=TA88_Read(main_file="Data_0327/S3A4A1_gate_fluxswp_midpeak_0dBm.hdf5")) #20, 35
         s3a4_mp.read_data()
@@ -366,7 +366,7 @@ if __name__=="__main__":
         #print dir(s3a4_mp.agent_dict["ifft_S3A4 midpeak"])
         print s3a4_mp.plots
 
-    if 1:
+    if 0:
 
         s3a1_mp=S3A1_Midpeak(filt_start_ind=28, filt_end_ind=40, on_res_ind=260, VNA_name='TA VNA2', port_name='S21',
                              rd_hdf=TA88_Read(main_file="Data_0327/S3A4A1_gate_fluxswp_midpeak_0dBm.hdf5")) #29, 40
@@ -380,6 +380,68 @@ if __name__=="__main__":
         s3a1_mp.filt_compare("filt_compare_on_res", s3a1_mp.on_res_ind)
         s3a1_mp.ifft_plot("ifft_S1A4 wide")
         s3a1_mp.ifft_dif_plot("ifft__dif_S1A4 wide")
+
+    if 0:
+        s3a4_mp=S3A4_Midpeak(filt_start_ind=95, filt_end_ind=144, on_res_ind=286, VNA_name='TA VNA2',
+                  rd_hdf=TA88_Read(main_file="Data_0328/S3A4A1_gate_fluxswp_0dBm.hdf5")) #20, 35
+        s3a4_mp.read_data()
+        s3a4_mp.magabs_colormesh("S3A4 midpeak magabs")
+        s3a4_mp.magabsfilt_colormesh("filtcolormesh S3A4 mp")
+        s3a4_mp.magdBfilt_colormesh("filtdB S1A4 wide")
+        s3a4_mp.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
+        #a2.filt_compare(a2.start_ind, bb2)
+        s3a4_mp.filt_compare("filt_compare_off_res", s3a4_mp.start_ind)
+        #s3a4_mp.filt_compare("filt_compare_on_res", s3a4_mp.on_res_ind)
+        s3a4_mp.filt_compare("filt_compare_on_res", 260)
+        #s3a4_mp.filt_compare("filt_compare_on_res", 236)
+
+
+        s3a4_mp.ifft_plot("ifft_S3A4 midpeak")
+        s3a4_mp.ifft_dif_plot("ifft__dif_S1A4 wide")
+        #print self.agent_dict.iter
+        print s3a4_mp.get_agents(Operative)
+        print isinstance(s3a4_mp, Operative)
+        print isinstance(s3a4_mp, TransLyzer)
+        print isinstance(s3a4_mp, TransTimeLyzer)
+
+        #print dir(s3a4_mp.agent_dict["ifft_S3A4 midpeak"])
+        print s3a4_mp.plots
+
+    if 0:
+
+        s3a1_mp=S3A1_Midpeak(filt_start_ind=121, filt_end_ind=170, on_res_ind=286, VNA_name='TA VNA2', port_name='S21',
+                             rd_hdf=TA88_Read(main_file="Data_0328/S3A4A1_gate_fluxswp_0dBm.hdf5")) #29, 40
+        s3a1_mp.read_data()
+        s3a1_mp.magabs_colormesh("S3A4 midpeak magabs")
+        s3a1_mp.magabsfilt_colormesh("filtcolormesh S3A4 mp")
+        s3a1_mp.magdBfilt_colormesh("filtdB S1A4 wide")
+        s3a1_mp.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
+        #a2.filt_compare(a2.start_ind, bb2)
+        s3a1_mp.filt_compare("filt_compare_off_res", s3a1_mp.start_ind)
+        #s3a1_mp.filt_compare("filt_compare_on_res", s3a1_mp.on_res_ind)
+        s3a1_mp.filt_compare("filt_compare_on_res", 260)
+        #s3a1_mp.filt_compare("filt_compare_on_res", 236)
+
+        s3a1_mp.ifft_plot("ifft_S1A4 wide")
+        s3a1_mp.ifft_dif_plot("ifft__dif_S1A4 wide")
+
+
+    if 1:
+        s3a4_w=S3A4_Wide(filt_start_ind=0, filt_end_ind=495, on_res_ind=260, VNA_name='TA VNA2',
+                         rd_hdf=TA88_Read(main_file="Data_0329/S3A4A1_widegate_fluxswp_higherpwr.hdf5")) #29, 40)
+        s3a4_w.read_data()
+        s3a4_w.magabs_colormesh("S3A1 wide magabs")
+        s3a4_w.magabsfilt_colormesh("filtcolormesh S4A1 wide")
+        s3a4_w.magdBfilt_colormesh("filtdB S1A4 wide")
+        s3a4_w.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
+        #a2.filt_compare(a2.start_ind, bb2)
+        #s1a1_mp.filt_compare("filt_compare_off_res", s1a1_mp.start_ind)
+        #s1a1_mp.filt_compare("filt_compare_on_res", s1a1_mp.on_res_ind)
+        s3a4_w.ifft_plot("ifft_S1A4 wide")
+        s3a4_w.ifft_dif_plot("ifft__dif_S1A4 wide")
+
+        #if slow:
+        #    s4a1_w.plot_widths(wp)
 
     Np=9
     K2=0.048
