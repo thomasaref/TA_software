@@ -258,6 +258,8 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         print init_str
         log_debug(self.VNA.Initialize(self.address, False, False, init_str)) 
         self.ch1=self.VNA.Channels["Channel1"]
+        self.VNA.System2.IO.IO.LockRsrc()
+
         self.VNA_abort()
         #self.VNA_write("CALC:PAR:DEL:ALL")
         self.error_query()
@@ -302,7 +304,8 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         for key in self.S_names:
             if getattr(self, 'do'+key):
                 log_debug(getattr(self, 'meas'+key).Delete())
-        #self.VNA_abort()        
+        #self.VNA_abort()   
+        log_debug(self.VNA.System2.IO.IO.UnlockRsrc())        
         log_debug(self.VNA.Close())
         for n in range(10):
             log_debug(n)
@@ -401,7 +404,7 @@ class AgilentNetworkAnalyzer(COM_Instrument):
 if __name__ == '__main__':
    # print get_ptr(1, "self.ch1.StimulusRange.Start")
     if 1:
-        VNA = AgilentNetworkAnalyzer(simulate=True)
+        VNA = AgilentNetworkAnalyzer(simulate=False)
         VNA.trace_plot
         #b=Plotter()
         #b.line_plot('data', VNA.freq, 20.0*log10(absolute(VNA.S21)))
