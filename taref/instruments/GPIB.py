@@ -4,49 +4,50 @@ Created on Sun Apr 20 22:35:45 2014
 
 @author: thomasaref
 """
-from taref.instruments.instrument import Instrument, InstrumentError, booter, closer
+from taref.instruments.instrument import InstrumentError, booter, closer
+from taref.instruments.string_instrument import String_Instrument, writer, reader, asker
 from taref.core.log import log_debug, log_info
 from taref.core.atom_extension import tag_Callable, get_tag, set_tag, log_func, private_property
-from atom.api import Unicode, Bool, Float, Typed
+from atom.api import Unicode, Bool, Float, Typed, Value
 #import visa
 from taref.instruments.fakevisa import fakevisa as visa
 from time import sleep
 
-def GPIB_read(instr):
-    """calls visa GPIB read"""
-    return instr.session.read()
+#def GPIB_read(instr):
+#    """calls visa GPIB read"""
+#    return instr.session.read()
+#
+#def GPIB_ask(instr, GPIB_string, **kwargs):
+#    """calls visa GPIB ask using GPIB_string and kwargs"""
+#    return instr.session.ask(GPIB_string.format(**kwargs))
+#
+#def GPIB_write(instr, GPIB_string, **kwargs):
+#    """calls visa GPIB write using GPIB_string and kwargs"""
+#    instr.session.write(GPIB_string.format(**kwargs))
+#
+#def ask_for_values(instr, GPIB_string, **kwargs):
+#    """calls visa GPIB ask_for_values using GPIB_string and kwargs"""
+#    return instr.session.ask_for_values(GPIB_string.format(**kwargs))
 
-def GPIB_ask(instr, GPIB_string, **kwargs):
-    """calls visa GPIB ask using GPIB_string and kwargs"""
-    return instr.session.ask(GPIB_string.format(**kwargs))
-
-def GPIB_write(instr, GPIB_string, **kwargs):
-    """calls visa GPIB write using GPIB_string and kwargs"""
-    instr.session.write(GPIB_string.format(**kwargs))
-
-def ask_for_values(instr, GPIB_string, **kwargs):
-    """calls visa GPIB ask_for_values using GPIB_string and kwargs"""
-    return instr.session.ask_for_values(GPIB_string.format(**kwargs))
-
-def GPIB_ask_it(GPIB_string, name):
-    """returns custom GPIB_ask with GPIB_string encoded in GPIB_log object"""
-    def GPIB_ask(instr, **kwargs):
-        return instr.session.ask(GPIB_string.format(**kwargs))
-    GPIB_ask=log_func(GPIB_ask, name)
-    GPIB_ask.log_message="GPIB ASK: {0} {1}: "+GPIB_string
-    GPIB_ask.run_params.append(name)
-    #GPIB_ask.GPIB_string=GPIB_string
-    return GPIB_ask
-
-def GPIB_write_it(GPIB_string, name):
-    """returns custom GPIB_write with GPIB_string encoded in GPIB_log object"""
-    def GPIB_write(instr, **kwargs):
-        instr.session.write(GPIB_string.format(**kwargs))
-    GPIB_write=log_func(GPIB_write, name)
-    GPIB_write.log_message="GPIB WRITE: {0} {1}: "+GPIB_string
-    GPIB_write.run_params.append(name)
-    #func.GPIB_string=GPIB_string
-    return GPIB_write
+#def GPIB_ask_it(GPIB_string, name):
+#    """returns custom GPIB_ask with GPIB_string encoded in GPIB_log object"""
+#    def GPIB_ask(instr, **kwargs):
+#        return instr.session.ask(GPIB_string.format(**kwargs))
+#    GPIB_ask=log_func(GPIB_ask, name)
+#    GPIB_ask.log_message="GPIB ASK: {0} {1}: "+GPIB_string
+#    GPIB_ask.run_params.append(name)
+#    #GPIB_ask.GPIB_string=GPIB_string
+#    return GPIB_ask
+#
+#def GPIB_write_it(GPIB_string, name):
+#    """returns custom GPIB_write with GPIB_string encoded in GPIB_log object"""
+#    def GPIB_write(instr, **kwargs):
+#        instr.session.write(GPIB_string.format(**kwargs))
+#    GPIB_write=log_func(GPIB_write, name)
+#    GPIB_write.log_message="GPIB WRITE: {0} {1}: "+GPIB_string
+#    GPIB_write.run_params.append(name)
+#    #func.GPIB_string=GPIB_string
+#    return GPIB_write
 
 def start_GPIB(instr, address, delay, timeout, reset, selftest, lock, send_end, identify, clear):
     if address=="":
@@ -64,24 +65,13 @@ def start_GPIB(instr, address, delay, timeout, reset, selftest, lock, send_end, 
         instr.receive('identify')
     log_info("GPIB instrument {name} initialized at address {address}".format(name=instr.name, address=address))
 
-class GPIB_Instrument(Instrument):
+    
+class GPIB_Instrument(String_Instrument):
     """Extends Instrument definition to GPIB Instruments"""
     #session=Typed(visa.Instrument).tag(private=True, desc="visa session of the instrument")
     base_name="GPIB_Instrument"
-
-    @tag_Callable(sub=True, desc="function for test page which sends a commands, waits and gets a response")
-    def command_response(self):
-        if get_tag(self, "command", "do", False):
-            self.send("command")
-        if get_tag(self, "resp_delay", "do", False):
-            sleep(self.resp_delay)
-        if get_tag(self, "response", "do", False):
-            self.receive("response")
-
-    command=Unicode().tag(sub=True, GPIB_writes="{command}", send_now=False, do=True)
-    resp_delay=Float(0.0).tag(sub=True, unit2="s", desc="delay between command and response", do=True)
-    response=Unicode().tag(sub=True, get_cmd=GPIB_read, spec="multiline", do=True)
-
+    session=Value().tag(private=True, desc="a link to the session of the instrument. useful particularly for dll-based instruments")
+    
     @booter
     def booter(self, address, delay, timeout, reset, selftest, lock, send_end, identify, clear):
         start_GPIB(self, self.address, self.delay, self.timeout, self.reset, self.selftest, self.lock, self.send_end, self.identify, self.clear)
@@ -120,16 +110,35 @@ class GPIB_Instrument(Instrument):
         """default GPIB stop is visa close"""
         self.session.close()
 
-    def extra_setup(self, param, typer):
-        super(GPIB_Instrument, self).extra_setup(param, typer)
-        GPIB_string=get_tag(self, param, 'GPIB_writes')
-        if GPIB_string!=None:
-            do=get_tag(self, param, "do", False)
-            set_tag(self, param, set_cmd=GPIB_write_it(GPIB_string, param), do=do)
-        GPIB_string=get_tag(self, param, 'GPIB_asks')
-        if GPIB_string!=None:
-            do=get_tag(self, param, "do", False)
-            set_tag(self, param, get_cmd=GPIB_ask_it(GPIB_string, param), do=do)
+    @reader
+    def reader(self):
+        """calls visa GPIB read"""
+        return self.session.read()
+    
+    @asker
+    def asker(self, ask_string):
+        """calls visa GPIB ask using GPIB_string and kwargs"""
+        return self.session.ask(ask_string)
+
+    @writer    
+    def writer(self, write_string):
+        """calls visa GPIB write using GPIB_string and kwargs"""
+        self.session.write(write_string)
+    
+    def ask_for_values(self, ask_string):
+        """calls visa GPIB ask_for_values using GPIB_string and kwargs"""
+        return self.session.ask_for_values(ask_string)
+
+#    def extra_setup(self, param, typer):
+#        super(GPIB_Instrument, self).extra_setup(param, typer)
+#        GPIB_string=get_tag(self, param, 'GPIB_writes')
+#        if GPIB_string!=None:
+#            do=get_tag(self, param, "do", False)
+#            set_tag(self, param, set_cmd=GPIB_write_it(GPIB_string, param), do=do)
+#        GPIB_string=get_tag(self, param, 'GPIB_asks')
+#        if GPIB_string!=None:
+#            do=get_tag(self, param, "do", False)
+#            set_tag(self, param, get_cmd=GPIB_ask_it(GPIB_string, param), do=do)
 
     @private_property
     def view_window(self):

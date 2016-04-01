@@ -168,6 +168,14 @@ enamldef InstrumentNotebook(Notebook):
             ScrollArea:
                 InstrHolder:
                     vmodel=instr
+    Conditional:
+        condition = hasattr(instr, "command_response")
+        Page:
+            name="test"
+            title="Test"
+            VGroup:
+                TestExt:
+                    pass
 
 enamldef GPIB_InstrumentNotebook(InstrumentNotebook):
     Page:

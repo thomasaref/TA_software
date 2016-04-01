@@ -7,7 +7,8 @@ Created on Mon Dec 29 05:41:29 2014
 from numpy import linspace, array, log10, absolute
 #from threading import Thread
 from atom.api import Unicode, Float, Bool, Enum, Int, Value, observe, Dict, Typed
-from taref.instruments.instrument import Instrument, booter, closer
+from taref.instruments.instrument import booter, closer
+from taref.instruments.com_instrument import COM_Instrument
 from taref.core.atom_extension import get_tag, set_tag, log_func, get_all_tags, tag_Callable, get_map, private_property
 from taref.core.universal import Array
 from taref.physics.units import GHz
@@ -61,88 +62,6 @@ def askVNA(VNA, VNA_string):
     return VNA.System2.ReadString()
 
 
-def pass_ask_it(instr, name):
-    """get pass function. used as place holder."""
-    def pass_ask(instr, **kwargs):
-        return getattr(instr, name)
-    pass_ask=log_func(pass_ask, name)
-    pass_ask.log_message="PASS ASK: {0} {1}: "+name
-    return pass_ask
-    
-def pass_write_it(instr, name):
-    """send pass function. used as place holder"""
-    def pass_write(instr, **kwargs):
-        setattr(instr, name, kwargs[name])
-    pass_write=log_func(pass_write, name)
-    pass_write.log_message="PASS WRITE: {0} {1}: "+name
-    pass_write.run_params.append(name)
-    return pass_write 
-   
-class COM_Instrument(Instrument):
-    """Instrument specialization to deal with COM drivers"""
-    def COM_ask_it(self, name, aka):
-        """returns custom COM_ask using alias aka"""
-        obj, param, index=self.get_ptr(aka)
-        if index is None:
-            def COM_ask(self, **kwargs):
-                return getattr(obj, param) #instr.session.ask(GPIB_string.format(**kwargs))
-        else:
-            def COM_ask(self, **kwargs):
-                return getattr(obj, param)[index] #instr.session.ask(GPIB_string.format(**kwargs))
-        COM_ask=log_func(COM_ask, name)
-        COM_ask.log_message="COM ASK: {0} {1}: "+name
-        return COM_ask
-    
-    def COM_write_it(self, name, aka):
-        """returns custom COM_write with using alias aka"""
-        obj, param, index=self.get_ptr(aka)
-        if index is None:
-            def COM_write(self, **kwargs):
-                setattr(obj, param, kwargs[name])
-        else:
-            def COM_write(self, **kwargs):
-                getattr(obj, param)[index]=kwargs[name]
-        COM_write=log_func(COM_write, name)
-        COM_write.log_message="COM WRITE: {0} {1}: "+name
-        COM_write.run_params.append(name)
-        return COM_write
-
-    def get_ptr(self, name):
-        """gets pointer to obj and param from alias. can handle multiple dots in path but not brackets.
-        param can be indexed with an integer"""
-        name_list=name.split(".")
-        param=name_list[-1]
-        index=None
-        if "[" in param:
-            param, div, index=param.partition("]")[0].partition("[")
-            index=int(index)
-        obj=self
-        for x in name_list[1:-1]:
-            obj = getattr(obj, x)
-        return obj, param, index
-    
-    def extra_setup(self, param, typer):
-        super(Instrument, self).extra_setup(param, typer)
-        aka = get_tag(self, param, "aka")
-        if aka!=None:
-            do=get_tag(self, param, "do", False)
-            readwrite=get_tag(self, param, "ReadWrite", "Both")
-            if readwrite in ("Both", "Write"):
-                set_tag(self, param, set_cmd=pass_write_it(self, param), do=do)
-            if readwrite in ("Both", "Read"):
-                set_tag(self, param, get_cmd=pass_ask_it(self, param), do=do)  
-    
-    def postboot(self):
-        for param in get_all_tags(self, "aka"):
-            aka = get_tag(self, param, "aka")
-            if get_tag(self, param, "set_cmd") is not None:
-                set_tag(self, param, set_cmd=self.COM_write_it(param, aka))
-            if get_tag(self, param, "get_cmd") is not None:
-                set_tag(self, param, get_cmd=self.COM_ask_it(param, aka))
-        for param in self.all_params:
-            if get_tag(self, param, 'get_cmd') is not None:
-                log_debug(param)
-                self.receive(param)        
                 
 class AgilentNetworkAnalyzer(COM_Instrument):
     base_name="E8354B"
@@ -162,10 +81,10 @@ class AgilentNetworkAnalyzer(COM_Instrument):
     simulate=Bool(False).tag(sub=True) 
     VNA=Value().tag(private=True, desc="a link to the session of the instrument.")
     ch1=Value().tag(private=True, desc="link to main instrument channel")
-    measS11=Value().tag(private=True, desc="link to measurements")
-    measS12=Value().tag(private=True, desc="link to measurements")
-    measS21=Value().tag(private=True, desc="link to measurements")
-    measS22=Value().tag(private=True, desc="link to measurements")
+    measS11=Value().tag(private=True, desc="link to measurement S11")
+    measS12=Value().tag(private=True, desc="link to measurement S12")
+    measS21=Value().tag(private=True, desc="link to measurement S21")
+    measS22=Value().tag(private=True, desc="link to measurements S22")
 
     trace_plot=Typed(Plotter).tag(private=True)
     
@@ -226,19 +145,22 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         t=sAll.split(",")
         return {t[i]:t[i+1] for i in range(0, len(t), 2)}
 
-        
-    def VNA_read(self):
+    @reader    
+    def reader(self):
         """calls VNA ReadString"""
         return self.VNA.System2.ReadString()
     
-    def VNA_write(self, VNA_string, **kwargs):
+    @writer
+    def writer(self, VNA_string):
         """calls VNA WriteString using string formatting by kwargs"""
-        self.VNA.System2.WriteString(VNA_string.format(**kwargs))
+        self.VNA.System2.WriteString(VNA_string)
     
-    def VNA_ask(self, VNA_string, **kwargs):
+    @asker
+    def asker(self, VNA_string):
         """calls VNA WriteString followed by VNA ReadString"""
-        self.VNA_write(VNA_string, **kwargs)
+        self.VNA_write(VNA_string)
         return self.VNA_read()
+
     
     @tag_Callable()    
     def VNA_abort(self):
@@ -258,7 +180,8 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         print init_str
         log_debug(self.VNA.Initialize(self.address, False, False, init_str)) 
         self.ch1=self.VNA.Channels["Channel1"]
-        self.VNA.System2.IO.IO.LockRsrc()
+        if not self.simulate:
+            self.VNA.System2.IO.IO.LockRsrc()
 
         self.VNA_abort()
         #self.VNA_write("CALC:PAR:DEL:ALL")
@@ -269,7 +192,8 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         self.measS21=self.ch1.Measurements["Measurement2"]
         self.measS12=self.ch1.Measurements["Measurement3"]
         self.measS22=self.ch1.Measurements["Measurement4"]
-        
+        if self.simulate:
+            self.stop_freq=4.0e9
         #sleep(1)
         #self.measS11.Create(1, 1)
         #self.error_query()
@@ -277,6 +201,7 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         #self.measS11.Delete()
                                     
         self.error_query()
+    
     @tag_Callable()    
     def error_query(self):
         for n in range(11):
@@ -304,8 +229,9 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         for key in self.S_names:
             if getattr(self, 'do'+key):
                 log_debug(getattr(self, 'meas'+key).Delete())
-        #self.VNA_abort()   
-        log_debug(self.VNA.System2.IO.IO.UnlockRsrc())        
+        #self.VNA_abort() 
+        if not self.simulate:
+            log_debug(self.VNA.System2.IO.IO.UnlockRsrc())        
         log_debug(self.VNA.Close())
         for n in range(10):
             log_debug(n)
@@ -378,13 +304,12 @@ class AgilentNetworkAnalyzer(COM_Instrument):
                                     aka="self.ch1.StimulusRange.Start", show_value=True)
 
     stop_freq = Float(5.0e9).tag(low=10.0e6, high=50.0e9, label = 'VNA stop frequency', unit2 = 'GHz',
-                                   aka="self.ch1.StimulusRange.Stop", show_value=False)
-    points = Int(1601).tag(low=1, high=20001, label = 'VNA frequency points',
-                            aka="self.ch1.Points")
-    averages = Int(1).tag(low=1, high=50000, label = 'VNA averages',
-                          aka="self.ch1.AveragingFactor")
+                                   aka="self.ch1.StimulusRange.Stop", show_value=True)
+                                   
+    points = Int(1601).tag(low=1, high=20001, aka="self.ch1.Points")
+    averages = Int(1).tag(low=1, high=50000, aka="self.ch1.AveragingFactor")
     averaging=Bool(True).tag(aka="self.ch1.Averaging")
-    power = Float(-27.0).tag(low=-27.0, high=0.0, label='VNA power', display_unit = 'dBm',
+    power = Float(-27.0).tag(low=-27.0, high=0.0, display_unit = 'dBm',
                               aka="self.ch1.SourcePower.Level[1]")
     #electrical_delay = Float(0).tag(label='VNA electrical delay', unit = 's',
     #                                GPIB_writes=":CALCulate1:CORRection:EDELay:TIME {electrical_delay}")
@@ -404,7 +329,7 @@ class AgilentNetworkAnalyzer(COM_Instrument):
 if __name__ == '__main__':
    # print get_ptr(1, "self.ch1.StimulusRange.Start")
     if 1:
-        VNA = AgilentNetworkAnalyzer(simulate=False)
+        VNA = AgilentNetworkAnalyzer(simulate=True)
         VNA.trace_plot
         #b=Plotter()
         #b.line_plot('data', VNA.freq, 20.0*log10(absolute(VNA.S21)))
