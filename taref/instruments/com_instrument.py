@@ -15,7 +15,7 @@ from taref.core.atom_extension import set_tag, get_tag, log_func, get_all_tags
 #    pass_ask=log_func(pass_ask, name)
 #    pass_ask.log_message="PASS ASK: {0} {1}: "+name
 #    return pass_ask
-#    
+#
 #def pass_write_it(instr, name):
 #    """send pass function. used as place holder"""
 #    def pass_write(instr, **kwargs):
@@ -23,8 +23,8 @@ from taref.core.atom_extension import set_tag, get_tag, log_func, get_all_tags
 #    pass_write=log_func(pass_write, name)
 #    pass_write.log_message="PASS WRITE: {0} {1}: "+name
 #    pass_write.run_params.append(name)
-#    return pass_write 
-   
+#    return pass_write
+
 class COM_Instrument(String_Instrument):
     """Instrument specialization to deal with COM drivers"""
     def COM_ask_it(self, name, aka):
@@ -39,7 +39,7 @@ class COM_Instrument(String_Instrument):
         COM_ask=log_func(COM_ask, name)
         COM_ask.log_message="COM ASK: {0} {1}: "+name
         return COM_ask
-    
+
     def COM_write_it(self, name, aka):
         """returns custom COM_write with using alias aka"""
         obj, param, index=self.get_ptr(aka)
@@ -67,7 +67,7 @@ class COM_Instrument(String_Instrument):
         for x in name_list[1:-1]:
             obj = getattr(obj, x)
         return obj, param, index
-    
+
     def extra_setup(self, param, typer):
         aka = get_tag(self, param, "aka")
         if aka!=None:
@@ -76,9 +76,9 @@ class COM_Instrument(String_Instrument):
             if readwrite in ("Both", "Write"):
                 set_tag(self, param, set_cmd=param+"={"+param+"}", do=do)
             if readwrite in ("Both", "Read"):
-                set_tag(self, param, get_str=param, do=do)  
+                set_tag(self, param, get_str=param, do=do)
         super(String_Instrument, self).extra_setup(param, typer)
-    
+
     def postboot(self):
         for param in get_all_tags(self, "aka"):
             aka = get_tag(self, param, "aka")
@@ -86,10 +86,12 @@ class COM_Instrument(String_Instrument):
                 set_tag(self, param, set_cmd=self.COM_write_it(param, aka))
             if get_tag(self, param, "get_cmd") is not None:
                 set_tag(self, param, get_cmd=self.COM_ask_it(param, aka))
+
+    def synchronize(self):
         for param in self.all_params:
             if get_tag(self, param, 'get_cmd') is not None:
-                log_debug(param)
-                self.receive(param)        
+                #log_debug(param)
+                self.receive(param)
 
 #def VNA_ask_it(self, VNA_string, name):
 #    """returns custom GPIB_ask with GPIB_string encoded in GPIB_log object"""

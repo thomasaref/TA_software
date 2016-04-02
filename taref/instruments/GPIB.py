@@ -65,26 +65,25 @@ def start_GPIB(instr, address, delay, timeout, reset, selftest, lock, send_end, 
         instr.receive('identify')
     log_info("GPIB instrument {name} initialized at address {address}".format(name=instr.name, address=address))
 
-    
+
 class GPIB_Instrument(String_Instrument):
     """Extends Instrument definition to GPIB Instruments"""
     #session=Typed(visa.Instrument).tag(private=True, desc="visa session of the instrument")
     base_name="GPIB_Instrument"
     session=Value().tag(private=True, desc="a link to the session of the instrument. useful particularly for dll-based instruments")
-    
+
     @booter
-    def booter(self, address, delay, timeout, reset, selftest, lock, send_end, identify, clear):
-        start_GPIB(self, self.address, self.delay, self.timeout, self.reset, self.selftest, self.lock, self.send_end, self.identify, self.clear)
+    def booter(self, address, GPIB_delay, timeout, reset, selftest, lock, send_end, identify, clear):
+        start_GPIB(self, self.address, self.GPIB_delay, self.timeout, self.reset, self.selftest, self.lock, self.send_end, self.identify, self.clear)
 
     address=Unicode("GPIB0::22::INSTR").tag(sub=True, label = "GPIB Address")
-    delay=Float(0).tag(sub=True, unit2="s", desc="delay between GPIB commands")
-    timeout=Float(5).tag(sub=True, unit2="s", desc="timeout")
+    GPIB_delay=Float(0).tag(sub=True, unit2="s", desc="delay between GPIB commands")
+    #timeout=Float(5).tag(sub=True, unit2="s", desc="timeout")
 
     @tag_Callable(sub=True)
     def reset(self):
         """send special GPIB command *RST"""
-        GPIB_write(self, "*RST")
-
+        self.writer("*RST")
 
     lock = Bool(False).tag(sub=True)
     send_end = Bool(True).tag(sub=True)
@@ -93,17 +92,15 @@ class GPIB_Instrument(String_Instrument):
     def clear(self):
         """calls visa GPIB clear"""
         self.session.clear()
-    #clear=Callable(GPIB_clear).tag(value=True)
 
-    identify = Unicode().tag(sub=True, GPIB_asks="*IDN?", do=True, read_only=True)
+    identify = Unicode().tag(sub=True, get_str="*IDN?", do=True, read_only=True)
 
     @tag_Callable(sub=True)
     def selftest(self):
         """perform selftest specified by special GPIB command *TST?"""
-        tst=GPIB_ask(self, "*TST?")
+        tst=self.asker("*TST?")
         if int(tst):
             raise InstrumentError("Instrument {0} did not pass the selftest. CODE: {1}".format(self.name, tst))
-    #GPIB_selftest.GPIB_string="*TST?"
 
     @closer
     def closer(self):
@@ -114,38 +111,27 @@ class GPIB_Instrument(String_Instrument):
     def reader(self):
         """calls visa GPIB read"""
         return self.session.read()
-    
+
     @asker
     def asker(self, ask_string):
-        """calls visa GPIB ask using GPIB_string and kwargs"""
+        """calls visa GPIB ask"""
         return self.session.ask(ask_string)
 
-    @writer    
+    @writer
     def writer(self, write_string):
-        """calls visa GPIB write using GPIB_string and kwargs"""
+        """calls visa GPIB write"""
         self.session.write(write_string)
-    
+
     def ask_for_values(self, ask_string):
         """calls visa GPIB ask_for_values using GPIB_string and kwargs"""
         return self.session.ask_for_values(ask_string)
 
-#    def extra_setup(self, param, typer):
-#        super(GPIB_Instrument, self).extra_setup(param, typer)
-#        GPIB_string=get_tag(self, param, 'GPIB_writes')
-#        if GPIB_string!=None:
-#            do=get_tag(self, param, "do", False)
-#            set_tag(self, param, set_cmd=GPIB_write_it(GPIB_string, param), do=do)
-#        GPIB_string=get_tag(self, param, 'GPIB_asks')
-#        if GPIB_string!=None:
-#            do=get_tag(self, param, "do", False)
-#            set_tag(self, param, get_cmd=GPIB_ask_it(GPIB_string, param), do=do)
-
-    @private_property
-    def view_window(self):
-        from enaml import imports
-        with imports():
-            from taref.instruments.instrument_e import GPIB_InstrumentView
-        return GPIB_InstrumentView(instr=self)
+#    @private_property
+#    def view_window(self):
+#        from enaml import imports
+#        with imports():
+#            from taref.instruments.instrument_e import GPIB_InstrumentView
+#        return GPIB_InstrumentView(instr=self)
 
 
 #    def __init__(self, **kwargs):

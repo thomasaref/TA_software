@@ -9,6 +9,7 @@ from numpy import linspace, array, log10, absolute
 from atom.api import Unicode, Float, Bool, Enum, Int, Value, observe, Dict, Typed
 from taref.instruments.instrument import booter, closer
 from taref.instruments.com_instrument import COM_Instrument
+from taref.instruments.string_instrument import reader, asker, writer
 from taref.core.atom_extension import get_tag, set_tag, log_func, get_all_tags, tag_Callable, get_map, private_property
 from taref.core.universal import Array
 from taref.physics.units import GHz
@@ -39,46 +40,46 @@ def get_mapping(indict):
     def new_func(name):
         return indict.get(name, None)
     return new_func
- 
+
 TriggerModeDict={"Continuous" : AgilentNALib.AgilentNATriggerModeContinuous,
                  "Hold"       : AgilentNALib.AgilentNATriggerModeHold}
 TriggerModeDict.update(invert_dict(TriggerModeDict))
-                 
+
 SweepModeDict = {'Swept'       :    AgilentNALib.AgilentNASweepModeSwept,
                  'Stepped'     :    AgilentNALib.AgilentNASweepModeStepped,
                  'FastStepped' :    AgilentNALib.AgilentNASweepModeFastStepped,
                  'FastSwept'   :    AgilentNALib.AgilentNASweepModeFastSwept}
-SweepModeDict.update(invert_dict(SweepModeDict)) 
+SweepModeDict.update(invert_dict(SweepModeDict))
 
 SweepTypeDict = {'LinFrequency' : AgilentNALib.AgilentNASweepTypeLinFrequency,
                  'LogFrequency' : AgilentNALib.AgilentNASweepTypeLogFrequency,
                  'Segment'      : AgilentNALib.AgilentNASweepTypeSegment,
                  'Power'        : AgilentNALib.AgilentNASweepTypePower,
                  'CWTime'       : AgilentNALib.AgilentNASweepTypeCWTime}
-SweepTypeDict.update(invert_dict(SweepTypeDict)) 
+SweepTypeDict.update(invert_dict(SweepTypeDict))
 
 def askVNA(VNA, VNA_string):
     VNA.System2.WriteString(VNA_string)
     return VNA.System2.ReadString()
 
 
-                
+
 class AgilentNetworkAnalyzer(COM_Instrument):
     base_name="E8354B"
-    
+
     @private_property
     def S_names(self):
         return ('S11', 'S21', 'S12', 'S22')
-    
+
     @private_property
     def main_params(self):
         return ["doS11", "doS21", "doS12", "doS22", "trigger_mode", "VNA_abort", "start_freq", "stop_freq",
                 "points", "averaging", "averages", 'timeout', "power", 'clear_average', 'acquire_data', 'error_query']
      #::inst0::INSTR"
      #enable SICL in system settings
-     #"TCPIP::129.16.115.134::5025::SOCKET"                
+     #"TCPIP::129.16.115.134::5025::SOCKET"
     address=Unicode("TCPIP::129.16.115.134").tag(sub=True, no_spacer=True)
-    simulate=Bool(False).tag(sub=True) 
+    simulate=Bool(False).tag(sub=True)
     VNA=Value().tag(private=True, desc="a link to the session of the instrument.")
     ch1=Value().tag(private=True, desc="link to main instrument channel")
     measS11=Value().tag(private=True, desc="link to measurement S11")
@@ -87,7 +88,7 @@ class AgilentNetworkAnalyzer(COM_Instrument):
     measS22=Value().tag(private=True, desc="link to measurements S22")
 
     trace_plot=Typed(Plotter).tag(private=True)
-    
+
     def update_trace_plot(self):
         self.trace_plot.plot_dict["trace_mag S21"].clt.set_xdata(self.freq)
         S21dB=20.0*log10(absolute(self.S21))
@@ -104,16 +105,16 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         tp=Plotter(name=self.name+' trace plot')
         tp.line_plot('trace_mag S21', self.freq, 20.0*log10(absolute(self.S21)))
         return tp
-    
+
     doS11=Bool(False)
     doS21=Bool(False)
     doS12=Bool(False)
     doS22=Bool(False)
     do_freq=Bool(False)
     timeout=Int(10000)
-    
+
     #clear_average=Bool(True).tag(sub=True)
-    
+
     @observe("doS11", "doS21", "doS21", "doS22")
     def observe_doSs(self, change):
         log_debug(change)
@@ -145,31 +146,31 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         t=sAll.split(",")
         return {t[i]:t[i+1] for i in range(0, len(t), 2)}
 
-    @reader    
+    @reader
     def reader(self):
         """calls VNA ReadString"""
         return self.VNA.System2.ReadString()
-    
+
     @writer
     def writer(self, VNA_string):
         """calls VNA WriteString using string formatting by kwargs"""
         self.VNA.System2.WriteString(VNA_string)
-    
+
     @asker
     def asker(self, VNA_string):
         """calls VNA WriteString followed by VNA ReadString"""
         self.VNA_write(VNA_string)
         return self.VNA_read()
 
-    
-    @tag_Callable()    
+
+    @tag_Callable()
     def VNA_abort(self):
         self.VNA.Channels.Abort()
         self.VNA_write("CALC:PAR:DEL:ALL")
         self.VNA.Status.Clear()
-        
+
         #self.ch1.TriggerMode=TriggerModeDict['Hold']
-          
+
     @booter
     def booter(self, address):
         self.VNA=CreateObject("AgilentNA.AgilentNA")
@@ -178,7 +179,7 @@ class AgilentNetworkAnalyzer(COM_Instrument):
                    ]
         init_str=','.join(init_list)
         print init_str
-        log_debug(self.VNA.Initialize(self.address, False, False, init_str)) 
+        log_debug(self.VNA.Initialize(self.address, False, False, init_str))
         self.ch1=self.VNA.Channels["Channel1"]
         if not self.simulate:
             self.VNA.System2.IO.IO.LockRsrc()
@@ -199,10 +200,10 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         #self.error_query()
         #sleep(1)
         #self.measS11.Delete()
-                                    
+
         self.error_query()
-    
-    @tag_Callable()    
+
+    @tag_Callable()
     def error_query(self):
         for n in range(11):
             err_query=self.VNA.Utility.ErrorQuery()
@@ -212,26 +213,26 @@ class AgilentNetworkAnalyzer(COM_Instrument):
 
     def clear_all_traces(self):
         self.VNA.System2.WriteString("CALC:PAR:DEL:ALL")
-                    
-                            
+
+
 #    def close_measurement(self, key):
 #        try:
 #            self.meas_dict[key].Delete()
 #        except COMError as e:
 #            log_debug(e)
-#            
+#
 #    def close_all_measurements(self):
 #        for key in self.meas_dict:
 #            self.close_measurement(key)
-            
+
     @closer
     def closer(self):
         for key in self.S_names:
             if getattr(self, 'do'+key):
                 log_debug(getattr(self, 'meas'+key).Delete())
-        #self.VNA_abort() 
+        #self.VNA_abort()
         if not self.simulate:
-            log_debug(self.VNA.System2.IO.IO.UnlockRsrc())        
+            log_debug(self.VNA.System2.IO.IO.UnlockRsrc())
         log_debug(self.VNA.Close())
         for n in range(10):
             log_debug(n)
@@ -240,11 +241,11 @@ class AgilentNetworkAnalyzer(COM_Instrument):
     #VNA.Channels["Channel1"].StimulusRange.Span
     #VNA.Channels["Channel1"].StimulusRange.Center
     #VNA.System2.WriteString(":OUTP 0")
-        
+
     @tag_Callable()
     def clear_average(self):
         self.ch1.ClearAverage()
-    
+
 #    def acq2(self):
 #        log_debug('acq2 started')
 #        self.ch1.TriggerMode=1
@@ -252,8 +253,8 @@ class AgilentNetworkAnalyzer(COM_Instrument):
 #        for n in range(self.averages):
 #            self.ch1.TriggerSweep(1000)
 #            self.VNA.System2.WaitForOperationComplete(10000)
-#        log_debug('acq2 stopped') 
-#    
+#        log_debug('acq2 stopped')
+#
 #    def acq(self):
 #        log_debug('acq started')
 #        self.VNA_write("SENSE:SWE:GRO:COUN {}".format(self.averages))
@@ -266,8 +267,8 @@ class AgilentNetworkAnalyzer(COM_Instrument):
 #            #print self.error_query()
 #        except Exception as e:
 #            raise Exception(str(e))
-#        log_debug('acq stopped') 
-    @tag_Callable()    
+#        log_debug('acq stopped')
+    @tag_Callable()
     def acquire_data(self):
         self.trigger_mode='Hold'
         #if get_tag(self, "clear_average", "do"):
@@ -282,12 +283,12 @@ class AgilentNetworkAnalyzer(COM_Instrument):
                 break
             self.ch1.TriggerSweep(1000)
             self.VNA.System2.WaitForOperationComplete(self.timeout)
-            
+
             if n==9:
                 for key in self.S_names:
                     if getattr(self, "do"+key):
                         getattr(self, 'meas'+key).Trace.AutoScale()
-                           
+
         for key in self.S_names:
             if getattr(self, "do"+key):
                 data=array(getattr(self, 'meas'+key).FetchComplex())
@@ -299,13 +300,13 @@ class AgilentNetworkAnalyzer(COM_Instrument):
             self.freq=linspace(self.start_freq, self.stop_freq, self.points)
         self.update_trace_plot()
                 #print list(frq)==list(self.freq)
-            
-    start_freq = Float(4.0e9).tag(high=50.0e9, low=10.0e6, label = 'VNA start frequency', unit2 = 'GHz', 
+
+    start_freq = Float(4.0e9).tag(high=50.0e9, low=10.0e6, label = 'VNA start frequency', unit2 = 'GHz',
                                     aka="self.ch1.StimulusRange.Start", show_value=True)
 
     stop_freq = Float(5.0e9).tag(low=10.0e6, high=50.0e9, label = 'VNA stop frequency', unit2 = 'GHz',
                                    aka="self.ch1.StimulusRange.Stop", show_value=True)
-                                   
+
     points = Int(1601).tag(low=1, high=20001, aka="self.ch1.Points")
     averages = Int(1).tag(low=1, high=50000, aka="self.ch1.AveragingFactor")
     averaging=Bool(True).tag(aka="self.ch1.Averaging")
@@ -323,9 +324,9 @@ class AgilentNetworkAnalyzer(COM_Instrument):
     S12 = Array().tag(sub=True)
     S21 = Array().tag(sub=True)
     S22 = Array().tag(sub=True)
-    
+
     trigger_mode=Enum('Continuous', 'Hold').tag(mapping=TriggerModeDict, aka="self.ch1.TriggerMode")
-    
+
 if __name__ == '__main__':
    # print get_ptr(1, "self.ch1.StimulusRange.Start")
     if 1:
@@ -355,25 +356,25 @@ if __name__ == '__main__':
                 VNA.doS21=True
                 VNA.acquire_data()
                 #VNA.acq2()
-                
+
                 #VNA.trigger_mode='Hold'
                 #print get_map(VNA, 'trigger_mode')
                 #print get_map(VNA, 'trigger_mode', 0)
-                
+
                 VNA.close()
         except Exception as e:
             print e
             VNA.VNA_abort()
         finally:
             AgilentNetworkAnalyzer.clean_up()
-            
 
-        
+
+
     #NA.start_freq = 4.0e9
     #NA.stop_freq = 5e9
     #NA.points = 201
     #NA.electrical_delay = 62.01e-9
-    #NA.power = -20    
+    #NA.power = -20
     #plotdata = Instance(ArrayPlotData)
     #prepared = CBool(False)
 #    def __init__(self, resource_name):

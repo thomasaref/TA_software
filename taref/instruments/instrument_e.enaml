@@ -4,7 +4,7 @@ Created on Thu May  7 11:20:09 2015
 
 @author: thomasaref
 """
-from enaml.widgets.api import Form, ToolBar, Action, VGroup, PushButton, GroupBox, ScrollArea, Container, Field, Label, DockPane, Notebook, Page
+from enaml.widgets.api import Form, ToolBar, Action, VGroup, PushButton, GroupBox, ScrollArea, Container, Field, Label, ProgressBar, DockPane, Notebook, Page
 from enaml.core.api import Looper, Conditional
 from enaml.layout.api import spacer
 from taref.core.agent_e import CoreView
@@ -58,6 +58,12 @@ enamldef BootCloseToolBar(ToolBar):
         text="Close All"
         triggered::chief_cls.close_all()
         tool_tip = "Close all instruments"
+    Action:
+        separator=True
+    Action:
+        text="Abort All"
+        triggered::chief_cls.abort_all()
+        tool_tip = "Abort all processes"
 
 
 enamldef ControlView(CoreView):
@@ -108,31 +114,48 @@ enamldef CloseExt(aHGroup):
             InstrVar:
                 vname=loop_item
 
-enamldef StatusExt(Form):
+enamldef StatusExt(aHGroup):
     """Top status display"""
-    aHGroup:
-        trailing_spacer=spacer
-        Label:
-            text = "Status:"
-        PushButton:
-            text << instr.status
-            checkable=True
-            checked << instr.status=="Active"
-            clicked ::
-                if instr.status=="Active":
-                    instr.close()
-                else:
-                    instr.boot()
-    aHGroup:
-        trailing_spacer=spacer
-        Label:
-            text="Automatic Send On Change:"
-        PushButton:
-                text << {True : "ON", False : "OFF"}[instr.send_now]
-                checkable=True
-                checked << instr.send_now
-                clicked ::
-                    instr.send_now=self.checked
+    trailing_spacer=None
+    #aHGroup:
+    #    trailing_spacer=spacer
+    #    Label:
+    #        text = "Status:"
+    PushButton:
+        text << instr.status
+        checkable=True
+        checked << instr.status=="Active"
+        clicked ::
+            if instr.status=="Active":
+                instr.close()
+            else:
+                instr.boot()
+    PushButton: busy_b:
+        text = "Busy"
+        checkable=True
+        checked << instr.busy
+        clicked:: busy_b.checked=instr.busy
+
+    ProgressBar:
+        value<<instr.progress
+        text_visible=True
+
+    PushButton:
+        text = "Abort"
+        checkable=True
+        clicked :: instr.abort=True
+        checked << instr.abort
+
+    #aHGroup:
+    #    trailing_spacer=spacer
+    #    Label:
+    #        text="Automatic Send On Change:"
+    PushButton:
+        text << {True : "SEND ON CHANGE", False : "USE SEND BUTTON"}[instr.send_now]
+        checkable=True
+        checked << instr.send_now
+        clicked ::
+            instr.send_now=self.checked
 
 enamldef TestExt(aHGroup):
     """test function display"""
@@ -177,13 +200,13 @@ enamldef InstrumentNotebook(Notebook):
                 TestExt:
                     pass
 
-enamldef GPIB_InstrumentNotebook(InstrumentNotebook):
-    Page:
-        name="test"
-        title="Test"
-        VGroup:
-            TestExt:
-                pass
+#enamldef GPIB_InstrumentNotebook(InstrumentNotebook):
+#    Page:
+#        name="test"
+#        title="Test"
+#        VGroup:
+#            TestExt:
+#                pass
 
 enamldef InstrumentView(AgentWindow):
     """default view for an agent based on dynamic templating"""
@@ -194,11 +217,11 @@ enamldef InstrumentView(AgentWindow):
         InstrumentNotebook:
             pass
 
-enamldef GPIB_InstrumentView(AgentWindow):
-    """default view for an agent based on dynamic templating"""
-    attr instr
-    VGroup:
-        StatusExt:
-            pass
-        GPIB_InstrumentNotebook:
-            pass
+#enamldef GPIB_InstrumentView(AgentWindow):
+#    """default view for an agent based on dynamic templating"""
+#    attr instr
+#    VGroup:
+#        StatusExt:
+#            pass
+#        GPIB_InstrumentNotebook:
+#            pass

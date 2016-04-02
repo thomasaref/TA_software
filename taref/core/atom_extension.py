@@ -13,10 +13,11 @@ from atom.api import Property, Callable, Coerced, Enum, Float, Int, Unicode, Lis
 from numpy import shape, ndarray
 from taref.core.log import log_debug, log_info
 from functools import wraps
-from enaml.application import deferred_call
 from threading import Thread
 from types import MethodType
 from taref.physics.fundamentals import dB, inv_dB, dB_pwr, inv_dB_pwr
+from enaml.application import Application, schedule, deferred_call
+from contextlib import contextmanager
 
 #def mult_unit_maker(unit_factor):
 #    def mult_unit_func(value):
@@ -167,6 +168,64 @@ UNIT_DICT={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
            #"dB":dB_func(), "inv_dB":inv_dB_func(),
 }
 
+def safe_setattr(obj, name, value):
+    """thread safe sets attribute if enaml application is running. otherwise, just does setattr"""
+    if Application.instance() is None:
+        return setattr(obj, name, value)
+    deferred_call(setattr, obj, name, value)
+
+def safe_set_attr(obj, name, value, **kwargs):
+    """thread safe sets attribute if enaml application is running. otherwise, just does setattr"""
+    if Application.instance() is None:
+        return set_attr(obj, name, value, **kwargs)
+    deferred_call(set_attr, obj, name, value, **kwargs)
+
+def safe_getattr(obj, name, default=None):
+    """thread safe function for getting. not so useful"""
+    if Application.instance() is None:
+        return getattr(obj, name, default)
+    return schedule(getattr, args=(obj, name, default))
+
+@contextmanager
+def safe_run(obj):
+    """generates a context which safely turns off abort and busy when done"""
+    yield
+    safe_setattr(obj, "abort", False)
+    safe_setattr(obj, "busy", False)
+
+
+@contextmanager
+def busy_run(obj):
+    """generates a context which safely turns off progress, abort and busy when done"""
+    safe_setattr(obj, "progress", 0)
+    safe_setattr(obj, "busy", True)
+    with safe_run(obj):
+        yield
+    safe_setattr(obj, "progress", 0)
+    #safe_setattr(obj, "abort", False)
+    #safe_setattr(obj, "busy", False)
+
+
+def safe_log(*args, **kwargs):
+    """thread safe call to logging"""
+    if Application.instance() is None:
+        return log_debug(*args, **kwargs)
+    deferred_call(log_info, *args, **kwargs)
+
+def get_value_check(obj, name, value):
+        """coerces and checks value when getting. For Enum this allows the inverse mapping.
+        For List, this calls the get_value_check for the respective parameter in the List"""
+        if get_type(obj, name) is Enum:
+            return get_inv(obj, name, value)
+#        elif get_type(obj, name) is List:
+#            for key, item in value.iteritems():
+#                temp=get_tag(obj, key, 'send_now', obj.send_now)
+#                set_tag(obj, key, send_now=False)
+#                setattr(obj, key, get_value_check(obj, key, item))
+#                set_tag(obj, key, send_now=temp)
+#            return value.keys()
+        return value
+
 def get_display(obj, name):
     disp_unit=get_tag(obj, name, "display_unit")
     return disp_unit.show_unit(getattr(obj, name)*disp_unit)
@@ -183,7 +242,7 @@ def set_all_tags(obj, **kwargs):
 def get_tag(obj, name, key, none_value=None):
     """Shortcut to retrieve metadata from an Atom member which also returns a none_value if the metadata does not exist.
        This is an easy way to get a tag on a particular member and provide a default if it isn't there."""
-    #log_debug(name)   
+    #log_debug(name)
     metadata=obj.get_member(name).metadata
     if metadata is None:
         return none_value
@@ -230,6 +289,7 @@ def call_func(obj, name, **kwargs):
     return getattr(obj, name)(obj, **kwargs)
 
 def reset_property(obj, name):
+    """shortcut to reset of property"""
     obj.get_member(name).reset(obj)
 
 def reset_properties(obj):
@@ -257,7 +317,7 @@ def set_value_map(obj, name, value):
         return get_map(obj, name, value)
     return value
 
-def log_func(func, pname=None):
+def log_func(func, pname=None, threaded=False):
     """logging decorator for Callables that logs call if tag log!=False"""
     func_name=func.func_name
     if pname is None:
@@ -284,11 +344,10 @@ def log_func(func, pname=None):
                         value=getattr(self, param)
                         value=set_value_map(self, param, value)
                         kwargs[param]=value
-        #if hasattr(obj, "chief"): #not working. how to get return value?
-        #    objargs=(obj,)+args
-        #    return_value=do_it_if_needed(obj.chief, self.func, *objargs, **kwargs)
-        #else:
-        return func(self, *args, **kwargs)
+        if threaded: #doesn't return value from thread
+            return self.do_it_busy(func, *((self,)+args), **kwargs)
+        else:
+            return func(self, *args, **kwargs)
     new_func.pname=pname
     new_func.run_params=get_run_params(func)
     return new_func
@@ -443,20 +502,20 @@ def set_log(obj, name, value):
        obj.datasave(name, value)
 
 
-def code_caller(topdog, code, *args, **kwargs):
-    result=code(*args, **kwargs)
-    try:
-        deferred_call(setattr, topdog, 'busy', False)
-        deferred_call(setattr, topdog, 'progress', 0)
-        deferred_call(setattr, topdog, 'abort', False)
-    except RuntimeError:
-        topdog.busy=False
-        topdog.progress=0
-        topdog.abort=False
-    return result
-
-def do_it_if_needed(topdog, code, *args, **kwargs):
-    if not topdog.busy:
-        topdog.busy = True
-        thread = Thread(target=code_caller, args=(topdog, code)+args, kwargs=kwargs)
-        thread.start()
+#def code_caller(topdog, code, *args, **kwargs):
+#    result=code(*args, **kwargs)
+#    try:
+#        deferred_call(setattr, topdog, 'busy', False)
+#        deferred_call(setattr, topdog, 'progress', 0)
+#        deferred_call(setattr, topdog, 'abort', False)
+#    except RuntimeError:
+#        topdog.busy=False
+#        topdog.progress=0
+#        topdog.abort=False
+#    return result
+#
+#def do_it_if_needed(topdog, code, *args, **kwargs):
+#    if not topdog.busy:
+#        topdog.busy = True
+#        thread = Thread(target=code_caller, args=(topdog, code)+args, kwargs=kwargs)
+#        thread.start()

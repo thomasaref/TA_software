@@ -5,9 +5,14 @@ Created on Mon Jan 25 22:29:11 2016
 @author: thomasaref
 """
 from atom.api import Property, Callable, Range, FloatRange
-from atom_extension import log_func, tag_Property, make_instancemethod, get_tag, set_tag
+from atom_extension import log_func, tag_Property, make_instancemethod, get_tag, set_tag, tag_Callable
 from taref.core.log import log_debug
 from taref.physics.units import UNIT_DICT
+#from functools import wraps
+
+class thread_callable(tag_Callable):
+    def __call__(self, func):
+        return super(thread_callable, self).__call__(log_func(func, pname=None, threaded=True))
 
 def property_func(func):
     name_list=func.func_name.split("_get_")
