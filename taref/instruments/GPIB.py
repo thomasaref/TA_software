@@ -7,11 +7,11 @@ Created on Sun Apr 20 22:35:45 2014
 from taref.instruments.instrument import InstrumentError, booter, closer
 from taref.instruments.string_instrument import String_Instrument, writer, reader, asker
 from taref.core.log import log_debug, log_info
-from taref.core.atom_extension import tag_Callable, get_tag, set_tag, log_func, private_property
-from atom.api import Unicode, Bool, Float, Typed, Value
-#import visa
-from taref.instruments.fakevisa import fakevisa as visa
-from time import sleep
+from taref.core.atom_extension import tag_Callable, get_tag#, set_tag, log_func, private_property
+from atom.api import Unicode, Bool, Float, Value
+import visa
+#from taref.instruments.fakevisa import fakevisa as visa
+#from time import sleep
 
 #def GPIB_read(instr):
 #    """calls visa GPIB read"""
@@ -48,13 +48,25 @@ from time import sleep
 #    GPIB_write.run_params.append(name)
 #    #func.GPIB_string=GPIB_string
 #    return GPIB_write
-
-def start_GPIB(instr, address, delay, timeout, reset, selftest, lock, send_end, identify, clear):
+def GPIB_lock(instr, timeout=None, requested_key=None):
+    if timeout is None:
+        return instr.session.lock(requested_key=requested_key)
+    return instr.session.lock(timeout=timeout, requested_key=requested_key)
+    
+def start_GPIB(instr, address, #delay, timeout, 
+                   reset, selftest, #send_end,
+                   identify, clear,
+               resource_manager, session, access_key):
     if address=="":
         raise InstrumentError("{0}: GPIB instruments need addresses.".format(instr.name))
     instr.address=address
-    instr.session=visa.instrument(address)
+    instr.resource_manager=visa.ResourceManager()
+    
+    instr.session=instr.resource_manager.open_resource(address) #visa.instrument(address)
     #self.session = visa.instrument(self.address, lock = lock, timeout = timeout, send_end=send_end, values_format = visa.single) #values_format=visa.single | visa.big_endian)
+    if get_tag(instr, "access_key", "do", False):
+        instr.access_key=GPIB_lock(instr)
+        instr.lock=True
     if get_tag(instr, "clear", "do", False):
         instr.clear()
     if get_tag(instr, "reset", "do", False):
@@ -66,34 +78,50 @@ def start_GPIB(instr, address, delay, timeout, reset, selftest, lock, send_end, 
     log_info("GPIB instrument {name} initialized at address {address}".format(name=instr.name, address=address))
 
 
+
 class GPIB_Instrument(String_Instrument):
     """Extends Instrument definition to GPIB Instruments"""
     #session=Typed(visa.Instrument).tag(private=True, desc="visa session of the instrument")
     base_name="GPIB_Instrument"
     session=Value().tag(private=True, desc="a link to the session of the instrument. useful particularly for dll-based instruments")
-
+    resource_manager=Value().tag(private=True, desc='a link to the resource_manager')
+    
     @booter
-    def booter(self, address, GPIB_delay, timeout, reset, selftest, lock, send_end, identify, clear):
-        start_GPIB(self, self.address, self.GPIB_delay, self.timeout, self.reset, self.selftest, self.lock, self.send_end, self.identify, self.clear)
+    def booter(self, address, GPIB_delay, timeout, reset, selftest, send_end, identify, clear,
+               resource_manager, session, access_key):
+        start_GPIB(self, address, #self.GPIB_delay, self.timeout,
+        reset, selftest, #send_end,
+        identify, clear, resource_manager, session, access_key)
 
     address=Unicode("GPIB0::22::INSTR").tag(sub=True, label = "GPIB Address")
-    GPIB_delay=Float(0).tag(sub=True, unit2="s", desc="delay between GPIB commands")
+    GPIB_delay=Float(3).tag(sub=True, unit2="s", desc="delay between GPIB commands")
     #timeout=Float(5).tag(sub=True, unit2="s", desc="timeout")
 
-    @tag_Callable(sub=True)
+    @tag_Callable(sub=True, do=False)
     def reset(self):
         """send special GPIB command *RST"""
         self.writer("*RST")
 
-    lock = Bool(False).tag(sub=True)
+    @tag_Callable(sub=False, do=True)
+    def excl_lock(self):
+        self.session.excl_lock()
+        
+    @tag_Callable(sub=False, do=True)        
+    def unlock(self):
+        if self.lock:
+            self.session.unlock()
+            self.lock=False
+    
+    access_key=Unicode().tag(sub=True, do=False, no_spacer=True)    
+    lock = Bool(False).tag(sub=False)
     send_end = Bool(True).tag(sub=True)
 
-    @tag_Callable(sub=True)
+    @tag_Callable(sub=True, do=False)
     def clear(self):
         """calls visa GPIB clear"""
         self.session.clear()
 
-    identify = Unicode().tag(sub=True, get_str="*IDN?", do=True, read_only=True)
+    identify = Unicode().tag(sub=True, get_str="*IDN?", do=True, read_only=True, no_spacer=True)
 
     @tag_Callable(sub=True)
     def selftest(self):
@@ -105,8 +133,10 @@ class GPIB_Instrument(String_Instrument):
     @closer
     def closer(self):
         """default GPIB stop is visa close"""
+        self.unlock()
         self.session.close()
-
+        self.resource_manager.close()
+    
     @reader
     def reader(self):
         """calls visa GPIB read"""

@@ -13,6 +13,7 @@ from taref.filer.save_file import Save_HDF5
 from contextlib import contextmanager
 from time import sleep
 from taref.core.shower import shower
+from enaml.application import Application, deferred_call
 
 from enaml import imports
 with imports():
@@ -77,8 +78,8 @@ class Instrument(Agent):
     def close_all(cls):
         """attempts to close all instruments, then raises any errors that occurred"""
         cls.abort_all()
-        for name, agent in cls.get_agents(Instrument).iteritems():
-            agent.close()
+        for name, instr in cls.get_agents(Instrument).iteritems():
+            instr.close()
 
     @booter
     def booter(self):
@@ -168,6 +169,7 @@ class Instrument(Agent):
                 value=get_cmd(self, **kwargs)
                 #safe_log(value)
                 with self.nosend_context(name):
+                    value=type(getattr(self, name))(value)
                     value=get_value_check(self, name, value)
                     safe_setattr(self, name, value)
                 return value
@@ -180,9 +182,15 @@ class Instrument(Agent):
     def nosend_context(self, name):
         """context that temporarily turns off auto sending for it's duration"""
         temp=get_tag(self, name, 'send_now', self.send_now)
-        set_tag(self, name, send_now=False)
+        if Application.instance() is None:
+            set_tag(self, name, send_now=False)
+        else:
+            deferred_call(set_tag, self, name, send_now=False)
         yield
-        set_tag(self, name, send_now=temp)
+        if Application.instance() is None:
+            set_tag(self, name, send_now=temp)
+        else:
+            deferred_call(set_tag, self, name, send_now=temp)
 
     def send_log(self, name):
         """Log for sending. can be overwritten in child classes to allow customization of message"""
