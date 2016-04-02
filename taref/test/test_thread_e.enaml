@@ -6,13 +6,24 @@ Created on Mon Mar 28 21:37:35 2016
 """
 
 from enaml.widgets.api import Window, Field, CheckBox, VGroup, PushButton, ProgressBar
+from enaml.application import deferred_call
 
 enamldef Main(Window):
     attr obj
     VGroup:
+        PushButton:
+            text = 'Do It!'
+            clicked :: obj.do_it_if_needed()
+        PushButton:
+            text = "Abort"
+            clicked :: obj.abort=True #deferred_call(setattr, obj, "abort", True)
+            checkable=True
+            checked << obj.abort
         Field:
             text := obj.a
             #enabled << not obj.int_busy
+        Field:
+            text:=obj.b
         CheckBox:
             checked <<obj.busy
         CheckBox:
