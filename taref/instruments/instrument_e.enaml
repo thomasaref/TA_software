@@ -33,7 +33,16 @@ enamldef InstrVar(DynVar):
                 checkable = True
                 checked << get_tag(vmodel, vname, "send_now", vmodel.send_now)
                 clicked :: set_tag(vmodel, vname, send_now=self.checked)
-
+    Conditional:
+        condition=get_tag(vmodel, vname, "set_cmd") != None
+        GroupBox: 
+            attr vmodel=parent.vmodel
+            visible = get_run_params(get_tag(vmodel, vname, 'set_cmd'))[1:] != []
+            title = "Send parameters:"
+            Looper:
+                iterable=get_run_params(get_tag(vmodel, vname, "set_cmd"))[1:]
+                DynVar:
+                    vname=loop_item
 
     Conditional:
         condition=get_tag(vmodel, vname, "get_cmd") != None
@@ -42,7 +51,15 @@ enamldef InstrVar(DynVar):
                 text = "Receive"
                 clicked :: vmodel.receive(vname)
                 enabled<<not vmodel.busy
-
+        GroupBox: 
+            attr vmodel=parent.vmodel
+            visible = get_run_params(get_tag(vmodel, vname, 'get_cmd'))[1:] != []
+            title = "Receive parameters:"
+            Looper:
+                iterable=get_run_params(get_tag(vmodel, vname, "get_cmd"))[1:]
+                DynVar:
+                    vname=loop_item
+                    
 enamldef InstrLooper(Looper):
     attr vmodel=parent.vmodel
     iterable=get_main_params(vmodel)

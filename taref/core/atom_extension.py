@@ -222,6 +222,8 @@ def get_value_check(obj, name, value):
         For List, this calls the get_value_check for the respective parameter in the List"""
         if get_type(obj, name) is Enum:
             return get_inv(obj, name, value)
+        else:
+            return type(getattr(obj, name))(value)
 #        elif get_type(obj, name) is List:
 #            for key, item in value.iteritems():
 #                temp=get_tag(obj, key, 'send_now', obj.send_now)
@@ -229,7 +231,7 @@ def get_value_check(obj, name, value):
 #                setattr(obj, key, get_value_check(obj, key, item))
 #                set_tag(obj, key, send_now=temp)
 #            return value.keys()
-        return value
+ #       return value
 
 def get_display(obj, name):
     disp_unit=get_tag(obj, name, "display_unit")
@@ -373,14 +375,12 @@ class instancemethod(object):
         make_instancemethod(self.obj, func, self.name)
         return func
 
-def get_run_params(f, skip_first=True):
+def get_run_params(f, skip=1):
     """returns names of parameters a function will call, skips first parameter if skip_first is True"""
     if hasattr(f, "run_params"):
-        return f.run_params
+        return f.run_params#[skip:]
     argcount=f.func_code.co_argcount
-    if skip_first:
-        return list(f.func_code.co_varnames[1:argcount])
-    return list(f.func_code.co_varnames[0:argcount])
+    return list(f.func_code.co_varnames[skip:argcount])
 
 def get_map(obj, name, value=None, reset=False):
     """gets the mapped value specified by the property mapping and returns the attribute value if it doesn't exist

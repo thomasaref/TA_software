@@ -88,7 +88,7 @@ class COM_Instrument(String_Instrument):
                 set_tag(self, param, get_cmd=self.COM_ask_it(param, aka))
 
     def synchronize(self):
-        for param in self.all_params:
+        for param in self.main_params:
             if get_tag(self, param, 'get_cmd') is not None:
                 #log_debug(param)
                 self.receive(param)

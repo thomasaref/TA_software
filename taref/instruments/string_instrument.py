@@ -79,16 +79,23 @@ class String_Instrument(Instrument):
         """default asker returns attr specified by ask_str"""
         return getattr(self, ask_str)
 
-    @thread_callable()
-    def example_loop(self):
-        #self.do_it_busy(self.do_example_loop)
-        print "starting loop"
-        for n in self.loop(10):
-            for m in self.loop(5):
-                print n, m
-                sleep(0.5)
-        return "yo {0} {1}".format(m, n)
+#    @thread_callable()
+#    def example_loop(self):
+#        #self.do_it_busy(self.do_example_loop)
+#        print "starting loop"
+#        for n in self.loop(10):
+#            for m in self.loop(5):
+#                print n, m
+#                sleep(0.5)
+#        return "yo {0} {1}".format(m, n)
 
+    def synchronize(self):
+        tlist=[param for param in self.main_params if get_tag(self, param, 'get_cmd') is not None]
+        
+        for cmd in set(tlist):
+            self.receive(param)
+            self.wait_loop(self.resp_delay)
+            
     def extra_setup(self, param, typer):
         """extends extra_setup to set response get_cmd to self.reader
         and autoset set_cmd and get_cmd for params with get_str and set_str"""
@@ -110,7 +117,7 @@ class String_Instrument(Instrument):
         make_instancemethod(self, self.writer)
         make_instancemethod(self, self.asker)
 
-    @thread_callable(sub=False, desc="function for test page which sends a commands, waits and gets a response")
+    @thread_callable(sub=True, desc="function for test page which sends a commands, waits and gets a response")
     def command_response(self, command, resp_delay, response):
         if get_tag(self, "command", "do", False):
             self.send(command=command)

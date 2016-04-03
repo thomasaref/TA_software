@@ -51,7 +51,7 @@ class Instrument(Agent):
         """uses self.loop to provide updating delay in increments of 100 ms"""
         for n in self.loop(int(delay/0.1)):
             sleep(0.1)
-
+                            
     @classmethod
     def run_measurement(cls):
         """shortcut method for running all measurements defined in run_func_dict"""
@@ -141,6 +141,7 @@ class Instrument(Agent):
 
     def _observe_send_now(self, change):
         """if instrument send_now changes, change all send_now tags of parameters"""
+        print change
         if change['type']!='create':
             set_all_tags(self, send_now=self.send_now, n=0)
 
@@ -168,17 +169,23 @@ class Instrument(Agent):
         get_cmd=get_tag(self, name, 'get_cmd')
         if self.status=="Active":
             if get_cmd!=None:
-                #if not hasattr(get_cmd, "pname"):
-                #    get_cmd=log_func(get_cmd, name)
-                #    set_tag(self, name, get_cmd=get_cmd)
+                if not hasattr(get_cmd, "pname"):
+                    get_cmd=log_func(get_cmd, name)
+                    set_tag(self, name, get_cmd=get_cmd)
                 self.receive_log(name)
                 value=get_cmd(self, **kwargs)
-                #safe_log(value)
-                with self.nosend_context(name):
-                    value=type(getattr(self, name))(value)
-                    value=get_value_check(self, name, value)
-                    safe_setattr(self, name, value)
-                return value
+                if isinstance(value, dict):
+                    self.nosend_safeset(**value)
+                    return value[name]
+                else:
+                    self.nosend_safeset(**{name:value})
+                    return value
+#                #safe_log(value)
+#                with self.nosend_context(name):
+#                    value=type(getattr(self, name))(value)
+#                    value=get_value_check(self, name, value)
+#                    safe_setattr(self, name, value)
+                #return value
             else:
                 print "WARNING: {instr} {name} get_cmd doesn't exist".format(instr=self.name, name=name)
         else:
@@ -191,7 +198,13 @@ class Instrument(Agent):
         safe_set_tag(self, name, send_now=False)
         yield
         safe_set_tag(self, name, send_now=temp)
-
+    
+    def nosend_safeset(self, **kwargs):
+        for key, value in kwargs.iteritems():
+            with self.nosend_context(key):
+                value=get_value_check(self, key, value)
+                safe_setattr(self, key, value)
+                
     def send_log(self, name):
         """Log for sending. can be overwritten in child classes to allow customization of message"""
         label=get_tag(self, name, 'label', name)
@@ -210,9 +223,9 @@ class Instrument(Agent):
         if self.status=="Active":
             set_cmd=get_tag(self, name, 'set_cmd')
             if set_cmd!=None:
-                #if not hasattr(set_cmd, "pname"):
-                #    set_cmd=log_func(set_cmd, name)
-                #    set_tag(self, name, set_cmd=set_cmd)
+                if not hasattr(set_cmd, "pname"):
+                    set_cmd=log_func(set_cmd, name)
+                    set_tag(self, name, set_cmd=set_cmd)
                 with self.nosend_context(name):
                     if value is not None:
                         safe_setattr(self, name, value)
@@ -232,7 +245,7 @@ class Instrument(Agent):
         if name in self.all_params:
             if get_tag(self, name, 'send_now', self.send_now):
                 if get_tag(self, name, 'set_cmd')!=None:
-                    self.send(name)
+                    self.send(**{name:value})
 
     def __init__(self, **kwargs):
         """init adds booter and closer as instance methods"""
