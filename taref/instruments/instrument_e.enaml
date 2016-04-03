@@ -26,12 +26,14 @@ enamldef InstrVar(DynVar):
         VGroup:
             PushButton:
                 text = "Send"
-                clicked :: vmodel.send(vname)
+                clicked :: vmodel.send(**{vname:vvalue})
+                enabled<<not vmodel.busy
             PushButton:
                 text = "Now"
                 checkable = True
                 checked << get_tag(vmodel, vname, "send_now", vmodel.send_now)
                 clicked :: set_tag(vmodel, vname, send_now=self.checked)
+
 
     Conditional:
         condition=get_tag(vmodel, vname, "get_cmd") != None
@@ -39,6 +41,7 @@ enamldef InstrVar(DynVar):
             PushButton:
                 text = "Receive"
                 clicked :: vmodel.receive(vname)
+                enabled<<not vmodel.busy
 
 enamldef InstrLooper(Looper):
     attr vmodel=parent.vmodel
@@ -90,6 +93,7 @@ enamldef BootExt(aHGroup):
             self.checked=instr.status=="Active"
         checkable=True
         checked << instr.status=="Active"
+        enabled << not instr.busy
     GroupBox: gb:
         title = "Boot parameters:"
         attr vmodel=instr
@@ -117,10 +121,7 @@ enamldef CloseExt(aHGroup):
 enamldef StatusExt(aHGroup):
     """Top status display"""
     trailing_spacer=None
-    #aHGroup:
-    #    trailing_spacer=spacer
-    #    Label:
-    #        text = "Status:"
+
     PushButton:
         text << instr.status
         checkable=True
@@ -130,26 +131,29 @@ enamldef StatusExt(aHGroup):
                 instr.close()
             else:
                 instr.boot()
+        enabled<< not instr.busy or instr.status=="Active"
+
     PushButton: busy_b:
         text = "Busy"
         checkable=True
         checked << instr.busy
         clicked:: busy_b.checked=instr.busy
+        enabled<<instr.busy
 
     ProgressBar:
         value<<instr.progress
         text_visible=True
 
-    PushButton:
+    PushButton: abort_b:
         text = "Abort"
         checkable=True
-        clicked :: instr.abort=True
+        clicked ::
+            instr.abort=True
+            if not instr.busy:
+                instr.abort=False
         checked << instr.abort
+        enabled << instr.busy
 
-    #aHGroup:
-    #    trailing_spacer=spacer
-    #    Label:
-    #        text="Automatic Send On Change:"
     PushButton:
         text << {True : "SEND ON CHANGE", False : "USE SEND BUTTON"}[instr.send_now]
         checkable=True

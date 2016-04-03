@@ -168,49 +168,54 @@ UNIT_DICT={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
            #"dB":dB_func(), "inv_dB":inv_dB_func(),
 }
 
+def safe_call(func, *args, **kwargs):
+    """utility function for safely calling functions that doesn't return anything"""
+    if Application.instance() is None:
+        return func(*args, **kwargs)
+    deferred_call(func, *args, **kwargs)
+
 def safe_setattr(obj, name, value):
     """thread safe sets attribute if enaml application is running. otherwise, just does setattr"""
-    if Application.instance() is None:
-        return setattr(obj, name, value)
-    deferred_call(setattr, obj, name, value)
+    safe_call(setattr, obj, name, value)
 
 def safe_set_attr(obj, name, value, **kwargs):
     """thread safe sets attribute if enaml application is running. otherwise, just does setattr"""
-    if Application.instance() is None:
-        return set_attr(obj, name, value, **kwargs)
-    deferred_call(set_attr, obj, name, value, **kwargs)
+    safe_call(set_attr, obj, name, value, **kwargs)
 
-def safe_getattr(obj, name, default=None):
-    """thread safe function for getting. not so useful"""
-    if Application.instance() is None:
-        return getattr(obj, name, default)
-    return schedule(getattr, args=(obj, name, default))
+def safe_log_debug(*args, **kwargs):
+    """thread safe call to logging"""
+    safe_call(log_debug, *args, **kwargs)
 
-@contextmanager
-def safe_run(obj):
-    """generates a context which safely turns off abort and busy when done"""
-    yield
-    safe_setattr(obj, "abort", False)
-    safe_setattr(obj, "busy", False)
+def safe_set_tag(obj, name, **kwargs):
+    safe_call(set_tag, obj, name, **kwargs)
+
+#def safe_getattr(obj, name, default=None):
+#    """thread safe function for getting. not so useful"""
+#    if Application.instance() is None:
+#        return getattr(obj, name, default)
+#    return schedule(getattr, args=(obj, name, default))
+
+#@contextmanager
+#def safe_run(obj):
+#    """generates a context which safely turns off abort and busy when done"""
+#    yield
+#    safe_setattr(obj, "abort", False)
+#    safe_setattr(obj, "busy", False)
 
 
-@contextmanager
-def busy_run(obj):
-    """generates a context which safely turns off progress, abort and busy when done"""
-    safe_setattr(obj, "progress", 0)
-    safe_setattr(obj, "busy", True)
-    with safe_run(obj):
-        yield
-    safe_setattr(obj, "progress", 0)
-    #safe_setattr(obj, "abort", False)
+#@contextmanager
+#def busy_run(obj):
+#    """generates a context which safely turns off progress, abort and busy when done"""
+#    safe_setattr(obj, "progress", 0)
+#    safe_setattr(obj, "busy", True)
+#    with safe_run(obj):
+#        yield
+#    safe_setattr(obj, "progress", 0)
+#    #safe_setattr(obj, "abort", False)
     #safe_setattr(obj, "busy", False)
 
 
-def safe_log(*args, **kwargs):
-    """thread safe call to logging"""
-    if Application.instance() is None:
-        return log_debug(*args, **kwargs)
-    deferred_call(log_info, *args, **kwargs)
+
 
 def get_value_check(obj, name, value):
         """coerces and checks value when getting. For Enum this allows the inverse mapping.
@@ -345,7 +350,8 @@ def log_func(func, pname=None, threaded=False):
                         value=set_value_map(self, param, value)
                         kwargs[param]=value
         if threaded: #doesn't return value from thread
-            return self.do_it_busy(func, *((self,)+args), **kwargs)
+            names=[thread.name for thread in self.thread_list if pname in thread.name]
+            return self.add_thread("{0} {1}".format(pname, len(names)), func, *((self,)+args), **kwargs)
         else:
             return func(self, *args, **kwargs)
     new_func.pname=pname
@@ -421,6 +427,16 @@ class tag_Callable(object):
 
     def __call__(self, func):
         return Callable(func).tag(**self.kwargs)
+
+class log_callable(tag_Callable):
+    def __call__(self, func):
+        threaded=self.kwargs.get("threaded", False)
+        new_func=log_func(func, pname=None, threaded=threaded)
+        return super(log_callable, self).__call__(new_func)
+
+class thread_callable(log_callable):
+    default_kwargs=dict(threaded=True)
+
 
 class tag_Property(tag_Callable):
     """disposable decorator class that returns a cached Property tagged with kwargs"""

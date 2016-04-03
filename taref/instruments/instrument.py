@@ -7,13 +7,14 @@ Created on Mon Jan 19 17:25:53 2015
 
 from atom.api import Bool, Enum, Float
 from taref.core.agent import Agent
-from taref.core.log import log_info, log_warning, log_debug#, make_log_file
-from taref.core.atom_extension import private_property, set_tag, get_tag, log_func, tag_Callable, set_all_tags, make_instancemethod, get_value_check, safe_setattr, safe_log
+from taref.core.log import log_info#, log_warning, log_debug#, make_log_file
+from taref.core.atom_extension import (private_property, set_tag, get_tag, log_func, tag_Callable, set_all_tags,
+                                       make_instancemethod, get_value_check, safe_setattr, safe_log_debug, safe_set_tag)
 from taref.filer.save_file import Save_HDF5
 from contextlib import contextmanager
 from time import sleep
 from taref.core.shower import shower
-from enaml.application import Application, deferred_call
+#from enaml.application import Application, deferred_call
 
 from enaml import imports
 with imports():
@@ -34,11 +35,6 @@ class tag_closer(tag_Callable):
 def closer(func):
     return tag_closer()(func)
 
-def receive_log(obj, name):
-    """Log for receiving. can be overwritten in child classes for customization of message"""
-    label=get_tag(obj, name, 'label', name)
-    log_debug("RECEIVE: {instr} {label}".format(instr=obj.name, label=label))
-
 class Instrument(Agent):
     """Instrument class. Provides functionality for running instruments"""
     base_name="instrument"
@@ -48,6 +44,10 @@ class Instrument(Agent):
     timeout=Float(1).tag(sub=True, desc="timeout in seconds")
 
     def wait_loop(self, delay):
+        names=[thread.name for thread in self.thread_list if "wait_loop" in thread.name]
+        self.add_thread("wait_loop {}".format(len(names)), self.do_wait_loop, delay)
+
+    def do_wait_loop(self, delay):
         """uses self.loop to provide updating delay in increments of 100 ms"""
         for n in self.loop(int(delay/0.1)):
             sleep(0.1)
@@ -71,15 +71,19 @@ class Instrument(Agent):
 
     @classmethod
     def boot_all(cls):
+        log_info("Booting all instruments")
         for instr in cls.get_agents(Instrument).values():
             instr.boot()
+        log_info("All instruments successfully booted")
 
     @classmethod
     def close_all(cls):
         """attempts to close all instruments, then raises any errors that occurred"""
         cls.abort_all()
+        log_info("Closing all instruments")
         for name, instr in cls.get_agents(Instrument).iteritems():
             instr.close()
+        log_info("All instruments successfully closed")
 
     @booter
     def booter(self):
@@ -97,6 +101,8 @@ class Instrument(Agent):
 
     def boot(self,  **kwargs):
         """Boot the instrument using booter function if it exists"""
+        if self.busy:
+            raise InstrumentError("Trying to boot while busy")
         if self.status=="Closed":
             self.status="Active"
             self.preboot()
@@ -152,19 +158,19 @@ class Instrument(Agent):
     def receive_log(self, name):
         """Log for receiving. can be overwritten in child classes for customization of message"""
         label=get_tag(self, name, 'label', name)
-        safe_log("RECEIVE: {instr} {label}".format(instr=self.name, label=label))
+        print "RECEIVE: {instr} {label}".format(instr=self.name, label=label)
 
-    def receive(self, name, **kwargs):
-        self.do_it_busy(self.do_receive, name, **kwargs)
+    def receive(self, name):
+        self.add_thread("receive "+name, self.do_receive, name)
 
     def do_receive(self, name, **kwargs):
         """performs receive of parameter name i.e. executing associated get_cmd with value checking"""
         get_cmd=get_tag(self, name, 'get_cmd')
         if self.status=="Active":
             if get_cmd!=None:
-                if not hasattr(get_cmd, "pname"):
-                    get_cmd=log_func(get_cmd, name)
-                    set_tag(self, name, get_cmd=get_cmd)
+                #if not hasattr(get_cmd, "pname"):
+                #    get_cmd=log_func(get_cmd, name)
+                #    set_tag(self, name, get_cmd=get_cmd)
                 self.receive_log(name)
                 value=get_cmd(self, **kwargs)
                 #safe_log(value)
@@ -182,23 +188,21 @@ class Instrument(Agent):
     def nosend_context(self, name):
         """context that temporarily turns off auto sending for it's duration"""
         temp=get_tag(self, name, 'send_now', self.send_now)
-        if Application.instance() is None:
-            set_tag(self, name, send_now=False)
-        else:
-            deferred_call(set_tag, self, name, send_now=False)
+        safe_set_tag(self, name, send_now=False)
         yield
-        if Application.instance() is None:
-            set_tag(self, name, send_now=temp)
-        else:
-            deferred_call(set_tag, self, name, send_now=temp)
+        safe_set_tag(self, name, send_now=temp)
 
     def send_log(self, name):
         """Log for sending. can be overwritten in child classes to allow customization of message"""
         label=get_tag(self, name, 'label', name)
-        safe_log("SEND: {instr} {label}".format(instr=self.name, label=label))
+        print "SEND: {instr} {label}".format(instr=self.name, label=label)
 
-    def send(self, name, value=None, **kwargs):
-        self.do_it_busy(self.do_send, name, value=None, **kwargs)
+    def send(self, **kwargs):
+        keys=kwargs.keys()
+        if len(keys)!=1:
+            raise InstrumentError("send takes argument of form param=value")
+        name=keys[0]
+        self.add_thread("send "+name, self.do_send, name, kwargs[name])
 
     def do_send(self, name, value=None, **kwargs):
         """performs send of parameter name i.e. executing associated set_cmd. If value is specified, parameter is set to value
@@ -206,18 +210,18 @@ class Instrument(Agent):
         if self.status=="Active":
             set_cmd=get_tag(self, name, 'set_cmd')
             if set_cmd!=None:
-                if not hasattr(set_cmd, "pname"):
-                    set_cmd=log_func(set_cmd, name)
-                    set_tag(self, name, set_cmd=set_cmd)
+                #if not hasattr(set_cmd, "pname"):
+                #    set_cmd=log_func(set_cmd, name)
+                #    set_tag(self, name, set_cmd=set_cmd)
                 with self.nosend_context(name):
                     if value is not None:
                         safe_setattr(self, name, value)
                     self.send_log(name)
                     value=set_cmd(self, **kwargs)
             else:
-                safe_log("WARNING: {instr} {name} set_cmd doesn't exist".format(instr=self.name, name=name))
+                print "WARNING: {instr} {name} set_cmd doesn't exist".format(instr=self.name, name=name)
         else:
-            safe_log("WARNING: Instrument {instr} not active".format(instr=self.name))
+            print "WARNING: Instrument {instr} not active".format(instr=self.name)
 
 
     def __setattr__(self, name, value):
@@ -235,42 +239,6 @@ class Instrument(Agent):
         super(Instrument, self).__init__(**kwargs)
         make_instancemethod(self, self.booter)
         make_instancemethod(self, self.closer)
-
-    #_busy=False
-    #_abort=False
-    #_progress=0
-
-
-#    @private_property
-#    def busy(self):
-#        return self._busy
-#
-#    @busy.setter
-#    def set_busy(self, value):
-#        type(self)._busy=value
-#        self.get_member("busy").reset(self)
-#
-#    @private_property
-#    def progress(self):
-#        return self._prog
-#
-#    @progress.setter
-#    def set_progress(self, value):
-#        type(self)._progress=value
-#        self.get_member("progress").reset(self)
-#
-#    @private_property
-#    def abort(self):
-#        return self._abort
-#
-#    @abort.setter
-#    def set_abort(self, value):
-#        type(self)._abort=value
-#        self.get_member("abort").reset(self)
-
-
-
-
 
 
 if __name__=="__main__":

@@ -7,9 +7,9 @@ Created on Fri Apr 01 21:59:45 2016
 
 from taref.instruments.instrument import Instrument
 from atom.api import Float, Unicode
-from taref.core.atom_extension import tag_Callable, set_tag, get_tag, log_func, make_instancemethod#, safe_setattr
+from taref.core.atom_extension import tag_Callable, set_tag, get_tag, log_func, make_instancemethod, thread_callable#, safe_setattr
 from time import sleep#, time
-from taref.core.extra_setup import thread_callable
+#from taref.core.extra_setup import thread_callable
 
 class tag_writer(tag_Callable):
     default_kwargs=dict(desc="the boot function for the instrument", private=True)
@@ -87,6 +87,7 @@ class String_Instrument(Instrument):
             for m in self.loop(5):
                 print n, m
                 sleep(0.5)
+        return "yo {0} {1}".format(m, n)
 
     def extra_setup(self, param, typer):
         """extends extra_setup to set response get_cmd to self.reader
@@ -109,14 +110,14 @@ class String_Instrument(Instrument):
         make_instancemethod(self, self.writer)
         make_instancemethod(self, self.asker)
 
-    @thread_callable(sub=True, desc="function for test page which sends a commands, waits and gets a response")
-    def command_response(self):
+    @thread_callable(sub=False, desc="function for test page which sends a commands, waits and gets a response")
+    def command_response(self, command, resp_delay, response):
         if get_tag(self, "command", "do", False):
-            self.do_send("command")
+            self.send(command=command)
         if get_tag(self, "resp_delay", "do", False):
             self.wait_loop(self.resp_delay)
         if get_tag(self, "response", "do", False):
-            self.do_receive("response")
+            self.receive("response")
 
     command=Unicode().tag(sub=True, set_str="{command}", send_now=False, do=True)
     resp_delay=Float(0.0).tag(sub=True, desc="delay in seconds", do=True)

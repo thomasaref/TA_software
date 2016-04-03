@@ -10,9 +10,7 @@ from taref.core.log import log_debug
 from taref.physics.units import UNIT_DICT
 #from functools import wraps
 
-class thread_callable(tag_Callable):
-    def __call__(self, func):
-        return super(thread_callable, self).__call__(log_func(func, pname=None, threaded=True))
+
 
 def property_func(func):
     name_list=func.func_name.split("_get_")

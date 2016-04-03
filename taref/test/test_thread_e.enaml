@@ -13,20 +13,40 @@ enamldef Main(Window):
     VGroup:
         PushButton:
             text = 'Do It!'
-            clicked :: obj.do_it_if_needed()
+            clicked :: obj.add_thread('a', obj.run_loop)
+            enabled<<not obj.busy
+        PushButton:
+            text = "update"
+            clicked ::
+                obj.add_thread('b', obj.run_loop)
+                obj.add_thread('a', obj.run_loop)
+            enabled<<not obj.busy
+
+            #    op.text=str(obj.watch_thread({}))
+
         PushButton:
             text = "Abort"
             clicked :: obj.abort=True #deferred_call(setattr, obj, "abort", True)
             checkable=True
             checked << obj.abort
-        Field:
-            text := obj.a
+            enabled<<obj.busy
+        #alias op
+        Field: #op:
+            text:=obj.a
             #enabled << not obj.int_busy
         Field:
             text:=obj.b
+
+        PushButton:
+            text='clear'
+            clicked::
+                obj.a=''
+                obj.b=''
+        Field:
+            pass
         CheckBox:
             checked <<obj.busy
         CheckBox:
             checked := obj.abort
         ProgressBar:
-            value<<obj.prog
+            value<<obj.progress

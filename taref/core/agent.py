@@ -5,14 +5,16 @@ Created on Sat Jul  4 13:03:26 2015
 @author: thomasaref
 """
 from taref.core.log import log_debug
-from atom.api import Unicode, ContainerList, Float, Bool, Int
+from atom.api import Unicode, ContainerList, Float, Bool, Int, Typed, Instance, Event
 from taref.core.backbone import Backbone
-from taref.core.atom_extension import private_property, set_log, reset_properties, safe_setattr, safe_run, busy_run, tag_Callable
+from taref.core.atom_extension import private_property, set_log, reset_properties, safe_setattr
 from collections import OrderedDict
 from taref.core.shower import shower
 from time import time, sleep
-from enaml.application import Application
+#from enaml.application import Application
 from threading import Thread
+from Queue import Queue#, Empty
+from numpy import linspace
 
 class AgentError(Exception):
     pass
@@ -31,73 +33,111 @@ class Operative(Backbone):
 
     @private_property
     def abort_timeout(self):
-        return 600
+        return 1.0
 
     busy=Bool(False).tag(private=True)
-    progress=Int().tag(private=True)
+    progress=Int(0).tag(private=True)
     abort=Bool(False).tag(private=True)
 
-    def _observe_abort(self, change):
-        """observer for abort, logs and does abort"""
-        if self.abort:
-            if self.busy:
-                log_debug("ABORTED: {0}".format(self.name))
-                self.do_it_now(self.do_abort)
-            else:
-                self.abort=False
+    thread=Typed(Thread).tag(private=True)
+    queue=Instance(Queue).tag(private=True)
+    done=Event().tag(private=True)
+    thread_list=ContainerList().tag(private=True)
 
-    def do_abort(self):
-        """thread for performing abort with timeout"""
-        #safe_setattr(self, "abort", True)
-        tstart=time()
-        for n in range(self.abort_timeout):
-            if time()>tstart+self.timeout:
-                raise AgentError("Timeout while attempting to abort!")
-            if not self.busy:
+    def _default_queue(self):
+        """queue of length one"""
+        return Queue(1)
+
+    def lins(self, start, stop, nsteps):
+        """a utility generator for looping with abort and progress.
+        use like linspace"""
+        n=start
+        for n in linspace(start, stop, nsteps):
+            if self.abort:
                 break
-            sleep(0.1)
-        #safe_setattr(self, "abort", False)
-
-
-    @classmethod
-    def abort_all(cls):
-        """attempts to abort all instruments, then raises any errors that occurred"""
-        for instr in cls.agent_dict.values():
-            instr.abort=True
-
-    def safe_run(self, code, *args, **kwargs):
-        with safe_run(self):
-            code(*args, **kwargs)
-
-    def busy_run(self, code, *args, **kwargs):
-        with busy_run(self):
-            code(*args, **kwargs)
+            safe_setattr(self, "progress", int((n-start)/(stop-start)*100))
+            yield n
+        yield n
 
     def loop(self, start, stop=None, step=1):
-        """an assisting generator for looping with
+        """a utility generator for looping with
         abort and progress. Use like range"""
         if stop is None:
             stop=start
             start=0
+        n=start
         for n in range(start, stop, step):
             if self.abort:
                 break
             safe_setattr(self, "progress", int((n+1.0)*step/(stop-start)*100.0))
             yield n
+        yield n
 
-    def do_it_now(self, code, *args, **kwargs):
-        if Application.instance() is None:
-            self.safe_run(code, *args, **kwargs)
-        else:
-            thread = Thread(target=self.safe_run, args=(code,)+args, kwargs=kwargs)
-            thread.start()
+    def queue_put(self, result):
+        """adds result to queue if thread is active and returns result. blocks for self.timeout seconds"""
+        if self.thread is not None:
+            self.queue.put(result, timeout=self.abort_timeout)
+        return result
 
-    def do_it_busy(self, code, *args, **kwargs):
-        if Application.instance() is None:
-            self.busy_run(code, *args, **kwargs)
+    def thread_run(self, code, *args, **kwargs):
+        """assisting function for running threads that passes exceptions and activates done event when finished"""
+        try:
+            return self.queue_put(code(*args, **kwargs))
+        except Exception as e:
+            self.queue_put(e)
+        finally:
+            self.done()
+
+    def _observe_done(self, change):
+        self.stop_thread()
+
+    def stop_thread(self):
+        """function for stopping a thread. if there are more threads in thread_list, it activates the next one.
+        otherwise sets thread, abort, and busy to false"""
+        print "stopping thread: "+ self.thread.name
+        if self.thread is not None:
+            try:
+                value=self.queue.get(timeout=self.abort_timeout)
+                if isinstance(value, Exception):
+                    raise value
+                if hasattr(self, self.thread.name):
+                    setattr(self, self.thread.name, value)
+            finally:
+                if self.thread_list!=[]:
+                    self.start_thread()
+                else:
+                    self.busy=False
+                    self.thread=None
+                    self.abort=False
+
+    def start_thread(self):
+        """starts first thread in thread_list and sets busy to true"""
+        self.busy=True
+        self.thread=self.thread_list.pop(0)
+        print "starting thread: "+self.thread.name
+        self.thread.start()
+
+    def add_thread(self, name, code, *args, **kwargs):
+        """adds a thread to thread_list and starts it if none are running"""
+        thread = Thread(target=self.thread_run, args=(code,)+args, kwargs=kwargs)#, args=(self.loop_step, 10))
+        thread.name=name
+        self.thread_list.append(thread)
+        if self.thread is None:
+            self.start_thread()
+
+    def _observe_abort(self, change):
+        """observer for abort, logs abort"""
+        if self.abort:
+            if self.busy:
+                log_debug("ABORTED: {0}".format(self.name))
         else:
-            thread = Thread(target=self.busy_run, args=(code,)+args, kwargs=kwargs)
-            thread.start()
+            self.abort=False
+
+    @classmethod
+    def abort_all(cls):
+        """attempts to abort all instruments"""
+        for instr in cls.agent_dict.values():
+            instr.abort=True
 
     def show(self, *args, **kwargs):
         """shortcut to shower which defaults to shower(self)"""
