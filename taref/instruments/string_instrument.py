@@ -128,7 +128,7 @@ class String_Instrument(Instrument):
 
     command=Unicode().tag(sub=True, set_str="{command}", send_now=False, do=True)
     resp_delay=Float(0.0).tag(sub=True, desc="delay in seconds", do=True)
-    response=Unicode().tag(sub=True, get_str="command", spec="multiline", do=True)
+    response=Unicode().tag(sub=True,  spec="multiline", do=True)
 
 if __name__=="__main__":
     a=String_Instrument()

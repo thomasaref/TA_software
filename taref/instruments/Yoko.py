@@ -8,8 +8,11 @@ Just a handy stand alone for testing GPIB instruments
 
 from taref.instruments.GPIB import GPIB_Instrument, InstrumentError
 from atom.api import Unicode, Float, Enum, Int, Bool
-from taref.core.atom_extension import private_property
+from taref.core.atom_extension import private_property, safe_log_debug
 from time import sleep
+from taref.core.log import log_debug
+
+log_debug('hji')
 
 
 def get_voltage(self):
@@ -29,7 +32,8 @@ def get_voltage(self):
         result=result[4:]
     voltage=float(result)
     pt_idx=result.find('.')
-    if result[-4:-2]=='-3':
+    if result[-4:-2]=='-3': 
+        #V_range={'-33':2, '-34':3, '+02':4, '+03':5, '+04':6}[result[-4:-2]+str(result.find('.'))]
         if pt_idx==3:
             V_range=2 #10 mV
         else:
@@ -75,7 +79,13 @@ class Yoko(GPIB_Instrument):
 
     def postboot(self):
         self.wait_loop(self.resp_delay)
-        self.synchronize() #needs work
+        self.synchronize() 
+    
+    def synchronize(self):
+        self.wait_loop(self.resp_delay)
+        self.receive('voltage')
+        self.wait_loop(self.resp_delay)
+        self.receive('output')
         
     def _default_resp_delay(self):
         return 0.05
@@ -108,6 +118,38 @@ class Yoko(GPIB_Instrument):
 
 
 if __name__=="__main__":
+    from taref.plotter.fig_format import Plotter
     a=Yoko(address='GPIB0::1::INSTR')
+    #b=Yoko(address='GPIB0::1::INSTR')
+    from time import time
+    from numpy import append
+    #b=Plotter()
+    #b.line_plot("voltage", [a.voltage])
+
+    from atom.api import Atom, Typed, observe, List
+    class Watch(Atom):
+        yok=Typed(Yoko)
+        plot=Typed(Plotter, ())
+        #tstart=Float(time())
+        xdata=List()
+        ydata=List()
+        #def _default_plot(self):
+         #       return self.plot.line_plot('voltage', [self.tstart], [yok.voltage])
+
+        @observe("yok.voltage")
+        def update_plot(self, change):
+            if change["type"]=="create":
+                self.plot.line_plot('voltage', [0], [self.yok.voltage])
+            elif change["type"]=="update":
+                xdata=self.plot.plot_dict['voltage'].clt.get_xdata()
+                xdata=append(xdata, len(xdata))
+                self.plot.plot_dict['voltage'].clt.set_xdata(xdata)
+                ydata=self.plot.plot_dict['voltage'].clt.get_ydata()
+                ydata=append(ydata, self.yok.voltage)
+                self.plot.plot_dict['voltage'].clt.set_ydata(ydata)
+                self.plot.draw()
+
     a.boot()
+    b=Watch(yok=a)
+    
     a.show()

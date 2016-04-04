@@ -74,10 +74,10 @@ class COM_Instrument(String_Instrument):
             do=get_tag(self, param, "do", False)
             readwrite=get_tag(self, param, "ReadWrite", "Both")
             if readwrite in ("Both", "Write"):
-                set_tag(self, param, set_cmd=param+"={"+param+"}", do=do)
+                set_tag(self, param, set_str=param+"={"+param+"}", do=do)
             if readwrite in ("Both", "Read"):
                 set_tag(self, param, get_str=param, do=do)
-        super(String_Instrument, self).extra_setup(param, typer)
+        super(COM_Instrument, self).extra_setup(param, typer)
 
     def postboot(self):
         for param in get_all_tags(self, "aka"):

@@ -4,7 +4,7 @@ Created on Mon Dec 29 05:41:29 2014
 
 @author: thomasaref
 """
-from numpy import linspace, array, log10, absolute
+from numpy import linspace, array, log10, absolute, shape
 #from threading import Thread
 from atom.api import Unicode, Float, Bool, Enum, Int, Value, observe, Dict, Typed
 from taref.instruments.instrument import booter, closer
@@ -73,7 +73,8 @@ class AgilentNetworkAnalyzer(COM_Instrument):
 
     @private_property
     def main_params(self):
-        return ["doS11", "doS21", "doS12", "doS22", "trigger_mode", "VNA_abort", "start_freq", "stop_freq",
+        return ["doS11", "doS21", "doS12", "doS22", "trigger_mode",
+        "VNA_abort", "start_freq", "stop_freq",
                 "points", "averaging", "averages", 'timeout', "power", 'clear_average', 'acquire_data', 'error_query']
      #::inst0::INSTR"
      #enable SICL in system settings
@@ -91,7 +92,9 @@ class AgilentNetworkAnalyzer(COM_Instrument):
 
     def update_trace_plot(self):
         self.trace_plot.plot_dict["trace_mag S21"].clt.set_xdata(self.freq)
-        S21dB=20.0*log10(absolute(self.S21))
+        S21dB=absolute(self.S21) #20.0*log10(absolute(self.S21))
+        print shape(self.freq)
+        print shape(S21dB)
         if self.simulate:
             S21dB=absolute(self.S21)
         self.trace_plot.plot_dict["trace_mag S21"].clt.set_ydata(S21dB)
@@ -103,7 +106,11 @@ class AgilentNetworkAnalyzer(COM_Instrument):
 
     def _default_trace_plot(self):
         tp=Plotter(name=self.name+' trace plot')
-        tp.line_plot('trace_mag S21', self.freq, 20.0*log10(absolute(self.S21)))
+        print self.freq
+        print absolute(self.S21)
+        print shape(self.freq)
+        print shape(self.S21)
+        tp.line_plot('trace_mag S21', self.freq, absolute(self.S21))#S20.0*log10(absolute(self.S21)))
         return tp
 
     doS11=Bool(False)
@@ -129,7 +136,7 @@ class AgilentNetworkAnalyzer(COM_Instrument):
                 SourcePort=int(Sname[2])
                 log_debug(ReceiverPort, SourcePort)
                 if Sname not in self.query_measurements().values():
-                    self.VNA_write("CALC:PAR:DEF:EXT MEAS{0},{0}".format(Sname))
+                    self.writer("CALC:PAR:DEF:EXT MEAS{0},{0}".format(Sname))
                 log_debug(getattr(self, 'meas'+Sname).Create(ReceiverPort, SourcePort))
                 self.error_query()
                 print self.query_measurements()
@@ -138,7 +145,7 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         #self.error_query()
 
     def query_measurements(self):
-        sAll=self.VNA_ask("CALC:PAR:CAT:EXT?")[1:-1]
+        sAll=self.asker("CALC:PAR:CAT:EXT?")[1:-1]
         if self.simulate:
             sAll='NO CATALOG'
         if sAll=='NO CATALOG':
@@ -159,14 +166,14 @@ class AgilentNetworkAnalyzer(COM_Instrument):
     @asker
     def asker(self, VNA_string):
         """calls VNA WriteString followed by VNA ReadString"""
-        self.VNA_write(VNA_string)
-        return self.VNA_read()
+        self.writer(VNA_string)
+        return self.reader()
 
 
-    @tag_Callable()
+    @tag_Callable(do=True)
     def VNA_abort(self):
         self.VNA.Channels.Abort()
-        self.VNA_write("CALC:PAR:DEL:ALL")
+        self.writer("CALC:PAR:DEL:ALL")
         self.VNA.Status.Clear()
 
         #self.ch1.TriggerMode=TriggerModeDict['Hold']
@@ -182,9 +189,10 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         log_debug(self.VNA.Initialize(self.address, False, False, init_str))
         self.ch1=self.VNA.Channels["Channel1"]
         if not self.simulate:
-            self.VNA.System2.IO.IO.LockRsrc()
+            print self.VNA.System2.IO.IO.LockRsrc()
 
-        self.VNA_abort()
+        if get_tag(self, 'abort', 'do', False):
+            self.VNA_abort()
         #self.VNA_write("CALC:PAR:DEL:ALL")
         self.error_query()
         #log_debug(self.VNA.System2.WaitForOperationComplete(self.timeout))
@@ -200,9 +208,12 @@ class AgilentNetworkAnalyzer(COM_Instrument):
         #self.error_query()
         #sleep(1)
         #self.measS11.Delete()
-
+        #self.synchronize()
         self.error_query()
 
+    def synchronize(self):
+        self.receive('points')
+        
     @tag_Callable()
     def error_query(self):
         for n in range(11):
@@ -229,13 +240,12 @@ class AgilentNetworkAnalyzer(COM_Instrument):
     def closer(self):
         for key in self.S_names:
             if getattr(self, 'do'+key):
-                log_debug(getattr(self, 'meas'+key).Delete())
+                getattr(self, 'meas'+key).Delete()
         #self.VNA_abort()
         if not self.simulate:
-            log_debug(self.VNA.System2.IO.IO.UnlockRsrc())
+            print self.VNA.System2.IO.IO.UnlockRsrc()
         log_debug(self.VNA.Close())
-        for n in range(10):
-            log_debug(n)
+        for n in self.loop(10):
             if self.VNA.Release()==0:
                 break
     #VNA.Channels["Channel1"].StimulusRange.Span
@@ -270,17 +280,14 @@ class AgilentNetworkAnalyzer(COM_Instrument):
 #        log_debug('acq stopped')
     @tag_Callable()
     def acquire_data(self):
-        self.trigger_mode='Hold'
+        self.send(trigger_mode='Hold')
         #if get_tag(self, "clear_average", "do"):
         self.clear_average()
         if self.averaging:
             numTriggers=self.averages
         else:
             numTriggers=1
-        for n in range(numTriggers):
-            log_debug(n)
-            if self.abort:
-                break
+        for n in self.loop(numTriggers):
             self.ch1.TriggerSweep(1000)
             self.VNA.System2.WaitForOperationComplete(self.timeout)
 
@@ -293,7 +300,7 @@ class AgilentNetworkAnalyzer(COM_Instrument):
             if getattr(self, "do"+key):
                 data=array(getattr(self, 'meas'+key).FetchComplex())
                 setattr(self, key, data[0]+1.0j*data[1])
-                log_debug(getattr(self, key))
+                #log_debug(getattr(self, key))
                 if self.do_freq:
                     self.freq=getattr(self, 'meas'+key).FetchX()
         if not self.do_freq:
@@ -332,6 +339,7 @@ if __name__ == '__main__':
     if 1:
         VNA = AgilentNetworkAnalyzer(simulate=True)
         VNA.trace_plot
+        print get_tag(VNA, "response", "get_cmd")
         #b=Plotter()
         #b.line_plot('data', VNA.freq, 20.0*log10(absolute(VNA.S21)))
         shower(VNA)
