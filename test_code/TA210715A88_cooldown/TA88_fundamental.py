@@ -92,6 +92,8 @@ class Lyzer(TA88_Fund):
     comment=Unicode().tag(read_only=True, spec="multiline")
     frequency=Array().tag(unit="GHz", plot=True, label="Frequency", sub=True)
     yoko=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
+    pwr=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
+
     Magcom=Array().tag(sub=True)
     offset=Float(-0.035)
     flux_factor=Float(0.2925)
@@ -153,6 +155,7 @@ class Lyzer(TA88_Fund):
 
     @tag_Property(plot=True, sub=True)
     def MagdBFiltbgsub(self):
+        return self.MagAbsFilt/mean(self.MagAbsFilt[:, 0:5], axis=1, keepdims=True)
         return self.MagdBFilt-10.0*log10(mean(self.MagAbsFilt[:, 0:5], axis=1, keepdims=True))
 
     @tag_Property(plot=True, sub=True)
@@ -392,20 +395,28 @@ if __name__=="__main__":
         #b.vline_plot("listent", 4.55e9, alpha=0.3, color="black")
         #b.vline_plot("listenb", 4.4e9, alpha=0.3, color="black")
 
-    if 0:
-        from numpy import pi, linspace, sin, amax, argmin, argmax
+    if 1:
+        from numpy import pi, linspace, sin, amax, argmin, argmax, cos
+        from scipy.constants import h
         Np=qdt.Np
         f0=5.35e9
-        freq=linspace(4e9, 5e9, 1000)
+        freq=linspace(3e9, 7.2e9, 2000)
+        print qdt.flux_factor, qdt.offset, qdt.Ejmax/h, qdt.Ec/h
+        def flux_par(voltage, offset=qdt.offset, flux_factor=qdt.flux_factor, Ejmax=qdt.Ejmax, Ec=qdt.Ec):
+            flux_over_flux0=(voltage-offset)*flux_factor
+            Ej=Ejmax*absolute(cos(pi*flux_over_flux0))
+            E0 =  sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0
+            E1 =  sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0)
+            return (E1-E0)/h
+            #return qdt._get_fq(Ej, qdt.Ec)
 
-        def R_full(f_listen=4.3e9):
+        def R_full(f_listen=4.3e9, fq=4.0e9):
             w_listen=2*pi*f_listen
             epsinf=qdt.epsinf
             W=qdt.W
             Dvv=qdt.Dvv
             w0=2*pi*f0
 
-            fq=linspace(4e9, 5e9, 20)
 
             wq=2.0*pi*fq
 
@@ -428,20 +439,43 @@ if __name__=="__main__":
         temp=[]
         t2=[]
         qfreq=[]
+        yo = linspace(-5.0, 5.0, 1000)
+        #yo=yo[328:500]
+        fq=array([flux_par(yn) for yn in yo])
         for f in freq:
-            X2=36*pi*(f-4.4e9)/4.4e9
-            wrap=(sin(X2)/X2)**2
-            R=absolute(R_full(f))**2
+                #X2=36*pi*(f-4.4e9)/4.4e9
+                #wrap=(sin(X2)/X2)**2
+            R=R_full(f, fq)
             #qfreq.append(freq[argmax(R)])
-            imax=argmax(R)
-            print imax
-            f1=freq[argmin(absolute(R[0:imax]-0.5))]
-            f2=freq[argmin(absolute(R[imax:-1]-0.5))]
-            t2.append(f2-f1)
+            #imax=argmax(R)
+            #print imax
+            #f1=freq[argmin(absolute(R[0:imax]-0.5))]
+            #f2=freq[argmin(absolute(R[imax:-1]-0.5))]
+            #t2.append(f2-f1)
             temp.append(R)
+        temp=array(temp)
+        #b.line_plot("coup", freq, t2)
+        d=Plotter()
+        b.colormesh("R_full", yo, freq, absolute(temp))
+        d.colormesh('R_angle', yo, freq, angle(temp))
 
-        b.line_plot("coup", freq, t2)
-        #b.colormesh("R_full", freq, freq, temp)
+        #fft.ifft(418, 328, 500)
+        def ifft_plot(name, plotter, Magcom, ind):
+            plotter.line_plot("ifft_{}".format(name), absolute(fft.ifft(Magcom[:,ind])), label="ifft_{}".format(name))
+        c=Plotter()
+        ifft_plot(328, c, temp, 328)
+        ifft_plot(418, c, temp, 418)
+        ifft_plot(500, c, temp, 500)
+        def fft_filter(mg, n):
+            myifft=fft.ifft(mg[:,n])
+            #myifft[16:-16]=0.0
+            #if self.filt_start_ind!=0:
+            myifft[:11]=0.0
+            myifft[-11:]=0.0
+            return fft.fft(myifft)
+        t2=array([fft_filter(temp, n) for n in range(len(yo))])
+        #b.colormesh("R_filt",# yo[328:500], freq[::4],
+        #absolute(t2[328:500, :]))
         #R_full(4.2500001e9)
         #R_full(4.3000001e9)
         #R_full(4.3500001e9)

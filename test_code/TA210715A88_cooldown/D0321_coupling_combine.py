@@ -426,7 +426,7 @@ if __name__=="__main__":
         s3a1_mp.ifft_dif_plot("ifft__dif_S1A4 wide")
 
 
-    if 1:
+    if 0:
         s3a4_w=S3A4_Wide(filt_start_ind=0, filt_end_ind=495, on_res_ind=260, VNA_name='TA VNA2',
                          rd_hdf=TA88_Read(main_file="Data_0329/S3A4A1_widegate_fluxswp_higherpwr.hdf5")) #29, 40)
         s3a4_w.read_data()
@@ -466,9 +466,95 @@ if __name__=="__main__":
 
     d=Fitter3()
     wp.line_plot("G_f", freq, d.G_f, label="theory")
-    shower(wp)
 
-#
+
+class S3A4_Power(TransLyzer):
+    def _default_name(self):
+        return "S3A4_power"
+
+    def _default_rd_hdf(self):
+           return TA88_Read(main_file="Data_0404/S3A4A1_gate_pwr_swp_midpeak.hdf5")
+    #@tag_Property(plot=True, sub=True)
+    #def MagAbsFilt(self):
+    #    return absolute(self.MagcomFilt-mean(self.MagcomFilt[0:1, :], axis=0, keepdims=True))
+
+    pwi=Int(8)
+    fqi=Int(280)
+    port_name=Unicode('S11')
+    VNA_name=Unicode("VNA")
+
+    def read_data(self):
+        with File(self.rd_hdf.file_path, 'r') as f:
+            print f["Traces"].keys()
+            Magvec=f["Traces"][self.VNA_name+" - {0}".format(self.port_name)]
+            data=f["Data"]["Data"]
+            self.comment=f.attrs["comment"]
+            self.pwr=data[:,0,0].astype(float64)
+            self.yoko=data[0,1,:].astype(float64)
+
+            print shape(data)
+            print shape(self.yoko)
+            fstart=f["Traces"][self.VNA_name+' - {0}_t0dt'.format(self.port_name)][0][0]
+            fstep=f["Traces"][self.VNA_name+' - {0}_t0dt'.format(self.port_name)][0][1]
+            sm=shape(Magvec)[0]
+            sy=shape(data)
+            print sy
+            s=(sm, sy[0], sy[2])
+            print s
+            Magcom=Magvec[:,0, :]+1j*Magvec[:,1, :]
+            Magcom=reshape(Magcom, s, order="F")
+            self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
+            Magcom=squeeze(Magcom)
+            self.Magcom=Magcom#[:, 10, :]
+            self.stop_ind=len(self.yoko)-1
+            return array([[self.fft_filter_full(m, n) for n in range(len(self.yoko))] for m in range(len(self.pwr))]).transpose()
+
+
+    @tag_Property(plot=True, sub=True)
+    def MagdBFiltbgsub(self):
+        return self.MagAbsFilt/mean(self.MagAbsFilt[:, :, 0:5], axis=1, keepdims=True)
+        return self.MagdBFilt-10.0*log10(mean(self.MagAbsFilt[:, :, 0:5], axis=1, keepdims=True))
+
+    @tag_Property(plot=True, sub=True)
+    def MagcomFilt(self):
+        return array([self.fft_filter(n) for n in range(len(self.yoko))]).transpose()
+
+    def fft_filter_full(self, m, n):
+        myifft=fft.ifft(self.Magcom[:, m, n])
+        myifft[self.filt_end_ind:-self.filt_end_ind]=0.0
+        if self.filt_start_ind!=0:
+            myifft[:self.filt_start_ind]=0.0
+            myifft[-self.filt_start_ind:]=0.0
+        return max(absolute(myifft))
+        return fft.fft(myifft)
+if 1:
+    s3a4_pow=S3A4_Power(filt_start_ind=8, filt_end_ind=16, on_res_ind=42, VNA_name='ta')#,
+                     #rd_hdf=TA88_Read(main_file="Data_0329/S3A4A1_widegate_fluxswp_higherpwr.hdf5")) #29, 40)
+    mg=s3a4_pow.read_data()
+    print shape(mg)
+
+    def magpow_colormesh(self, plotter, mg):
+        print shape(mg)
+        plotter.colormesh("magabs_{}".format(self.name), self.pwr, self.yoko, absolute(mg[ :, :]))
+        #plotter.set_ylim(min(self.frequency), max(self.frequency))
+        plotter.set_xlim(min(self.yoko), max(self.yoko))
+        plotter.xlabel="Yoko (V)"
+        plotter.ylabel="Frequency (Hz)"
+        plotter.title="Magabs fluxmap {}".format(self.name)
+
+    magpow_colormesh(s3a4_pow, Plotter(), mg)
+
+#    s3a4_pow.magabs_colormesh("S3A1 wide magabs")
+#    s3a4_pow.magabsfilt_colormesh("filtcolormesh S4A1 wide")
+#    s3a4_pow.magdBfilt_colormesh("filtdB S1A4 wide")
+#    s3a4_pow.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
+#    #a2.filt_compare(a2.start_ind, bb2)
+#    #s1a1_mp.filt_compare("filt_compare_off_res", s1a1_mp.start_ind)
+#    #s1a1_mp.filt_compare("filt_compare_on_res", s1a1_mp.on_res_ind)
+#    s3a4_pow.ifft_plot("ifft_S1A4 wide")
+#    s3a4_pow.ifft_dif_plot("ifft__dif_S1A4 wide")
+
+shower(wp)#
 #def fano(x, p):
 #    return p[2]*(((p[4]*p[0]+x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]
 #
