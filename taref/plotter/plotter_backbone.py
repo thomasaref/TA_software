@@ -7,15 +7,17 @@ Created on Thu Feb  4 12:48:42 2016
 
 
 from taref.core.log import log_debug
-from atom.api import observe, Atom, Typed, Bool, cached_property, Float
+from atom.api import observe, Atom, Typed, Bool, cached_property, Float, Unicode
 from matplotlib import cm
 from collections import OrderedDict
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 class PlotObserver(object):
-    """decorator object that adds auto drawing of plot to observe"""
+    """decorator object that adds auto drawing of plot to observe decorator"""
     def __init__(self, *args, **kwargs):
+        """if kwarg update_legend is true, will update legend,
+            if kwarg immediate_update is true, will perform on create"""
         self.args=args
         self.update_legend=kwargs.get("update_legend", False)
         self.immediate_update=kwargs.get("immediate_update", False)
@@ -24,20 +26,23 @@ class PlotObserver(object):
         def new_func(obj, change):
             if change["type"]=="update":
                 func(obj, change)
-                obj.update_plot(self.update_legend)
+                obj._parent.update_plot(self.update_legend)
             elif change["type"]=="create":
                 if self.immediate_update:
                     func(obj, change)
         return observe(*self.args)(new_func)
 
 def plot_observe( *args, **kwargs):
+    """function wrapper for PlotObserver class"""
     return PlotObserver(*args, **kwargs)
 
 class SimpleSetter(Atom):
-    def simple_set(self, obj, param):
-        getattr(obj, "set_"+param)(getattr(self, param))
+    """a class that has the can call a 'set_name' function on a param with a given name"""
+    def simple_set(self, clt, mpl, param):
+        getattr(clt, "set_"+param)(getattr(mpl, param))
 
 class PlotMaster(SimpleSetter):
+    """base plot class contains figure, axes, plot_dict"""
     figure=Typed(Figure)
     fig_height=Float(4.0)
     fig_width=Float(4.0)
@@ -45,12 +50,14 @@ class PlotMaster(SimpleSetter):
     auto_draw=Bool(True)
     show_legend=Bool(False)
 
-    plot_dict=Typed(OrderedDict)
+    plot_dict=Typed(OrderedDict, ()).tag(desc="dict of plots contained in figure")
 
     horiz_fig=Typed(Figure)
     horiz_axe=Typed(Axes)
     vert_fig=Typed(Figure)
     vert_axe=Typed(Axes)
+
+    selected=Unicode()
 
     def _default_figure(self):
         return Figure(figsize=(self.fig_height, self.fig_width))
@@ -66,19 +73,15 @@ class PlotMaster(SimpleSetter):
             self.get_member("plot_names").reset(self)
 
     def legend(self):
+        """adds the legend and makes it draggable if it does not exist"""
         lgnd=self.axes.legend()
         if lgnd is not None:
-            lgnd.draggable()
+            lgnd.draggable(state=True)
 
     def legend_remove(self):
+        """removes the legen if it exists"""
         if self.axes.legend_ is not None:
             self.axes.legend_.remove()
-
-
-    def _default_plot_dict(self):
-        plot_dict=OrderedDict()
-        #xyfs["All"]=AllXYFormat(plotter=self, name="All")
-        return plot_dict
 
     @cached_property
     def plot_names(self):
@@ -106,6 +109,7 @@ class PlotMaster(SimpleSetter):
                 self.legend()
 
 class PlotUpdate(SimpleSetter):
+    """a base clase that contains a plotter object and defines the update plot method (shortcut to plotter method)"""
     plotter=Typed(PlotMaster)
 
     def update_plot(self, update_legend=True):

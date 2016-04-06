@@ -400,7 +400,7 @@ if __name__=="__main__":
         from scipy.constants import h
         Np=qdt.Np
         f0=5.35e9
-        freq=linspace(3e9, 7.2e9, 2000)
+        freq=linspace(3e9, 9e9, 2000)
         print qdt.flux_factor, qdt.offset, qdt.Ejmax/h, qdt.Ec/h
         def flux_par(voltage, offset=qdt.offset, flux_factor=qdt.flux_factor, Ejmax=qdt.Ejmax, Ec=qdt.Ec):
             flux_over_flux0=(voltage-offset)*flux_factor
@@ -462,10 +462,20 @@ if __name__=="__main__":
         #fft.ifft(418, 328, 500)
         def ifft_plot(name, plotter, Magcom, ind):
             plotter.line_plot("ifft_{}".format(name), absolute(fft.ifft(Magcom[:,ind])), label="ifft_{}".format(name))
+
+
         c=Plotter()
-        ifft_plot(328, c, temp, 328)
-        ifft_plot(418, c, temp, 418)
-        ifft_plot(500, c, temp, 500)
+        c.line_plot("cross_sections1", freq, absolute(temp[:, 500]), label="{:.3f}V".format(yo[500]))
+        c.line_plot("cross_sections2", freq, absolute(temp[:, 428]), label="{:.3f}V".format(yo[428]))
+        c.line_plot("cross_sections3", freq, absolute(temp[:, 401]), label="{:.3f}V".format(yo[401]))
+        c.line_plot("cross_sections4", freq, absolute(temp[:, 385]), label="{:.3f}V".format(yo[385]))
+        c.line_plot("cross_sections5", freq, absolute(temp[:, 380]), label="{:.3f}V".format(yo[380]))
+        c.line_plot("cross_sections6", freq, absolute(temp[:, 368]), label="{:.3f}V".format(yo[368]))
+
+
+        #ifft_plot(328, c, temp, 328)
+        #ifft_plot(418, c, temp, 418)
+        #ifft_plot(500, c, temp, 500)
         def fft_filter(mg, n):
             myifft=fft.ifft(mg[:,n])
             #myifft[16:-16]=0.0

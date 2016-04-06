@@ -150,13 +150,11 @@ class Plotter(Fig):
         """saves the figure. if a canvas does not exist, the window will be shown and hidden to create it.
         if a QtApplication is not active, a temporary one will be created but not run to host the plot"""
         if self.figure.canvas is None:
-            app=None
-            if QtApplication.instance() is None:
+            app=QtApplication.instance()
+            if app is None:
                  app=QtApplication()
             self.view_window.show()
             self.view_window.hide()
-            if app is not None:
-                app.destroy()
         self.figure.savefig(dir_path+fig_name, dpi=self.dpi, bbox_inches='tight')
 
     @private_property

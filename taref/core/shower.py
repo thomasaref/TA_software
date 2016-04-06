@@ -26,7 +26,7 @@ def shower(*agents, **kwargs):
     if chief_cls does not have one. attributes of chief_window can be modified with the remaining kwargs"""
 
     start_it=kwargs.pop("start_it", False)
-    app=kwargs.pop("app", QtApplication.instance())
+    app=QtApplication.instance()
     if app is None:
         app = QtApplication()
         start_it=True

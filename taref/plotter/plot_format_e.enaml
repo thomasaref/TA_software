@@ -91,16 +91,24 @@ enamldef ScatterVGroup(VGroup):
 
 from taref.plotter.events import mpl_cross_section
 
+enamldef AllVGroup(VGroup):
+    attr mpl_format
+    CheckButton:
+        value := mpl_format.visible
+        True_text="Visible"
+        False_text = "Hidden"
+
 def reset_dyn_items(dyn_items, pf):
     dyn_items.objects=[]
     #pf=pltr.plot_dict[selected]
     #log_debug(pf.plot_type in ("colormap", "multiline"))
+    dyn_items.objects.append(AllVGroup(mpl_format=pf.mpl))
     if pf.plot_type in ("colormap", "multiline"):
-        dyn_items.objects.append(ColorMap(plot_format=pf))
+        dyn_items.objects.append(ColorMap(plot_format=pf.mpl))
     if pf.plot_type in ("line", "multiline", "scatter", "cross_cursor", "vline", "hline"):
-        dyn_items.objects.append(LineVGroup(plot_format=pf))
+        dyn_items.objects.append(LineVGroup(plot_format=pf.mpl))
     if pf.plot_type in ("scatter",):
-        dyn_items.objects.append(ScatterVGroup(plot_format=pf))
+        dyn_items.objects.append(ScatterVGroup(plot_format=pf.mpl))
 
 enamldef PlotVGroup(VGroup):
     attr plot_format<<pltr.plot_dict[it.selected]
@@ -119,10 +127,6 @@ enamldef PlotVGroup(VGroup):
     ObjectCombo: it:
         items<<pltr.plot_names
         selected :: pltr.selected=self.selected
-    CheckButton:
-        value := plot_format.visible
-        True_text="Visible"
-        False_text = "Hidden"
     Include: dyn_items:
         pass
     PushButton:

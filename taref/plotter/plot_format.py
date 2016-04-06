@@ -5,21 +5,46 @@ Created on Thu Feb  4 12:51:21 2016
 @author: thomasaref
 """
 from taref.core.log import log_debug
-from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names
+from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names, SimpleSetter
 from taref.core.universal import Array
-from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict, Instance
-from numpy import linspace, arange, asanyarray
+from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict, Instance, Atom
+from numpy import linspace, arange, asanyarray, append
 from taref.core.shower import shower
 from taref.core.atom_extension import get_all_tags, get_tag
 from enaml import imports
 with imports():
     from taref.core.interactive_e import InteractiveWindow
 
-
-
 from matplotlib.collections import PolyCollection, LineCollection, QuadMesh, PathCollection
 from matplotlib.lines import Line2D
 from matplotlib.colorbar import Colorbar
+
+class MPL_Format(SimpleSetter):
+    visible=Bool(True)#.tag(former="visible")
+    _parent=Typed(PlotUpdate)
+
+
+
+    def plot_set(self, param):
+        #if param not in ("clt",):
+        self.simple_set(self._parent.clt, self, get_tag(self, param, "former", param))
+
+    @plot_observe("visible")
+    def plot_update(self, change):
+        """set the clt's parameter to the obj's value using clt's set function"""
+        self.plot_set(change["name"])
+
+    def process_kwargs(self, kwargs):
+        for arg in self.members():
+            #for arg in get_all_tags(self, "former"):
+            if not arg.startswith("_"):
+            #if arg not in ("clt",):
+
+                if arg in kwargs:
+                    setattr(self, arg, kwargs[arg])
+                key=get_tag(self, arg, "former", arg)
+                kwargs[key]=kwargs.pop(arg, getattr(self, arg))
+        return kwargs
 
 class PlotFormat(PlotUpdate):
     """base class corresponding to one graph or collection on axes"""
@@ -31,36 +56,29 @@ class PlotFormat(PlotUpdate):
     xind=Int()
     yind=Int()
 
-    visible=Bool(True).tag(former="visible")
-
+    #visible=Bool(True).tag(former="visible")
+    mpl=Typed(MPL_Format)
     xdata=Array()
     ydata=Array()
 
-    plot_type=Enum("line", "scatter", "multiline", "colormap", "vline", "hline", "polygon", "cross_cursor")
-
-    def __init__(self, **kwargs):
-        super(PlotFormat, self).__init__(**kwargs)
-        self.plotter.plot_dict[self.name]=self
+    def _default_mpl(self):
+        return MPL_Format()
 
     def remove_collection(self):
         if self.clt is not None:
             self.clt.remove()
 
-    def plot_set(self, param):
-        self.simple_set(self.clt, param)
+    plot_type=Enum("line", "scatter", "multiline", "colormap", "vline", "hline", "polygon", "cross_cursor")
 
-    @plot_observe("visible")
-    def plot_update(self, change):
-        """set the clt's parameter to the obj's value using clt's set function"""
-        self.plot_set(change["name"])
+    def __init__(self, **kwargs):
+        #plotter=kwargs.pop("plotter", None)
+        #if plotter is None:
+        #    plotter=None
+        #self.mpl.plotter=plotter
+        super(PlotFormat, self).__init__(**kwargs)
+        self.plotter.plot_dict[self.name]=self
 
-    def process_kwargs(self, kwargs):
-        for arg in get_all_tags(self, "former"):
-            if arg in kwargs:
-                setattr(self, arg, kwargs[arg])
-            key=get_tag(self, arg, "former", arg)
-            kwargs[key]=kwargs.pop(arg, getattr(self, arg))
-        return kwargs
+    clt=Typed(Line2D)
 
     @cached_property
     def view_window(self):
@@ -68,7 +86,7 @@ class PlotFormat(PlotUpdate):
             from plot_format_e import Main
         view=Main(pltr=self.plotter)
         return view
-    interactive_window=InteractiveWindow()
+    #interactive_window=InteractiveWindow()
 
 def transformation(func):
     """decorator that assists with transfroming from one format to another"""
@@ -80,29 +98,43 @@ def transformation(func):
         del self
     return transform_func
 
-class LineFormat(PlotFormat):
-    clt=Typed(Line2D)
-    alpha=Float(1.0).tag(former="alpha")
-    label=Unicode().tag(former="label")
+class MPL_Line(MPL_Format):
+    alpha=Float(1.0)
+    label=Unicode()
     color=Enum(*colors_tuple[1:]).tag(former="c")
-    linewidth=Float(2.0).tag(former="linewidth")
-    linestyle=Enum('solid', 'dashed', 'dashdot', 'dotted').tag(former="linestyle")
-    custom_color=ContainerList(default=[0.0, 1.0, 0.0, 1.0])
-
-    def _default_plot_type(self):
-        return "line"
+    linewidth=Float(2.0)#.tag(former="linewidth")
+    linestyle=Enum('solid', 'dashed', 'dashdot', 'dotted')#.tag(former="linestyle")
 
     @plot_observe("alpha", "label", "linewidth", "linestyle", "color", update_legend=True)
     def line_update(self, change):
         self.plot_set(change["name"])
 
-    def set_color(self, param, color):
-        getattr(self.clt,"set_"+param)(color)
+class LineFormat(PlotFormat):
+    #clt=Typed(Line2D)
+    #alpha=Float(1.0).tag(former="alpha")
+    #label=Unicode().tag(former="label")
+    #color=Enum(*colors_tuple[1:]).tag(former="c")
+    #linewidth=Float(2.0).tag(former="linewidth")
+    #linestyle=Enum('solid', 'dashed', 'dashdot', 'dotted').tag(former="linestyle")
+    custom_color=ContainerList(default=[0.0, 1.0, 0.0, 1.0])
+
+    def _default_plot_type(self):
+        return "line"
+
+    def _default_mpl(self):
+        return MPL_Line(_parent=self)
+
+    #@plot_observe("mpl.alpha", "mpl.label", "mpl.linewidth", "mpl.linestyle", "mpl.color", update_legend=True)
+    #def line_update(self, change):
+    #    self.plot_set(change["name"])
+
+    #def set_color(self, param, color):
+    #    getattr(self.clt,"set_"+param)(color)
 
 
 class Line2DFormat(LineFormat):
     def line_plot(self, *args, **kwargs):
-        kwargs=self.process_kwargs(kwargs)
+        kwargs=self.mpl.process_kwargs(kwargs)
         self.remove_collection()
         if len(args)==1:
             y=args[0]
@@ -112,16 +144,33 @@ class Line2DFormat(LineFormat):
             y=args[1]
         self.xdata=x
         self.ydata=y
+
         self.clt=self.plotter.axes.plot(x,y, **kwargs)[0]
 
-    @transformation
-    def line2scatter(self):
-        sf=ScatterFormat(name=self.name, plotter=self.plotter)
-        sf.scatter_plot(self.xdata, self.ydata)
-        return sf
+    def append_xy(self, *args):
+        """appends points x and y if 2 args are passed and just y and len of xdata if one args is passed"""
+        if len(args)==1:
+            y=args[0]
+            x=len(self.xdata)
+        elif len(args)==2:
+            x=args[0]
+            y=args[1]
+        self.xdata=append(self.xdata, x)
+        self.ydata=append(self.ydata, y)
+
+
+    #@transformation
+    #def line2scatter(self):
+    #    sf=ScatterFormat(name=self.name, plotter=self.plotter)
+    #    sf.scatter_plot(self.xdata, self.ydata)
+    #    return sf
 
 def line_plot(plotter, name, *args, **kwargs):
+    kwargs.pop("plotter", None)
+    print plotter
     pl0t=Line2DFormat(name=name, plotter=plotter)
+
+    #pl0t.mpl.plotter=plotter
     pl0t.line_plot(*args, **kwargs)
     return pl0t
 
@@ -390,6 +439,9 @@ if __name__=="__main__":
     n = 300
     x = linspace(-1.5, 1.5, n)
     y = linspace(-1.5, 1.5, n*2)
+    print pm
+    a=line_plot(pm, "blah", x, x)
+    shower(a)
     X, Y = meshgrid(x, y)
     Z = sqrt(X**2 + Y**2)
 
