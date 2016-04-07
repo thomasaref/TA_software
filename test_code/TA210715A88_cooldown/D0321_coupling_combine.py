@@ -489,8 +489,8 @@ class S3A4_Power(TransLyzer):
             Magvec=f["Traces"][self.VNA_name+" - {0}".format(self.port_name)]
             data=f["Data"]["Data"]
             self.comment=f.attrs["comment"]
-            self.pwr=data[:,0,0].astype(float64)
-            self.yoko=data[0,1,:].astype(float64)
+            self.yoko=data[:,0,0].astype(float64)
+            self.pwr=data[0,1,:].astype(float64)
 
             print shape(data)
             print shape(self.yoko)
@@ -505,7 +505,7 @@ class S3A4_Power(TransLyzer):
             Magcom=reshape(Magcom, s, order="F")
             self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
             Magcom=squeeze(Magcom)
-            self.Magcom=Magcom[:, 0, :]
+            self.Magcom=Magcom[:, :, 10]
             self.stop_ind=len(self.yoko)-1
             return array([[self.fft_filter_full(m, n, Magcom) for n in range(len(self.yoko))] for m in range(len(self.pwr))]).transpose()
 
@@ -520,13 +520,13 @@ class S3A4_Power(TransLyzer):
         return array([self.fft_filter(n) for n in range(len(self.yoko))]).transpose()
 
     def fft_filter_full(self, m, n, Magcom):
-        myifft=fft.ifft(Magcom[:, m, n])
+        myifft=fft.ifft(Magcom[:, n, m])
         myifft[self.filt_end_ind:-self.filt_end_ind]=0.0
         if self.filt_start_ind!=0:
             myifft[:self.filt_start_ind]=0.0
             myifft[-self.filt_start_ind:]=0.0
         return max(absolute(myifft))
-        #return fft.fft(myifft)
+        return fft.fft(myifft)
 if 0:
     s3a4_pow=S3A4_Power(filt_start_ind=8, filt_end_ind=16, on_res_ind=42, VNA_name='ta', port_name='S21')#,
                      #rd_hdf=TA88_Read(main_file="Data_0329/S3A4A1_widegate_fluxswp_higherpwr.hdf5")) #29, 40)
@@ -544,7 +544,7 @@ if 0:
 
     magpow_colormesh(s3a4_pow, Plotter(), mg)
 
-if 1:
+if 0:
     s3a4_pow=S3A4_Power(filt_start_ind=11, filt_end_ind=17, on_res_ind=91, VNA_name='ta', port_name='S21',
                      rd_hdf=TA88_Read(main_file="Data_0405/S3A4A1_gate_pwr_swp_midpeak.hdf5")) #29, 40)
     mg=s3a4_pow.read_data()
@@ -567,6 +567,41 @@ if 1:
         plotter.xlabel="Yoko (V)"
         plotter.ylabel="Frequency (Hz)"
         plotter.title="Magabs fluxmap {}".format(self.name)
+
+    magpow_colormesh(s3a4_pow, Plotter(), mg)
+#    s3a4_pow.magabs_colormesh("S3A1 wide magabs")
+#    s3a4_pow.magabsfilt_colormesh("filtcolormesh S4A1 wide")
+#    s3a4_pow.magdBfilt_colormesh("filtdB S1A4 wide")
+#    s3a4_pow.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
+#    #a2.filt_compare(a2.start_ind, bb2)
+#    #s1a1_mp.filt_compare("filt_compare_off_res", s1a1_mp.start_ind)
+#    #s1a1_mp.filt_compare("filt_compare_on_res", s1a1_mp.on_res_ind)
+#    s3a4_pow.ifft_plot("ifft_S1A4 wide")
+#    s3a4_pow.ifft_dif_plot("ifft__dif_S1A4 wide")
+
+if 1:
+    s3a4_pow=S3A4_Power(filt_start_ind=13, filt_end_ind=18, on_res_ind=131, VNA_name='RS VNA', port_name='S21',
+                     rd_hdf=TA88_Read(main_file="Data_0406/S3A1_gate_listen_fft.hdf5")) #29, 40)
+    mg=s3a4_pow.read_data()
+    s3a4_pow.magabs_colormesh("S3A1 wide magabs")
+    s3a4_pow.magabsfilt_colormesh("filtcolormesh S4A1 wide")
+    s3a4_pow.magdBfilt_colormesh("filtdB S1A4 wide")
+    s3a4_pow.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
+    #a2.filt_compare(a2.start_ind, bb2)
+    #s1a1_mp.filt_compare("filt_compare_off_res", s1a1_mp.start_ind)
+    #s1a1_mp.filt_compare("filt_compare_on_res", s1a1_mp.on_res_ind)
+    s3a4_pow.ifft_plot("ifft_S1A4 wide")
+    s3a4_pow.ifft_dif_plot("ifft__dif_S1A4 wide")
+    print shape(mg)
+
+    def magpow_colormesh(self, plotter, mg):
+        print shape(mg)
+        plotter.colormesh("magabs_{}".format(self.name), self.pwr, self.yoko, absolute(mg[ :, :]))
+        #plotter.set_ylim(min(self.frequency), max(self.frequency))
+        #plotter.set_xlim(min(self.yoko), max(self.yoko))
+        plotter.mpl_axes.xlabel="Yoko (V)"
+        plotter.mpl_axes.ylabel="Frequency (Hz)"
+        plotter.mpl_axes.title="Magabs fluxmap {}".format(self.name)
 
     magpow_colormesh(s3a4_pow, Plotter(), mg)
 #    s3a4_pow.magabs_colormesh("S3A1 wide magabs")

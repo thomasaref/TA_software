@@ -26,12 +26,21 @@ enamldef ColorMap(VGroup):
     Label:
         text = "vmin:"
     FloatField:
-        value:=plot_format.vmin
+        value:=plot_format._parent.vmin
     Label:
         text = "vmax:"
     FloatField:
-        value:=plot_format.vmax
-
+        value:=plot_format._parent.vmax
+    PushButton:
+        text = "test append"
+        clicked ::
+            from numpy import linspace, meshgrid, sqrt
+            n = 300
+            x = linspace(-1.5, 1.5, n)
+            y = linspace(-1.5, 1.5, n*2)
+            X, Y = meshgrid(x, y)
+            Z = sqrt(X**2 + Y**2)
+            plot_format._parent.append_xy( Z[:,plot_format._parent.count]) #2*plot_format._parent.count)
 enamldef LineVGroup(VGroup):
     attr plot_format
     Label:
@@ -65,14 +74,18 @@ enamldef LineVGroup(VGroup):
     ObjectCombo:
         items=list(plot_format.get_member('linestyle').items)
         selected:=plot_format.linestyle
+    #PushButton:
+    #    text = "test append"
+    #    clicked ::
+    #        plot_format._parent.append_xy( 2*plot_format._parent.count)
 
 enamldef ScatterVGroup(VGroup):
     attr plot_format
     Label:
         text = "Marker size:"
     FloatField:
-        value := plot_format.marker_size
-        enabled << plot_format.plot_type=="scatter"
+        value := plot_format._parent.marker_size
+        enabled << plot_format._parent.plot_type=="scatter"
     Label:
         text = "Edge Color"
     ObjectCombo:
@@ -86,8 +99,8 @@ enamldef ScatterVGroup(VGroup):
     Label:
         text = "Marker"
     ObjectCombo:
-        items=list(plot_format.get_member('marker').items)
-        selected:=plot_format.marker
+        items=list(plot_format._parent.get_member('marker').items)
+        selected:=plot_format._parent.marker
 
 from taref.plotter.events import mpl_cross_section
 

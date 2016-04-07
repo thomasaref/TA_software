@@ -8,8 +8,8 @@ from taref.core.log import log_debug
 
 from enaml.qt.qt_application import QtApplication
 
-from taref.plotter.plotter_backbone import plot_observe, PlotMaster
-from atom.api import Bool, Unicode, Float, Enum, Int, cached_property
+from taref.plotter.plotter_backbone import plot_observe, PlotMaster, SimpleSetter, PlotUpdate
+from atom.api import Bool, Unicode, Float, Enum, Int, cached_property, Typed
 
 from taref.core.shower import shower
 from taref.core.agent import Operative
@@ -37,22 +37,46 @@ from matplotlib.backends import backend_qt4
 from PySide.QtCore import Qt
 backend_qt4.cursord[cursors.POINTER] = Qt.CursorShape.CrossCursor
 
+
+class MPL_Axes(SimpleSetter):
+    _parent=Typed(PlotUpdate)
+    xlabel=Unicode()
+    ylabel=Unicode()
+    title=Unicode()
+    xscale=Enum('linear', 'log')
+    yscale=Enum('linear', 'log')
+
+    def axes_set(self, param):
+        self.simple_set(self._parent.axes, self, param)
+
+    @plot_observe("xscale", "yscale", "title", "xlabel", "ylabel", immediate_update=True)
+    def axes_update(self, change):
+        self.axes_set(change["name"])
+
+    _parent=Typed(PlotMaster)
+
+class MPL_Figure(SimpleSetter):
+    tight_layout=Bool(False)
+    dpi=Int(150)
+
+    def figure_set(self, param):
+        self.simple_set(self._parent.figure, self, param)
+
+    @plot_observe("tight_layout", "dpi")
+    def figure_update(self, change):
+        self.figure_set(change["name"])
+
+    _parent=Typed(PlotMaster)
+
 class Fig(PlotMaster, Operative):
     cid=Int().tag(private=True)
 
     base_name="plot"
-    title=Unicode()
-    tight_layout=Bool(False)
-    dpi=Int(150)
 
     show_cross_cursor=Bool(False)
-    xlabel=Unicode()
     xlabel_size=Float(14.0)
-    ylabel=Unicode()
-    ylabel_size=Float(14.0)
 
-    xscale=Enum('linear', 'log')
-    yscale=Enum('linear', 'log')
+    ylabel_size=Float(14.0)
 
     x_min=Float()
     x_max=Float()
@@ -65,16 +89,17 @@ class Fig(PlotMaster, Operative):
     selected=Unicode()
     show_cross_section=Bool(False)
 
+    mpl_figure=Typed(MPL_Figure)
+    mpl_axes=Typed(MPL_Axes)
+
+    def _default_mpl_figure(self):
+        return MPL_Figure(_parent=self)
+
+    def _default_mpl_axes(self):
+        return MPL_Axes(_parent=self)
+
     def _default_figure(self):
-        return Figure(figsize=(self.fig_height, self.fig_width), dpi=self.dpi, tight_layout=self.tight_layout)
-
-    def figure_set(self, param):
-        self.simple_set(self.figure, param)
-
-    @plot_observe("tight_layout", "dpi")
-    def figure_update(self, change):
-        self.figure_set(change["name"])
-
+        return Figure(figsize=(self.fig_height, self.fig_width), dpi=self.mpl_figure.dpi, tight_layout=self.mpl_figure.tight_layout)
 
     def set_xlim(self, xmin, xmax):
         self.x_min=xmin
@@ -92,13 +117,6 @@ class Fig(PlotMaster, Operative):
             from fig_format_e import Main
         view=Main(pltr=self)
         return view
-
-    def axes_set(self, param):
-        self.simple_set(self.axes, param)
-
-    @plot_observe("xscale", "yscale", "title", "xlabel", "ylabel", immediate_update=True)
-    def axes_update(self, change):
-        self.axes_set(change["name"])
 
     @plot_observe("xlabel_size")
     def xlabel_update(self, change):
@@ -122,8 +140,6 @@ class Fig(PlotMaster, Operative):
             self.legend()
         else:
             self.legend_remove()
-
-
 
 class Plotter(Fig):
     #pm=Typed(Fig)
@@ -177,10 +193,10 @@ if __name__=="__main__":
     a.colormesh("colormesh", x, y, Z)
     #b=Plotter()
     #a.scatter_plot("scatter", [100,200,300], [100,200,300], marker="<", marker_size=300)
-    a.savefig()
+    #a.savefig()
     #d=CrossCursor(plotter=a)
     #d.add_cursor()
-    shower()
+    shower(a)
 
 #    def line_plot(self, zname, zdata, *args, **kwargs):
 #        """Uses LineCollection for efficient plotting of lines.

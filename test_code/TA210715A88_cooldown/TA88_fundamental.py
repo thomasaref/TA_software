@@ -171,9 +171,9 @@ class Lyzer(TA88_Fund):
         plotter.colormesh("magabs_{}".format(self.name), self.yoko, self.frequency, self.MagAbs)
         plotter.set_ylim(min(self.frequency), max(self.frequency))
         plotter.set_xlim(min(self.yoko), max(self.yoko))
-        plotter.xlabel="Yoko (V)"
-        plotter.ylabel="Frequency (Hz)"
-        plotter.title="Magabs fluxmap {}".format(self.name)
+        plotter.mpl_axes.xlabel="Yoko (V)"
+        plotter.mpl_axes.ylabel="Frequency (Hz)"
+        plotter.mpl_axes.title="Magabs fluxmap {}".format(self.name)
 
     @plots
     def ifft_plot(self, plotter):
@@ -197,27 +197,27 @@ class Lyzer(TA88_Fund):
         plotter.colormesh("magabsfilt_{}".format(self.name), self.yoko, self.frequency, self.MagAbsFilt)
         plotter.set_ylim(min(self.frequency), max(self.frequency))
         plotter.set_xlim(min(self.yoko), max(self.yoko))
-        plotter.xlabel="Yoko (V)"
-        plotter.ylabel="Frequency (Hz)"
-        plotter.title="Magabs fluxmap {}".format(self.name)
+        plotter.mpl_axes.xlabel="Yoko (V)"
+        plotter.mpl_axes.ylabel="Frequency (Hz)"
+        plotter.mpl_axes.title="Magabs fluxmap {}".format(self.name)
 
     @plots
     def magdBfilt_colormesh(self, plotter):
         plotter.colormesh("magdBfilt_{}".format(self.name), self.yoko, self.frequency, self.MagdBFilt)
         plotter.set_ylim(min(self.frequency), max(self.frequency))
         plotter.set_xlim(min(self.yoko), max(self.yoko))
-        plotter.xlabel="Yoko (V)"
-        plotter.ylabel="Frequency (Hz)"
-        plotter.title="MagdB fluxmap {}".format(self.name)
+        plotter.mpl_axes.xlabel="Yoko (V)"
+        plotter.mpl_axes.ylabel="Frequency (Hz)"
+        plotter.mpl_axes.title="MagdB fluxmap {}".format(self.name)
 
     @plots
     def magdBfiltbgsub_colormesh(self, plotter):
         plotter.colormesh("magdBfiltbgsub_{}".format(self.name), self.yoko, self.frequency, self.MagdBFiltbgsub)
         plotter.set_ylim(min(self.frequency), max(self.frequency))
         plotter.set_xlim(min(self.yoko), max(self.yoko))
-        plotter.xlabel="Yoko (V)"
-        plotter.ylabel="Frequency (Hz)"
-        plotter.title="MagdB bg sub fluxmap {}".format(self.name)
+        plotter.mpl_axes.xlabel="Yoko (V)"
+        plotter.mpl_axes.ylabel="Frequency (Hz)"
+        plotter.mpl_axes.title="MagdB bg sub fluxmap {}".format(self.name)
 
     def read_data(self):
         with File(self.rd_hdf.file_path, 'r') as f:

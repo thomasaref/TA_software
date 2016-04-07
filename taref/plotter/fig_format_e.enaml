@@ -25,29 +25,29 @@ enamldef FigureVGroup(VGroup):
         Label:
             text = "Title"
         Field:
-            text := pltr.title
+            text := pltr.mpl_axes.title
     pHGroup:
         Label:
             text = "X label"
         Field:
-            text := pltr.xlabel
+            text := pltr.mpl_axes.xlabel
     pHGroup:
         Label:
             text = "Y label"
         Field:
-            text := pltr.ylabel
+            text := pltr.mpl_axes.ylabel
     Container:
         constraints = [hbox(xscalel, xscaleoc, spacer, yscalel, yscaleoc)]
         Label: xscalel:
             text = "X axis"
         ObjectCombo: xscaleoc:
-            items=list(pltr.get_member('xscale').items)
-            selected:=pltr.xscale
+            items=list(pltr.mpl_axes.get_member('xscale').items)
+            selected:=pltr.mpl_axes.xscale
         Label: yscalel:
             text = "Y axis"
         ObjectCombo: yscaleoc:
-            items=list(pltr.get_member('yscale').items)
-            selected:=pltr.yscale
+            items=list(pltr.mpl_axes.get_member('yscale').items)
+            selected:=pltr.mpl_axes.yscale
     pHGroup:
         constraints = [xminf.width==xmaxf.width]
         Label:
@@ -82,9 +82,9 @@ enamldef FigureVGroup(VGroup):
             text = "Draw"
             clicked :: pltr.draw()
     CheckButton:
-        value := pltr.tight_layout
+        value := pltr.mpl_figure.tight_layout
     IntField:
-        value := pltr.dpi
+        value := pltr.mpl_figure.dpi
 
     PushButton:
         text = "test save"
