@@ -23,6 +23,7 @@ class MPL_Format(SimpleSetter):
     """format class for those attributes with a direct correspondence to mpl attributes"""
     visible=Bool(True)#.tag(former="visible")
     _parent=Typed(PlotUpdate)
+    _dont_process=[]
 
     def clt_values(self):
         if isinstance(self._parent.clt, dict):
@@ -41,7 +42,7 @@ class MPL_Format(SimpleSetter):
     def process_kwargs(self, kwargs):
         for arg in self.members():
             #for arg in get_all_tags(self, "former"):
-            if not arg.startswith("_"):
+            if not arg.startswith("_") and arg not in self._dont_process:
             #if arg not in ("clt",):
 
                 if arg in kwargs:
@@ -317,23 +318,28 @@ class MPL_Colormesh(MPL_Format):
     def colormap_update(self, change):
         self.plot_set(change["name"])
 
+    def set_clim(self, vmin, vmax):
+        self._parent.clt.set_clim(vmin, vmax)
+
+    @plot_observe("vmin", "vmax")
+    def clim_update(self, change):
+        self.set_clim(self.vmin, self.vmax)
+
+    vmin=Float()
+    vmax=Float()
+    _dont_process=("vmin", "vmax")
+
 class ColormeshFormat(PlotFormat):
     clt=Typed(QuadMesh)
     zdata=Array()
-    vmin=Float()
-    vmax=Float()
+
 
     colorbar=Instance(Colorbar)
 
     def _default_mpl(self):
         return MPL_Colormesh(_parent=self)
 
-    def set_clim(self, vmin, vmax):
-        self.clt.set_clim(vmin, vmax)
 
-    @plot_observe("vmin", "vmax")
-    def clim_update(self, change):
-        self.set_clim(self.vmin, self.vmax)
 
     def _default_colorbar(self):
         self.plotter.figure.colorbar(self.clt)

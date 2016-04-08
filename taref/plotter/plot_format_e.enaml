@@ -26,11 +26,11 @@ enamldef ColorMap(VGroup):
     Label:
         text = "vmin:"
     FloatField:
-        value:=plot_format._parent.vmin
+        value:=plot_format.vmin
     Label:
         text = "vmax:"
     FloatField:
-        value:=plot_format._parent.vmax
+        value:=plot_format.vmax
     PushButton:
         text = "test append"
         clicked ::

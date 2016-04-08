@@ -363,7 +363,8 @@ if __name__=="__main__":
     print get_tag(qdt, "a", "unit")
     print qdt.latex_table()
     from taref.plotter.fig_format import Plotter
-    from taref.physics.fundamentals import sinc, sinc_sq
+    from taref.physics.fundamentals import sinc, sinc_sq,e
+    print e
     b=Plotter()
     from numpy import linspace, pi, absolute, sqrt
     freq=linspace(1e9, 10e9, 1000)
@@ -400,38 +401,58 @@ if __name__=="__main__":
         from scipy.constants import h
         Np=qdt.Np
         f0=5.35e9
-        freq=linspace(3e9, 9e9, 2000)
+        vf=3488.0
+        freq=linspace(0.0001e9, 15e9, 2000)
         print qdt.flux_factor, qdt.offset, qdt.Ejmax/h, qdt.Ec/h
         def flux_par(voltage, offset=qdt.offset, flux_factor=qdt.flux_factor, Ejmax=qdt.Ejmax, Ec=qdt.Ec):
             flux_over_flux0=(voltage-offset)*flux_factor
             Ej=Ejmax*absolute(cos(pi*flux_over_flux0))
             E0 =  sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0
             E1 =  sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0)
-            return (E1-E0)/h
+            E2 =  sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*2**2+6.0*2+3.0)
+            E3 =  sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*3**2+6.0*3+3.0)
+
+            return (E1-E0)/h, (E2-E0)/h/2.0#/3.0
             #return qdt._get_fq(Ej, qdt.Ec)
 
-        def R_full(f_listen=4.3e9, fq=4.0e9):
+        def R_full(f_listen=4.3e9, voltage=0.001):
+
+
             w_listen=2*pi*f_listen
             epsinf=qdt.epsinf
             W=qdt.W
-            Dvv=qdt.Dvv
+            Dvv=qdt.Dvv#/2.0
             w0=2*pi*f0
 
-
-            wq=2.0*pi*fq
 
             X=Np*pi*(f_listen-f0)/f0
             Ga0=3.11*w0*epsinf*W*Dvv*Np**2
             C=sqrt(2.0)*Np*W*epsinf
-            L=1/(C*(wq**2.0))
-
             Ga=Ga0*(sin(X)/X)**2.0
             Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+
+            C_prime=Ba/w_listen+C
+            Ec_prime=e**2/(2.0*C_prime)
+
+            fq, fq2=flux_par(voltage, offset=0.0, flux_factor=0.2945, Ejmax=qdt.Ejmax, Ec=Ec_prime)
+            wq=2.0*pi*fq
+            wq2=2.0*pi*fq2
+
+            L=1/(C*(wq**2.0))
+            L2=1/(C*(wq2**2.0))
+
+            #Lc=5000.0
+            #Qi=pi*5000.0/(vf/f0*(1-0.999))
+            #Qe=1.0/(5.74*vf*50.0*epsinf*W*Dvv*2)*5000.0/36**2
+
+            #r=((Qe-Qi)+2j*Qi*Qe*(fq2-f0)/f0)/((Qe+Qi)+2j*Qi*Qe*(fq2-f0)/f0)
+
+            #w2=Ecprime
 
             #b.line_plot("Ba", fq, Ba)
             #b.line_plot("Ga", fq, Ga)
             #print Ga, Ba, w_listen*C
-            return Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L))
+            return Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L))#+Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L2))
         #R=Ga/(Ga+1j*w_listen*C+1/(1j*w_listen*L))
             #b.line_plot("semiclassical", fq, absolute(R)**2, label=str(f_listen))
         #b.line_plot("semiclassical", fq, Ba)
@@ -441,11 +462,13 @@ if __name__=="__main__":
         qfreq=[]
         yo = linspace(-5.0, 5.0, 1000)
         #yo=yo[328:500]
-        fq=array([flux_par(yn) for yn in yo])
+        #fq=array([flux_par(yn)[0] for yn in yo])
+        #fq2=array([flux_par(yn)[1] for yn in yo])
+
         for f in freq:
                 #X2=36*pi*(f-4.4e9)/4.4e9
                 #wrap=(sin(X2)/X2)**2
-            R=R_full(f, fq)
+            R=R_full(f, yo)
             #qfreq.append(freq[argmax(R)])
             #imax=argmax(R)
             #print imax
@@ -456,7 +479,7 @@ if __name__=="__main__":
         temp=array(temp)
         #b.line_plot("coup", freq, t2)
         d=Plotter()
-        b.colormesh("R_full", yo, freq, absolute(temp))
+        b.colormesh("R_full", yo, freq, 10*log10(absolute(temp)))
         d.colormesh('R_angle', yo, freq, angle(temp))
 
         #fft.ifft(418, 328, 500)
@@ -465,12 +488,20 @@ if __name__=="__main__":
 
 
         c=Plotter()
-        c.line_plot("cross_sections1", freq, absolute(temp[:, 500]), label="{:.3f}V".format(yo[500]))
-        c.line_plot("cross_sections2", freq, absolute(temp[:, 428]), label="{:.3f}V".format(yo[428]))
-        c.line_plot("cross_sections3", freq, absolute(temp[:, 401]), label="{:.3f}V".format(yo[401]))
-        c.line_plot("cross_sections4", freq, absolute(temp[:, 385]), label="{:.3f}V".format(yo[385]))
-        c.line_plot("cross_sections5", freq, absolute(temp[:, 380]), label="{:.3f}V".format(yo[380]))
-        c.line_plot("cross_sections6", freq, absolute(temp[:, 368]), label="{:.3f}V".format(yo[368]))
+        c.line_plot("cross_sections1", freq, 10*log10(absolute(temp[:, 500])), label="{:.3f}V".format(yo[500]))
+        c.line_plot("cross_sections2", freq, 10*log10(absolute(temp[:, 428])), label="{:.3f}V".format(yo[428]))
+        c.line_plot("cross_sections3", freq, 10*log10(absolute(temp[:, 401])), label="{:.3f}V".format(yo[401]))
+        c.line_plot("cross_sections4", freq, 10*log10(absolute(temp[:, 385])), label="{:.3f}V".format(yo[385]))
+        c.line_plot("cross_sections5", freq, 10*log10(absolute(temp[:, 380])), label="{:.3f}V".format(yo[380]))
+        c.line_plot("cross_sections6", freq, 10*log10(absolute(temp[:, 368])), label="{:.3f}V".format(yo[368]))
+
+        q=Plotter()
+        q.line_plot("cross_sections1", freq, angle(temp[:, 500]), label="{:.3f}V".format(yo[500]))
+        q.line_plot("cross_sections2", freq, angle(temp[:, 428]), label="{:.3f}V".format(yo[428]))
+        q.line_plot("cross_sections3", freq, angle(temp[:, 401]), label="{:.3f}V".format(yo[401]))
+        q.line_plot("cross_sections4", freq, angle(temp[:, 385]), label="{:.3f}V".format(yo[385]))
+        q.line_plot("cross_sections5", freq, angle(temp[:, 380]), label="{:.3f}V".format(yo[380]))
+        q.line_plot("cross_sections6", freq, angle(temp[:, 368]), label="{:.3f}V".format(yo[368]))
 
 
         #ifft_plot(328, c, temp, 328)
