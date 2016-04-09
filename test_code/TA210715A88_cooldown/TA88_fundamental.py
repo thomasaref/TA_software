@@ -93,7 +93,7 @@ class Lyzer(TA88_Fund):
     frequency=Array().tag(unit="GHz", plot=True, label="Frequency", sub=True)
     yoko=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
     pwr=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
-
+    frq2=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
     Magcom=Array().tag(sub=True)
     offset=Float(-0.035)
     flux_factor=Float(0.2925)
@@ -404,6 +404,157 @@ if __name__=="__main__":
         w0=2*pi*f0
 
         vf=3488.0
+        freq=linspace(1e9, 10e9, 1000)
+        print qdt.flux_factor, qdt.offset, qdt.Ejmax/h, qdt.Ec/h
+        def flux_to_Ej(voltage,  offset=qdt.offset, flux_factor=qdt.flux_factor, Ejmax=qdt.Ejmax):
+            flux_over_flux0=(voltage-offset)*flux_factor
+            Ej=Ejmax*absolute(cos(pi*flux_over_flux0))
+            return Ej
+
+        def calc_Lamb_shift(fq, Dvv=qdt.Dvv):
+            epsinf=qdt.epsinf
+            W=qdt.W
+
+            wq=2.0*pi*fq#print wq
+
+            X=Np*pi*(wq-w0)/w0
+            Ga0=3.11*w0*epsinf*W*Dvv*Np**2
+            C=sqrt(2.0)*Np*W*epsinf
+            #Ga=Ga0*(sin(X)/X)**2.0
+            Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+            return -Ba/(2.0*C)
+
+        def energy_levels(EjdivEc, Ec=qdt.Ec, Dvv=qdt.Dvv):
+            Ec=Ec
+            Ej=EjdivEc*Ec
+            #epsinf=qdt.epsinf
+            #W=qdt.W
+            #Dvv=qdt.Dvv
+            E0p =  sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0#-Ba/(2.0*C)*0.5 #(n +1/2)
+
+            E1p =  sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0)# -Ba/(2.0*C)*1.5
+
+            E2p =  sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*2**2+6.0*2+3.0)#-Ba/(2.0*C)*2.5
+            E3p =  sqrt(8.0*Ej*Ec)*3.5 - (Ec/12.0)*(6.0*3**2+6.0*3+3.0)#-Ba/(2.0*C)*3.5
+
+            E0p=E0p/h
+            E1p=E1p/h
+            E2p=E2p/h
+            E3p=E3p/h
+            #fq=sqrt(8.0*Ej*Ec)
+            #wq=2.0*pi*fq#print wq
+
+            #X=Np*pi*(wq-w0)/w0
+            #Ga0=3.11*w0*epsinf*W*Dvv*Np**2
+            #C=sqrt(2.0)*Np*W*epsinf
+            #Ga=Ga0*(sin(X)/X)**2.0
+            #Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+
+            #E10=sqrt(8.0*Ej*Ec/(1.0+Ba/(wq*C)))-Ec/(1.0+Ba/(wq*C))
+            #E21=sqrt(8.0*Ej*Ec/(1.0+Ba/(wq*C)))-2.0*Ec/(1.0+Ba/(wq*C))
+            #return E10/h, (E21+E10)/h/2.0
+            #E_{tot}=-E_J+\sqrt{8E_J E_C}(n +1/2)-(B_a/2C)(n +1/2)-\dfrac{E_C}{12}(6n^2+6n+3)
+            E0 =  E0p+calc_Lamb_shift(E0p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0-Ba/(2.0*C)*0.5 #(n +1/2)
+
+            E1 =  E1p+calc_Lamb_shift(E1p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0) -Ba/(2.0*C)*1.5
+
+            E2 =  E2p+calc_Lamb_shift(E2p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*2**2+6.0*2+3.0)-Ba/(2.0*C)*2.5
+            E3 =  E3p+calc_Lamb_shift(E3p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*3.5 - (Ec/12.0)*(6.0*3**2+6.0*3+3.0)-Ba/(2.0*C)*3.5
+            return E0, E1, E2, E3, E0p, E1p, E2p, E3p
+            return (E1-E0)/h, (E2-E1)/h#/3.0
+            #return qdt._get_fq(Ej, qdt.Ec)
+
+        EjdivEc=linspace(0.001, 300, 3000).astype(float64)
+        Ejmax=qdt.Ejmax
+        E0,E1,E2,E3, E0p, E1p, E2p, E3p=energy_levels(EjdivEc, Dvv=qdt.Dvv)
+
+        b.line_plot("E0", EjdivEc, E0, label="E0")
+        b.line_plot("E1", EjdivEc, E1, label="E1")
+        b.line_plot("E2", EjdivEc, E2, label="E2")
+        b.line_plot("E3", EjdivEc, E3, label="E3")
+
+        DEP=E1p-E0p
+        d=Plotter()
+        d.line_plot("E0", EjdivEc, (E2-E1)-(E1-E0), label="E0")
+        #d.line_plot("E1", E1p-E0p, (E2-E1)-DEP, label="E1")
+        #d.line_plot("E2", E1p-E0p, (E3-E2), label="E2")
+        #d.line_plot("E3", EjdivEc, E3, label="E3")
+        #E0,E1,E2,E3=energy_levels(EjdivEc, Dvv=0.0)
+
+        b.line_plot("E0p", EjdivEc, E0p, label="E0p")
+        b.line_plot("E1p", EjdivEc, E1p, label="E1p")
+        b.line_plot("E2p", EjdivEc, E2p, label="E2p")
+        b.line_plot("E3p", EjdivEc, E3p, label="E3p")
+
+        d.line_plot("E0p", EjdivEc, (E2p-E1p)-(E1p-E0p), label="E0p")
+        #d.line_plot("E1p", E1p-E0p, (E2p-E1p)-DEP, label="E1p")
+        #d.line_plot("E2p", E1p-E0p, E3p-E2p, label="E2p")
+
+        yo = linspace(-2.0, 2.0, 2000)
+        Ej=flux_to_Ej(yo, Ejmax=Ejmax)
+        EjdivEc=Ej/qdt.Ec
+        E0,E1,E2,E3, E0p, E1p, E2p, E3p=energy_levels(EjdivEc, Dvv=qdt.Dvv)
+
+
+
+        def R_full(f_listen=4.3e9, fq=5.0e9, fq2=6.0e9):
+
+
+            w_listen=2*pi*f_listen
+            epsinf=qdt.epsinf
+            W=qdt.W
+            Dvv=qdt.Dvv
+            w0=2*pi*f0
+
+
+            X=Np*pi*(f_listen-f0)/f0
+            Ga0=3.11*w0*epsinf*W*Dvv*Np**2
+            C=sqrt(2.0)*Np*W*epsinf
+            Ga=Ga0*(sin(X)/X)**2.0
+            Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+
+            wq=2.0*pi*fq
+            wq2=2.0*pi*fq2
+
+            L=1/(C*(wq**2.0))
+            L2=1/(C*(wq2**2.0))
+
+            Gamma=Ga/(2.0*C)
+            #return 1.0/(1.0 +1.0j*(w_listen-wq)/Gamma), 1.0/(1.0 +1.0j*(w_listen-wq2)/Gamma)
+            return Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L)), Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L2))
+
+
+        temp=[]
+        t2=[]
+        qfreq=[]
+        for f in freq:
+            R1, R2=R_full(f, E1-E0, (E2-E0)/2.0)
+            #qfreq.append(freq[argmax(R)])
+            #imax=argmax(R)
+            #print imax
+            #f1=fq[argmin(absolute(fq-f))]
+            #f2=freq[argmin(absolute(R[imax:-1]-0.5))]
+            t2.append(R2)
+            temp.append(R1)
+        temp=array(temp)
+        #b.line_plot("coup", freq, t2)
+        c=Plotter()
+        g=Plotter()
+        c.colormesh("R_full", yo, freq, 10*log10(absolute(temp)+absolute(t2)))
+        g.colormesh("R_full", yo, freq, 10*log10(absolute(t2)))
+
+        #g.colormesh('R_angle', yo, freq, angle(temp))        #b.line_plot("Ba", freq, t2)
+        #b.line_plot("Ga", freq, temp)
+        b.show()
+
+    if 0:
+        from numpy import pi, linspace, sin, amax, argmin, argmax, cos
+        from scipy.constants import h
+        Np=qdt.Np
+        f0=5.45e9
+        w0=2*pi*f0
+
+        vf=3488.0
         freq=linspace(0.0001e9, 15e9, 2000)
         print qdt.flux_factor, qdt.offset, qdt.Ejmax/h, qdt.Ec/h
         def flux_par(w_listen, voltage, offset=qdt.offset, flux_factor=qdt.flux_factor, Ejmax=qdt.Ejmax, Ec=qdt.Ec):
@@ -512,7 +663,7 @@ if __name__=="__main__":
         #c.line_plot('R_angle', yo, t2)
 
         #c.line_plot("cross_sections1", yo, t2)#, label="{:.3f}V".format(yo[500]))
-        
+
         #c.line_plot("cross_sections1", freq, 10*log10(absolute(temp[:, 500])), label="{:.3f}V".format(yo[500]))
         #c.line_plot("cross_sections2", freq, 10*log10(absolute(temp[:, 428])), label="{:.3f}V".format(yo[428]))
         #c.line_plot("cross_sections3", freq, 10*log10(absolute(temp[:, 401])), label="{:.3f}V".format(yo[401]))
