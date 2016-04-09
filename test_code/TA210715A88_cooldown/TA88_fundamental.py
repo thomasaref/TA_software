@@ -400,19 +400,36 @@ if __name__=="__main__":
         from numpy import pi, linspace, sin, amax, argmin, argmax, cos
         from scipy.constants import h
         Np=qdt.Np
-        f0=5.35e9
+        f0=5.45e9
+        w0=2*pi*f0
+
         vf=3488.0
         freq=linspace(0.0001e9, 15e9, 2000)
         print qdt.flux_factor, qdt.offset, qdt.Ejmax/h, qdt.Ec/h
-        def flux_par(voltage, offset=qdt.offset, flux_factor=qdt.flux_factor, Ejmax=qdt.Ejmax, Ec=qdt.Ec):
+        def flux_par(w_listen, voltage, offset=qdt.offset, flux_factor=qdt.flux_factor, Ejmax=qdt.Ejmax, Ec=qdt.Ec):
             flux_over_flux0=(voltage-offset)*flux_factor
             Ej=Ejmax*absolute(cos(pi*flux_over_flux0))
+            epsinf=qdt.epsinf
+            W=qdt.W
+            Dvv=qdt.Dvv
+            fq=sqrt(8.0*Ej*Ec)/h
+            wq=2.0*pi*fq#print wq
+
+            X=Np*pi*(wq-w0)/w0
+            Ga0=3.11*w0*epsinf*W*Dvv*Np**2
+            C=sqrt(2.0)*Np*W*epsinf
+            #Ga=Ga0*(sin(X)/X)**2.0
+            Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+
+            E10=sqrt(8.0*Ej*Ec/(1.0+Ba/(wq*C)))-Ec/(1.0+Ba/(wq*C))
+            E21=sqrt(8.0*Ej*Ec/(1.0+Ba/(wq*C)))-2.0*Ec/(1.0+Ba/(wq*C))
+            return E10/h, (E21+E10)/h/2.0
             E0 =  sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0
             E1 =  sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0)
             E2 =  sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*2**2+6.0*2+3.0)
             E3 =  sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*3**2+6.0*3+3.0)
 
-            return (E1-E0)/h, (E2-E0)/h/2.0#/3.0
+            return (E1-E0)/h, (E2-E0)/h#/3.0
             #return qdt._get_fq(Ej, qdt.Ec)
 
         def R_full(f_listen=4.3e9, voltage=0.001):
@@ -421,7 +438,7 @@ if __name__=="__main__":
             w_listen=2*pi*f_listen
             epsinf=qdt.epsinf
             W=qdt.W
-            Dvv=qdt.Dvv#/2.0
+            Dvv=qdt.Dvv
             w0=2*pi*f0
 
 
@@ -431,10 +448,10 @@ if __name__=="__main__":
             Ga=Ga0*(sin(X)/X)**2.0
             Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
 
-            C_prime=Ba/w_listen+C
-            Ec_prime=e**2/(2.0*C_prime)
-
-            fq, fq2=flux_par(voltage, offset=0.0, flux_factor=0.2945, Ejmax=qdt.Ejmax, Ec=Ec_prime)
+            #C_prime=Ba/w_listen+C
+            #Ec_prime=e**2/(2.0*C_prime)
+            #BadwC=Ba/(w_listen*C)
+            fq, fq2=flux_par(w_listen, voltage, offset=0.0, flux_factor=0.2945, Ejmax=qdt.Ejmax, Ec=qdt.Ec)
             wq=2.0*pi*fq
             wq2=2.0*pi*fq2
 
@@ -449,10 +466,11 @@ if __name__=="__main__":
 
             #w2=Ecprime
 
-            #b.line_plot("Ba", fq, Ba)
-            #b.line_plot("Ga", fq, Ga)
+            #b.line_plot("Ba", f_listen, Ba)
+            #b.line_plot("Ga", f_listen, Ga)
+            #return Ba/(2*C*2*pi), Ga/(2*C*2*pi)
             #print Ga, Ba, w_listen*C
-            return Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L))#+Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L2))
+            return fq, Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L))+Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L2))
         #R=Ga/(Ga+1j*w_listen*C+1/(1j*w_listen*L))
             #b.line_plot("semiclassical", fq, absolute(R)**2, label=str(f_listen))
         #b.line_plot("semiclassical", fq, Ba)
@@ -468,17 +486,20 @@ if __name__=="__main__":
         for f in freq:
                 #X2=36*pi*(f-4.4e9)/4.4e9
                 #wrap=(sin(X2)/X2)**2
-            R=R_full(f, yo)
+            fq, R=R_full(f, yo)
             #qfreq.append(freq[argmax(R)])
             #imax=argmax(R)
             #print imax
-            #f1=freq[argmin(absolute(R[0:imax]-0.5))]
+            #f1=fq[argmin(absolute(fq-f))]
             #f2=freq[argmin(absolute(R[imax:-1]-0.5))]
-            #t2.append(f2-f1)
+            t2.append(fq)
             temp.append(R)
         temp=array(temp)
         #b.line_plot("coup", freq, t2)
         d=Plotter()
+        #b.line_plot("Ba", freq, t2)
+        #b.line_plot("Ga", freq, temp)
+
         b.colormesh("R_full", yo, freq, 10*log10(absolute(temp)))
         d.colormesh('R_angle', yo, freq, angle(temp))
 
@@ -488,20 +509,24 @@ if __name__=="__main__":
 
 
         c=Plotter()
-        c.line_plot("cross_sections1", freq, 10*log10(absolute(temp[:, 500])), label="{:.3f}V".format(yo[500]))
-        c.line_plot("cross_sections2", freq, 10*log10(absolute(temp[:, 428])), label="{:.3f}V".format(yo[428]))
-        c.line_plot("cross_sections3", freq, 10*log10(absolute(temp[:, 401])), label="{:.3f}V".format(yo[401]))
-        c.line_plot("cross_sections4", freq, 10*log10(absolute(temp[:, 385])), label="{:.3f}V".format(yo[385]))
-        c.line_plot("cross_sections5", freq, 10*log10(absolute(temp[:, 380])), label="{:.3f}V".format(yo[380]))
-        c.line_plot("cross_sections6", freq, 10*log10(absolute(temp[:, 368])), label="{:.3f}V".format(yo[368]))
+        #c.line_plot('R_angle', yo, t2)
+
+        #c.line_plot("cross_sections1", yo, t2)#, label="{:.3f}V".format(yo[500]))
+        
+        #c.line_plot("cross_sections1", freq, 10*log10(absolute(temp[:, 500])), label="{:.3f}V".format(yo[500]))
+        #c.line_plot("cross_sections2", freq, 10*log10(absolute(temp[:, 428])), label="{:.3f}V".format(yo[428]))
+        #c.line_plot("cross_sections3", freq, 10*log10(absolute(temp[:, 401])), label="{:.3f}V".format(yo[401]))
+        #c.line_plot("cross_sections4", freq, 10*log10(absolute(temp[:, 385])), label="{:.3f}V".format(yo[385]))
+        #c.line_plot("cross_sections5", freq, 10*log10(absolute(temp[:, 380])), label="{:.3f}V".format(yo[380]))
+        #c.line_plot("cross_sections6", freq, 10*log10(absolute(temp[:, 368])), label="{:.3f}V".format(yo[368]))
 
         q=Plotter()
-        q.line_plot("cross_sections1", freq, angle(temp[:, 500]), label="{:.3f}V".format(yo[500]))
-        q.line_plot("cross_sections2", freq, angle(temp[:, 428]), label="{:.3f}V".format(yo[428]))
-        q.line_plot("cross_sections3", freq, angle(temp[:, 401]), label="{:.3f}V".format(yo[401]))
-        q.line_plot("cross_sections4", freq, angle(temp[:, 385]), label="{:.3f}V".format(yo[385]))
-        q.line_plot("cross_sections5", freq, angle(temp[:, 380]), label="{:.3f}V".format(yo[380]))
-        q.line_plot("cross_sections6", freq, angle(temp[:, 368]), label="{:.3f}V".format(yo[368]))
+        #q.line_plot("cross_sections1", freq, angle(temp[:, 500]), label="{:.3f}V".format(yo[500]))
+        #q.line_plot("cross_sections2", freq, angle(temp[:, 428]), label="{:.3f}V".format(yo[428]))
+        #q.line_plot("cross_sections3", freq, angle(temp[:, 401]), label="{:.3f}V".format(yo[401]))
+        #q.line_plot("cross_sections4", freq, angle(temp[:, 385]), label="{:.3f}V".format(yo[385]))
+        #q.line_plot("cross_sections5", freq, angle(temp[:, 380]), label="{:.3f}V".format(yo[380]))
+        #q.line_plot("cross_sections6", freq, angle(temp[:, 368]), label="{:.3f}V".format(yo[368]))
 
 
         #ifft_plot(328, c, temp, 328)
@@ -514,7 +539,7 @@ if __name__=="__main__":
             myifft[:11]=0.0
             myifft[-11:]=0.0
             return fft.fft(myifft)
-        t2=array([fft_filter(temp, n) for n in range(len(yo))])
+        #t2=array([fft_filter(temp, n) for n in range(len(yo))])
         #b.colormesh("R_filt",# yo[328:500], freq[::4],
         #absolute(t2[328:500, :]))
         #R_full(4.2500001e9)
