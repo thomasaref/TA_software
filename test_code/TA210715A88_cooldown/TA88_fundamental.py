@@ -402,7 +402,7 @@ if __name__=="__main__":
         Np=qdt.Np
         f0=5.45e9
         w0=2*pi*f0
-
+        #qdt.Dvv=0.001
         vf=3488.0
         freq=linspace(1e9, 10e9, 1000)
         print qdt.flux_factor, qdt.offset, qdt.Ejmax/h, qdt.Ec/h
@@ -424,9 +424,23 @@ if __name__=="__main__":
             Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
             return -Ba/(2.0*C)
 
+        def calc_Coupling(fqq, Dvv=qdt.Dvv):
+            epsinf=qdt.epsinf
+            W=qdt.W
+
+            wq=2.0*pi*fqq#print wq
+
+            X=Np*pi*(wq-w0)/w0
+            Ga0=3.11*w0*epsinf*W*Dvv*Np**2
+            C=sqrt(2.0)*Np*W*epsinf
+            Ga=Ga0*(sin(X)/X)**2.0
+            #Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+            return Ga/(2.0*C)
+
         def energy_levels(EjdivEc, Ec=qdt.Ec, Dvv=qdt.Dvv):
             Ec=Ec
             Ej=EjdivEc*Ec
+            w0n=sqrt(8.0*Ej*Ec)/h*(2.0*pi)
             #epsinf=qdt.epsinf
             #W=qdt.W
             #Dvv=qdt.Dvv
@@ -460,13 +474,13 @@ if __name__=="__main__":
 
             E2 =  E2p+calc_Lamb_shift(E2p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*2**2+6.0*2+3.0)-Ba/(2.0*C)*2.5
             E3 =  E3p+calc_Lamb_shift(E3p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*3.5 - (Ec/12.0)*(6.0*3**2+6.0*3+3.0)-Ba/(2.0*C)*3.5
-            return E0, E1, E2, E3, E0p, E1p, E2p, E3p
+            return E0, E1, E2, E3, E0p, E1p, E2p, E3p, w0n
             return (E1-E0)/h, (E2-E1)/h#/3.0
             #return qdt._get_fq(Ej, qdt.Ec)
 
         EjdivEc=linspace(0.001, 300, 3000).astype(float64)
         Ejmax=qdt.Ejmax
-        E0,E1,E2,E3, E0p, E1p, E2p, E3p=energy_levels(EjdivEc, Dvv=qdt.Dvv)
+        E0,E1,E2,E3, E0p, E1p, E2p, E3p, w0n=energy_levels(EjdivEc, Dvv=qdt.Dvv)
 
         b.line_plot("E0", EjdivEc, E0, label="E0")
         b.line_plot("E1", EjdivEc, E1, label="E1")
@@ -475,7 +489,7 @@ if __name__=="__main__":
 
         DEP=E1p-E0p
         d=Plotter()
-        d.line_plot("E0", EjdivEc, (E2-E1)-(E1-E0), label="E0")
+        #d.line_plot("E0", EjdivEc, (E2-E1)-(E1-E0), label="E0")
         #d.line_plot("E1", E1p-E0p, (E2-E1)-DEP, label="E1")
         #d.line_plot("E2", E1p-E0p, (E3-E2), label="E2")
         #d.line_plot("E3", EjdivEc, E3, label="E3")
@@ -486,49 +500,67 @@ if __name__=="__main__":
         b.line_plot("E2p", EjdivEc, E2p, label="E2p")
         b.line_plot("E3p", EjdivEc, E3p, label="E3p")
 
-        d.line_plot("E0p", EjdivEc, (E2p-E1p)-(E1p-E0p), label="E0p")
+        #d.line_plot("E0p", EjdivEc, (E2p-E1p)-(E1p-E0p), label="E0p")
         #d.line_plot("E1p", E1p-E0p, (E2p-E1p)-DEP, label="E1p")
         #d.line_plot("E2p", E1p-E0p, E3p-E2p, label="E2p")
 
         yo = linspace(-2.0, 2.0, 2000)
         Ej=flux_to_Ej(yo, Ejmax=Ejmax)
         EjdivEc=Ej/qdt.Ec
-        E0,E1,E2,E3, E0p, E1p, E2p, E3p=energy_levels(EjdivEc, Dvv=qdt.Dvv)
-
-
-
-        def R_full(f_listen=4.3e9, fq=5.0e9, fq2=6.0e9):
-
-
-            w_listen=2*pi*f_listen
+        E0,E1,E2,E3, E0p, E1p, E2p, E3p, w0n=energy_levels(EjdivEc, Dvv=qdt.Dvv)
+        Gamma10=calc_Coupling(E1-E0)
+        Gamma20=calc_Coupling((E2-E0)/2.0)
+        d.scatter_plot("blah", E1-E0, Gamma10, label="E_{10}")
+        d.scatter_plot("lbs", (E2-E0)/2.0, Gamma20, label="E_{20}/2")
+        def R_lor(f_listen, fqq, w0n1, Dvv=qdt.Dvv):
+            w=2*pi*f_listen
             epsinf=qdt.epsinf
             W=qdt.W
-            Dvv=qdt.Dvv
-            w0=2*pi*f0
-
 
             X=Np*pi*(f_listen-f0)/f0
             Ga0=3.11*w0*epsinf*W*Dvv*Np**2
             C=sqrt(2.0)*Np*W*epsinf
-            Ga=Ga0*(sin(X)/X)**2.0
+#            Ga=Ga0*(sin(X)/X)**2.0
             Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
-
-            wq=2.0*pi*fq
-            wq2=2.0*pi*fq2
-
-            L=1/(C*(wq**2.0))
-            L2=1/(C*(wq2**2.0))
-
-            Gamma=Ga/(2.0*C)
-            #return 1.0/(1.0 +1.0j*(w_listen-wq)/Gamma), 1.0/(1.0 +1.0j*(w_listen-wq2)/Gamma)
-            return Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L)), Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L2))
+            w0nn=2*pi*fqq#w0n1#-Ba/(2.0*C)
+            Gamma=calc_Coupling(fqq, Dvv=Dvv)
+            #return -2Gamma10*(gamma10-idw)/(4*(gamma10*2+dw**2)) #+Gamma10*Gamma21*(gamma20+idw)*0
+            #return 1-2*Gamma10/(2*(gamma10-1.0j*dw)+(OmegaC**2)/(2*gamma20-2j*(dw+dwc)))
+            return -Gamma/(Gamma+1.0j*(w-w0nn))
+#        def R_full(f_listen=4.3e9, fq=5.0e9, fq2=6.0e9):
+#
+#
+#            w_listen=2*pi*f_listen
+#            epsinf=qdt.epsinf
+#            W=qdt.W
+#            Dvv=qdt.Dvv
+#            w0=2*pi*f0
+#
+#
+#            X=Np*pi*(f_listen-f0)/f0
+#            Ga0=3.11*w0*epsinf*W*Dvv*Np**2
+#            C=sqrt(2.0)*Np*W*epsinf
+#            Ga=Ga0*(sin(X)/X)**2.0
+#            Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+#
+#            wq=2.0*pi*fq
+#            wq2=2.0*pi*fq2
+#
+#            L=1/(C*(wq**2.0))
+#            L2=1/(C*(wq2**2.0))
+#
+#            Gamma=Ga/(2.0*C)
+#            #return 1.0/(1.0 +1.0j*(w_listen-wq)/Gamma), 1.0/(1.0 +1.0j*(w_listen-wq2)/Gamma)
+#            return Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L)), Ga/(Ga+1.0j*Ba+1.0j*w_listen*C+1.0/(1.0j*w_listen*L2))
 
 
         temp=[]
         t2=[]
         qfreq=[]
         for f in freq:
-            R1, R2=R_full(f, E1-E0, (E2-E0)/2.0)
+            R1=R_lor(f, E1-E0, w0n)
+            R2=R_lor(f, (E2-E0)/2.0, w0n)
+            #R1, R2=R_full(f, E1-E0, (E2-E0)/2.0)
             #qfreq.append(freq[argmax(R)])
             #imax=argmax(R)
             #print imax
@@ -541,7 +573,10 @@ if __name__=="__main__":
         c=Plotter()
         g=Plotter()
         c.colormesh("R_full", yo, freq, 10*log10(absolute(temp)+absolute(t2)))
-        g.colormesh("R_full", yo, freq, 10*log10(absolute(t2)))
+        g.colormesh("R_full", yo, freq, angle(temp))
+        h=Plotter()
+        h.colormesh("R_full", yo, freq, angle(t2))
+
 
         #g.colormesh('R_angle', yo, freq, angle(temp))        #b.line_plot("Ba", freq, t2)
         #b.line_plot("Ga", freq, temp)
