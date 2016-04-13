@@ -7,10 +7,12 @@ Created on Sat Apr  9 19:14:03 2016
 
 from sys import exc_info
 from os.path import basename
-from atom.api import Atom, Unicode, Bool, List, Typed, Dict, cached_property
+from atom.api import Atom, Unicode, Bool, List, Typed, Dict, cached_property, Int
 from enaml import imports
 with imports():
     from taref.core.ipython_e import InteractiveWindow
+
+import sys
 
 def f_top_finder(fb):
     """A recursive top frame finder"""
@@ -79,6 +81,30 @@ class Interact(Atom):
     file_reader=Typed(File_Parser)#()
     locals_dict=Dict()
     file_read=False
+    exec_on_enter=Bool(False)
+
+    log_height=Int(100)
+    log_width=Int(300)
+    log_str=Unicode()
+
+    @cached_property
+    def initial_position(self):
+        return (0, self.log_height)
+
+    @cached_property
+    def initial_size(self):
+        return (self.log_width, self.log_height)
+
+    def write(self, in_str):
+        self.log_str+=in_str
+
+    def redirect_stdout(self, visible):
+        if visible:
+            sys.stdout=self
+            sys.stderr=self
+        else:
+            sys.stdout=sys.__stdout__ #old_stdout
+            sys.stderr=sys.__stderr__
 
     @cached_property
     def interact_window(self):
@@ -101,7 +127,16 @@ class Interact(Atom):
                 file_text=f.read()
             self.input_code="\n".join([line for line in file_text.split("\n") if self.file_reader(line)])
 
+    def _observe_input_code(self, change):
+        if change["type"]=="update":
+            nn=change["value"].count("\n")-change.get('oldvalue', '').count('\n')
+            if nn!=0 and self.exec_on_enter:
+                self.exec_code()
+
+
     def exec_code(self):
         """simulates the python code producing the output texlist"""
+        self.log_str=""
         exec(self.input_code, {}, self.locals_dict)
+        self.locals_dict.update(locals())
 

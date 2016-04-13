@@ -155,7 +155,7 @@ class Lyzer(TA88_Fund):
 
     @tag_Property(plot=True, sub=True)
     def MagdBFiltbgsub(self):
-        return self.MagAbsFilt/mean(self.MagAbsFilt[:, 0:5], axis=1, keepdims=True)
+        #return self.MagAbsFilt/mean(self.MagAbsFilt[:, 0:5], axis=1, keepdims=True)
         return self.MagdBFilt-10.0*log10(mean(self.MagAbsFilt[:, 0:5], axis=1, keepdims=True))
 
     @tag_Property(plot=True, sub=True)

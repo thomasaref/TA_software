@@ -8,7 +8,7 @@ Created on Sat Jan 30 13:51:10 2016
 from enaml.widgets.api import DockPane, MultilineField, MainWindow, IPythonConsole, VGroup, PushButton
 from atom.api import Atom, Float, Unicode, Int, Typed, cached_property
 from taref.core.log import log_debug
-#
+
 #class IPythonCatch(Atom):
 #    """a stream catching class for use with the IPython window"""
 #    ipy_str=Unicode("#IPython Log (Outputs appear with comment # in front)\n\n")
@@ -55,6 +55,9 @@ def update_and_return(indict, updict):
     indict.update(updict)
     return indict
 
+#class MyField(MultilineField):
+#    def _observe_text(self, change):
+#        log_debug(change)
 enamldef InteractiveWindow(MainWindow): main:
     destroy_on_close=False
     #attr input_dict : dict = {}
@@ -63,13 +66,18 @@ enamldef InteractiveWindow(MainWindow): main:
     title = "myPython"
     #initial_position=ipython_stream.initial_position
     #initial_size=ipython_stream.initial_size
+    activated ::
+        interact.redirect_stdout(True)
     closed ::
         self.set_size(self.size())
         self.set_position(self.position())
+        interact.redirect_stdout(False)
+
     VGroup:
         alias ipc
         MultilineField: ipc:
             text := interact.input_code
+            #text :: print dir(self)
             #text ::
             #    if do.checked:
             #        log_debug(self.text)
@@ -78,9 +86,16 @@ enamldef InteractiveWindow(MainWindow): main:
             #    self.proxy.text_control.textChanged.connect(text_ev(ipy_console=ipc, ipy_stream=ipython_stream))
             #initial_ns=update_and_return({"wd" : dict([(w.name, w) for w in main.windows])}, input_dict)
 
-        #MultilineField: runtxt:
-        #    read_only=True
-            #text<<ipython_stream.ipy_str
+        MultilineField: runtxt:
+            read_only=True
+            text<<interact.log_str
+        PushButton:
+            checkable = True
+            checked := interact.exec_on_enter
+            text<< {True : "Execute on enter", False : "Execute on Run"}[self.checked]
+            #clicked ::
+
+
         PushButton: do:
                 text = "Run"
                 #checkable = True
