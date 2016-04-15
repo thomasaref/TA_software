@@ -505,9 +505,9 @@ class S3A4_Power(TransLyzer):
             Magcom=reshape(Magcom, s, order="F")
             self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
             Magcom=squeeze(Magcom)
-            self.Magcom=Magcom[:, 10, :]
+            self.Magcom=Magcom#[:, 10, :]
             self.stop_ind=len(self.yoko)-1
-            return array([[self.fft_filter_full(m, n, Magcom) for n in range(len(self.yoko))] for m in range(len(self.pwr))]).transpose()
+            #return array([[self.fft_filter_full(m, n, Magcom) for n in range(len(self.yoko))] for m in range(len(self.pwr))]).transpose()
 
 
     #@tag_Property(plot=True, sub=True)
@@ -515,7 +515,7 @@ class S3A4_Power(TransLyzer):
     #    return self.MagAbsFilt/mean(self.MagAbsFilt[:, :, 0:5], axis=1, keepdims=True)
     #    return self.MagdBFilt-10.0*log10(mean(self.MagAbsFilt[:, :, 0:5], axis=1, keepdims=True))
 
-    @tag_Property(plot=True, sub=True)
+    #@tag_Property(plot=True, sub=True)
     def MagcomFilt(self):
         return array([self.fft_filter(n) for n in range(len(self.yoko))]).transpose()
 
@@ -806,7 +806,7 @@ if 0:
 
     magpow_colormesh(s3a4_2t, Plotter(), mg)
 
-if 1:
+if 0:
     s3a4_2t=S3A4_TwoTone(filt_start_ind=18, filt_end_ind=28, on_res_ind=7,#, VNA_name='RS VNA', port_name='S21',
                      rd_hdf=TA88_Read(main_file="Data_0414/S3S4A1_two_tone_test1.hdf5")) #29, 40)
     mg=s3a4_2t.read_data()
@@ -831,6 +831,36 @@ if 1:
         plotter.mpl_axes.title="Magabs fluxmap {}".format(self.name)
 
     magpow_colormesh(s3a4_2t, Plotter(), mg)
+
+if 1:
+    s3a4_pow=S3A4_Power(filt_start_ind=40, filt_end_ind=55, on_res_ind=80, VNA_name='RS VNA', port_name='S21',
+                     rd_hdf=TA88_Read(main_file="Data_0414/S3S4A1_trans_lowpwr_pwrswp.hdf5")) #29, 40)
+    mg=s3a4_pow.read_data()
+    Plotter().colormesh("blah", s3a4_pow.MagdB[1, :, 0:80].transpose()-s3a4_pow.MagdB[1, :, 81])
+    Plotter().line_plot("blah", s3a4_pow.pwr, s3a4_pow.MagdB[0, :, 30]-s3a4_pow.MagdB[0, :, 81])
+
+    #s3a4_pow.magabs_colormesh("S3A1 wide magabs")
+    #s3a4_pow.magabsfilt_colormesh("filtcolormesh S4A1 wide")
+    #s3a4_pow.magdBfilt_colormesh("filtdB S1A4 wide")
+    #s3a4_pow.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
+    #a2.filt_compare(a2.start_ind, bb2)
+    #s1a1_mp.filt_compare("filt_compare_off_res", s1a1_mp.start_ind)
+    #s1a1_mp.filt_compare("filt_compare_on_res", s1a1_mp.on_res_ind)
+    #s3a4_pow.ifft_plot("ifft_S1A4 wide")
+    #s3a4_pow.ifft_dif_plot("ifft__dif_S1A4 wide")
+    print shape(mg)
+
+    def magpow_colormesh(self, plotter, mg):
+        print shape(mg)
+        plotter.colormesh("magabs_{}".format(self.name), self.pwr, self.yoko, mg[ :, :])
+        #plotter.set_ylim(min(self.frequency), max(self.frequency))
+        #plotter.set_xlim(min(self.yoko), max(self.yoko))
+        plotter.mpl_axes.xlabel="Yoko (V)"
+        plotter.mpl_axes.ylabel="Frequency (Hz)"
+        plotter.mpl_axes.title="Magabs fluxmap {}".format(self.name)
+
+    #magpow_colormesh(s3a4_pow, Plotter(), mg)
+
 shower(wp)#
 #def fano(x, p):
 #    return p[2]*(((p[4]*p[0]+x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]

@@ -422,7 +422,7 @@ if __name__=="__main__":
             C=sqrt(2.0)*Np*W*epsinf
             #Ga=Ga0*(sin(X)/X)**2.0
             Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
-            return -Ba/(2.0*C)
+            return -Ba/(2.0*C)/(2.0*pi)
 
         def calc_Coupling(fqq, Dvv=qdt.Dvv):
             epsinf=qdt.epsinf
@@ -435,7 +435,7 @@ if __name__=="__main__":
             C=sqrt(2.0)*Np*W*epsinf
             Ga=Ga0*(sin(X)/X)**2.0
             #Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
-            return Ga/(2.0*C)
+            return Ga/(2.0*C)/(2.0*pi)
 
         def energy_levels(EjdivEc, Ec=qdt.Ec, Dvv=qdt.Dvv):
             Ec=Ec
@@ -489,7 +489,7 @@ if __name__=="__main__":
 
         DEP=E1p-E0p
         d=Plotter()
-        #d.line_plot("E0", EjdivEc, (E2-E1)-(E1-E0), label="E0")
+        Plotter(name="anharm").line_plot("E0", EjdivEc, (E2-E1)-(E1-E0), label="E0")
         #d.line_plot("E1", E1p-E0p, (E2-E1)-DEP, label="E1")
         #d.line_plot("E2", E1p-E0p, (E3-E2), label="E2")
         #d.line_plot("E3", EjdivEc, E3, label="E3")
@@ -510,8 +510,13 @@ if __name__=="__main__":
         E0,E1,E2,E3, E0p, E1p, E2p, E3p, w0n=energy_levels(EjdivEc, Dvv=qdt.Dvv)
         Gamma10=calc_Coupling(E1-E0)
         Gamma20=calc_Coupling((E2-E0)/2.0)
-        d.scatter_plot("blah", E1-E0, Gamma10, label="E_{10}")
-        d.scatter_plot("lbs", (E2-E0)/2.0, Gamma20, label="E_{20}/2")
+        #d.scatter_plot("blah", E1-E0, Gamma10, label="E_{10}")
+        #d.scatter_plot("lbs", (E2-E0)/2.0, Gamma20, label="E_{20}/2")
+        fw0=E1-E0 #sqrt(8*Ej*qdt.Ec)/h
+        d.line_plot("asdf", fw0, calc_Coupling(fw0))
+        d.line_plot("asdfd", fw0, calc_Lamb_shift(fw0))
+        Plotter().line_plot("asdf", yo, fw0+calc_Lamb_shift(fw0))
+
         def R_lor(f_listen, fqq, w0n1, Dvv=qdt.Dvv):
             w=2*pi*f_listen
             epsinf=qdt.epsinf
@@ -573,9 +578,9 @@ if __name__=="__main__":
         c=Plotter()
         g=Plotter()
         c.colormesh("R_full", yo, freq, 10*log10(absolute(temp)+absolute(t2)))
-        g.colormesh("R_full", yo, freq, angle(temp))
+        g.colormesh("R_full", yo, freq, absolute(temp))
         h=Plotter()
-        h.colormesh("R_full", yo, freq, angle(t2))
+        h.colormesh("R_full", yo, freq, absolute(t2))
 
 
         #g.colormesh('R_angle', yo, freq, angle(temp))        #b.line_plot("Ba", freq, t2)
