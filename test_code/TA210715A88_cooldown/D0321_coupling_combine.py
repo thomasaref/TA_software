@@ -505,9 +505,9 @@ class S3A4_Power(TransLyzer):
             Magcom=reshape(Magcom, s, order="F")
             self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
             Magcom=squeeze(Magcom)
-            self.Magcom=Magcom#[:, 10, :]
+            self.Magcom=Magcom[:, 10, :]
             self.stop_ind=len(self.yoko)-1
-            #return array([[self.fft_filter_full(m, n, Magcom) for n in range(len(self.yoko))] for m in range(len(self.pwr))]).transpose()
+            return array([[self.fft_filter_full(m, n, Magcom) for n in range(len(self.yoko))] for m in range(len(self.pwr))]).transpose()
 
 
     #@tag_Property(plot=True, sub=True)
@@ -515,7 +515,7 @@ class S3A4_Power(TransLyzer):
     #    return self.MagAbsFilt/mean(self.MagAbsFilt[:, :, 0:5], axis=1, keepdims=True)
     #    return self.MagdBFilt-10.0*log10(mean(self.MagAbsFilt[:, :, 0:5], axis=1, keepdims=True))
 
-    #@tag_Property(plot=True, sub=True)
+    @tag_Property(plot=True, sub=True)
     def MagcomFilt(self):
         return array([self.fft_filter(n) for n in range(len(self.yoko))]).transpose()
 
@@ -525,7 +525,8 @@ class S3A4_Power(TransLyzer):
         if self.filt_start_ind!=0:
             myifft[:self.filt_start_ind]=0.0
             myifft[-self.filt_start_ind:]=0.0
-        return angle(myifft[43])
+        #return angle(myifft[44])
+        return absolute(myifft[69])
         #return max(absolute(myifft))
         return fft.fft(myifft)
 if 0:
@@ -697,8 +698,8 @@ class S3A4_TwoTone(TransLyzer):
         if self.filt_start_ind!=0:
             myifft[:self.filt_start_ind]=0.0
             myifft[-self.filt_start_ind:]=0.0
-        return angle(myifft[21])
-        return absolute(myifft[21])
+        return angle(myifft[44])
+        return absolute(myifft[44])
         return fft.fft(myifft)
 
 if 0:
@@ -833,26 +834,31 @@ if 0:
     magpow_colormesh(s3a4_2t, Plotter(), mg)
 
 if 1:
-    s3a4_pow=S3A4_Power(filt_start_ind=40, filt_end_ind=55, on_res_ind=80, VNA_name='RS VNA', port_name='S21',
-                     rd_hdf=TA88_Read(main_file="Data_0414/S3S4A1_trans_lowpwr_pwrswp.hdf5")) #29, 40)
+    s3a4_pow=S3A4_Power(filt_start_ind=65, filt_end_ind=73, on_res_ind=10, VNA_name='RS VNA', port_name='S21',
+                     rd_hdf=TA88_Read(main_file="Data_0415/S3S4A1_lowpwr_midpeak.hdf5")) #29, 40)
     mg=s3a4_pow.read_data()
-    Plotter().colormesh("blah", s3a4_pow.MagdB[1, :, 0:80].transpose()-s3a4_pow.MagdB[1, :, 81])
-    Plotter().line_plot("blah", s3a4_pow.pwr, s3a4_pow.MagdB[0, :, 30]-s3a4_pow.MagdB[0, :, 81])
+    #Plotter().colormesh("blah", s3a4_pow.MagdB[1, :, 0:80].transpose()-s3a4_pow.MagdB[1, :, 81])
+    #Plotter().line_plot("blah", s3a4_pow.pwr, s3a4_pow.MagdB[0, :, 30]-s3a4_pow.MagdB[0, :, 81])
 
-    #s3a4_pow.magabs_colormesh("S3A1 wide magabs")
-    #s3a4_pow.magabsfilt_colormesh("filtcolormesh S4A1 wide")
-    #s3a4_pow.magdBfilt_colormesh("filtdB S1A4 wide")
-    #s3a4_pow.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
+    s3a4_pow.magabs_colormesh("S3A1 wide magabs")
+    s3a4_pow.magabsfilt_colormesh("filtcolormesh S4A1 wide")
+    s3a4_pow.magdBfilt_colormesh("filtdB S1A4 wide")
+    s3a4_pow.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
     #a2.filt_compare(a2.start_ind, bb2)
     #s1a1_mp.filt_compare("filt_compare_off_res", s1a1_mp.start_ind)
     #s1a1_mp.filt_compare("filt_compare_on_res", s1a1_mp.on_res_ind)
-    #s3a4_pow.ifft_plot("ifft_S1A4 wide")
+    s3a4_pow.ifft_plot("ifft_S1A4 wide")
     #s3a4_pow.ifft_dif_plot("ifft__dif_S1A4 wide")
     print shape(mg)
 
+    Plotter().colormesh("mag", 10*log10(mg)-10*log10(mg[28, :]))
+    #for n in range(len(s3a4_pow.pwr)):
+    #    Plotter().colormesh("pwr{}".format(n), absolute(mg[:, :, n]).transpose())#/absolute(mg[:,28,n]))
+
     def magpow_colormesh(self, plotter, mg):
         print shape(mg)
-        plotter.colormesh("magabs_{}".format(self.name), self.pwr, self.yoko, mg[ :, :])
+        plotter.colormesh("magabs_{}".format(self.name), 10*log10(absolute(mg[100, :, :]))-10*log10(absolute(mg[100,28, :])))
+        print self.yoko
         #plotter.set_ylim(min(self.frequency), max(self.frequency))
         #plotter.set_xlim(min(self.yoko), max(self.yoko))
         plotter.mpl_axes.xlabel="Yoko (V)"

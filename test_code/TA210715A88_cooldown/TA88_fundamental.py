@@ -512,16 +512,30 @@ if __name__=="__main__":
         Gamma20=calc_Coupling((E2-E0)/2.0)
         #d.scatter_plot("blah", E1-E0, Gamma10, label="E_{10}")
         #d.scatter_plot("lbs", (E2-E0)/2.0, Gamma20, label="E_{20}/2")
-        fw0=E1-E0 #sqrt(8*Ej*qdt.Ec)/h
-        d.line_plot("asdf", fw0, calc_Coupling(fw0))
-        d.line_plot("asdfd", fw0, calc_Lamb_shift(fw0))
-        Plotter().line_plot("asdf", yo, fw0+calc_Lamb_shift(fw0))
+        fw0=linspace(4e9, 7e9, 1000) #E1-E0 #sqrt(8*Ej*qdt.Ec)/h
+        d.line_plot("asdf", fw0/1e9, calc_Coupling(fw0)/1e9, label=r"$G_a/2C$")
+        d.line_plot("asdfd", fw0/1e9, calc_Lamb_shift(fw0)/1e9, label=r"$-B_a/2C$")
+        def listen_coupling(f_listen, Dvv=qdt.Dvv):
+            epsinf=qdt.epsinf
+            W=qdt.W
+            w=2.0*pi*f_listen
+            Np=36
+            f0=idt.f0
+            print f0 #4.5e9
+            w0=2*pi*f0
+            X=Np*pi*(w-w0)/w0
+            Ga0=3.11*w0*epsinf*W*Dvv*Np**2
+            C=sqrt(2.0)*Np*W*epsinf
+            Ga=Ga0*(sin(X)/X)**2.0
+            #Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+            return Ga/(2.0*C)/(2.0*pi)
+        d.line_plot("listen", fw0/1e9, listen_coupling(fw0)/4/1e9, label=r"$G_a^{IDT}/2C^{IDT}/4$")
+        #Plotter().line_plot("asdf", yo, fw0+calc_Lamb_shift(fw0))
 
         def R_lor(f_listen, fqq, w0n1, Dvv=qdt.Dvv):
             w=2*pi*f_listen
             epsinf=qdt.epsinf
             W=qdt.W
-
             X=Np*pi*(f_listen-f0)/f0
             Ga0=3.11*w0*epsinf*W*Dvv*Np**2
             C=sqrt(2.0)*Np*W*epsinf
