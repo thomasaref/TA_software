@@ -5,7 +5,7 @@ Created on Thu Feb  4 12:51:21 2016
 @author: thomasaref
 """
 from taref.core.log import log_debug
-from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names, SimpleSetter
+from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names, simple_set
 from taref.core.universal import Array
 from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict, Instance, Atom
 from numpy import linspace, arange, asanyarray, append, amax, amin
@@ -19,7 +19,7 @@ from matplotlib.collections import PolyCollection, LineCollection, QuadMesh, Pat
 from matplotlib.lines import Line2D
 from matplotlib.colorbar import Colorbar
 
-class MPL_Format(SimpleSetter):
+class MPL_Format(Atom):
     """format class for those attributes with a direct correspondence to mpl attributes"""
     visible=Bool(True)#.tag(former="visible")
     _parent=Typed(PlotUpdate)
@@ -32,7 +32,7 @@ class MPL_Format(SimpleSetter):
 
     def plot_set(self, param):
         for clt in self.clt_values():
-            self.simple_set(clt, self, get_tag(self, param, "former", param))
+            simple_set(clt, self, get_tag(self, param, "former", param))
 
     @plot_observe("visible")
     def plot_update(self, change):

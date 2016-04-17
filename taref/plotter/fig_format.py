@@ -5,11 +5,13 @@ Created on Thu Feb  4 12:54:58 2016
 @author: thomasaref
 """
 from taref.core.log import log_debug
+from matplotlib import use#('Agg')
+use('Agg')
 
 from enaml.qt.qt_application import QtApplication
 
-from taref.plotter.plotter_backbone import plot_observe, PlotMaster, SimpleSetter, PlotUpdate
-from atom.api import Bool, Unicode, Float, Enum, Int, cached_property, Typed
+from taref.plotter.plotter_backbone import plot_observe, PlotMaster, simple_set, PlotUpdate
+from atom.api import Bool, Unicode, Float, Enum, Int, cached_property, Typed, Atom
 
 from taref.core.shower import shower
 from taref.core.agent import Operative
@@ -19,6 +21,8 @@ from taref.core.atom_extension import private_property
 
 from matplotlib.figure import Figure
 from matplotlib import rcParams
+print rcParams
+#rcParams["figure.figsize"]=[9.0, 3.0]
 rcParams['axes.labelsize'] = 14
 rcParams['xtick.labelsize'] = 14
 rcParams['ytick.labelsize'] = 14
@@ -36,9 +40,9 @@ from matplotlib.backend_bases import cursors
 from matplotlib.backends import backend_qt4
 from PySide.QtCore import Qt
 backend_qt4.cursord[cursors.POINTER] = Qt.CursorShape.CrossCursor
+from matplotlib import pyplot as plt
 
-
-class MPL_Axes(SimpleSetter):
+class MPL_Axes(Atom):
     _parent=Typed(PlotUpdate)
     xlabel=Unicode()
     ylabel=Unicode()
@@ -47,7 +51,7 @@ class MPL_Axes(SimpleSetter):
     yscale=Enum('linear', 'log')
 
     def axes_set(self, param):
-        self.simple_set(self._parent.axes, self, param)
+        simple_set(self._parent.axes, self, param)
 
     @plot_observe("xscale", "yscale", "title", "xlabel", "ylabel", immediate_update=True)
     def axes_update(self, change):
@@ -55,14 +59,14 @@ class MPL_Axes(SimpleSetter):
 
     _parent=Typed(PlotMaster)
 
-class MPL_Figure(SimpleSetter):
+class MPL_Figure(Atom):
     tight_layout=Bool(False)
-    dpi=Int(150)
+    dpi=Int(300)
 
     def figure_set(self, param):
         self.simple_set(self._parent.figure, self, param)
 
-    @plot_observe("tight_layout", "dpi")
+    #@plot_observe("tight_layout", "dpi")
     def figure_update(self, change):
         self.figure_set(change["name"])
 
@@ -83,6 +87,9 @@ class Fig(PlotMaster, Operative):
     y_min=Float()
     y_max=Float()
 
+    transparent=Bool(True)
+    save_type=Enum("png", "pdf", "ps", "eps","svg")
+
     auto_xlim=Bool(True)
     auto_ylim=Bool(True)
 
@@ -99,7 +106,8 @@ class Fig(PlotMaster, Operative):
         return MPL_Axes(_parent=self)
 
     def _default_figure(self):
-        return Figure(figsize=(self.fig_height, self.fig_width), dpi=self.mpl_figure.dpi, tight_layout=self.mpl_figure.tight_layout)
+        return plt.figure(figsize=(self.fig_width, self.fig_height), dpi=self.mpl_figure.dpi,
+        tight_layout=self.mpl_figure.tight_layout)
 
     def set_xlim(self, xmin, xmax):
         self.x_min=xmin
@@ -162,16 +170,27 @@ class Plotter(Fig):
     def multiline_plot(self, name, *args,**kwargs):
         multiline_plot(self, name, *args,**kwargs)
 
-    def savefig(self, dir_path="/Users/thomasaref/Documents/TA_software/", fig_name="test_colormap_plot"):
+    def savefig(self, dir_path="/Users/thomasaref/Documents/TA_software/", fig_name="test_colormap_plot.png"):
         """saves the figure. if a canvas does not exist, the window will be shown and hidden to create it.
         if a QtApplication is not active, a temporary one will be created but not run to host the plot"""
-        if self.figure.canvas is None:
-            app=QtApplication.instance()
-            if app is None:
-                 app=QtApplication()
-            self.view_window.show()
-            self.view_window.hide()
-        self.figure.savefig(dir_path+fig_name, dpi=self.dpi, bbox_inches='tight')
+#        if self.figure.canvas is None:
+#            app=QtApplication.instance()
+#            if app is None:
+#                print "fig save"
+#            else:
+#                 #app=QtApplication()
+#                 self.view_window.show()
+#                 self.view_window.hide()
+        print "saving figure"
+        self.figure.savefig(dir_path+fig_name, dpi=self.mpl_figure.dpi,
+                            bbox_inches='tight',
+                            transparent=self.transparent)#, format=self.save_type)
+
+
+        #print dir(self.figure)
+        #print self.figure.get_figure()
+        #self.figure.savefig(dir_path+fig_name, dpi=self.mpl_figure.dpi, bbox_inches='tight', format="pdf")#, transparent=self.transparent)#,
+                            #format=self.save_type)
 
     @private_property
     def cls_run_funcs(self):
@@ -182,7 +201,7 @@ class Plotter(Fig):
 if __name__=="__main__":
 
     #pm=PlotMaster()
-    a=Plotter()
+    a=Plotter(fig_width=9.0, fig_height=3.0)
     from numpy import meshgrid, sqrt, linspace
     n = 300
     x = linspace(-1.5, 1.5, n)
@@ -190,13 +209,22 @@ if __name__=="__main__":
     X, Y = meshgrid(x, y)
     Z = sqrt(X**2 + Y**2)
 
+    #a.figure=plt.figure(figsize=(8.5,4))
+
     a.colormesh("colormesh", x, y, Z)
+    print a.figure.get_size_inches()
+    print a.figure.get_dpi()
+    #a.figure.set_size_inches((9.5, 3.0))
+    #print plt.plot(x)#,y,Z)
+    a.savefig() #figure.savefig("/Users/thomasaref/Documents/TA_software/test_colorm.pdf")#, format="eps")
+
+    #shower(a)
     #b=Plotter()
     #a.scatter_plot("scatter", [100,200,300], [100,200,300], marker="<", marker_size=300)
-    #a.savefig()
+    #a.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Linneaus180416/", fig_name="test_colormap")
     #d=CrossCursor(plotter=a)
     #d.add_cursor()
-    shower(a)
+    #shower(a)
 
 #    def line_plot(self, zname, zdata, *args, **kwargs):
 #        """Uses LineCollection for efficient plotting of lines.

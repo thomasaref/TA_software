@@ -12,8 +12,9 @@ from matplotlib import cm
 from collections import OrderedDict
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from matplotlib import pyplot as plt
 
-class PlotObserver(object):
+class plot_observe(object):
     """decorator object that adds auto drawing of plot to observe decorator"""
     def __init__(self, *args, **kwargs):
         """if kwarg update_legend is true, will update legend,
@@ -32,16 +33,11 @@ class PlotObserver(object):
                     func(obj, change)
         return observe(*self.args)(new_func)
 
-def plot_observe( *args, **kwargs):
-    """function wrapper for PlotObserver class"""
-    return PlotObserver(*args, **kwargs)
+def simple_set(clt, mpl, param, set_str="set_"):
+    """utility function that uses clt set_ function to set param"""
+    getattr(clt, set_str+param)(getattr(mpl, param))
 
-class SimpleSetter(Atom):
-    """a class that has the can call a 'set_name' function on a param with a given name"""
-    def simple_set(self, clt, mpl, param):
-        getattr(clt, "set_"+param)(getattr(mpl, param))
-
-class PlotMaster(SimpleSetter):
+class PlotMaster(Atom):
     """base plot class contains figure, axes, plot_dict"""
     figure=Typed(Figure)
     fig_height=Float(4.0)
@@ -60,7 +56,7 @@ class PlotMaster(SimpleSetter):
     selected=Unicode()
 
     def _default_figure(self):
-        return Figure(figsize=(self.fig_height, self.fig_width))
+        return plt.figure(figsize=(self.fig_height, self.fig_width))
 
     def _default_axes(self):
          axes=self.figure.add_subplot(111)
@@ -88,14 +84,14 @@ class PlotMaster(SimpleSetter):
         return self.plot_dict.keys()
 
     def _default_horiz_fig(self):
-        return Figure(figsize=(self.fig_width, 1.0))
+        return plt.figure(figsize=(self.fig_width, 1.0))
 
     def _default_horiz_axe(self):
         h_axe=self.horiz_fig.add_subplot(111, sharex=self.axes)
         return h_axe
 
     def _default_vert_fig(self):
-        return Figure(figsize=(1.0, self.fig_height))
+        return plt.figure(figsize=(1.0, self.fig_height))
 
     def _default_vert_axe(self):
         v_axe=self.vert_fig.add_subplot(111, sharey=self.axes)
@@ -108,7 +104,7 @@ class PlotMaster(SimpleSetter):
             if self.show_legend:
                 self.legend()
 
-class PlotUpdate(SimpleSetter):
+class PlotUpdate(Atom):
     """a base clase that contains a plotter object and defines the update plot method (shortcut to plotter method)"""
     plotter=Typed(PlotMaster)
 

@@ -119,6 +119,10 @@ class Lyzer(TA88_Fund):
         Ej=qdt.call_func("Ej", flux_over_flux0=flux_over_flux0)
         return qdt._get_fq(Ej, qdt.Ec)
 
+    @tag_Property(sub=True)
+    def flux_over_flux0(self):
+        return (self.yoko-self.offset)*self.flux_factor
+
     @tag_Property()
     def p_guess(self):
         #return [200e6,4.5e9, 0.002, 0.022, 0.1]
@@ -488,7 +492,7 @@ if __name__=="__main__":
         b.line_plot("E3", EjdivEc, E3, label="E3")
 
         DEP=E1p-E0p
-        d=Plotter()
+        d=Plotter(fig_height=5.0, fig_width=7.0)
         Plotter(name="anharm").line_plot("E0", EjdivEc, (E2-E1)-(E1-E0), label="E0")
         #d.line_plot("E1", E1p-E0p, (E2-E1)-DEP, label="E1")
         #d.line_plot("E2", E1p-E0p, (E3-E2), label="E2")
@@ -512,9 +516,20 @@ if __name__=="__main__":
         Gamma20=calc_Coupling((E2-E0)/2.0)
         #d.scatter_plot("blah", E1-E0, Gamma10, label="E_{10}")
         #d.scatter_plot("lbs", (E2-E0)/2.0, Gamma20, label="E_{20}/2")
-        fw0=linspace(4e9, 7e9, 1000) #E1-E0 #sqrt(8*Ej*qdt.Ec)/h
-        d.line_plot("asdf", fw0/1e9, calc_Coupling(fw0)/1e9, label=r"$G_a/2C$")
-        d.line_plot("asdfd", fw0/1e9, calc_Lamb_shift(fw0)/1e9, label=r"$-B_a/2C$")
+        fw0=linspace(4e9, 7e9, 2000) #E1-E0 #sqrt(8*Ej*qdt.Ec)/h
+        d.line_plot("asdf", fw0/1e9, calc_Coupling(fw0)/1e9, label=r"$G_a/2C$", color="blue")
+        d.line_plot("asdfd", fw0/1e9, calc_Lamb_shift(fw0)/1e9, label=r"$-B_a/2C$", color="red")
+        d.legend()
+
+        d.mpl_axes.xlabel="Frequency (GHz)"
+        d.mpl_axes.ylabel="Frequency (GHz)"
+        d.set_ylim(-1.0, 1.5)
+        #dd.set_xlim(4.2, 5.0)
+        d.savefig("/Users/thomasaref/Dropbox/Current stuff/Linneaus180416/", "Ga_Ba.pdf")
+        d.show()
+
+
+        dd=Plotter(fig_height=7.0, fig_width=7.0)
         def listen_coupling(f_listen, Dvv=qdt.Dvv):
             epsinf=qdt.epsinf
             W=qdt.W
@@ -529,7 +544,23 @@ if __name__=="__main__":
             Ga=Ga0*(sin(X)/X)**2.0
             #Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
             return Ga/(2.0*C)/(2.0*pi)
-        d.line_plot("listen", fw0/1e9, listen_coupling(fw0)/4/1e9, label=r"$G_a^{IDT}/2C^{IDT}/4$")
+
+        dd.line_plot("asdf", fw0/1e9, calc_Coupling(fw0)/1e9, label=r"$G_a/2C$", color="blue")
+        dd.line_plot("asdfd", fw0/1e9, calc_Lamb_shift(fw0)/1e9, label=r"$-B_a/2C$", color="red")
+        dd.line_plot("listen", fw0/1e9, listen_coupling(fw0)/4/1e9, label=r"$G_a^{IDT}/2C^{IDT}/4$", color="green")
+        dd.plot_dict["listen"].mpl.linestyle="dashed"
+        dd.legend()
+        #dd.set_ylim(-1.0, 1.5)
+        #dd.set_xlim(min(self.yoko), max(self.yoko))
+        dd.mpl_axes.xlabel="Frequency (GHz)"
+        dd.mpl_axes.ylabel="Frequency (GHz)"
+        #dd.savefig("/Users/thomasaref/Dropbox/Current stuff/Linneaus180416/", "Ga_all.pdf")#, format="eps")
+        dd.set_ylim(-0.01, 0.1)
+        dd.set_xlim(4.2, 5.0)
+        #dd.savefig("/Users/thomasaref/Dropbox/Current stuff/Linneaus180416/", "Ga_all_zoom.pdf")#, format="eps")
+
+        dd.show()
+        #plotter.mpl_axes.title="MagdB fluxmap {}".format(self.name)
         #Plotter().line_plot("asdf", yo, fw0+calc_Lamb_shift(fw0))
 
         def R_lor(f_listen, fqq, w0n1, Dvv=qdt.Dvv):
