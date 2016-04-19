@@ -442,6 +442,7 @@ if __name__=="__main__":
             return Ga/(2.0*C)/(2.0*pi)
 
         def energy_levels(EjdivEc, Ec=qdt.Ec, Dvv=qdt.Dvv):
+            print Ec/h
             Ec=Ec
             Ej=EjdivEc*Ec
             w0n=sqrt(8.0*Ej*Ec)/h*(2.0*pi)
@@ -472,19 +473,19 @@ if __name__=="__main__":
             #E21=sqrt(8.0*Ej*Ec/(1.0+Ba/(wq*C)))-2.0*Ec/(1.0+Ba/(wq*C))
             #return E10/h, (E21+E10)/h/2.0
             #E_{tot}=-E_J+\sqrt{8E_J E_C}(n +1/2)-(B_a/2C)(n +1/2)-\dfrac{E_C}{12}(6n^2+6n+3)
-            E0 =  E0p+calc_Lamb_shift(E0p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0-Ba/(2.0*C)*0.5 #(n +1/2)
+            E0 =  E0p#+calc_Lamb_shift(E0p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0-Ba/(2.0*C)*0.5 #(n +1/2)
 
-            E1 =  E1p+calc_Lamb_shift(E1p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0) -Ba/(2.0*C)*1.5
+            E1 =  E1p+calc_Lamb_shift(E1p-E0p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0) -Ba/(2.0*C)*1.5
 
-            E2 =  E2p+calc_Lamb_shift(E2p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*2**2+6.0*2+3.0)-Ba/(2.0*C)*2.5
-            E3 =  E3p+calc_Lamb_shift(E3p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*3.5 - (Ec/12.0)*(6.0*3**2+6.0*3+3.0)-Ba/(2.0*C)*3.5
+            E2 =  E2p+calc_Lamb_shift(E2p-E1p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*2**2+6.0*2+3.0)-Ba/(2.0*C)*2.5
+            E3 =  E3p+calc_Lamb_shift(E3p-E2p, Dvv=Dvv) #sqrt(8.0*Ej*Ec)*3.5 - (Ec/12.0)*(6.0*3**2+6.0*3+3.0)-Ba/(2.0*C)*3.5
             return E0, E1, E2, E3, E0p, E1p, E2p, E3p, w0n
             return (E1-E0)/h, (E2-E1)/h#/3.0
             #return qdt._get_fq(Ej, qdt.Ec)
 
         EjdivEc=linspace(0.001, 300, 3000).astype(float64)
         Ejmax=qdt.Ejmax
-        E0,E1,E2,E3, E0p, E1p, E2p, E3p, w0n=energy_levels(EjdivEc, Dvv=qdt.Dvv)
+        E0,E1,E2,E3, E0p, E1p, E2p, E3p, w0n=energy_levels(EjdivEc, Ec=qdt.Ec, Dvv=qdt.Dvv)
 
         b.line_plot("E0", EjdivEc, E0, label="E0")
         b.line_plot("E1", EjdivEc, E1, label="E1")
@@ -493,9 +494,10 @@ if __name__=="__main__":
 
         DEP=E1p-E0p
         d=Plotter(fig_height=5.0, fig_width=7.0)
-        Plotter(name="anharm").line_plot("E0", EjdivEc, (E2-E1)-(E1-E0), label="E0")
-        #d.line_plot("E1", E1p-E0p, (E2-E1)-DEP, label="E1")
-        #d.line_plot("E2", E1p-E0p, (E3-E2), label="E2")
+        #Plotter(name="anharm")
+        d.line_plot("E0", E1p-E0p, (E2-E1)-(E1-E0)-((E2p-E1p)-(E1p-E0p)), label="E0")
+        d.line_plot("E1", E1p-E0p, E1-E0-(E1p-E0p), label="E1")
+        d.line_plot("E2", E1p-E0p, E2-E1-(E2p-E1p), label="E2")
         #d.line_plot("E3", EjdivEc, E3, label="E3")
         #E0,E1,E2,E3=energy_levels(EjdivEc, Dvv=0.0)
 
@@ -507,7 +509,7 @@ if __name__=="__main__":
         #d.line_plot("E0p", EjdivEc, (E2p-E1p)-(E1p-E0p), label="E0p")
         #d.line_plot("E1p", E1p-E0p, (E2p-E1p)-DEP, label="E1p")
         #d.line_plot("E2p", E1p-E0p, E3p-E2p, label="E2p")
-
+        #b.show()
         yo = linspace(-2.0, 2.0, 2000)
         Ej=flux_to_Ej(yo, Ejmax=Ejmax)
         EjdivEc=Ej/qdt.Ec
@@ -525,8 +527,8 @@ if __name__=="__main__":
         d.mpl_axes.ylabel="Frequency (GHz)"
         d.set_ylim(-1.0, 1.5)
         #dd.set_xlim(4.2, 5.0)
-        d.savefig("/Users/thomasaref/Dropbox/Current stuff/Linneaus180416/", "Ga_Ba.pdf")
-        d.show()
+        #d.savefig("/Users/thomasaref/Dropbox/Current stuff/Linneaus180416/", "Ga_Ba.pdf")
+        #d.show()
 
 
         dd=Plotter(fig_height=7.0, fig_width=7.0)
@@ -559,7 +561,7 @@ if __name__=="__main__":
         dd.set_xlim(4.2, 5.0)
         #dd.savefig("/Users/thomasaref/Dropbox/Current stuff/Linneaus180416/", "Ga_all_zoom.pdf")#, format="eps")
 
-        dd.show()
+        #dd.show()
         #plotter.mpl_axes.title="MagdB fluxmap {}".format(self.name)
         #Plotter().line_plot("asdf", yo, fw0+calc_Lamb_shift(fw0))
 
@@ -570,10 +572,12 @@ if __name__=="__main__":
             X=Np*pi*(f_listen-f0)/f0
             Ga0=3.11*w0*epsinf*W*Dvv*Np**2
             C=sqrt(2.0)*Np*W*epsinf
-#            Ga=Ga0*(sin(X)/X)**2.0
+            Ga=Ga0*(sin(X)/X)**2.0
             Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
             w0nn=2*pi*fqq#w0n1#-Ba/(2.0*C)
             Gamma=calc_Coupling(fqq, Dvv=Dvv)
+            L=1/(C*(w0nn**2.0))
+            return  Ga/(Ga+1.0j*Ba+1.0j*w*C+1.0/(1.0j*w*L))
             #return -2Gamma10*(gamma10-idw)/(4*(gamma10*2+dw**2)) #+Gamma10*Gamma21*(gamma20+idw)*0
             #return 1-2*Gamma10/(2*(gamma10-1.0j*dw)+(OmegaC**2)/(2*gamma20-2j*(dw+dwc)))
             return -Gamma/(Gamma+1.0j*(w-w0nn))
@@ -608,8 +612,16 @@ if __name__=="__main__":
         t2=[]
         qfreq=[]
         for f in freq:
-            R1=R_lor(f, E1-E0, w0n)
-            R2=R_lor(f, (E2-E0)/2.0, w0n)
+            Gamma=calc_Coupling(E1-E0)
+            w0nn=2*pi*(E1p-E0p)
+            w=2*pi*f
+            #R1=-Gamma/(Gamma+1.0j*(w-w0nn))
+            R1=R_lor(f, E1p-E0p, w0n)
+            #Gamma=calc_Coupling((E2p-E0p)/2.0)
+            #w0nn=2*pi*(E2p-E0p)/2.0
+            #R2=-Gamma/(Gamma+1.0j*(w-w0nn))
+            anharm=(E2-E1)-(E1-E0)
+            R2=R_lor(f, E1p-E0p+anharm/2.0, w0n)
             #R1, R2=R_full(f, E1-E0, (E2-E0)/2.0)
             #qfreq.append(freq[argmax(R)])
             #imax=argmax(R)
