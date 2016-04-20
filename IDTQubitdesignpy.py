@@ -83,10 +83,10 @@ def EkdivEc(ng=0.5, Ec=1.0/4.0, Ej=2.0, N=50):
     return array(d1), array(d2), array(d3)
 
 N=30
-ng=[0.0]#linspace(-0.6001, 1.6, 101) #[0.5] 
+ng=[0.0]#linspace(-0.6001, 1.6, 101) #[0.5]
 f0=8.0e9
 Ej=f0*h/h*1e-9
-EjoverEc=linspace(0.1, 40, 101) #array([1*4.0])
+EjoverEc=linspace(0.1, 4, 101) #array([1*4.0])
 Ej0=Ej#*sqrt(EjoverEc/8)
 #Np=30
 #Cs=5.0e-10
@@ -94,12 +94,12 @@ Ej0=Ej#*sqrt(EjoverEc/8)
 #Ec=e**2/(2*Cj)
 #Ec=Ej/EjoverEc
 #d1, d2, d3= EkdivEc(ng=ng, Ec=Ec, Ej=Ej, N=50)
-        
+
 def sweepEc():
     Ecarr=Ej/EjoverEc
     E01a=sqrt(8*Ej*Ecarr)-Ecarr
     data=[]
-    for Ec in Ecarr: 
+    for Ec in Ecarr:
         d1, d2, d3= EkdivEc(ng=ng, Ec=Ec, Ej=Ej, N=50)
         E12=d3[0]-d2[0]
         E01=d2[0]-d1[0]
@@ -114,12 +114,14 @@ Ec0=Ej0/EjoverEc#/h*1e-9
 anharm=-1/(sqrt(8.0*Ej0/Ec0)-1.0)
 E01a=sqrt(8*Ej0*Ec0)-Ec0
 
-plot(Ej0/Ec0/4.0, anharm*E01a, label='transmon approx')#*E01a/h*1e-9, label="anharm transmon approx")
-plot(EjoverEc/4.0, data, label="anharm python ng=0")
+#plot(Ej0/Ec0/4.0, anharm*E01a, label='transmon approx')#*E01a/h*1e-9, label="anharm transmon approx")
+#plot(EjoverEc/4.0, data, label="anharm python ng=0")
 
-ng=[0.5]#linspace(-0.6001, 1.6, 101) #[0.5] 
+ng=[0.5]#linspace(-0.6001, 1.6, 101) #[0.5]
 E01a, Ctr, data, d1, d2, d3=sweepEc()
-plot(EjoverEc/4.0, data, label="anharm python ng=0.5 E=%.3f" % data[-1])
+#plot(EjoverEc/4.0, data, label="anharm python ng=0.5 E=%.3f" % data[-1])
+#legend()
+#show()
 #print Ctr
 #plot(ng, d1, 'o', label="eigenvalue solution python")
 #plot(ng, d2, 'o')
@@ -132,18 +134,19 @@ with open('/Users/thomasaref/Dropbox/Current stuff/mmataoutputanharm.txt') as in
 results=array(results)
 results=results.transpose()
 #with open('path/to/file') as infile:
-#    answer = [[int(i) for i in line.strip().split(',')] for line in infile]            
-plot(results[0], results[1], label='Bloch Bands ala mathieu nb ng=0.5')
-plot(results[0], results[2], label='Bloch Bands ala mathieu nb ng=0')
+#    answer = [[int(i) for i in line.strip().split(',')] for line in infile]
+#plot(results[0], results[1],  label='Bloch Bands ala mathieu nb ng=0.5')
+plot(results[0], results[2],  label='Bloch Bands ala mathieu nb ng=0')
 #plot(results[0], 4.0*Ec*results[3])
 #print results[1]
-plot(EjoverEc, data, label="anharm many charge states")
-
+#plot(EjoverEc, data, label="anharm many charge states")
+legend()
+show()
 Np=2
 #W=20.0e-6
 f0=4.0e9
 W=Ctr/(1.414*Np*epsinf)
-coupling1=0.5*f0*Np*2.0*Dvv    
+coupling1=0.5*f0*Np*2.0*Dvv
 plot(EjoverEc/4.0, zeros(101,)+coupling1*1e-9, label="Np={0}, coupling={1}".format(Np, coupling1*1e-9))
 plot(EjoverEc/4.0, W*1e6/10, label="IDT W (um)")#, d2, ng, d3)
 Nidt=sqrt(1.0/50.0/(3.11*2.0*pi*f0*epsinf*W*Dvv))
@@ -151,12 +154,12 @@ plot(EjoverEc/4.0, Nidt/10.0, label="N IDT/10")#, d2, ng, d3)
 
 #W=10.0e-6
 #Np=Ctr/(1.414*W*epsinf)
-#coupling1=0.5*f0*Np*2.0*Dvv    
+#coupling1=0.5*f0*Np*2.0*Dvv
 #plot(EjoverEc, coupling1*1e-9, label="coupling (W=10 um)")
 #plot(EjoverEc, Np, label="Number of finger pairs (W=10 um)")#, d2, ng, d3)
 #W=5.0e-6
 #Np=Ctr/(1.414*W*epsinf)
-#coupling1=0.5*f0*Np*2.0*Dvv    
+#coupling1=0.5*f0*Np*2.0*Dvv
 #plot(EjoverEc/4.0, coupling1*1e-9, label="coupling (W=5 um)")
 #plot(EjoverEc, Np, label="Number of finger pairs (W=5 um)")#, d2, ng, d3)
 plot(EjoverEc/4, zeros(101,), label="y=0")
