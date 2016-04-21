@@ -8,18 +8,18 @@ from taref.core.log import log_debug
 from matplotlib import use#('Agg')
 use('Agg')
 
-from enaml.qt.qt_application import QtApplication
+#from enaml.qt.qt_application import QtApplication
 
 from taref.plotter.plotter_backbone import plot_observe, PlotMaster, simple_set, PlotUpdate
 from atom.api import Bool, Unicode, Float, Enum, Int, cached_property, Typed, Atom
 
-from taref.core.shower import shower
+#from taref.core.shower import shower
 from taref.core.agent import Operative
 from enaml import imports
 from plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh, multiline_plot
 from taref.core.atom_extension import private_property
 
-from matplotlib.figure import Figure
+#from matplotlib.figure import Figure
 from matplotlib import rcParams
 print rcParams
 #rcParams["figure.figsize"]=[9.0, 3.0]
@@ -41,36 +41,6 @@ from matplotlib.backends import backend_qt4
 from PySide.QtCore import Qt
 backend_qt4.cursord[cursors.POINTER] = Qt.CursorShape.CrossCursor
 from matplotlib import pyplot as plt
-
-class MPL_Axes(Atom):
-    _parent=Typed(PlotUpdate)
-    xlabel=Unicode()
-    ylabel=Unicode()
-    title=Unicode()
-    xscale=Enum('linear', 'log')
-    yscale=Enum('linear', 'log')
-
-    def axes_set(self, param):
-        simple_set(self._parent.axes, self, param)
-
-    @plot_observe("xscale", "yscale", "title", "xlabel", "ylabel", immediate_update=True)
-    def axes_update(self, change):
-        self.axes_set(change["name"])
-
-    _parent=Typed(PlotMaster)
-
-class MPL_Figure(Atom):
-    tight_layout=Bool(False)
-    dpi=Int(300)
-
-    def figure_set(self, param):
-        self.simple_set(self._parent.figure, self, param)
-
-    #@plot_observe("tight_layout", "dpi")
-    def figure_update(self, change):
-        self.figure_set(change["name"])
-
-    _parent=Typed(PlotMaster)
 
 class Fig(PlotMaster, Operative):
     cid=Int().tag(private=True)
@@ -94,16 +64,30 @@ class Fig(PlotMaster, Operative):
     auto_ylim=Bool(True)
 
     selected=Unicode()
-    show_cross_section=Bool(False)
 
-    mpl_figure=Typed(MPL_Figure)
-    mpl_axes=Typed(MPL_Axes)
 
-    def _default_mpl_figure(self):
-        return MPL_Figure(_parent=self)
+    xlabel=Unicode()
+    ylabel=Unicode()
+    title=Unicode()
+    xscale=Enum('linear', 'log')
+    yscale=Enum('linear', 'log')
 
-    def _default_mpl_axes(self):
-        return MPL_Axes(_parent=self)
+    def axes_set(self, param):
+        simple_set(self.axes, self, param)
+
+    @plot_observe("xscale", "yscale", "title", "xlabel", "ylabel", immediate_update=True)
+    def axes_update(self, change):
+        self.axes_set(change["name"])
+
+    tight_layout=Bool(False)
+    dpi=Int(300)
+
+    def figure_set(self, param):
+        self.simple_set(self._parent.figure, self, param)
+
+    #@plot_observe("tight_layout", "dpi")
+    def figure_update(self, change):
+        self.figure_set(change["name"])
 
     def _default_figure(self):
         return plt.figure(figsize=(self.fig_width, self.fig_height), dpi=self.mpl_figure.dpi,

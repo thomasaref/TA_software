@@ -8,7 +8,7 @@ Created on Thu Feb  4 12:48:42 2016
 
 from taref.core.log import log_debug
 from atom.api import observe, Atom, Typed, Bool, cached_property, Float, Unicode
-from matplotlib import cm
+#from matplotlib import cm
 from collections import OrderedDict
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -27,7 +27,7 @@ class plot_observe(object):
         def new_func(obj, change):
             if change["type"]=="update":
                 func(obj, change)
-                obj._parent.update_plot(self.update_legend)
+                obj.update_plot(self.update_legend)
             elif change["type"]=="create":
                 if self.immediate_update:
                     func(obj, change)
@@ -54,6 +54,8 @@ class PlotMaster(Atom):
     vert_axe=Typed(Axes)
 
     selected=Unicode()
+
+    show_cross_section=Bool(False)
 
     def _default_figure(self):
         return plt.figure(figsize=(self.fig_height, self.fig_width))
@@ -109,7 +111,7 @@ class PlotUpdate(Atom):
     plotter=Typed(PlotMaster)
 
     def update_plot(self, update_legend=True):
-        self.plotter.update_plot(update_legend)
+        self.plotter.update_plot(update_legend=update_legend)
 
 
 

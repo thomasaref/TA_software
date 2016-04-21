@@ -1036,10 +1036,54 @@ if 0:
         plotter.mpl_axes.title="Magabs fluxmap {}".format(self.name)
 
     magpow_colormesh(s3a4_pow, Plotter(), mg)
-
 if 1:
-    s3a4_pow=S3A4_Power(filt_start_ind=25, filt_end_ind=70, on_res_ind=148, VNA_name='RS VNA', port_name='S21',
+    from numpy import unwrap
+
+    s3a4_pow=S3A4_Power(filt_start_ind=0, filt_end_ind=70, on_res_ind=148, VNA_name='RS VNA', port_name='S21',
                      rd_hdf=TA88_Read(main_file="Data_0418/S3S4A4_pwr_midpeak.hdf5")) #52, 78
+    mg=s3a4_pow.read_data()
+    #Plotter().colormesh("blah", s3a4_pow.MagdB[1, :, 0:80].transpose()-s3a4_pow.MagdB[1, :, 81])
+    #Plotter().line_plot("blah", s3a4_pow.pwr, s3a4_pow.MagdB[0, :, 30]-s3a4_pow.MagdB[0, :, 81])
+
+    s3a4_pow.magabs_colormesh("S3A1 wide magabs")
+    s3a4_pow.magabsfilt_colormesh("filtcolormesh S4A1 wide")
+    s3a4_pow.magdBfilt_colormesh("filtdB S1A4 wide")
+    s3a4_pow.magdBfiltbgsub_colormesh("filtdBbgsub S1A4 wide")
+    #a2.filt_compare(a2.start_ind, bb2)
+    #s1a1_mp.filt_compare("filt_compare_off_res", s1a1_mp.start_ind)
+    #s1a1_mp.filt_compare("filt_compare_on_res", s1a1_mp.on_res_ind)
+    s3a4_pow.ifft_plot("ifft_S1A4 wide")
+    #s3a4_pow.ifft_dif_plot("ifft__dif_S1A4 wide")
+    print shape(mg)
+
+    #Plotter().colormesh("mag", 10*log10(mg)-10*log10(mg[28, :]))
+    #for n in range(len(s3a4_pow.pwr)):
+    #    Plotter().colormesh("pwr{}".format(n), absolute(mg[:, :, n]).transpose())#/absolute(mg[:,28,n]))
+
+    def remove2pi(arr):
+        if mean(arr)>0:
+            return arr-2*pi
+        return arr
+    def magpow_colormesh(self, plotter, mg):
+        print shape(mg)
+        print mg.dtype
+        newmg=unwrap(angle(mg[562, :, :]), 2.5, axis=0) #, discont=3.1, axis=0)
+        #newmg=angle(mg[500, :, :]) #, discont=3.1, axis=0)
+
+        #newmg=array([remove2pi(newmg[:, pwi]) for pwi in range(len(self.pwr))])
+        plotter.colormesh("magabs_{}".format(self.name),  self.yoko, self.pwr,  newmg.transpose())#unwrap(angle(mg[500, :, :]), 6.0))#-10*log10(absolute(mg[500,28, :])))
+        print self.yoko
+        #plotter.set_ylim(min(self.frequency), max(self.frequency))
+        #plotter.set_xlim(min(self.yoko), max(self.yoko))
+        plotter.mpl_axes.xlabel="Yoko (V)"
+        plotter.mpl_axes.ylabel="Frequency (Hz)"
+        plotter.mpl_axes.title="Magabs fluxmap {}".format(self.name)
+
+    magpow_colormesh(s3a4_pow, Plotter(), mg)
+
+if 0:
+    s3a4_pow=S3A4_Power(filt_start_ind=15, filt_end_ind=25, on_res_ind=110, VNA_name='RS VNA', port_name='S21',
+                     rd_hdf=TA88_Read(main_file="Data_0420/S4A4_lowfrq_pwr_test2.hdf5")) #52, 78
     mg=s3a4_pow.read_data()
     #Plotter().colormesh("blah", s3a4_pow.MagdB[1, :, 0:80].transpose()-s3a4_pow.MagdB[1, :, 81])
     #Plotter().line_plot("blah", s3a4_pow.pwr, s3a4_pow.MagdB[0, :, 30]-s3a4_pow.MagdB[0, :, 81])
@@ -1061,7 +1105,7 @@ if 1:
 
     def magpow_colormesh(self, plotter, mg):
         print shape(mg)
-        plotter.colormesh("magabs_{}".format(self.name),  self.pwr, self.yoko, absolute(mg[624, :, :]))#-10*log10(absolute(mg[500,28, :])))
+        plotter.colormesh("magabs_{}".format(self.name),  self.pwr, self.yoko, absolute(mg[306, :, :]))#-10*log10(absolute(mg[500,28, :])))
         print self.yoko
         #plotter.set_ylim(min(self.frequency), max(self.frequency))
         #plotter.set_xlim(min(self.yoko), max(self.yoko))
