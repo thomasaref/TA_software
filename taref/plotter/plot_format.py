@@ -5,12 +5,12 @@ Created on Thu Feb  4 12:51:21 2016
 @author: thomasaref
 """
 from taref.core.log import log_debug
-from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names, simple_set
+from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names, simple_set, process_kwargs
 from taref.core.universal import Array
-from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict, Instance, Atom
+from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict, Instance
 from numpy import linspace, arange, asanyarray, append, amax, amin
 from taref.core.shower import shower
-from taref.core.atom_extension import get_all_tags, get_tag
+from taref.core.atom_extension import get_all_tags, get_tag, set_tag, check_initialized
 from enaml import imports
 with imports():
     from taref.core.interactive_e import InteractiveWindow
@@ -21,7 +21,11 @@ from matplotlib.colorbar import Colorbar
 
 class PlotFormat(PlotUpdate):
     """base class corresponding to one graph or collection on axes"""
-    name=Unicode()
+    plot_name=Unicode()
+
+    def _observe_plot_name(self, change):
+        check_initialized(self, change)
+
     append=Bool(True)
     remove=Bool(True)
 
@@ -40,9 +44,9 @@ class PlotFormat(PlotUpdate):
     visible=Bool(True).tag(former="visible")
 
     def clt_values(self):
-        if isinstance(self._parent.clt, dict):
-            return self._parent.clt.values()
-        return [self._parent.clt]
+        if isinstance(self.clt, dict):
+            return self.clt.values()
+        return [self.clt]
 
     def plot_set(self, param):
         for clt in self.clt_values():
@@ -53,14 +57,6 @@ class PlotFormat(PlotUpdate):
         """set the clt's parameter to the obj's value using clt's set function"""
         self.plot_set(change["name"])
 
-    def process_kwargs(self, kwargs):
-        for arg in get_all_tags(self, "former"):
-            if arg in kwargs:
-                setattr(self, arg, kwargs[arg])
-            key=get_tag(self, arg, "former", arg)
-            kwargs[key]=kwargs.pop(arg, getattr(self, arg))
-        return kwargs
-
     def remove_collection(self):
         if self.remove:
             if self.clt is not None:
@@ -68,11 +64,16 @@ class PlotFormat(PlotUpdate):
 
     def __init__(self, **kwargs):
         super(PlotFormat, self).__init__(**kwargs)
-        if self.name=="":
-            self.name=self.plot_type
-        if self.name in self.plotter.plot_dict:
-            self.name+="__{0}".format(len(self.plotter.keys()))
-        self.plotter.plot_dict[self.name]=self
+        set_tag(self, "plot_name", initialized=False)
+        if self.plot_name=="":
+            self.plot_name=self.plot_type
+        if self.plot_name in self.plotter.plot_dict:
+            if self.remove:
+                self.remove_collection()
+            else:
+                self.plot_name+="__{0}".format(len(self.plotter.plot_dict.keys()))
+        self.plotter.plot_dict[self.plot_name]=self
+        set_tag(self, "plot_name", initialized=True)
 
     @cached_property
     def view_window(self):
@@ -87,7 +88,7 @@ def transformation(func):
         self.remove_collection()
         new_form=func(self)
         new_form.update_plot()
-        self.plotter.plot_dict[self.name]=new_form
+        self.plotter.plot_dict[self.plot_name]=new_form
         del self
     return transform_func
 
@@ -110,7 +111,7 @@ class LineFormat(PlotFormat):
 
 class Line2DFormat(LineFormat):
     def line_plot(self, *args, **kwargs):
-        kwargs=self.process_kwargs(kwargs)
+        kwargs=process_kwargs(self, kwargs)
         self.remove_collection()
         if len(args)==1:
             y=args[0]
@@ -120,7 +121,9 @@ class Line2DFormat(LineFormat):
             y=args[1]
         self.xdata=x
         self.ydata=y
-        self.clt=self.plotter.axes.plot(x,y, **kwargs)[0]
+        self.clt=self.plotter.axes.plot(*args, **kwargs)[0]
+        print type(self.clt.get_xdata())
+        print self.clt.get_ydata()
 
     def append_xy(self, *args):
         """appends points x and y if 2 args are passed and just y and len of xdata if one args is passed"""
@@ -140,13 +143,13 @@ class Line2DFormat(LineFormat):
 
     @transformation
     def line2scatter(self):
-        sf=ScatterFormat(name=self.name, plotter=self.plotter)
+        sf=ScatterFormat(plot_name=self.plot_name, plotter=self.plotter)
         sf.scatter_plot(self.xdata, self.ydata)
         return sf
 
-def line_plot(plotter, name="", *args, **kwargs):
-    kwargs.pop("plotter", None)
-    pl0t=Line2DFormat(name=name, plotter=plotter)
+def line_plot(plotter, *args, **kwargs):
+    plot_name=kwargs.pop("plot_name", "")
+    pl0t=Line2DFormat(plot_name=plot_name, plotter=plotter)
     pl0t.line_plot(*args, **kwargs)
     return pl0t
 
@@ -155,14 +158,14 @@ class VaxisLine(LineFormat):
     def _default_plot_type(self):
         return "vline"
 
-    def axvline(self, x, **kwargs):
-        kwargs=self.process_kwargs(kwargs)
+    def axvline(self, *args, **kwargs):
+        kwargs=process_kwargs(self, kwargs)
         self.remove_collection()
-        self.clt=self.plotter.axes.axvline(x, **kwargs)
+        self.clt=self.plotter.axes.axvline(*args, **kwargs)
 
-def vline_plot(plotter, name="", x, **kwargs):
-    pl0t=VaxisLine(name=name, plotter=plotter)
-    pl0t.axvline(x, **kwargs)
+def vline_plot(plotter, plot_name="", *args, **kwargs):
+    pl0t=VaxisLine(plot_name=plot_name, plotter=plotter)
+    pl0t.axvline(*args, **kwargs)
     return pl0t
 
 class HaxisLine(LineFormat):
@@ -170,20 +173,17 @@ class HaxisLine(LineFormat):
         return "hline"
 
     def axhline(self, y, **kwargs):
-        kwargs=self.process_kwargs(kwargs)
+        kwargs=process_kwargs(self, kwargs)
         self.remove_collection()
         self.clt=self.plotter.axes.axhline(y, **kwargs)
 
-def hline_plot(plotter, name="", y, **kwargs):
-    pl0t=HaxisLine(name=name, plotter=plotter)
-    pl0t.axhline(y, **kwargs)
+def hline_plot(plotter, plot_name="", *args, **kwargs):
+    pl0t=HaxisLine(plot_name=plot_name, plotter=plotter)
+    pl0t.axhline(*args, **kwargs)
     return pl0t
 
 class CrossCursor(LineFormat):
     clt=Dict(default={"h_line":None, "v_line":None, "h_axe":None, "v_axe" : None})
-
-    def _default_name(self):
-        return "cross_cursor"
 
     def _default_plot_type(self):
         return "cross_cursor"
@@ -206,7 +206,7 @@ class CrossCursor(LineFormat):
                 item.remove()
 
     def add_cursor(self, x, y, **kwargs):
-        kwargs=self.process_kwargs(kwargs)
+        kwargs=process_kwargs(self, kwargs)
         self.remove_collection()
         self.clt=dict(h_line=self.plotter.axes.axhline(y, **kwargs),
                       v_line=self.plotter.axes.axvline(x, **kwargs),
@@ -244,7 +244,7 @@ class ScatterFormat(LineFormat):
         return "scatter"
 
     def scatter_plot(self, *args, **kwargs):
-        kwargs=self.process_kwargs(kwargs)
+        kwargs=process_kwargs(self, kwargs)
         self.remove_collection()
         if len(args)==1:
             self.ydata=args[0]
@@ -256,12 +256,12 @@ class ScatterFormat(LineFormat):
 
     @transformation
     def scatter2line(self):
-        lf=LineFormat(name=self.name, plotter=self.plotter)
+        lf=Line2DFormat(plot_name=self.plot_name, plotter=self.plotter)
         lf.line_plot(self.xdata, self.ydata)
         return lf
 
-def scatter_plot(plotter, name="", *args, **kwargs):
-    pl0t=ScatterFormat(name=name, plotter=plotter)
+def scatter_plot(plotter, plot_name="", *args, **kwargs):
+    pl0t=ScatterFormat(plot_name=plot_name, plotter=plotter)
     pl0t.scatter_plot(*args, **kwargs)
     return pl0t
 
@@ -293,7 +293,7 @@ class ColormeshFormat(PlotFormat):
         return "colormap"
 
     def pcolormesh(self, *args, **kwargs):
-        kwargs=self.process_kwargs(kwargs)
+        kwargs=process_kwargs(self, kwargs)
         self.remove_collection()
         if len(args) == 1:
             #if isinstance(args[0], tuple):
@@ -337,7 +337,7 @@ class ColormeshFormat(PlotFormat):
 
     @transformation
     def colormap2horizlines(self):
-        mlf=MultiLineFormat(name=self.name, plotter=self.plotter)
+        mlf=MultiLineFormat(plot_name=self.plot_name, plotter=self.plotter)
         mlf.multiline_plot([zip(self.xdata, self.zdata[n, :])for n in range(self.ydata.shape[0])])
         mlf.ydata=self.ydata
         mlf.autocolor_set("color")
@@ -345,14 +345,14 @@ class ColormeshFormat(PlotFormat):
 
     @transformation
     def colormap2vertlines(self):
-        mlf=MultiLineFormat(name=self.name, plotter=self.plotter)
+        mlf=MultiLineFormat(plot_name=self.plot_name, plotter=self.plotter)
         mlf.multiline_plot([zip(self.ydata, self.zdata[:, n])for n in range(self.xdata.shape[0])])
         mlf.ydata=self.xdata
         mlf.autocolor_set("color")
         return mlf
 
-def colormesh(plotter, name="", *args, **kwargs):
-    pl0t=ColormeshFormat(name=name, plotter=plotter)
+def colormesh_plot(plotter, plot_name="", *args, **kwargs):
+    pl0t=ColormeshFormat(plot_name=plot_name, plotter=plotter)
     pl0t.pcolormesh(*args, **kwargs)
     pl0t.colorbar
     return pl0t
@@ -366,7 +366,7 @@ class MultiLineFormat(LineFormat, ColormeshFormat):
 
     @plot_observe("color")
     def color_update(self, change):
-        param=change["name"]
+        param=change["plot_name"]
         value=getattr(self, param)
         if value=="auto":
             self.autocolor_set(param)
@@ -386,7 +386,7 @@ class MultiLineFormat(LineFormat, ColormeshFormat):
         getattr(self.clt, "set_"+param)(colors)
 
     def multiline_plot(self, *args, **kwargs):
-        kwargs=self.process_kwargs(kwargs)
+        kwargs=process_kwargs(self, kwargs)
         self.xdata=[arg[0] for arg in args[0][0]]
         self.zdata=[[vert[1] for vert in line] for line in args[0]]
         self.clt=LineCollection(args[0])
@@ -394,31 +394,20 @@ class MultiLineFormat(LineFormat, ColormeshFormat):
 
     @transformation
     def vertlines2colormap(self):
-        cmf=ColormeshFormat(name=self.name, plotter=self.plotter)
+        cmf=ColormeshFormat(plot_name=self.plot_name, plotter=self.plotter)
         cmf.pcolormesh(self.ydata, self.xdata, self.zdata.transpose())
         return cmf
 
     @transformation
     def horizlines2colormap(self):
-        cmf=ColormeshFormat(name=self.name, plotter=self.plotter)
+        cmf=ColormeshFormat(plot_name=self.plot_name, plotter=self.plotter)
         cmf.pcolormesh(self.xdata, self.ydata, self.zdata)
         return cmf
 
-def multiline_plot(plotter, name="", *args, **kwargs):
-    pl0t=MultiLineFormat(name=name, plotter=plotter)
+def multiline_plot(plotter, plot_name="", *args, **kwargs):
+    pl0t=MultiLineFormat(plot_name=plot_name, plotter=plotter)
     pl0t.multiline_plot(*args, **kwargs)
     return pl0t
-
-#class AllXYFormat(MultiLineFormat):
-#    name=Unicode("All")
-
-
-
-#    def set_param(self, param, change, index=-1):
-#        if change['type']!='create':
-#            for key in self.plotter.xyfs.keys():
-#                if key!="All":
-#                    setattr(self.plotter.xyfs[key], change['name'], change['value'])
 
 if __name__=="__main__":
     from taref.plotter.plotter_backbone import PlotMaster
@@ -433,7 +422,8 @@ if __name__=="__main__":
     X, Y = meshgrid(x, y)
     Z = sqrt(X**2 + Y**2)
 
-    a=ColormeshFormat(name="colormesh", plotter=pm)
+    a=ColormeshFormat( plotter=pm)
+
     #a.pcolormesh(x, y, Z)
 
     a.pcolormesh(linspace(-1.5, 1.5, n+1), linspace(-1.5, 1.5, n*2+1), zeros((600,300)))
@@ -441,15 +431,15 @@ if __name__=="__main__":
     #a.visible=False
 
 
-    b=ScatterFormat( name="scatter", plotter=pm)
+    b=ScatterFormat( plot_name="scatter", plotter=pm)
     b.scatter_plot([100,200,300], [100,200,300])
     data=list([zip([100, 200, 300],[100*q, 200*q, 300*q]) for q in range(3)])
-    #c=MultiLineFormat( name="lines", plotter=pm)
+    #c=MultiLineFormat( plot_name="lines", plotter=pm)
     #c.multiline_plot(data)
 
-    #dd=VaxisLine(name="vline", plotter=pm)
+    #dd=VaxisLine(plot_name="vline", plotter=pm)
     #dd.axvline(30)
-    #d=LineFormat(name="lin", plotter=pm)
+    #d=LineFormat(plot_name="lin", plotter=pm)
     #d.line_plot([100,200,300], [100,200,300])
     #d.line2scatter()
     shower(a)

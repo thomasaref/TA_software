@@ -84,8 +84,8 @@ enamldef ScatterVGroup(VGroup):
     Label:
         text = "Marker size:"
     FloatField:
-        value := plot_format._parent.marker_size
-        enabled << plot_format._parent.plot_type=="scatter"
+        value := plot_format.marker_size
+        enabled << plot_format.plot_type=="scatter"
     Label:
         text = "Edge Color"
     ObjectCombo:
@@ -99,8 +99,8 @@ enamldef ScatterVGroup(VGroup):
     Label:
         text = "Marker"
     ObjectCombo:
-        items=list(plot_format._parent.get_member('marker').items)
-        selected:=plot_format._parent.marker
+        items=list(plot_format.get_member('marker').items)
+        selected:=plot_format.marker
 
 from taref.plotter.events import mpl_cross_section
 

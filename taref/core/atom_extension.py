@@ -517,6 +517,10 @@ def set_log(obj, name, value):
    if hasattr(obj, "data_save"):
        obj.datasave(name, value)
 
+def check_initialized(self, change):
+    if change["type"]=="update":
+        if get_tag(self, change["name"], "initialized", False):
+            raise Exception("{0} already initialized".format(change["name"]))
 
 #def code_caller(topdog, code, *args, **kwargs):
 #    result=code(*args, **kwargs)

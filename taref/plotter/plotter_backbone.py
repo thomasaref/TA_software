@@ -7,6 +7,7 @@ Created on Thu Feb  4 12:48:42 2016
 
 
 from taref.core.log import log_debug
+from taref.core.atom_extension import get_all_tags, get_tag, get_all_params
 from atom.api import observe, Atom, Typed, Bool, cached_property, Float, Unicode
 #from matplotlib import cm
 from collections import OrderedDict
@@ -36,6 +37,20 @@ class plot_observe(object):
 def simple_set(clt, mpl, param, set_str="set_"):
     """utility function that uses clt set_ function to set param"""
     getattr(clt, set_str+param)(getattr(mpl, param))
+
+def process_kwargs(self, kwargs):
+    """Goes through all_params and sets the attribute if it is included in kwargs, also popping it out of kwargs.
+    if the param is tagged with "former", the kwarg is added back using the value of the param. Returns the processed kwargs"""
+    for arg in get_all_params(self): #get_all_tags(self, "former"):
+        if arg in kwargs:
+            setattr(self, arg, kwargs[arg])
+        val=kwargs.pop(arg, None)
+        key=get_tag(self, arg, "former", False)
+        if key is not False:
+            if val is None:
+                val=getattr(self, arg)
+            kwargs[key]=val
+    return kwargs
 
 class PlotMaster(Atom):
     """base plot class contains figure, axes, plot_dict"""
@@ -114,7 +129,6 @@ class PlotUpdate(Atom):
         self.plotter.update_plot(update_legend=update_legend)
 
 
-
 colormap_names=("jet", "rainbow", "nipy_spectral", u'cool', u'coolwarm', u'copper', 'cubehelix', u'flag', u'gist_earth', u'gist_gray',
                  u'gist_heat', u'gist_ncar', u'gist_rainbow', u'gist_stern', u'gist_yarg', u'gnuplot', u'gnuplot2', u'gray', u'hot', u'hsv',  u'ocean', u'pink', u'prism',
                  u'seismic', u'spectral', u'spring', u'summer', u'terrain', u'winter',)
@@ -133,6 +147,6 @@ colors_tuple=('auto', 'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'c
 markers_tuple=(".", ",", "o", "v", "^", "<",">", "1", "2", "3", "4", "8", "s", "p", "*", "h", "H", "+", "x", "D", "d", "|", "_", "$2/3$")
 
 if __name__=="__main__":
-    a=PlotObserver("blah", "upd")
+    a=plot_observe("blah", "upd")
     print a.args
     print a.update_legend

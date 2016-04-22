@@ -8,20 +8,16 @@ from taref.core.log import log_debug
 from matplotlib import use#('Agg')
 use('Agg')
 
-#from enaml.qt.qt_application import QtApplication
+from taref.plotter.plotter_backbone import plot_observe, PlotMaster, simple_set, process_kwargs
+from atom.api import Bool, Unicode, Float, Enum, Int, cached_property#, Typed
 
-from taref.plotter.plotter_backbone import plot_observe, PlotMaster, simple_set, PlotUpdate
-from atom.api import Bool, Unicode, Float, Enum, Int, cached_property, Typed, Atom
-
-#from taref.core.shower import shower
 from taref.core.agent import Operative
 from enaml import imports
-from plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh, multiline_plot
+#from plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh, multiline_plot
 from taref.core.atom_extension import private_property
 
-#from matplotlib.figure import Figure
 from matplotlib import rcParams
-print rcParams
+#print rcParams
 #rcParams["figure.figsize"]=[9.0, 3.0]
 rcParams['axes.labelsize'] = 14
 rcParams['xtick.labelsize'] = 14
@@ -65,7 +61,6 @@ class Fig(PlotMaster, Operative):
 
     selected=Unicode()
 
-
     xlabel=Unicode()
     ylabel=Unicode()
     title=Unicode()
@@ -90,8 +85,8 @@ class Fig(PlotMaster, Operative):
         self.figure_set(change["name"])
 
     def _default_figure(self):
-        return plt.figure(figsize=(self.fig_width, self.fig_height), dpi=self.mpl_figure.dpi,
-        tight_layout=self.mpl_figure.tight_layout)
+        return plt.figure(figsize=(self.fig_width, self.fig_height), dpi=self.dpi,
+        tight_layout=self.tight_layout)
 
     def set_xlim(self, xmin, xmax):
         self.x_min=xmin
@@ -103,7 +98,7 @@ class Fig(PlotMaster, Operative):
         self.y_max=ymax
         self.axes.set_ylim(ymin, ymax)
 
-    @cached_property
+    @private_property
     def view_window(self):
         with imports():
             from fig_format_e import Main
@@ -133,53 +128,7 @@ class Fig(PlotMaster, Operative):
         else:
             self.legend_remove()
 
-class Plotter(Fig):
-    #pm=Typed(Fig)
 
-    def line_plot(self, name, *args, **kwargs):
-        line_plot(self, name, *args, **kwargs)
-
-    def vline_plot(self, name, x, **kwargs):
-        vline_plot(self, name, x, **kwargs)
-
-    def hline_plot(self, name, y, **kwargs):
-        hline_plot(self, name, y, **kwargs)
-
-    def scatter_plot(self, name, *args, **kwargs):
-        scatter_plot(self, name, *args, **kwargs)
-
-    def colormesh(self, name, *args, **kwargs):
-        colormesh(self, name, *args, **kwargs)
-
-    def multiline_plot(self, name, *args,**kwargs):
-        multiline_plot(self, name, *args,**kwargs)
-
-    def savefig(self, dir_path="/Users/thomasaref/Documents/TA_software/", fig_name="test_colormap_plot.png"):
-        """saves the figure. if a canvas does not exist, the window will be shown and hidden to create it.
-        if a QtApplication is not active, a temporary one will be created but not run to host the plot"""
-#        if self.figure.canvas is None:
-#            app=QtApplication.instance()
-#            if app is None:
-#                print "fig save"
-#            else:
-#                 #app=QtApplication()
-#                 self.view_window.show()
-#                 self.view_window.hide()
-        print "saving figure"
-        self.figure.savefig(dir_path+fig_name, dpi=self.mpl_figure.dpi,
-                            bbox_inches='tight',
-                            transparent=self.transparent)#, format=self.save_type)
-
-
-        #print dir(self.figure)
-        #print self.figure.get_figure()
-        #self.figure.savefig(dir_path+fig_name, dpi=self.mpl_figure.dpi, bbox_inches='tight', format="pdf")#, transparent=self.transparent)#,
-                            #format=self.save_type)
-
-    @private_property
-    def cls_run_funcs(self):
-        """class or static methods to include in run_func_dict on initialization. Can be overwritten in child classes"""
-        return [self.savefig]
 
 
 if __name__=="__main__":
@@ -200,7 +149,8 @@ if __name__=="__main__":
     print a.figure.get_dpi()
     #a.figure.set_size_inches((9.5, 3.0))
     #print plt.plot(x)#,y,Z)
-    a.savefig() #figure.savefig("/Users/thomasaref/Documents/TA_software/test_colorm.pdf")#, format="eps")
+    a.show()
+    #a.savefig() #figure.savefig("/Users/thomasaref/Documents/TA_software/test_colorm.pdf")#, format="eps")
 
     #shower(a)
     #b=Plotter()

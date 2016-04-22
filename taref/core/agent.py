@@ -7,7 +7,7 @@ Created on Sat Jul  4 13:03:26 2015
 from taref.core.log import log_debug
 from atom.api import Unicode, ContainerList, Float, Bool, Int, Typed, Instance, Event
 from taref.core.backbone import Backbone
-from taref.core.atom_extension import private_property, set_log, reset_properties, safe_setattr
+from taref.core.atom_extension import private_property, set_log, reset_properties, safe_setattr, check_initialized, set_tag
 from collections import OrderedDict
 from taref.core.shower import shower
 from time import time, sleep
@@ -21,8 +21,11 @@ class AgentError(Exception):
 
 class Operative(Backbone):
     """Adds functionality for auto showing to Backbone"""
-    name=Unicode().tag(private=True, desc="name of agent. This name will be modified to be unique, if necessary")
+    name=Unicode().tag(private=True, desc="name of agent. This name will be modified to be unique, if necessary", initialized=False)
     desc=Unicode().tag(private=True, desc="optional description of agent")
+
+    def _observe_name(self, change):
+        check_initialized(self, change)
 
     saving=False
     save_file=None
@@ -195,6 +198,7 @@ class Operative(Backbone):
         """extends Backbone __init__ to add agent to boss's agent list
         and give unique default name."""
         super(Operative, self).__init__(**kwargs)
+        set_tag(self, "name", initialized=False)
         agent_name=self.name
         if agent_name=="":
             agent_name=self.base_name
@@ -202,6 +206,7 @@ class Operative(Backbone):
             agent_name="{name}__{num}".format(name=agent_name, num=len(Operative.agent_dict))
         self.name=agent_name
         Operative.agent_dict[self.name]=self
+        set_tag(self, "name", initialized=True)
         self.add_func(*self.cls_run_funcs)
 
 
