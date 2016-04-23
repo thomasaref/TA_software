@@ -14,27 +14,27 @@ from taref.plotter.plot_format import line_plot, vline_plot, hline_plot, scatter
 class Plotter(Fig):
     def line(self, *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
-        line_plot(self, *args, **kwargs)
+        return line_plot(self, *args, **kwargs)
 
     def vline(self, plot_name="", *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
-        vline_plot(self, plot_name, *args, **kwargs)
+        return vline_plot(self, plot_name, *args, **kwargs)
 
     def hline(self, plot_name="", *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
-        hline_plot(self, plot_name, *args, **kwargs)
+        return hline_plot(self, plot_name, *args, **kwargs)
 
     def scatter(self, plot_name="", *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
-        scatter_plot(self, plot_name, *args, **kwargs)
+        return scatter_plot(self, plot_name, *args, **kwargs)
 
     def colormesh(self, plot_name="", *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
-        colormesh_plot(self, plot_name=plot_name, *args, **kwargs)
+        return colormesh_plot(self, plot_name=plot_name, *args, **kwargs)
 
     def multiline(self, plot_name="", *args,**kwargs):
         kwargs=process_kwargs(self, kwargs)
-        multiline_plot(self, plot_name=plot_name, *args,**kwargs)
+        return multiline_plot(self, plot_name=plot_name, *args,**kwargs)
 
     def savefig(self, dir_path="/Users/thomasaref/Documents/TA_software/", fig_name="test_colormap_plot.png"):
         """saves the figure. if a canvas does not exist, the window will be shown and hidden to create it.
@@ -56,8 +56,8 @@ class Plotter(Fig):
                 plotter=cls.agent_dict[plotter]
             else:
                 plotter=Plotter(name=plotter)
-        getattr(plotter, plot_func)(*args, **kwargs)
-        return plotter
+        pf=getattr(plotter, plot_func)(*args, **kwargs)
+        return plotter, pf
 
     @private_property
     def cls_run_funcs(self):
@@ -100,6 +100,8 @@ def colormesh(*args, **kwargs):
 
 def multiline(*args, **kwargs):
     return Plotter.plot_do("multiline", *args, **kwargs)
+
+
 
 if __name__=="__main__":
     b=line([[4,5,6], [7,8,9]])

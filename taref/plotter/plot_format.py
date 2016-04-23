@@ -26,7 +26,7 @@ class PlotFormat(PlotUpdate):
     def _observe_plot_name(self, change):
         check_initialized(self, change)
 
-    append=Bool(True)
+    append=Bool(False)
     remove=Bool(True)
 
     xcoord=Float()
@@ -125,21 +125,27 @@ class Line2DFormat(LineFormat):
         print type(self.clt.get_xdata())
         print self.clt.get_ydata()
 
-    def append_xy(self, *args):
+    def alter_xy(self, *args):
         """appends points x and y if 2 args are passed and just y and len of xdata if one args is passed"""
         if len(args)==1:
             y=args[0]
-            x=len(self.xdata)
+            x=range(len(self.xdata))
         elif len(args)==2:
             x=args[0]
             y=args[1]
-        self.xdata=append(self.xdata, x)
-        self.ydata=append(self.ydata, y)
+        if self.append:
+            self.xdata=append(self.xdata, x)
+            self.ydata=append(self.ydata, y)
+        else:
+            self.xdata=x
+            self.ydata=y
         self.clt.set_xdata(self.xdata)
         self.clt.set_ydata(self.ydata)
-        fig=self.clt.get_figure()
-        if fig.canvas is not None:
-            fig.canvas.draw()
+        self.update_plot(update_legend=False)
+        #fig=self.clt.get_figure()
+
+        #if fig.canvas is not None:
+        #    fig.canvas.draw()
 
     @transformation
     def line2scatter(self):

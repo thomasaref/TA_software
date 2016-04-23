@@ -10,9 +10,8 @@ Gathers all useful constants and functions in one location. Also initiates a def
 from scipy.constants import e, h, hbar, k as kB, epsilon_0 as eps0, pi
 c_eta = 0.8
 
-from numpy import (sin, cos, sqrt, exp, empty, mean, exp, log10, arange, array, ndarray, delete,
+from numpy import (sin, fft, cos, sqrt, exp, empty, mean, exp, log10, arange, array, ndarray, delete,
                    absolute, dtype, angle, amin, amax, linspace, zeros, shape)
-from numpy.fft import fft, ifft
 from numpy.linalg import eig
 from atom.api import Float
 
@@ -81,8 +80,15 @@ def sinc_sq(X):
     """sinc squared which doesn't autoinclude pi"""
     return (sinc(X))**2
 
-Tc=1.315 #critical temperature of aluminum
-Delta=200.0e-6*e #gap of aluminum
+
+def fft_filter(Magcom, filt_start_ind=0, filt_end_ind=0):
+    myifft=fft.ifft(Magcom)
+    if filt_end_ind!=0:
+        myifft[filt_end_ind:-filt_end_ind]=0.0
+    if filt_start_ind!=0:
+        myifft[:filt_start_ind]=0.0
+        myifft[-filt_start_ind:]=0.0
+    return fft.fft(myifft)
 
 #
 #_material_dict=dict(

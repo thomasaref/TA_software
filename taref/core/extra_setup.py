@@ -51,6 +51,7 @@ def _setup_property_fs(self, param, typer):
             self.get_member(param).setter(fset_maker(self, fget, param))
 
 def _setup_callables(self, param, typer):
+    """auto makes Callables into instance methods"""
     if typer == Callable:
         func=getattr(self, param)
         if func is not None:

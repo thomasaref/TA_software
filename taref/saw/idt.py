@@ -69,6 +69,74 @@ def plot_data(self, zname, **kwargs):
      if add_legend:
          legend()
 
+
+def eta(a, g):
+    """metalization ratio"""
+    return a/(a+g)
+
+#def periodicity(a, g):
+#    """periodicity of IDT?"""
+#    return a+g
+
+def K2(Dvv):
+    r"""Coupling strength. K$^2=2\Delta v/v$"""
+    return Dvv*2.0
+
+def Dvv(K2):
+    """other couplign strength. free speed minus metal speed all over free speed"""
+    return K2/2.0
+
+Ct_mult={"double" : 1.414213562373, "single" : 1.0}
+def Ct(mult, W, epsinf, Np):
+    """Morgan page 16, 145"""
+    return mult*W*epsinf*Np
+
+def epsinf(mult, W, Ct, Np):
+    """reversing capacitance to extract eps infinity"""
+    return Ct/(mult*W*Np)
+
+def lbda(vf, f):
+    """wavelength relationship to speed and frequency"""
+    return vf/f
+
+def f(vf, lbda):
+    """frequency relationship to speed and wavelength"""
+    return vf/lbda
+
+def g(a, eta):
+    """gap given metalization and finger width
+       eta=a/(a+g)
+       => a=(a+g)*eta
+       => (1-eta)*a=g*eta
+       => g=a*(1/eta-1)"""
+    return a*(1.0/eta-1.0)
+
+def a_from_g(eta, g):
+    """finger width given gap and metalization ratio
+       eta=a/(a+g)
+       => a=(a+g)*eta
+       => (1-eta)*a=g*eta
+       => a=g*eta/(1-eta)"""
+    return g*eta/(1.0-eta)
+
+mult_dict={"double" : 2.0, "single" : 1.0}
+def a_from_lbda0(eta, lbda0, mult):
+    """finger width from lbda0"""
+    return eta*lbda0/(2.0*mult)
+
+def lbda0_from_a(a, eta, mult):
+    return a/eta*2.0*mult
+
+def Ga_f(Ga_0, Np, f, f0):
+    """sinc squared behavior of real part of IDT admittance"""
+    return Ga_0*sinc_sq(Np*pi*(f-f0)/f0)
+
+material_dict={"STquartz": dict(epsinf=5.6*eps0, Dvv=0.06e-2, vf=3159.0),
+               'GaAs':     dict(epsinf=1.2e-10, Dvv=0.035e-2, vf=2900.0),
+               'LiNbYZ':   dict(epsinf=46*eps0, Dvv=2.4e-2, vf=3488.0),
+               'LiNb128':  dict(epsinf=56*eps0, Dvv=2.7e-2, vf=3979.0),
+               'LiNbYZX':  dict(epsinf=46*eps0, Dvv=0.8e-2, vf=3770.0)}
+
 class IDT(Agent):
     """Theoretical description of IDT"""
     base_name="IDT"
@@ -107,45 +175,39 @@ class IDT(Agent):
 
     @property_func
     def _get_eta(self, a, g):
-         return a/(a+g)
+         return eta(a, g)
 
-    @tagged_property(desc="periodicity. this should be twice width for 50\% metallization")
-    def p(self, a, g):
-        return a+g
+    #@tagged_property(desc="periodicity. this should be twice width for 50\% metallization")
+    #def p(self, a, g):
+    #    return a+g
 
     @tagged_property(desc="coupling strength", unit="%", tex_str=r"K$^2$", expression=r"K$^2=2\Delta v/v$")
     def K2(self, Dvv):
-        return Dvv*2.0
+        return K2(Dvv)
 
     @K2.fget.setter
     def _get_Dvv(self, K2):
-        return K2/2.0
+        return Dvv(K2)
 
     @tagged_property(unit="F", desc="Total capacitance of IDT", reference="Morgan page 16/145")
     def Ct(self, ft, W, epsinf, Np):
-        m={"double" : 1.414213562373, "single" : 1.0}[ft]
-        return m*W*epsinf*Np
+        return Ct(Ct_mult[ft], W, epsinf, Np)
 
     @Ct.fget.setter
-    def _get_epsinf(self, Ct):
-        m={"double" : 1.414213562373, "single" : 1.0}[self.ft]
-        return Ct/(m*self.W*self.Np)
+    def _get_epsinf(self, ft, W, Ct, Np):
+        return epsinf(Ct_mult[ft], W, Ct, Np)
 
     @tagged_property(unit="um", desc="Center wavelength", reference="")
     def lbda0(self, vf, f0):
-        return vf/f0
+        return lbda(vf, f0)
 
     @lbda0.fget.setter
     def _get_f0(self, vf, lbda0):
-        return vf/lbda0
+        return f(vf, lbda0)
 
     @tagged_property(desc="gap between fingers (um). about 0.096 for double fingers at 4.5 GHz", unit="um")
     def g(self, a, eta):
-        """eta=a/(a+g)
-           => a=(a+g)*eta
-           => (1-eta)*a=g*eta
-           => g=a*(1/eta-1)"""
-        return a*(1.0/eta-1.0)
+        return g(a, eta)
 
     @g.fget.setter
     def _get_a_get_(self, eta, g):

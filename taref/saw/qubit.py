@@ -14,6 +14,10 @@ from atom.api import Float, Enum
 from taref.core.universal import Array
 from numpy.linalg import eigvalsh, eigvals
 
+
+#def Delta(Tc):
+#    return 1.764*kB*Tc
+
 class Qubit(Agent):
     """Theoretical description of qubit"""
 
