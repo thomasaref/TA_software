@@ -15,11 +15,11 @@ def fano_fit(resid_func, p_guess, y, x):
     best_parameters = pbest[0]
     return (best_parameters[0], best_parameters[1], best_parameters[2], best_parameters[3])
 
-def full_fano_fit(p_guess, y, x, indices=None):
+def full_fano_fit(fit_func, p_guess, y, x, indices=None):
     print "started fano fitting"
     if indices is None:
         indices=range(len(y))
-    def residuals(fit_func, p, y, x):
+    def residuals(p, y, x):
         """residuals of fitting function"""
         return y-fit_func(x, p)
     fit_params=[fano_fit(residuals, p_guess, y[n], x)  for n in indices]

@@ -5,11 +5,11 @@ Created on Mon Feb 15 14:08:41 2016
 @author: thomasaref
 """
 
-from taref.saw.qdt import QDT
-from taref.saw.idt import IDT
+from taref.physics.qdt import QDT
+from taref.physics.idt import IDT
 from taref.core.atom_extension import get_tag, tag_Property
 from taref.filer.read_file import Read_HDF5
-#from taref.filer.filer import Folder
+from taref.filer.filer import Folder
 from taref.core.agent import Agent
 from atom.api import Float, Unicode, Typed, Int, Callable, Enum
 from taref.core.universal import Array
@@ -20,22 +20,16 @@ from taref.core.log import log_debug
 from taref.plotter.plotter import line, colormesh #Plotter
 from taref.physics.units import dBm, dB
 from taref.physics.fitting_functions import fano, lorentzian, refl_lorentzian, refl_fano
-from taref.physics.fundamentals import Ej, fq, flux_over_flux0
-read_dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216"
+#from taref.physics.fundamentals import Ej, fq, flux_over_flux0
 
-class Fundamentals(Agent):
-    base_name="TA88_Fundamentals"
-    fridge_atten=Float(60)
-    fridge_gain=Float(45)
+from lyzer import Lyzer
 
-    rd_hdf=Typed(Read_HDF5)
-    rt_atten=Float(40)
-    rt_gain=Float(23*2)
+class TA88_Read(Read_HDF5):
+    def _default_folder(self):
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216", quality="", main_dir="Data_0221")
 
-    offset=Float(-0.035)
-    flux_factor=Float(0.2925)
+#read_dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216"
 
-    comment=Unicode().tag(read_only=True, spec="multiline")
 
 qdt=QDT(material='LiNbYZ',
         ft="double",
@@ -55,212 +49,11 @@ idt=IDT(material='LiNbYZ',
         eta=0.5,
         a=96.0e-9)
 
-#def plots(func):
-#    """decorator that assists with plotting function definition"""
-#    def plotty_func(self, plotter=None, *args, **kwargs):
-#        if plotter is None:
-#            plotter=Plotter()
-#        elif isinstance(plotter, basestring):
-#            if plotter in self.agent_dict:
-#                plotter=self.agent_dict[plotter]
-#            else:
-#                plotter=Plotter(name=plotter)
-#        return func(self, plotter=plotter, *args, **kwargs)
-#    return plotty_func
+class TA88_Lyzer(Lyzer):
+    qdt=qdt
 
 
-def read_data(self):
-    with File(self.rd_hdf.file_path, 'r') as f:
-        Magvec=f["Traces"]["RS VNA - S21"]
-        data=f["Data"]["Data"]
-        self.comment=f.attrs["comment"]
-        self.yoko=data[:,0,0].astype(float64)
-        fstart=f["Traces"]['RS VNA - S21_t0dt'][0][0]
-        fstep=f["Traces"]['RS VNA - S21_t0dt'][0][1]
-        sm=shape(Magvec)[0]
-        sy=shape(data)
-        print sy
-        s=(sm, sy[0], 1)#sy[2])
-        Magcom=Magvec[:,0, :]+1j*Magvec[:,1, :]
-        Magcom=reshape(Magcom, s, order="F")
-        self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
-        self.Magcom=squeeze(Magcom)
-        self.stop_ind=len(self.yoko)-1
-
-class Lyzer(Fundamentals):
-    #def _default_main_params(self):
-    #    return ["rt_atten", "fridge_atten", "fridge_gain", "rt_gain", "comment", "flux_factor", "offset", "fit_type",
-    #            "on_res_ind", "start_ind", "stop_ind", "filt_start_ind", "filt_end_ind"]
-
-    frequency=Array().tag(unit="GHz", plot=True, label="Frequency", sub=True)
-    yoko=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
-    #pwr=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
-    #frq2=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
-    Magcom=Array().tag(sub=True)
-
-
-
-    on_res_ind=Int()
-    start_ind=Int()
-    stop_ind=Int()
-    filt_end_ind=Int(58)
-    filt_start_ind=Int(5)
-
-    fit_func=Callable(fano).tag(private=True)
-    read_data=Callable(read_data).tag(private=True)
-
-    fit_type=Enum("Transmission", "Reflection")
-
-    @tag_Property(plot=True, sub=True)
-    def fq(self):
-        return fq(Ej=self.Ej, Ec=qdt.Ec)
-
-    @tag_Property(plot=True, sub=True)
-    def Ej(self):
-        return Ej(Ejmax=qdt.Ejmax, flux_over_flux0=self.flux_over_flux0)
-
-    @tag_Property(sub=True)
-    def flux_over_flux0(self):
-        return flux_over_flux0(voltage=self.yoko, offset=self.offset, flux_factor=qdt.flux_factor)
-
-    @tag_Property()
-    def p_guess(self):
-        return [200e6,4.5e9, 0.002, 0.022]
-
-    @tag_Property(sub=True)
-    def indices(self):
-        return range(len(self.frequency))
-        #return [range(81, 120+1), range(137, 260+1), range(269, 320+1), range(411, 449+1)]#, [490]]#, [186]]
-
-    def fft_filter(self, n):
-        myifft=fft.ifft(self.Magcom[:,n])
-        myifft[self.filt_end_ind:-self.filt_end_ind]=0.0
-        if self.filt_start_ind!=0:
-            myifft[:self.filt_start_ind]=0.0
-            myifft[-self.filt_start_ind:]=0.0
-        return fft.fft(myifft)
-
-    @tag_Property(plot=True, sub=True)
-    def MagdB(self):
-        return 10.0*log10(self.MagAbs)
-
-    @tag_Property(plot=True, sub=True)
-    def MagAbs(self):
-        return absolute(self.Magcom)
-
-    @tag_Property(plot=True, sub=True)
-    def MagAbsFilt(self):
-        return absolute(self.MagcomFilt)
-
-    @tag_Property(plot=True, sub=True)
-    def MagdBFilt(self):
-        return 10.0*log10(self.MagAbsFilt)
-
-    #@tag_Property(plot=True, sub=True)
-    #def MagdBFiltbgsub(self):
-        #return self.MagAbsFilt/mean(self.MagAbsFilt[:, 0:5], axis=1, keepdims=True)
-    #    return self.MagdBFilt-10.0*log10(mean(self.MagAbsFilt[:, 0:5], axis=1, keepdims=True))
-
-    #@tag_Property(plot=True, sub=True)
-    #def MagAbsFilt_sq(self):
-    #    return self.MagAbsFilt**2
-
-    @tag_Property(plot=True, sub=True)
-    def MagcomFilt(self):
-        return array([fft_filter(self.Magcom[:,n], self.filt_start_ind, self.filt_end_ind) for n in range(len(self.yoko))]).transpose()
-
-    def magabs_colormesh(self):
-        p=colormesh(self.yoko, self.frequency/1e9, self.MagAbs, plotter="magabs_{}".format(self.name))
-        p.set_ylim(min(self.frequency/1e9), max(self.frequency/1e9))
-        p.set_xlim(min(self.yoko), max(self.yoko))
-        p.xlabel="Yoko (V)"
-        p.ylabel="Frequency (Hz)"
-        return p
-
-    def ifft_plot(self):
-        p=line(absolute(fft.ifft(self.Magcom[:,self.on_res_ind])), plotter="ifft_{}".format(self.name),
-               plot_name="onres_{}".format(self.on_res_ind), label="i {}".format(self.on_res_ind))
-        line(absolute(fft.ifft(self.Magcom[:,self.start_ind])), plotter=p,
-             plot_name="strt {}".format(self.start_ind), label="i {}".format(self.start_ind))
-        line(absolute(fft.ifft(self.Magcom[:,self.stop_ind])),
-             plot_name="stop {}".format(self.stop_ind), label="i {}".format(self.stop_ind))
-
-    #def ifft_dif_plot(self, plotter):
-    #    plotter.line_plot("ifft_dif1_{}".format(self.name), absolute(absolute(fft.ifft(self.Magcom[:,self.start_ind]))-absolute(fft.ifft(self.Magcom[:,self.on_res_ind]))))
-    #    plotter.line_plot("ifft_dif2_{}".format(self.name), absolute(absolute(fft.ifft(self.Magcom[:,self.stop_ind]))-absolute(fft.ifft(self.Magcom[:,self.on_res_ind]))))
-    #    plotter.line_plot("ifft_dif3_{}".format(self.name), absolute(absolute(fft.ifft(self.Magcom[:,self.stop_ind]))-absolute(fft.ifft(self.Magcom[:,self.start_ind]))))
-
-    def filt_compare(self, ind):
-        p=line(self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)", plotter="filtcomp_{}".format(self.name))
-        line(self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)", plotter=p)
-
-    def magabsfilt_colormesh(self):
-        p=colormesh(self.yoko, self.frequency/1e9, self.MagAbsFilt, plotter="magabsfilt_{}".format(self.name))
-        p.set_ylim(min(self.frequency/1e9), max(self.frequency/1e9))
-        p.set_xlim(min(self.yoko), max(self.yoko))
-        p.xlabel="Yoko (V)"
-        p.ylabel="Frequency (GHz)"
-
-    def magdBfilt_colormesh(self, plotter):
-        plotter.colormesh("magdBfilt_{}".format(self.name), self.yoko, self.frequency, self.MagdBFilt)
-        plotter.set_ylim(min(self.frequency), max(self.frequency))
-        plotter.set_xlim(min(self.yoko), max(self.yoko))
-        plotter.mpl_axes.xlabel="Yoko (V)"
-        plotter.mpl_axes.ylabel="Frequency (Hz)"
-        plotter.mpl_axes.title="MagdB fluxmap {}".format(self.name)
-
-    def magdBfiltbgsub_colormesh(self, plotter):
-        plotter.colormesh("magdBfiltbgsub_{}".format(self.name), self.yoko, self.frequency, self.MagdBFiltbgsub)
-        plotter.set_ylim(min(self.frequency), max(self.frequency))
-        plotter.set_xlim(min(self.yoko), max(self.yoko))
-        plotter.mpl_axes.xlabel="Yoko (V)"
-        plotter.mpl_axes.ylabel="Frequency (Hz)"
-        plotter.mpl_axes.title="MagdB bg sub fluxmap {}".format(self.name)
-
-
-
-    def full_fano_fit(self):
-        log_debug("started fano fitting")
-        fit_params=[self.fano_fit(n)  for n in self.indices]
-        fit_params=array(zip(*fit_params))
-        log_debug("ended fano fitting")
-        return fit_params
-
-    def plot_widths(self, plotter):
-        fit_params=self.full_fano_fit()
-        plotter.scatter_plot("widths_{}".format(self.name), fit_params[0, :], absolute(fit_params[1, :]), color="red", label=self.name)
-
-    def fano_fit(self, n):
-        pbest= leastsq(self.resid_func, self.p_guess, args=(self.MagAbsFilt_sq[n, :], self.flux_par), full_output=1)
-        best_parameters = pbest[0]
-        #log_debug(best_parameters)
-        #if 0:#n==539 or n==554:#n % 10:
-            #b.line_plot("magabs_flux", self.flux_par*1e-9, (self.MagAbsFilt_sq[n, :], label="{}".format(n), linewidth=0.2)
-            #b.line_plot("lorentzian", self.flux_par*1e-9, self.fit_func(self.flux_par,best_parameters), label="fit {}".format(n), linewidth=0.5)
-        return (self.frequency[n], best_parameters[0], best_parameters[1], best_parameters[2], best_parameters[3])
-
-class TransLyzer(Lyzer):
-    def _default_fit_func(self):
-        return lorentzian
-
-    def _default_fit_type(self):
-        return "Transmission"
-
-#    @tag_Property()
-#    def p_guess(self):
-#        return [200e6,4.5e9, 0.002, 0.022, 0.1]
-#
-#    def _default_fit_func(self):
-#        return fano
-class ReflLyzer(Lyzer):
-    def _default_fit_func(self):
-        return refl_lorentzian
-
-    def _default_fit_type(self):
-        return "Reflection"
-
-
-class TransTimeLyzer(TransLyzer):
+class TransTimeLyzer(Lyzer):
     f_ind=Int()
     t_ind=Int()
     t_start_ind=Int(63)

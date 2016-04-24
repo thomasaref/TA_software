@@ -28,9 +28,9 @@ class Plotter(Fig):
         kwargs=process_kwargs(self, kwargs)
         return scatter_plot(self, plot_name, *args, **kwargs)
 
-    def colormesh(self, plot_name="", *args, **kwargs):
+    def colormesh(self, *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
-        return colormesh_plot(self, plot_name=plot_name, *args, **kwargs)
+        return colormesh_plot(self, *args, **kwargs)
 
     def multiline(self, plot_name="", *args,**kwargs):
         kwargs=process_kwargs(self, kwargs)

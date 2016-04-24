@@ -123,20 +123,24 @@ class Line2DFormat(LineFormat):
         self.ydata=y
         self.clt=self.plotter.axes.plot(*args, **kwargs)[0]
         print type(self.clt.get_xdata())
-        print self.clt.get_ydata()
+        #print self.clt.get_ydata()
 
     def alter_xy(self, *args):
         """appends points x and y if 2 args are passed and just y and len of xdata if one args is passed"""
         if len(args)==1:
             y=args[0]
-            x=range(len(self.xdata))
+            x=None #range(len(self.xdata))
         elif len(args)==2:
             x=args[0]
             y=args[1]
         if self.append:
+            if x is None:
+                x=len(self.xdata)
             self.xdata=append(self.xdata, x)
             self.ydata=append(self.ydata, y)
         else:
+            if x is None:
+                x=self.clt.get_xdata()
             self.xdata=x
             self.ydata=y
         self.clt.set_xdata(self.xdata)
@@ -315,7 +319,12 @@ class ColormeshFormat(PlotFormat):
         elif len(args) == 3:
             self.xdata, self.ydata, self.zdata = [asanyarray(a) for a in args]
         self.clt=self.plotter.axes.pcolormesh(self.xdata, self.ydata, self.zdata, **kwargs)
-        self.set_clim(amin(self.zdata), amax(self.zdata))
+        if self.plotter.auto_zlim:
+            self.set_clim(amin(self.zdata), amax(self.zdata))
+        if self.plotter.auto_xlim:
+            self.plotter.set_xlim(min(self.xdata), max(self.xdata))
+        if self.plotter.auto_ylim:
+            self.plotter.set_ylim(min(self.ydata), max(self.ydata))
 
     count=Int()
     def append_xy(self, z, index=None, axis=1):
@@ -336,9 +345,10 @@ class ColormeshFormat(PlotFormat):
         #print help(self.clt.set_axis)
         #self.clt.set_xdata(self.xdata)
         #self.pcolormesh(self.xdata, self.ydata, self.zdata)
-        fig=self.clt.get_figure()
-        if fig.canvas is not None:
-            fig.canvas.draw()
+        self.update_plot(update_legend=False)
+        #fig=self.clt.get_figure()
+        #if fig.canvas is not None:
+        #    fig.canvas.draw()
 
 
     @transformation
@@ -357,7 +367,8 @@ class ColormeshFormat(PlotFormat):
         mlf.autocolor_set("color")
         return mlf
 
-def colormesh_plot(plotter, plot_name="", *args, **kwargs):
+def colormesh_plot(plotter, *args, **kwargs):
+    plot_name=kwargs.pop("plot_name", "")
     pl0t=ColormeshFormat(plot_name=plot_name, plotter=plotter)
     pl0t.pcolormesh(*args, **kwargs)
     pl0t.colorbar

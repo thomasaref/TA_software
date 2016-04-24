@@ -47,8 +47,13 @@ def _setup_property_fs(self, param, typer):
     """sets up property_f's pointing obj at self and setter at functions decorated with param.fget.setter"""
     if typer==Property:
         fget =getattr(self.get_member(param), "fget")
-        if getattr(fget, "fset_list", []) != []:
-            self.get_member(param).setter(fset_maker(self, fget, param))
+        if hasattr(fget, "fset_list"):
+            if getattr(fget, "fset_list") != []:
+                self.get_member(param).setter(fset_maker(self, fget, param))
+            else:
+                def do_nothing_set(obj, value):
+                    pass
+                self.get_member(param).setter(do_nothing_set)
 
 def _setup_callables(self, param, typer):
     """auto makes Callables into instance methods"""

@@ -7,16 +7,16 @@ Created on Tue Apr 19 10:46:09 2016
 
 from numpy import pi, linspace, sin, amax, argmin, argmax, cos, absolute, sqrt, float64
 from scipy.constants import h, e, epsilon_0 as eps0
-from taref.plotter.fig_format import Plotter
+#from taref.plotter.fig_format import Plotter
 
-Np=10
+Np=9
 f0=5.45e9
 w0=2*pi*f0
 vf=3488.0
 freq=linspace(1e9, 10e9, 1000)
 
 Ejmax=50.0e9
-epsinf=46*eps0#/3.72*sqrt(2)
+epsinf=46*eps0/3.72#*sqrt(2)
 
 W=25.0e-6
 
@@ -28,6 +28,7 @@ Ec=e**2/(2*C)
 print Ec/h
 
 Gamma0=Ga0/(2*C)/(2.0*pi)
+print Gamma0
 
 def flux_to_Ej(voltage,  offset=0.0, flux_factor=1.0, Ejmax=Ejmax):
     flux_over_flux0=(voltage-offset)*flux_factor

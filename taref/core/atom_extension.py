@@ -335,9 +335,9 @@ def log_func(func, pname=None, threaded=False):
     def new_func(self, *args, **kwargs):
         """logs the call of an instance method and autoinserts kwargs"""
         if get_tag(self, pname, "log", False):
-            log_debug(log_message.format(getattr(self, "name", ""), func_name), n=1)
+            log_debug(log_message.format(getattr(self, "name", ""), func_name), n=2)
         if len(args)==0:
-            members=self.members().keys()
+            members=get_all_params(self)#.members().keys()
             for param in get_run_params(new_func):
                 if param in members:
                     if param in kwargs:

@@ -85,9 +85,9 @@ class PlotMaster(Atom):
             self.figure.canvas.draw()
             self.get_member("plot_names").reset(self)
 
-    def legend(self):
+    def legend(self, *args, **kwargs):
         """adds the legend and makes it draggable if it does not exist"""
-        lgnd=self.axes.legend()
+        lgnd=self.axes.legend(*args, **kwargs)
         if lgnd is not None:
             lgnd.draggable(state=True)
 

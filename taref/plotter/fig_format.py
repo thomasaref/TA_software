@@ -58,6 +58,7 @@ class Fig(PlotMaster, Operative):
 
     auto_xlim=Bool(True)
     auto_ylim=Bool(True)
+    auto_zlim=Bool(True)
 
     selected=Unicode()
 

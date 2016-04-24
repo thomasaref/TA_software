@@ -14,9 +14,9 @@ from numpy import (sin, cos, sqrt, exp, empty, mean, exp, log10, arange, array, 
                    absolute, dtype, angle, amin, amax, linspace, zeros, shape)
 
 
-from taref.core.agent import Agent
+from taref.core.api import Agent, Array
 from taref.core.extra_setup import tagged_property
-from atom.api import Enum, Float
+from atom.api import Enum, Float, Int
 
 Tc_Al=1.315 #critical temperature of aluminum
 Delta_Al=200.0e-6*e #gap of aluminum
@@ -65,7 +65,8 @@ def fq(Ej, Ec):
     E1 =  -Ej + sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0)
     return (E1-E0)/h
 
-def anharm(Ej, Ec):
+def anharm(EjdivEc, Ec):
+    Ej=EjdivEc*Ec
     E0 =  sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0
     E1 =  sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0)
     E2 =  sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*2**2+6.0*2+3.0)
@@ -88,6 +89,13 @@ def flux_parabola(voltage, offset, flux_factor, Ejmax, Ec):
 
 def detuning(fq0, fq):
     return 2.0*pi*(fq0 - fq)
+
+def transmon_energy(Ej, Ec, m):
+    return -Ej+sqrt(8.0*Ej*Ec)*(m+0.5) - (Ec/12.0)*(6.0*m**2+6.0*m+3.0)
+
+def transmon_energy_levels(EjdivEc, Ec, n=3):
+    Ej=EjdivEc*Ec
+    return [transmon_energy(Ej, Ec, m) for m in range(n)]
 
 class Qubit(Agent):
     """Theoretical description of qubit"""
@@ -133,7 +141,7 @@ class Qubit(Agent):
         return Ic_from_Rn(Rn, Delta)
 
     @Ic.fget.setter
-    def _get_Rn(self, Ic):
+    def _get_Rn(self, Ic, Delta):
         return Rn(Ic, Delta)
 
     @tagged_property(desc="""Max Josephson Energy""", unit="hGHz")#, unit_factor=1.0e9*h)
@@ -181,9 +189,10 @@ class Qubit(Agent):
         return fq(Ej, Ec)
 
     @tagged_property(desc="absolute anharmonicity", unit="hGHz")
-    def anharm(self, Ej, Ec):
-        return anharm(Ej, Ec)
+    def anharm(self, EjdivEc, Ec):
+        return anharm(EjdivEc, Ec)
 
+    @fq.fget.setter
     def _get_Ej(self, fq, Ec):
         return Ej_from_fq(fq, Ec)
 
@@ -199,11 +208,17 @@ class Qubit(Agent):
     def _get_voltage(self, flux_over_flux0, offset, flux_factor):
         return voltage_from_flux(flux_over_flux0, offset, flux_factor)
 
-    def flux_parabola(self, voltage, offset, flux_factor, Ejmax, Ec):
-        return flux_parabola(voltage, offset, flux_factor, Ejmax, Ec)
+    def flux_parabola(self, voltage):
+        return flux_parabola(voltage, offset=self.offset, flux_factor=self.flux_factor, Ejmax=self.Ejmax, Ec=self.Ec)
 
-    def detuning(self, f0, fq):
-        return 2.0*pi*(f0 - fq)
+    def detuning(self, fq_off):
+        return detuning(self.fq, fq_off)
+
+    n_energy=Int(3)
+
+    @tagged_property()
+    def transmon_energy_levels(self, EjdivEc, Ec, n_energy):
+        return transmon_energy_levels(EjdivEc, Ec, n_energy)
 
     def indiv_EkdivEc(self, ng, Ec, Ej, Nstates, order):
         NL=2*Nstates+1
@@ -218,6 +233,10 @@ class Qubit(Agent):
         print w, v
         #for n in range(order):
 
+    ng=Float(0.5).tag(desc="charge on gate line")
+    Nstates=Int(50).tag(desc="number of states to include in mathieu approximation. More states is better approximation")
+    order=Int(3)
+    EkdivEc=Array().tag(unit2="Ec")
 
 
     def update_EkdivEc(self, ng, Ec, Ej, Nstates, order):
@@ -269,6 +288,7 @@ class Qubit(Agent):
             data.append(anharm2)
         Ctr=e**2/(2.0*Ecarr*h*1e9)
         return E01a, Ctr, data, d1, d2, d3
+
 
 if __name__=="__main__":
     a=Qubit()
