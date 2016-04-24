@@ -65,6 +65,12 @@ def fq(Ej, Ec):
     E1 =  -Ej + sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0)
     return (E1-E0)/h
 
+def fq2(Ej, Ec):
+    E0 =  sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0
+    #E1 =  sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0)
+    E2 =  sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*2**2+6.0*2+3.0)
+    return (E2-E0)/h/2
+
 def anharm(EjdivEc, Ec):
     Ej=EjdivEc*Ec
     E0 =  sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0

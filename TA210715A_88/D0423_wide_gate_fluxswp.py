@@ -8,7 +8,7 @@ Created on Sun Apr 24 18:55:33 2016
 from TA88_fundamental import TA88_Lyzer, TA88_Read, qdt
 from taref.plotter.api import colormesh, line
 from taref.core.api import set_tag, set_all_tags
-from numpy import array, squeeze, sqrt, pi, mod, floor_divide, trunc, arccos, shape
+from numpy import array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape
 from atom.api import FloatRange
 from taref.core.api import tag_Property
 from taref.plotter.api import LineFitter
@@ -46,9 +46,19 @@ def magabs_colormesh(self):
 #    #pl.set_xlim(0.7, 1.3)
 #    return pl
 
-from taref.physics.qubit import flux_parabola, Ej_from_fq, voltage_from_flux
+from taref.physics.qubit import  flux_parabola, Ej_from_fq, voltage_from_flux
+from taref.physics.qdt import lamb_shifted_anharm, calc_freq_shift
 
-def flux_par3(self, offset=-0.1, flux_factor=0.5312, Ejmax=h*40.5e9, pl=None):
+def fq2(Ej, Ec):
+    E0 =  sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0
+    #E1 =  sqrt(8.0*Ej*Ec)*1.5 - (Ec/12.0)*(6.0+6.0+3.0)
+    E2 =  sqrt(8.0*Ej*Ec)*2.5 - (Ec/12.0)*(6.0*2**2+6.0*2+3.0)
+    return (E2-E0)/h/2
+
+def Ej_from_fq2(fq2, Ec):
+    return (((2*h*fq2+3.0*Ec)/2.0)**2)/(8.0*Ec)   
+
+def flux_par3(self, offset=-0.08, flux_factor=0.5, Ejmax=h*40.5e9, pl=None):
     set_all_tags(qdt, log=False)
     flux_o_flux0=qdt.call_func("flux_over_flux0", voltage=self.yoko, offset=offset, flux_factor=flux_factor)
     #print flux_o_flux0-pi/2*trunc(flux_o_flux0/(pi/2.0))
@@ -56,19 +66,28 @@ def flux_par3(self, offset=-0.1, flux_factor=0.5312, Ejmax=h*40.5e9, pl=None):
     #EjdivEc=Ej/qdt.Ec
     fq_vec=array([sqrt(f*(f+1.0*qdt.call_func("calc_Lamb_shift", fqq=f))) for f in self.frequency])
     fq_vec=array([f-qdt.call_func("calc_Lamb_shift", fqq=f) for f in self.frequency])
-
+    fq_vec=array([sqrt(f*(f+calc_freq_shift(f, qdt.ft, qdt.Np, qdt.f0, qdt.epsinf, qdt.W, qdt.Dvv))) for f in self.frequency])
     Ej=Ej_from_fq(fq_vec, qdt.Ec)
     flux_d_flux0=arccos(Ej/Ejmax)#-pi/2
+    flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax))
 
     if pl is not None:
         volt=voltage_from_flux(flux_d_flux0, offset, flux_factor)
-        line(s3a4_wg.frequency/1e9, volt, plotter=pl)
+        freq=s3a4_wg.frequency[:]/1e9
+        freq=append(freq, freq)
+        line(freq, volt, plotter=pl, color="green")
         EjdivEc=Ej/qdt.Ec
-        fq_vec=qdt.call_func("lamb_shifted_fq2", EjdivEc=EjdivEc)
-        Ej=Ej_from_fq(fq_vec, qdt.Ec)
-        flux_d_flux0=arccos(Ej/Ejmax)#-pi/2
-        volt=voltage_from_flux(flux_d_flux0, offset, flux_factor)
-        line(s3a4_wg.frequency/1e9, volt, plotter=pl)
+        f_vec=lamb_shifted_anharm(EjdivEc, qdt.ft, qdt.Np, qdt.f0, qdt.epsinf, qdt.W, qdt.Dvv)
+        freq=(s3a4_wg.frequency[:]-1.3e9)/1e9
+        freq=append(freq, freq)
+        #fq_vec+=f_vec/h/2        
+        #fq2_vec=fq2(Ej, qdt.Ec)
+        #Ej=Ej_from_fq(fq_vec, qdt.Ec) #qdt.call_func("lamb_shifted_fq2", EjdivEc=EjdivEc)
+        #Ej=Ej_from_fq(fq_vec, qdt.Ec)
+        #flux_d_flux0=arccos(Ej/Ejmax)#-pi/2
+        #flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax))
+        #volt=voltage_from_flux(flux_d_flux0, offset, flux_factor)
+        line(freq, volt, plotter=pl)
     #flux_d_flux0.append(-)
     return voltage_from_flux(flux_d_flux0, offset, flux_factor)
 
@@ -105,8 +124,8 @@ def flux_par(self, offset, flux_factor, Ejmax):
     return ls_fq/1e9#, ls_fq2/1e9
 
 pl=magabs_colormesh(s3a4_wg)#.show()
-#flux_par3(s3a4_wg, pl=pl)
-#pl.show()
+flux_par3(s3a4_wg, pl=pl)
+pl.show()
 
 class Fitter(LineFitter):
     Ejmax=FloatRange(0.001, 100.0, qdt.Ejmax/h/1e9).tag(tracking=True)
@@ -116,7 +135,9 @@ class Fitter(LineFitter):
     def _default_plotter(self):
         if self.plot_name=="":
             self.plot_name=self.name
-        pl1, pf=line(s3a4_wg.frequency/1e9, self.data, plot_name=self.plot_name, plotter=pl)
+        freq=s3a4_wg.frequency[:]/1e9
+        freq=append(freq, freq)
+        pl1, pf=line(freq, self.data, plot_name=self.plot_name, plotter=pl)
         self.plot_name=pf.plot_name
         return pl1
 

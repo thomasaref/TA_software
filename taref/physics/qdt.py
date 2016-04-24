@@ -50,6 +50,14 @@ def calc_Lamb_shift(fq, ft, Np, f0, epsinf, W, Dvv):
     Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
     return -Ba/(2.0*C)/(2.0*pi)
 
+def calc_freq_shift(fq, ft, Np, f0, epsinf, W, Dvv):
+    """returns Lamb shift in Hz"""
+    X=Np*pi*(fq-f0)/f0
+    Ga0=Ga0_mult[ft]*2*pi*f0*epsinf*W*Dvv*(Np**2)
+    C=Ct_mult[ft]*Np*W*epsinf
+    Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+    return Ba/C/(2.0*pi)
+
 def calc_coupling(fq, ft, Np, f0, Dvv, epsinf, W):
     X=Np*pi*(fq-f0)/f0
     Ga0=Ga0_mult[ft]*2*pi*f0*epsinf*W*Dvv*(Np**2)
