@@ -6,7 +6,7 @@ Created on Sun Apr 24 18:55:33 2016
 """
 
 from TA88_fundamental import TA88_Lyzer, TA88_Read, qdt
-from taref.plotter.api import colormesh, line
+from taref.plotter.api import colormesh, line, Plotter
 from taref.core.api import set_tag, set_all_tags
 from numpy import array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape
 from atom.api import FloatRange
@@ -20,11 +20,22 @@ s3a4_wg=TA88_Lyzer(filt_start_ind=0, filt_end_ind=0, on_res_ind=260,# VNA_name="
 s3a4_wg.read_data(s3a4_wg)
 
 def magabs_colormesh(self):
-    pl, pf=colormesh(self.frequency/1e9, self.yoko, (self.MagdB.transpose()-self.MagdB[:, 0]), plotter="magabs_{}".format(self.name))
+    pl=Plotter(fig_width=9.0, fig_height=6.0, name="magabs_{}".format(self.name))
+    pl, pf=colormesh(self.frequency/1e9, self.yoko, (self.MagdB.transpose()-self.MagdB[:, 0]), plotter=pl)
+    pf.set_clim(-0.3, 0.1)
     pl.set_xlim(min(self.frequency/1e9), max(self.frequency/1e9))
     pl.set_ylim(min(self.yoko), max(self.yoko))
+
+    pl.ylabel="Yoko (V)"
+    pl.xlabel="Frequency (GHz)"
+    return pl
+
+def line_cs(self, ind=210):
+    print self.frequency[ind]/1e9
+    pl=Plotter(fig_width=9.0, fig_height=6.0, name="magabs_cs_{}".format(self.name))
+    pl, pf=line(self.yoko, (self.MagdB.transpose()-self.MagdB[:, 0])[:, ind], plotter=pl, linewidth=1.0)
     pl.xlabel="Yoko (V)"
-    pl.ylabel="Frequency (GHz)"
+    pl.ylabel="Magnitude (dB)"
     return pl
 
 #def flux_par(self, pl, offset, flux_factor):
@@ -56,9 +67,9 @@ def fq2(Ej, Ec):
     return (E2-E0)/h/2
 
 def Ej_from_fq2(fq2, Ec):
-    return (((2*h*fq2+3.0*Ec)/2.0)**2)/(8.0*Ec)   
+    return (((2*h*fq2+3.0*Ec)/2.0)**2)/(8.0*Ec)
 
-def flux_par3(self, offset=-0.08, flux_factor=0.5, Ejmax=h*40.5e9, pl=None):
+def flux_par3(self, offset=-0.08, flux_factor=0.52, Ejmax=h*44.0e9, f0=5.35e9, alpha=0.7, pl=None):
     set_all_tags(qdt, log=False)
     flux_o_flux0=qdt.call_func("flux_over_flux0", voltage=self.yoko, offset=offset, flux_factor=flux_factor)
     #print flux_o_flux0-pi/2*trunc(flux_o_flux0/(pi/2.0))
@@ -66,28 +77,47 @@ def flux_par3(self, offset=-0.08, flux_factor=0.5, Ejmax=h*40.5e9, pl=None):
     #EjdivEc=Ej/qdt.Ec
     fq_vec=array([sqrt(f*(f+1.0*qdt.call_func("calc_Lamb_shift", fqq=f))) for f in self.frequency])
     fq_vec=array([f-qdt.call_func("calc_Lamb_shift", fqq=f) for f in self.frequency])
-    fq_vec=array([sqrt(f*(f+calc_freq_shift(f, qdt.ft, qdt.Np, qdt.f0, qdt.epsinf, qdt.W, qdt.Dvv))) for f in self.frequency])
+    fq_vec=array([sqrt(f*(f+alpha*calc_freq_shift(f, qdt.ft, qdt.Np, f0, qdt.epsinf, qdt.W, qdt.Dvv))) for f in self.frequency])
     Ej=Ej_from_fq(fq_vec, qdt.Ec)
     flux_d_flux0=arccos(Ej/Ejmax)#-pi/2
     flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax))
+    flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax)+pi)
+    flux_d_flux0=append(flux_d_flux0, arccos(Ej/Ejmax)-pi)
 
     if pl is not None:
         volt=voltage_from_flux(flux_d_flux0, offset, flux_factor)
         freq=s3a4_wg.frequency[:]/1e9
+        freq=append(freq, freq) #append(freq, append(freq, freq)))
         freq=append(freq, freq)
-        line(freq, volt, plotter=pl, color="green")
+        #freq=append(freq, freq)
+        line(freq, volt, plotter=pl, linewidth=1.0, alpha=0.5)
         EjdivEc=Ej/qdt.Ec
+        ls_fq2=qdt.call_func("lamb_shifted_fq2", EjdivEc=EjdivEc)
+        E0, E1, E2=qdt.call_func("transmon_energy_levels", EjdivEc=EjdivEc, n_energy=3)
+        fq2=(E2-E1)/h
         f_vec=lamb_shifted_anharm(EjdivEc, qdt.ft, qdt.Np, qdt.f0, qdt.epsinf, qdt.W, qdt.Dvv)
-        freq=(s3a4_wg.frequency[:]-1.3e9)/1e9
-        freq=append(freq, freq)
-        #fq_vec+=f_vec/h/2        
+        ah=-ls_fq2/2#-fq2)
+        #fq_vec=array([sqrt((f-ah[n])*(f-ah[n]+alpha*calc_freq_shift(f-ah[n], qdt.ft, qdt.Np, f0, qdt.epsinf, qdt.W, qdt.Dvv))) for n, f in enumerate(self.frequency)])
+        fq_vec=array([f/2-qdt.call_func("calc_Lamb_shift", fqq=f/2) for f in self.frequency])
+
+        #freq=(s3a4_wg.frequency[:]-1.45e9)/1e9
+        #freq=append(freq, freq)
+        #freq=append(freq, freq)
+        Ej=Ej_from_fq(fq_vec, qdt.Ec)
+        flux_d_flux0=arccos(Ej/Ejmax)#-pi/2
+        flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax))
+        flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax)+pi)
+        flux_d_flux0=append(flux_d_flux0, arccos(Ej/Ejmax)-pi)
+
+        #freq=append(freq, freq)
+        #fq_vec+=f_vec/h/2
         #fq2_vec=fq2(Ej, qdt.Ec)
         #Ej=Ej_from_fq(fq_vec, qdt.Ec) #qdt.call_func("lamb_shifted_fq2", EjdivEc=EjdivEc)
         #Ej=Ej_from_fq(fq_vec, qdt.Ec)
         #flux_d_flux0=arccos(Ej/Ejmax)#-pi/2
         #flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax))
-        #volt=voltage_from_flux(flux_d_flux0, offset, flux_factor)
-        line(freq, volt, plotter=pl)
+        volt=voltage_from_flux(flux_d_flux0, offset, flux_factor)
+        line(freq, volt, plotter=pl, plot_name="second", color="green", linewidth=1.0, alpha=0.5)
     #flux_d_flux0.append(-)
     return voltage_from_flux(flux_d_flux0, offset, flux_factor)
 
@@ -124,18 +154,45 @@ def flux_par(self, offset, flux_factor, Ejmax):
     return ls_fq/1e9#, ls_fq2/1e9
 
 pl=magabs_colormesh(s3a4_wg)#.show()
-flux_par3(s3a4_wg, pl=pl)
+#pl.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Graphs_0425/",
+#           fig_name="wide_gate_colormap.png")
+flux_par3(s3a4_wg, pl=pl)#.show()#, f0=5.45e9, alpha=1.0)
+#pl.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Graphs_0425/",
+#           fig_name="wide_gate_colormap_bothpar.png")
+
+#pl=line_cs(s3a4_wg, 190)
+#pl.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Graphs_0425/",
+#           fig_name="wide_gate_cs_5p4.pdf")
+#pl=line_cs(s3a4_wg, 210)
+#pl.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Graphs_0425/",
+#           fig_name="wide_gate_cs_5p6.pdf")
+#pl=line_cs(s3a4_wg, 239)
+#pl.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Graphs_0425/",
+#           fig_name="wide_gate_cs_5p89.pdf")
+#pl=line_cs(s3a4_wg, 246)
+#pl.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Graphs_0425/",
+#           fig_name="wide_gate_cs_5p96.pdf")
+#pl=line_cs(s3a4_wg, 256)
+#pl.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Graphs_0425/",
+#           fig_name="wide_gate_cs_6p06.pdf")
+
+
+#pl.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Graphs_0425/",
+#           fig_name="wide_gate_colormap_bothpar.png")
 pl.show()
 
 class Fitter(LineFitter):
     Ejmax=FloatRange(0.001, 100.0, qdt.Ejmax/h/1e9).tag(tracking=True)
     offset=FloatRange(-5.0, 5.0, 0.0).tag(tracking=True)
     flux_factor=FloatRange(0.1, 5.0, 0.3).tag(tracking=True)
+    f0=FloatRange(4.0, 6.0, qdt.f0/1e9).tag(tracking=True)
+    alpha=FloatRange(0.1, 2.0, 1.0).tag(tracking=True)
 
     def _default_plotter(self):
         if self.plot_name=="":
             self.plot_name=self.name
         freq=s3a4_wg.frequency[:]/1e9
+        freq=append(freq, freq)
         freq=append(freq, freq)
         pl1, pf=line(freq, self.data, plot_name=self.plot_name, plotter=pl)
         self.plot_name=pf.plot_name
@@ -143,7 +200,7 @@ class Fitter(LineFitter):
 
     @tag_Property(private=True)
     def data(self):
-        return flux_par3(s3a4_wg, offset=self.offset, flux_factor=self.flux_factor, Ejmax=self.Ejmax*h*1e9)
+        return flux_par3(s3a4_wg, offset=self.offset, flux_factor=self.flux_factor, Ejmax=self.Ejmax*h*1e9, f0=self.f0*1e9, alpha=self.alpha)
 
 d=Fitter()
 d.show(d.plotter)

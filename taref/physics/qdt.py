@@ -90,7 +90,7 @@ def lamb_shifted_fq(EjdivEc, ft, Np, f0, epsinf, W, Dvv):
 
 def lamb_shifted_fq2(EjdivEc, ft, Np, f0, epsinf, W, Dvv):
     E0, E1, E2=lamb_shifted_transmon_energy_levels(EjdivEc, 3, ft, Np, f0, epsinf, W, Dvv)
-    return (E2-E1)/h
+    return (E2-E0)/h
 
 class QDT(IDT, Qubit):
     base_name="QDT"
@@ -166,20 +166,24 @@ if __name__=="__main__":
     EjdivEc=linspace(0.1, 300, 3000)
     yoko=linspace(-5,5,3000)
     #print a.calc_coupling(fqq=4.5e9), a.call_func("coupling", Ga=1.0)
-    from taref.plotter.api import line
+    from taref.plotter.api import line, Plotter
     from taref.core.api import set_tag
 
     def energy_level_plot():
+        pl=Plotter(fig_width=9.0, fig_height=6.0)
+
         set_tag(qdt, "EjdivEc", log=False)
         E0, E1, E2=qdt.call_func("transmon_energy_levels", EjdivEc=EjdivEc, n_energy=3)
         Ej=EjdivEc*qdt.Ec
-        pl, pf=line(EjdivEc, E0+Ej, linestyle="dashed", linewidth=0.5)
-        line(EjdivEc, E1+Ej, plotter=pl, linestyle="dashed", linewidth=0.5)
-        line(EjdivEc, E2+Ej, plotter=pl, linestyle="dashed", linewidth=0.5)
+        pl, pf=line(EjdivEc, (E0+Ej)/h/1e9, linestyle="dashed", linewidth=1.0, plotter=pl)
+        line(EjdivEc, (E1+Ej)/h/1e9, plotter=pl, linestyle="dashed", linewidth=1.0)
+        line(EjdivEc, (E2+Ej)/h/1e9, plotter=pl, linestyle="dashed", linewidth=1.0)
         E0p, E1p, E2p=qdt.call_func("lamb_shifted_transmon_energy_levels", EjdivEc=EjdivEc, n_energy=3)
-        line(EjdivEc, E0p+Ej, plotter=pl, color="red", linewidth=0.5)
-        line(EjdivEc, E1p+Ej, plotter=pl, color="green", linewidth=0.5)
-        line(EjdivEc, E2p+Ej, plotter=pl, color="purple", linewidth=0.5)
+        line(EjdivEc, (E0p+Ej)/h/1e9, plotter=pl, color="red", linewidth=1.0)
+        line(EjdivEc, (E1p+Ej)/h/1e9, plotter=pl, color="green", linewidth=1.0)
+        line(EjdivEc, (E2p+Ej)/h/1e9, plotter=pl, color="purple", linewidth=1.0)
+        pl.xlabel="$E_j/E_c$"
+        pl.ylabel="Frequency (GHz)"
         return pl
 
     def anharm_plot():
@@ -188,8 +192,8 @@ if __name__=="__main__":
         set_tag(qdt, "Ej", log=False)
 
         #qdt.epsinf=qdt.epsinf/3.72
-        qdt.Np=10
-        qdt.Ec=qdt.fq*0.1*h
+        #qdt.Np=10
+        #qdt.Ec=qdt.fq*0.1*h
         print qdt.max_coupling, qdt.coupling_approx
         anharm=qdt.call_func("anharm", EjdivEc=EjdivEc)
         anharmp=qdt.call_func("lamb_shifted_anharm", EjdivEc=EjdivEc)
@@ -218,14 +222,14 @@ if __name__=="__main__":
         """reproduces anharm plot in Anton's paper"""
         set_tag(qdt, "EjdivEc", log=False)
         set_tag(qdt, "Ej", log=False)
-
+        pl=Plotter(fig_width=9.0, fig_height=6.0)
         #qdt.epsinf=qdt.epsinf/3.72
         #qdt.Np=10
         #qdt.Ec=qdt.fq*0.1*h
         print qdt.max_coupling, qdt.coupling_approx
-        flux_o_flux0=qdt.call_func("flux_over_flux0", voltage=yoko)
-        Ej=qdt.call_func("Ej", flux_over_flux0=flux_o_flux0)
-        EjdivEc=Ej/qdt.Ec
+        #flux_o_flux0=qdt.call_func("flux_over_flux0", voltage=yoko)
+        #Ej=qdt.call_func("Ej", flux_over_flux0=flux_o_flux0)
+        #EjdivEc=Ej/qdt.Ec
         anharm=qdt.call_func("anharm", EjdivEc=EjdivEc)
         anharmp=qdt.call_func("lamb_shifted_anharm", EjdivEc=EjdivEc)
         fq=qdt.call_func("fq", Ej=EjdivEc*qdt.Ec)
@@ -233,24 +237,33 @@ if __name__=="__main__":
         ls_fq2=qdt.call_func("lamb_shifted_fq2", EjdivEc=EjdivEc)
         #pl, pf=line(fq, anharm/h, linewidth=0.5, color="black", label=r"$\Delta_{2,1}-\Delta_{1,0}$")
 
-        pl, pf=line(yoko, anharmp/h, linewidth=0.5, color="black", label=r"$\Delta_{2,1}-\Delta_{1,0}$")
-        line(yoko, ls_fq, plotter=pl, color="blue", linewidth=0.5, label=r"$\Delta_{1,0}$")
-        #E0, E1, E2=qdt.call_func("transmon_energy_levels", EjdivEc=EjdivEc, n_energy=3)
-        #fq2=(E2-E1)/h
-        line(yoko, ls_fq2, plotter=pl, color="red", linewidth=0.5, label=r"$\Delta_{2,1}$")
-        #pl.set_ylim(-1.0, 0.6)
-        #pl.set_xlim(0.7, 1.3)
-        pl.xlabel=r"$f_{10}/f_{IDT}$"
-        pl.ylabel=r"$\Delta/\Gamma_{10}^{MAX}$"
-        #pl.legend(loc='lower left')
+        pl, pf=line(EjdivEc, anharmp/h/1e9, linewidth=1.0, color="black", label=r"$\Delta_{2,1}-\Delta_{1,0}$", plotter=pl)
+        line(EjdivEc, anharm/h/1e9, linewidth=1.0, color="purple", label=r"anharm", plotter=pl)
+
+        line(EjdivEc, (ls_fq-fq)/1e9, plotter=pl, color="blue", linewidth=1.0, label=r"$\Delta_{1,0}$")
+        E0, E1, E2=qdt.call_func("transmon_energy_levels", EjdivEc=EjdivEc, n_energy=3)
+        fq2=(E2-E1)/h
+        line(EjdivEc, (ls_fq2-fq2)/1e9, plotter=pl, color="red", linewidth=1.0, label=r"$\Delta_{2,1}$")
+        pl.set_ylim(-2, 1.5)
+        #pl.set_xlim(0.0, 70)
+        pl.xlabel=r"$E_j/E_c$"
+        pl.ylabel=r"$\Delta (GHz)$"
+        #pl.legend(loc='lower right')
         #fq=qdt.call_func("lamb_shifted_fq", EjdivEc=EjdivEc)
         #line(EjdivEc, fq, plotter=pl, color="green", linewidth=0.5)
 
         #line(EjdivEc, E1p, plotter=pl, color="green", linewidth=0.5)
         #line(EjdivEc, E2p, plotter=pl, color="purple", linewidth=0.5)
         return pl
-    energy_level_plot()
-    anharm_plot2().show()
+    pl=energy_level_plot()
+    pl.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Graphs_0425/",
+           fig_name="energy_levels.pdf")
+    anharm_plot()
+    pl=anharm_plot2()
+    pl.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Graphs_0425/",
+           fig_name="anharm1.pdf")
+    pl.show()
+
     #a.show()
 
 #Np=qdt.Np
