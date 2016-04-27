@@ -91,7 +91,7 @@ def voltage_from_flux(flux_over_flux0, offset, flux_factor):
 def flux_parabola(voltage, offset, flux_factor, Ejmax, Ec):
     flx_d_flx0=flux_over_flux0(voltage=voltage, offset=offset, flux_factor=flux_factor)
     qEj=Ej(Ejmax=Ejmax, flux_over_flux0=flx_d_flx0)
-    return fq(Ej=qEj, Ec=Ec)
+    return fq(Ej=qEj, Ec=Ec), fq2(qEj, Ec)
 
 def detuning(fq0, fq):
     return 2.0*pi*(fq0 - fq)

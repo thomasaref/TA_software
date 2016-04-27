@@ -8,7 +8,7 @@ Created on Sun Apr 24 18:55:33 2016
 from TA88_fundamental import TA88_Lyzer, TA88_Read, qdt
 from taref.plotter.api import colormesh, line, Plotter
 from taref.core.api import set_tag, set_all_tags
-from numpy import array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape
+from numpy import array, nan_to_num, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape
 from atom.api import FloatRange
 from taref.core.api import tag_Property
 from taref.plotter.api import LineFitter
@@ -19,12 +19,38 @@ s3a4_wg=TA88_Lyzer(filt_start_ind=0, filt_end_ind=0, on_res_ind=260,# VNA_name="
               rd_hdf=TA88_Read(main_file="Data_0423/S3A4_widegate.hdf5"))
 s3a4_wg.read_data(s3a4_wg)
 
-def magabs_colormesh(self):
+def magabs_colormesh2(self, offset=-0.08, flux_factor=0.52, Ejmax=h*44.0e9, f0=5.35e9, alpha=0.7, pl=None):
+    fq_vec=array([sqrt(f*(f+alpha*calc_freq_shift(f, qdt.ft, qdt.Np, f0, qdt.epsinf, qdt.W, qdt.Dvv))) for f in self.frequency])
+
     pl=Plotter(fig_width=9.0, fig_height=6.0, name="magabs_{}".format(self.name))
-    pl, pf=colormesh(self.frequency/1e9, self.yoko, (self.MagdB.transpose()-self.MagdB[:, 0]), plotter=pl)
+    pl, pf=colormesh(fq_vec, self.yoko, (self.MagdB.transpose()-self.MagdB[:, 0]), plotter=pl)
     pf.set_clim(-0.3, 0.1)
-    pl.set_xlim(min(self.frequency/1e9), max(self.frequency/1e9))
+    #pl.set_xlim(min(self.frequency/1e9), max(self.frequency/1e9))
     pl.set_ylim(min(self.yoko), max(self.yoko))
+
+    pl.ylabel="Yoko (V)"
+    pl.xlabel="Frequency (GHz)"
+    return pl
+
+def magabs_colormesh(self, offset=-0.08, flux_factor=0.52, Ejmax=h*44.0e9, f0=5.35e9, alpha=0.7, pl=None):
+    fq_vec=array([sqrt(f*(f+alpha*calc_freq_shift(f, qdt.ft, qdt.Np, f0, qdt.epsinf, qdt.W, qdt.Dvv))) for f in self.frequency])
+    freq, frq2=flux_parabola(self.yoko, offset, 0.16, Ejmax, qdt.Ec)
+
+    pl=Plotter(fig_width=9.0, fig_height=6.0, name="magabs_{}".format(self.name))
+    pl, pf=colormesh(freq, fq_vec, (self.MagdB.transpose()-self.MagdB[:, 0]).transpose(), plotter=pl)
+    pf.set_clim(-0.3, 0.1)
+    line([min(freq), max(freq)], [min(freq), max(freq)], plotter=pl)
+    flux_o_flux0=flux_over_flux0(self.yoko, offset, flux_factor)
+    qEj=Ej(Ejmax, flux_o_flux0)
+    EjdivEc=qEj/qdt.Ec
+    ls_fq=qdt.call_func("lamb_shifted_fq", EjdivEc=EjdivEc)
+    ls_fq2=qdt.call_func("lamb_shifted_fq2", EjdivEc=EjdivEc)
+
+    frq2=qdt.call_func("lamb_shifted_anharm", EjdivEc=EjdivEc)/h
+    line(ls_fq, ls_fq2, plotter=pl)
+
+    #pl.set_xlim(min(self.frequency/1e9), max(self.frequency/1e9))
+    #pl.set_ylim(min(self.yoko), max(self.yoko))
 
     pl.ylabel="Yoko (V)"
     pl.xlabel="Frequency (GHz)"
@@ -57,8 +83,8 @@ def line_cs(self, ind=210):
 #    #pl.set_xlim(0.7, 1.3)
 #    return pl
 
-from taref.physics.qubit import  flux_parabola, Ej_from_fq, voltage_from_flux
-from taref.physics.qdt import lamb_shifted_anharm, calc_freq_shift
+from taref.physics.qubit import  flux_parabola, Ej_from_fq, voltage_from_flux, flux_over_flux0, Ej
+from taref.physics.qdt import lamb_shifted_anharm, calc_freq_shift, lamb_shifted_fq, lamb_shifted_fq2
 
 def fq2(Ej, Ec):
     E0 =  sqrt(8.0*Ej*Ec)*0.5 - Ec/4.0
@@ -68,6 +94,16 @@ def fq2(Ej, Ec):
 
 def Ej_from_fq2(fq2, Ec):
     return (((2*h*fq2+3.0*Ec)/2.0)**2)/(8.0*Ec)
+
+def flux_par4(self, offset=-0.08, flux_factor=0.16, Ejmax=h*44.0e9, f0=5.35e9, alpha=0.7, pl=None):
+    set_all_tags(qdt, log=False)
+    flux_o_flux0=flux_over_flux0(self.yoko, offset, flux_factor)
+    qEj=Ej(Ejmax, flux_o_flux0)
+    #flux_o_flux0=qdt.call_func("flux_over_flux0", voltage=self.yoko, offset=offset, flux_factor=flux_factor)
+    freq, frq2=flux_parabola(self.yoko, offset, flux_factor, Ejmax, qdt.Ec)
+    fq1=lamb_shifted_fq2(qEj/qdt.Ec, qdt.ft, qdt.Np, f0, qdt.epsinf, qdt.W, qdt.Dvv)
+    line(self.yoko, freq, plotter=pl, linewidth=1.0, alpha=0.5)
+    line(self.yoko, fq1/2, plotter=pl, linewidth=1.0, alpha=0.5)
 
 def flux_par3(self, offset=-0.08, flux_factor=0.52, Ejmax=h*44.0e9, f0=5.35e9, alpha=0.7, pl=None):
     set_all_tags(qdt, log=False)
@@ -91,23 +127,36 @@ def flux_par3(self, offset=-0.08, flux_factor=0.52, Ejmax=h*44.0e9, f0=5.35e9, a
         freq=append(freq, freq)
         #freq=append(freq, freq)
         line(freq, volt, plotter=pl, linewidth=1.0, alpha=0.5)
+        Ejdivh=Ej/h
+        w0=4*Ejdivh*(1-sqrt(1-fq_vec/(2*Ejdivh)))
         EjdivEc=Ej/qdt.Ec
+        #print -(w0**2)/(8*Ejdivh)
+        
         ls_fq2=qdt.call_func("lamb_shifted_fq2", EjdivEc=EjdivEc)
         E0, E1, E2=qdt.call_func("transmon_energy_levels", EjdivEc=EjdivEc, n_energy=3)
         fq2=(E2-E1)/h
         f_vec=lamb_shifted_anharm(EjdivEc, qdt.ft, qdt.Np, qdt.f0, qdt.epsinf, qdt.W, qdt.Dvv)
+        print f_vec/h
         ah=-ls_fq2/2#-fq2)
         #fq_vec=array([sqrt((f-ah[n])*(f-ah[n]+alpha*calc_freq_shift(f-ah[n], qdt.ft, qdt.Np, f0, qdt.epsinf, qdt.W, qdt.Dvv))) for n, f in enumerate(self.frequency)])
         fq_vec=array([f/2-qdt.call_func("calc_Lamb_shift", fqq=f/2) for f in self.frequency])
+        coup=qdt.call_func("calc_coupling", fqq=self.frequency)
+        print coup
+        volt=array([
+          voltage_from_flux(arccos(Ej_from_fq(f-f_vec[c]/h/2, qdt.Ec)/Ejmax), offset, flux_factor)
+          for c,f in enumerate(self.frequency)])
+        #freq=nan_to_num(freq)/1e9
+        #print freq
+        freq=s3a4_wg.frequency[:]/1e9
 
-        #freq=(s3a4_wg.frequency[:]-1.45e9)/1e9
+        #freq=(s3a4_wg.frequency[:]+coup)/1e9
         #freq=append(freq, freq)
         #freq=append(freq, freq)
-        Ej=Ej_from_fq(fq_vec, qdt.Ec)
-        flux_d_flux0=arccos(Ej/Ejmax)#-pi/2
-        flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax))
-        flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax)+pi)
-        flux_d_flux0=append(flux_d_flux0, arccos(Ej/Ejmax)-pi)
+        #Ej=Ej_from_fq(fq_vec, f_vec/h)
+        #flux_d_flux0=arccos(Ej/Ejmax)#-pi/2
+        #flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax))
+        #flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax)+pi)
+        #flux_d_flux0=append(flux_d_flux0, arccos(Ej/Ejmax)-pi)
 
         #freq=append(freq, freq)
         #fq_vec+=f_vec/h/2
@@ -116,7 +165,7 @@ def flux_par3(self, offset=-0.08, flux_factor=0.52, Ejmax=h*44.0e9, f0=5.35e9, a
         #Ej=Ej_from_fq(fq_vec, qdt.Ec)
         #flux_d_flux0=arccos(Ej/Ejmax)#-pi/2
         #flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax))
-        volt=voltage_from_flux(flux_d_flux0, offset, flux_factor)
+        #volt=voltage_from_flux(flux_d_flux0, offset, flux_factor)
         line(freq, volt, plotter=pl, plot_name="second", color="green", linewidth=1.0, alpha=0.5)
     #flux_d_flux0.append(-)
     return voltage_from_flux(flux_d_flux0, offset, flux_factor)
@@ -156,7 +205,7 @@ def flux_par(self, offset, flux_factor, Ejmax):
 pl=magabs_colormesh(s3a4_wg)#.show()
 #pl.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Graphs_0425/",
 #           fig_name="wide_gate_colormap.png")
-flux_par3(s3a4_wg, pl=pl)#.show()#, f0=5.45e9, alpha=1.0)
+flux_par4(s3a4_wg, pl=pl)#.show()#, f0=5.45e9, alpha=1.0)
 #pl.savefig(dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/Graphs_0425/",
 #           fig_name="wide_gate_colormap_bothpar.png")
 

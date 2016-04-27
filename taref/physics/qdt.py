@@ -90,7 +90,7 @@ def lamb_shifted_fq(EjdivEc, ft, Np, f0, epsinf, W, Dvv):
 
 def lamb_shifted_fq2(EjdivEc, ft, Np, f0, epsinf, W, Dvv):
     E0, E1, E2=lamb_shifted_transmon_energy_levels(EjdivEc, 3, ft, Np, f0, epsinf, W, Dvv)
-    return (E2-E0)/h
+    return (E2-E1)/h
 
 class QDT(IDT, Qubit):
     base_name="QDT"
