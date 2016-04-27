@@ -39,7 +39,7 @@
           <div class="body" role="main">
             
   <h1>Source code for taref.core.log</h1><div class="highlight"><pre>
-<span class="c"># -*- coding: utf-8 -*-</span>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Created on Tue Mar 24 16:09:54 2015</span>
 
@@ -49,20 +49,20 @@
 <span class="sd">points it at a stream and a memory handler and starts logging.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">warning</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">getLogger</span><span class="p">,</span> <span class="n">StreamHandler</span><span class="p">,</span> <span class="n">FileHandler</span><span class="p">,</span> <span class="n">basicConfig</span><span class="p">,</span> <span class="n">Formatter</span><span class="p">,</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">DEBUG</span><span class="p">,</span> <span class="n">log</span><span class="p">,</span> <span class="n">addLevelName</span><span class="p">,</span> <span class="n">INFO</span> <span class="c">#, debug</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">warning</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">getLogger</span><span class="p">,</span> <span class="n">StreamHandler</span><span class="p">,</span> <span class="n">FileHandler</span><span class="p">,</span> <span class="n">basicConfig</span><span class="p">,</span> <span class="n">Formatter</span><span class="p">,</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">DEBUG</span><span class="p">,</span> <span class="n">log</span><span class="p">,</span> <span class="n">addLevelName</span><span class="p">,</span> <span class="n">INFO</span> <span class="c1">#, debug</span>
 <span class="kn">from</span> <span class="nn">logging.handlers</span> <span class="kn">import</span> <span class="n">MemoryHandler</span>
 <span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">Unicode</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">cached_property</span>
 <span class="kn">from</span> <span class="nn">sys</span> <span class="kn">import</span> <span class="n">exc_info</span>
 <span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">basename</span>
 
-<span class="c">#redefine DEBUG level so doesn&#39;t catch debug warnings from IPythonConsole in enaml</span>
+<span class="c1">#redefine DEBUG level so doesn&#39;t catch debug warnings from IPythonConsole in enaml</span>
 
 <span class="n">MYDEBUG</span><span class="o">=</span><span class="n">DEBUG</span><span class="o">+</span><span class="mi">1</span>
-<span class="n">addLevelName</span><span class="p">(</span><span class="n">MYDEBUG</span><span class="p">,</span> <span class="s">&quot;MYDEBUG&quot;</span><span class="p">)</span>
-<span class="c">#configure logging</span>
+<span class="n">addLevelName</span><span class="p">(</span><span class="n">MYDEBUG</span><span class="p">,</span> <span class="s2">&quot;MYDEBUG&quot;</span><span class="p">)</span>
+<span class="c1">#configure logging</span>
 <span class="n">MEMBUFFER</span><span class="o">=</span><span class="mi">30</span>
-<span class="n">LOGFORMATTER</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%(asctime)s</span><span class="s"> </span><span class="si">%(levelname)s</span><span class="s">  @ </span><span class="si">%(message)s</span><span class="s">&#39;</span>
-<span class="n">LOGLEVEL</span><span class="o">=</span><span class="n">MYDEBUG</span> <span class="c">#INFO #DEBUG</span>
+<span class="n">LOGFORMATTER</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> </span><span class="si">%(levelname)s</span><span class="s1">  @ </span><span class="si">%(message)s</span><span class="s1">&#39;</span>
+<span class="n">LOGLEVEL</span><span class="o">=</span><span class="n">MYDEBUG</span> <span class="c1">#INFO #DEBUG</span>
 
 <span class="n">basicConfig</span><span class="p">(</span><span class="n">format</span><span class="o">=</span><span class="n">LOGFORMATTER</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">LOGLEVEL</span><span class="p">)</span>
 
@@ -91,19 +91,19 @@
 </div>
 <div class="viewcode-block" id="msg"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.msg">[docs]</a><span class="k">def</span> <span class="nf">msg</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;log msg that accepts multiple args with file info&quot;&quot;&quot;</span>
-    <span class="n">n</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&quot;n&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">n</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">fb</span><span class="o">=</span><span class="n">f_top</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
-    <span class="k">return</span> <span class="s">&quot;{0} {1} {2}: {3}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fb</span><span class="o">.</span><span class="n">f_lineno</span><span class="p">,</span> <span class="n">basename</span><span class="p">(</span><span class="n">fb</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_filename</span><span class="p">),</span>
-              <span class="n">fb</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_name</span><span class="p">,</span> <span class="s">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="s2">&quot;{0} {1} {2}: {3}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fb</span><span class="o">.</span><span class="n">f_lineno</span><span class="p">,</span> <span class="n">basename</span><span class="p">(</span><span class="n">fb</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_filename</span><span class="p">),</span>
+              <span class="n">fb</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_name</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]))</span>
 </div>
 <div class="viewcode-block" id="new_log_func"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.new_log_func">[docs]</a><span class="k">def</span> <span class="nf">new_log_func</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;redefines func so args are incorporated into message and name and line of execution are correct&quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">new_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">n</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&quot;n&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="c">#0</span>
+        <span class="n">n</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="c1">#0</span>
         <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="n">log</span><span class="p">:</span>
-            <span class="n">func</span><span class="p">(</span><span class="n">MYDEBUG</span><span class="p">,</span> <span class="n">msg</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span><span class="n">n</span><span class="p">}),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">func</span><span class="p">(</span><span class="n">MYDEBUG</span><span class="p">,</span> <span class="n">msg</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s2">&quot;n&quot;</span><span class="p">:</span><span class="n">n</span><span class="p">}),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">func</span><span class="p">(</span><span class="n">msg</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span><span class="n">n</span><span class="p">}),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">func</span><span class="p">(</span><span class="n">msg</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s2">&quot;n&quot;</span><span class="p">:</span><span class="n">n</span><span class="p">}),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">new_func</span>
 </div>
 <span class="n">log_debug</span><span class="o">=</span><span class="n">new_log_func</span><span class="p">(</span><span class="n">log</span><span class="p">)</span>
@@ -140,27 +140,27 @@
             <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">=</span><span class="bp">self</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">=</span><span class="bp">self</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span> <span class="c">#old_stdout</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span> <span class="c1">#old_stdout</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">__stderr__</span>
 
-<span class="c">#adds a stream catcher for display and a memory handler for saving</span></div></div>
+<span class="c1">#adds a stream catcher for display and a memory handler for saving</span></div></div>
 <span class="n">log_stream</span><span class="o">=</span><span class="n">StreamCatch</span><span class="p">()</span>
 <span class="n">logger</span><span class="o">=</span><span class="n">getLogger</span><span class="p">()</span>
 <span class="n">display_handler</span><span class="o">=</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">log_stream</span><span class="p">)</span>
 <span class="n">display_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">LOGLEVEL</span><span class="p">)</span>
 <span class="n">display_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">Formatter</span><span class="p">(</span><span class="n">LOGFORMATTER</span><span class="p">))</span>
-<span class="n">display_handler</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;StreamCatch&quot;</span>
+<span class="n">display_handler</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;StreamCatch&quot;</span>
 <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">display_handler</span><span class="p">)</span>
 
 <span class="n">memory_handler</span><span class="o">=</span><span class="n">MemoryHandler</span><span class="p">(</span><span class="n">MEMBUFFER</span><span class="p">)</span>
 <span class="n">memory_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">LOGLEVEL</span><span class="p">)</span>
 <span class="n">memory_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">Formatter</span><span class="p">(</span><span class="n">LOGFORMATTER</span><span class="p">))</span>
-<span class="n">memory_handler</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;MemoryLog&quot;</span>
+<span class="n">memory_handler</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;MemoryLog&quot;</span>
 <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">memory_handler</span><span class="p">)</span>
 
-<span class="n">log_info</span><span class="p">(</span><span class="s">&quot;Started logging&quot;</span><span class="p">)</span>
+<span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;Started logging&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="make_log_file"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.make_log_file">[docs]</a><span class="k">def</span> <span class="nf">make_log_file</span><span class="p">(</span><span class="n">log_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;a&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="make_log_file"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.make_log_file">[docs]</a><span class="k">def</span> <span class="nf">make_log_file</span><span class="p">(</span><span class="n">log_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Points memory handler at a particular file to save the log.&quot;&quot;&quot;</span>
     <span class="n">file_handler</span> <span class="o">=</span> <span class="n">FileHandler</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">log_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
     <span class="n">file_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">LOGLEVEL</span><span class="p">)</span>

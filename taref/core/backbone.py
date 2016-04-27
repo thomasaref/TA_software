@@ -20,7 +20,9 @@ with imports():
     from taref.core.log_e import LogWindow
 
 class Backbone(Atom):
-    """Class combining primary functions for viewer operation.
+    """
+    tarefdoc-process-docstring
+    Class combining primary functions for viewer operation.
     Extends __init__ to allow extra setup.
     extends __setattr__ to perform low/high check on params"""
     unit_dict=UNIT_DICT

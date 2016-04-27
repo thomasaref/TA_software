@@ -125,7 +125,7 @@ i.e. members that are tagged as private and will behave as usual Atom members</p
 
 <dl class="function">
 <dt id="taref.core.atom_extension.get_run_params">
-<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_run_params</code><span class="sig-paren">(</span><em>f</em>, <em>skip_first=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/atom_extension.html#get_run_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_run_params" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_run_params</code><span class="sig-paren">(</span><em>f</em>, <em>skip=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/atom_extension.html#get_run_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_run_params" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns names of parameters a function will call, skips first parameter if skip_first is True</p>
 </dd></dl>
 
@@ -142,6 +142,13 @@ This is an easy way to get a tag on a particular member and provide a default if
 <dd><p>returns type of member with given name, with possible override via tag typer</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="taref.core.atom_extension.get_value_check">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">get_value_check</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/atom_extension.html#get_value_check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.get_value_check" title="Permalink to this definition">¶</a></dt>
+<dd><p>coerces and checks value when getting. For Enum this allows the inverse mapping.
+For List, this calls the get_value_check for the respective parameter in the List</p>
+</dd></dl>
+
 <dl class="class">
 <dt id="taref.core.atom_extension.instancemethod">
 <em class="property">class </em><code class="descclassname">taref.core.atom_extension.</code><code class="descname">instancemethod</code><span class="sig-paren">(</span><em>obj</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/atom_extension.html#instancemethod"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.instancemethod" title="Permalink to this definition">¶</a></dt>
@@ -150,7 +157,7 @@ This is an easy way to get a tag on a particular member and provide a default if
 
 <dl class="function">
 <dt id="taref.core.atom_extension.log_func">
-<code class="descclassname">taref.core.atom_extension.</code><code class="descname">log_func</code><span class="sig-paren">(</span><em>func</em>, <em>pname=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/atom_extension.html#log_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.log_func" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">log_func</code><span class="sig-paren">(</span><em>func</em>, <em>pname=None</em>, <em>threaded=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/atom_extension.html#log_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.log_func" title="Permalink to this definition">¶</a></dt>
 <dd><p>logging decorator for Callables that logs call if tag log!=False</p>
 </dd></dl>
 
@@ -171,6 +178,36 @@ Improves performance greatly over property!</p>
 <dt id="taref.core.atom_extension.reset_properties">
 <code class="descclassname">taref.core.atom_extension.</code><code class="descname">reset_properties</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/atom_extension.html#reset_properties"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.reset_properties" title="Permalink to this definition">¶</a></dt>
 <dd><p>resets all  properties that are in all_params</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.reset_property">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">reset_property</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/atom_extension.html#reset_property"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.reset_property" title="Permalink to this definition">¶</a></dt>
+<dd><p>shortcut to reset of property</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.safe_call">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">safe_call</code><span class="sig-paren">(</span><em>func</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/atom_extension.html#safe_call"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.safe_call" title="Permalink to this definition">¶</a></dt>
+<dd><p>utility function for safely calling functions that doesn&#8217;t return anything</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.safe_log_debug">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">safe_log_debug</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/atom_extension.html#safe_log_debug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.safe_log_debug" title="Permalink to this definition">¶</a></dt>
+<dd><p>thread safe call to logging</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.safe_set_attr">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">safe_set_attr</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em>, <em>value</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/atom_extension.html#safe_set_attr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.safe_set_attr" title="Permalink to this definition">¶</a></dt>
+<dd><p>thread safe sets attribute if enaml application is running. otherwise, just does setattr</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.atom_extension.safe_setattr">
+<code class="descclassname">taref.core.atom_extension.</code><code class="descname">safe_setattr</code><span class="sig-paren">(</span><em>obj</em>, <em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/atom_extension.html#safe_setattr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.atom_extension.safe_setattr" title="Permalink to this definition">¶</a></dt>
+<dd><p>thread safe sets attribute if enaml application is running. otherwise, just does setattr</p>
 </dd></dl>
 
 <dl class="function">

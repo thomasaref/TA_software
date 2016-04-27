@@ -87,7 +87,7 @@ class Lyzer(LyzerBase):
 
     @tag_Property()
     def p_guess(self):
-        return [200e6,4.5e9, 0.002, 0.022]
+        return [200e6,4.5e9, 0.002, 0.022, 0.1]
 
     @tag_Property(sub=True)
     def indices(self):
@@ -131,11 +131,11 @@ class Lyzer(LyzerBase):
         return pl
 
     def ifft_plot(self):
-        p=line(absolute(fft.ifft(self.Magcom[:,self.on_res_ind])), plotter="ifft_{}".format(self.name),
-               plot_name="onres_{}".format(self.on_res_ind), label="i {}".format(self.on_res_ind))
+        p, pf=line(absolute(fft.ifft(self.Magcom[:,self.on_res_ind])), plotter="ifft_{}".format(self.name),
+               plot_name="onres_{}".format(self.on_res_ind),label="i {}".format(self.on_res_ind))
         line(absolute(fft.ifft(self.Magcom[:,self.start_ind])), plotter=p,
              plot_name="strt {}".format(self.start_ind), label="i {}".format(self.start_ind))
-        line(absolute(fft.ifft(self.Magcom[:,self.stop_ind])),
+        line(absolute(fft.ifft(self.Magcom[:,self.stop_ind])), plotter=p,
              plot_name="stop {}".format(self.stop_ind), label="i {}".format(self.stop_ind))
 
     def filt_compare(self, ind):
@@ -166,13 +166,13 @@ class Lyzer(LyzerBase):
 
     def full_fano_fit2(self):
         MagAbsFilt_sq=self.MagAbsFilt**2
-        fit_params=[full_fano_fit(self.fit_func, self.p_guess, MagAbsFilt_sq[n, :], self.flux_par) for n in self.indices]
+        fit_params=[full_fano_fit(self.fit_func, self.p_guess, MagAbsFilt_sq[n, :], self.fq) for n in self.indices]
         fit_params=array(zip(*fit_params))
         return fit_params
 
-    def plot_widths(self, plotter):
+    def plot_widths(self, plotter=None):
         fit_params=self.full_fano_fit()
-        plotter.scatter_plot("widths_{}".format(self.name), fit_params[0, :], absolute(fit_params[1, :]), color="red", label=self.name)
+        scatter_plot(fit_params[0, :], absolute(fit_params[1, :]), color="red", label=self.name, plot_name="widths_{}".format(self.name), plotter=plotter)
 
     def fano_fit(self, n):
         pbest= leastsq(self.resid_func, self.p_guess, args=(self.MagAbsFilt_sq[n, :], self.flux_par), full_output=1)

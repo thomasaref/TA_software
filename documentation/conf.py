@@ -24,6 +24,7 @@ import shlex
 
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('./_sphinxext'))
 
 # -- General configuration ------------------------------------------------
 
@@ -39,6 +40,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
+    'tarefdoc'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

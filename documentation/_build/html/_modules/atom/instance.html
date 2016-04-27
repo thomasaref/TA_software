@@ -1,0 +1,229 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>atom.instance &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for atom.instance</h1><div class="highlight"><pre>
+<span></span><span class="c1">#------------------------------------------------------------------------------</span>
+<span class="c1"># Copyright (c) 2013, Nucleic Development Team.</span>
+<span class="c1">#</span>
+<span class="c1"># Distributed under the terms of the Modified BSD License.</span>
+<span class="c1">#</span>
+<span class="c1"># The full license is in the file COPYING.txt, distributed with this software.</span>
+<span class="c1">#------------------------------------------------------------------------------</span>
+<span class="kn">from</span> <span class="nn">.catom</span> <span class="kn">import</span> <span class="n">Member</span><span class="p">,</span> <span class="n">DefaultValue</span><span class="p">,</span> <span class="n">Validate</span>
+
+
+<span class="k">class</span> <span class="nc">Instance</span><span class="p">(</span><span class="n">Member</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A value which allows objects of a given type or types.</span>
+
+<span class="sd">    Values will be tested using the `PyObject_IsInstance` C API call.</span>
+<span class="sd">    This call is equivalent to `isinstance(value, kind)` and all the</span>
+<span class="sd">    same rules apply.</span>
+
+<span class="sd">    The value of an Instance may be set to None.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialize an Instance.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        kind : type or tuple of types</span>
+<span class="sd">            The allowed type or types for the instance.</span>
+
+<span class="sd">        args : tuple, optional</span>
+<span class="sd">            If &#39;factory&#39; is None, then &#39;kind&#39; is a callable type and</span>
+<span class="sd">            these arguments will be passed to the constructor to create</span>
+<span class="sd">            the default value.</span>
+
+<span class="sd">        kwargs : dict, optional</span>
+<span class="sd">            If &#39;factory&#39; is None, then &#39;kind&#39; is a callable type and</span>
+<span class="sd">            these keywords will be passed to the constructor to create</span>
+<span class="sd">            the default value.</span>
+
+<span class="sd">        factory : callable, optional</span>
+<span class="sd">            An optional factory to use for creating the default value.</span>
+<span class="sd">            If this is not provided and &#39;args&#39; and &#39;kwargs&#39; is None,</span>
+<span class="sd">            then the default value will be None.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_default_value_mode</span><span class="p">(</span><span class="n">DefaultValue</span><span class="o">.</span><span class="n">CallObject</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="n">args</span> <span class="ow">or</span> <span class="p">()</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">factory</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">kind</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_default_value_mode</span><span class="p">(</span><span class="n">DefaultValue</span><span class="o">.</span><span class="n">CallObject</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Instance</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ForwardInstance</span><span class="p">(</span><span class="n">Instance</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; An Instance which delays resolving the type definition.</span>
+
+<span class="sd">    The first time the value is accessed or modified, the type will</span>
+<span class="sd">    be resolved and the forward instance will behave identically to</span>
+<span class="sd">    a normal instance.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;resolve&#39;</span><span class="p">,</span> <span class="s1">&#39;args&#39;</span><span class="p">,</span> <span class="s1">&#39;kwargs&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resolve</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialize a ForwardInstance.</span>
+
+<span class="sd">        resolve : callable</span>
+<span class="sd">            A callable which takes no arguments and returns the type or</span>
+<span class="sd">            tuple of types to use for validating the values.</span>
+
+<span class="sd">        args : tuple, optional</span>
+<span class="sd">            If &#39;factory&#39; is None, then &#39;resolve&#39; will return a callable</span>
+<span class="sd">            type and these arguments will be passed to the constructor</span>
+<span class="sd">            to create the default value.</span>
+
+<span class="sd">        kwargs : dict, optional</span>
+<span class="sd">            If &#39;factory&#39; is None, then &#39;resolve&#39; will return a callable</span>
+<span class="sd">            type and these keywords will be passed to the constructor to</span>
+<span class="sd">            create the default value.</span>
+
+<span class="sd">        factory : callable, optional</span>
+<span class="sd">            An optional factory to use for creating the default value.</span>
+<span class="sd">            If this is not provided and &#39;args&#39; and &#39;kwargs&#39; is None,</span>
+<span class="sd">            then the default value will be None.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span> <span class="o">=</span> <span class="n">resolve</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="k">if</span> <span class="n">factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_default_value_mode</span><span class="p">(</span><span class="n">DefaultValue</span><span class="o">.</span><span class="n">CallObject</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="n">DefaultValue</span><span class="o">.</span><span class="n">MemberMethod_Object</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_default_value_mode</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="s2">&quot;default&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">MemberMethod_ObjectOldNew</span><span class="p">,</span> <span class="s2">&quot;validate&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Called to retrieve the default value.</span>
+
+<span class="sd">        This will resolve and instantiate the type. It will then update</span>
+<span class="sd">        the internal default and validate handlers to behave like a</span>
+<span class="sd">        normal instance member.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="ow">or</span> <span class="p">()</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">kind</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">factory</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">kind</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_default_value_mode</span><span class="p">(</span><span class="n">DefaultValue</span><span class="o">.</span><span class="n">CallObject</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Instance</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Called to validate the value.</span>
+
+<span class="sd">        This will resolve the type and validate the new value. It will</span>
+<span class="sd">        then update the internal default and validate handlers to behave</span>
+<span class="sd">        like a normal instance member.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_value_mode</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">DefaultValue</span><span class="o">.</span><span class="n">MemberMethod_Object</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="ow">or</span> <span class="p">()</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">factory</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">kind</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_default_value_mode</span><span class="p">(</span><span class="n">DefaultValue</span><span class="o">.</span><span class="n">CallObject</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Instance</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_validate</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a clone of the ForwardInstance object.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">clone</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ForwardInstance</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">clone</span><span class="o">.</span><span class="n">resolve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span>
+        <span class="n">clone</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span>
+        <span class="n">clone</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span>
+        <span class="k">return</span> <span class="n">clone</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

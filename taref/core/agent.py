@@ -17,13 +17,13 @@ from Queue import Queue#, Empty
 from numpy import linspace
 
 class AgentError(Exception):
+    """An Error for use by Operatives, Agents and Spies"""
     pass
 
 class Operative(Backbone):
     """Adds functionality for auto showing to Backbone"""
-    name=Unicode().tag(private=True, desc="name of agent. This name will be modified to be unique, if necessary", initialized=False)
-    desc=Unicode().tag(private=True, desc="optional description of agent")
-
+    name=Unicode().tag(private=True, desc="Name of agent. This name will be modified to be unique, if necessary", initialized=False)
+    desc=Unicode().tag(private=True, desc="Optional description of agent")
     def _observe_name(self, change):
         check_initialized(self, change)
 
@@ -32,28 +32,27 @@ class Operative(Backbone):
 
     base_name="operative"
 
-    timeout=Float(1).tag(sub=True, desc="timeout in seconds")
+    timeout=Float(1).tag(sub=True, desc="Timeout in seconds")
 
     @private_property
     def abort_timeout(self):
         return 1.0
 
-    busy=Bool(False).tag(private=True)
-    progress=Int(0).tag(private=True)
-    abort=Bool(False).tag(private=True)
+    busy=Bool(False).tag(private=True, desc="A private Bool that represents if the agent is busy")
+    progress=Int(0).tag(private=True, desc="A private Int that represents progress from 0 to 100")
+    abort=Bool(False).tag(private=True, desc="A private Bool that signifies the agent wants to abort")
 
-    thread=Typed(Thread).tag(private=True)
-    queue=Instance(Queue).tag(private=True)
-    done=Event().tag(private=True)
-    thread_list=ContainerList().tag(private=True)
+    thread=Typed(Thread).tag(private=True, desc="A private Typed that links to the current thread")
+    queue=Instance(Queue).tag(private=True, desc="A private Instance that links to the agent's Queue")
+    done=Event().tag(private=True, desc="A private Event that signifies a thread is done")
+    thread_list=ContainerList().tag(private=True, desc="A private ContainerList that has the list of threads")
 
     def _default_queue(self):
         """queue of length one"""
         return Queue(1)
 
     def lins(self, start, stop, nsteps):
-        """a utility generator for looping with abort and progress.
-        use like linspace"""
+        """A utility generator for looping with abort and progress. Use like linspace"""
         n=start
         for n in linspace(start, stop, nsteps):
             if self.abort:
@@ -63,8 +62,7 @@ class Operative(Backbone):
         yield n
 
     def loop(self, start, stop=None, step=1):
-        """a utility generator for looping with
-        abort and progress. Use like range"""
+        """a utility generator for looping with abort and progress. Use like range"""
         if stop is None:
             stop=start
             start=0
@@ -148,7 +146,7 @@ class Operative(Backbone):
 
     @classmethod
     def clean_up(cls):
-        """default class clean up aborts all processes and flushes class file buffer if saving"""
+        """Default class clean up aborts all processes and flushes class file buffer if saving"""
         cls.abort_all()
         if cls.saving:
             if hasattr(cls, "save_file"):
@@ -156,13 +154,14 @@ class Operative(Backbone):
 
     @classmethod
     def run_all(cls):
-        """runs all functions added in run_func_dict". Can be included in cls_run_funcs"""
+        """Runs all functions added in run_func_dict". Can be included in cls_run_funcs"""
         for func in cls.run_func_dict.values():
             if func!=cls.run_all:
                 func()
 
     @private_property
     def plots(self):
+        """Dictionary of plots determined by base_name of agent being 'plot'"""
         return OrderedDict([(name, agent) for (name, agent) in self.agent_dict.iteritems() if agent.base_name=="plot"])
 
     @classmethod
@@ -179,7 +178,7 @@ class Operative(Backbone):
     run_func_dict=OrderedDict()
 
     def add_func(self, *funcs):
-        """adds functions to run_func_dict. functions should be a classmethod, a staticmethod
+        """Adds functions to run_func_dict. functions should be a classmethod, a staticmethod
         or a separate function that takes no arguments"""
         for func in funcs:
             self.run_func_dict[func.func_name]=func
@@ -191,7 +190,7 @@ class Operative(Backbone):
 
     @classmethod
     def activated(cls):
-        """function that runs when window is activated"""
+        """Function that runs when window is activated."""
         pass
 
     def __init__(self, **kwargs):
@@ -215,7 +214,7 @@ class Spy(Operative):
     base_name="spy"
 
     def log_changes(self, change):
-        """a simple logger for all changes and to reset properties"""
+        """A simple logger for all changes and to reset properties"""
         if change["type"]!="create":
             set_log(self, change["name"], change["value"])
         if change["type"]=="update":
@@ -227,25 +226,24 @@ class Spy(Operative):
         self.observe(param, self.log_changes)
 
 class Agent(Operative):
-    """Agents use primarily setattr to log changes to params"""
+    """Agents uses primarily setattr to log changes to params"""
     base_name="agent"
 
     def __setattr__(self, name, value):
-        """uses __setattr__ to log changes and reset properties"""
+        """Uses __setattr__ to log changes and reset properties"""
         super(Agent, self).__setattr__(name, value)
         if name in self.all_params:
             set_log(self, name, value)
             reset_properties(self)
 
     def extra_setup(self, param, typer):
-        """adds observer for ContainerLists to catch changes not covered by setattr.
-        extra_setup goes from Spy, not Agent to not add observers"""
+        """Adds observer for ContainerLists to catch changes not covered by setattr."""
         super(Agent, self).extra_setup(param, typer)
         if typer in (ContainerList,): #Dict update does not generate event so not included
             self.observe(param, self.log_changes)
 
     def log_changes(self, change):
-        """a simple logger for changes not of type create or update that also resets properties"""
+        """A simple logger for changes not of type create or update that also resets properties"""
         if change["type"] not in ("create", "update"):
             set_log(self, change["name"], change["value"])
             reset_properties(self)
