@@ -5,91 +5,106 @@ Created on Sat Apr 30 12:37:18 2016
 @author: thomasaref
 """
 
-from pxi_backbone import PXI_Backbone
-from ctypes import create_string_buffer, byref
-#Code for generating COM module
-#from comtypes.client import CreateObject
-#s=CreateObject("afComSigGen.afCoSigGen")
+from pxi_backbone import PXI_Backbone, pp
+from ctypes import create_string_buffer, byref, c_double, c_ulong
+
+if 0:  #Code for generating COM module
+    from comtypes.client import CreateObject
+    s=CreateObject("afComSigGen.afCoSigGen")
 from comtypes.gen import AFCOMSIGGENLib
 
 class afSigGen(PXI_Backbone):
-    #modulation_source_mapping=dict(CW=SG.afSigGenDll_msCW,
-    #                                 LVDS=SG.afSigGenDll_msLVDS,
-    #                                 ARB=SG.afSigGenDll_msARB,
-    #                                 AM=SG.afSigGenDll_msAM,
-    #                                 FM=SG.afSigGenDll_msFM,
-    #                                 ExtAnalog=afSigGenDll_msExtAnalog)
+    def __init__(self):
+        super(afSigGen, self).__init__(lib_name='afSigGenDll_32.dll', com_lib=AFCOMSIGGENLib)
 
-    def __init__(self, lib_name, func_prefix=None):
-        super(afSigGen, self).__init__(lib_name=='afSigGenDll_32.dll', com_lib=AFCOMSIGGENLib)
+    mode=pp('Mode', prefix='m') #Manual
+    LO_reference=pp('LO_Reference', prefix='lorm') #OXCO, ExternalTerminated, ExternalDaisy, Internal
+    modulation_source=pp('Manual_ModulationSource', prefix='ms') #CW, LVDS, ARB, AM, FM, ExtAnalog
+    frequency=pp('Manual_Frequency', dtype=c_double)
+    level=pp('Manual_Level', dtype=c_double)
+    output=pp('Manual_RfState', prefix=bool)
 
-    def start(self, lo_resource_name, dig_resource_name):
-        self.do_func('BootInstrument', self.session, lo_resource_name, dig_resource_name, False)
-        #self.lo_reference_set(afSigGenDll_lormExternalTerminated)
-        self.do_func('LO_Reference_Set', self.session, self.clib['lormExternalTerminated'])
-        #self.mode_set(afSigGenDll_mManual)
-        self.do_func('Mode_Set', self.session, self.clib["mManual"])
-        #self.output = 'Off'
-        #self.power = -30
+    arb_external_trigger_enable=pp('ARB_ExternalTrigger_Enable', prefix=bool)
+    arb_external_trigger_gated=pp('ARB_ExternalTrigger_Gated', prefix=bool)
+    arb_external_trigger_negative_edge=pp('ARB_ExternalTrigger_NegativeEdge', prefix=bool)
 
-    def stop(self):
-        self.do_func('CloseInstrument', self.session)
-        self.do_func("DestroyObject", self.session)
+    arb_single_shot_mode=pp('ARB_SingleShotMode', prefix=bool)
 
-    def is_active_get(self):
-        return self.get_func('IsActive_Get', self.session)
+    def arb_single_shot_trigger(self):
+        self.do_func('ARB_SingleShotTrigger')
 
-    def manual_modulation_source_set(self, src):
-        self.do_func('Manual_ModulationSource_Set', self.session, self.clib[src])
+    def arb_add_file(self, filename):
+        self.do_func('ARB_Catalogue_AddFile', filename)
 
-    def manual_modulation_source_get(self):
-        return self.get_func('Manual_ModulationSource_Get', self.session)
+    def arb_delete_file(self, filename):
+        self.do_func('ARB_Catalogue_DeleteFile', filename)
 
-    def frequency_set(self, frequency):
-        self.do_func('Manual_Frequency_Set', self.session, frequency)
-        self.frequency=frequency
+    def arb_delete_all_files(self):
+        self.do_func('ARB_Catalogue_DeleteAllFiles')
 
-    def frequency_get(self):
-        self.frequency=self.get_func('Manual_Frequency_Get', self.session)
-        return self.frequency
+    def arb_file_sample_rate_get(self, filename):
+        return self.get_func('ARB_Catalogue_GetFileSampleRate', filename, dtype=c_ulong)
 
-    #get_func'Manual_FrequencyMax_Get(self.session, byref(pFrequency))
-    def level_set(self, level):
-        self.do_func('Manual_Level_Set', self.session, level)
-        self.level=level
+    def arb_play_file(self, filename):
+        self.do_func('ARB_Catalogue_PlayFile', filename)
 
-    def level_get(self):
-        self.level=self.get_func('Manual_Level_Get', self.session)
-        return self.level
+    def arb_reload_all_files(self):
+        self.do_func('ARB_Catalogue_ReloadAllFiles')
 
-    #def manual_arb_file_set(self, ArbFile=None):
-    #    ArbFile = ArbFile or c_char()
-    #    do_func('Manual_ArbFile_Set', self.session, byref(ArbFile))
-    #    return (ArbFile.value)
-
-    def arb_file_get(self, arbFileBuffer, arbFileBufLen):
-        self.msg=create_string_buffer(256)
-        self.do_func('Manual_ArbFile_Get', self.session, byref(self.msg), 256)
-        return self.msg.value
-
-    #def manual_arb_file_name_length_get(self, pArbFileBufLen=None):
-    #    pArbFileBufLen = pArbFileBufLen or c_long()
-    #    error = afSigGenDll_Manual_ArbFileNameLength_Get(self.session, byref(pArbFileBufLen))
-    #    if error:
-    #        self.get_error(error)
-    #    return (pArbFileBufLen.value)
+    @property
+    def arb_is_playing(self):
+        return self.get_func('ARB_IsPlaying_Get', prefix=bool)
 
     def arb_stop_playing(self):
-        self.do_func('Manual_ArbStopPlaying', self.session)
+        self.do_func('ARB_StopPlaying')
 
-    def rf_state_set(self, state):
-        self.do_func('Manual_RfState_Set', self.session, state)
-        self.state=state
+    #def ARB_find_file(self, filename):
+    #    self.get_func('ARB_Catalogue_FindFile')
 
-    def manual_rf_state_get(self):
-        self.state=self.get_func('Manual_RfState_Get', self.session)
-        return self.state
+    def start(self, lo_resource_name="3010S1", dig_resource_name="3025S1", plugin=False):
+        self.do_func('BootInstrument', lo_resource_name, dig_resource_name, plugin)
+        #self.set_func('LO_Reference_Set', 'ExternalTerminated', prefix='lorm')
+        self.LO_reference='ExternalTerminated'
+        #self.set_func('Mode_Set', 'Manual', prefix='m')
+        self.mode='Manual'
 
+    def stop(self):
+        self.do_func('CloseInstrument')
+        self.do_func("DestroyObject")
+
+    @property
+    def reference_locked(self):
+        return self.get_func('LO_ReferenceLocked_Get', prefix=bool)
+
+    @property
+    def is_active(self):
+        return self.get_func('IsActive_Get')
+
+    @property
+    def frequency_max(self):
+        return self.get_func('Manual_FrequencyMax_Get')
+
+    def manual_arb_file_set(self, ArbFile):
+        self.set_func('Manual_ArbFile_Set', byref(ArbFile))
+        return (ArbFile.value)
+
+    @property
+    def manual_arb_file(self, arbFileBuffer, arbFileBufLen):
+        self.msg=create_string_buffer(256)
+        self.do_func('Manual_ArbFile_Get', byref(self.msg), 256)
+        return self.msg.value
+
+    @property
+    def manual_arb_file_name_length(self):
+        return self.get_func('Manual_ArbFileNameLength')
+
+    def manual_arb_stop_playing(self):
+        self.do_func('Manual_ArbStopPlaying')
+
+if __name__=='__main__':
+    a=afSigGen()
+    #a.get_func('LO_Reference_Get', prefix="lorm")
+    #a.get_func('LO_ReferenceLocked_Get', prefix=bool)
 
 #from comtypes.client import CreateObject
 #

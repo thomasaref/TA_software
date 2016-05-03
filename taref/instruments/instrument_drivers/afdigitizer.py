@@ -6,13 +6,14 @@ Created on Mon Apr 11 14:11:10 2016
 """
 
 from ctypes import  c_long, pointer, c_float, c_double, c_ulong, POINTER, byref, WinDLL, Structure, c_void_p, create_string_buffer
-from numpy import zeros, array, log10, absolute, mean, fft, empty
+from numpy import zeros, array, log10, absolute, mean, fft, empty, power
 import matplotlib.pyplot as plt
-from pxi_backbone import PXI_Backbone
+from pxi_backbone import PXI_Backbone, pp
+from time import time
 
 #Code for generating COM module
 #from comtypes.client import CreateObject
-#s=CreateObject("afComSigGen.afCoSigGen")
+#s=CreateObject("afComDigitizer.afCoDigitizer")
 from comtypes.gen import AFCOMDIGITIZERLib
 
 class afDigitizerBufferIQ_t(Structure):
@@ -21,59 +22,79 @@ class afDigitizerBufferIQ_t(Structure):
         ('qBuffer', POINTER(c_float)),
         ('samples', c_ulong),
         ('userData', c_void_p)]
-
+        
 class afDigitizer(PXI_Backbone):
-    def __init__(self, lib_name, func_prefix=None):
-        super(afDigitizer, self).__init__(lib_name=='afDigitizerDll_32.dll', com_lib=AFCOMDIGITIZERLib)
+    def __init__(self):
+        super(afDigitizer, self).__init__(lib_name='afDigitizerDll_32.dll', com_lib=AFCOMDIGITIZERLib)
 
-    def start_dig(self, lo_address='3011D1', dig_address='3036D1', plugin=False, mod_mode=5):
-        if mod_mode is None:
-            mod_mode="mmGeneric"
-        self.do_func("BootInstrument", self.session, lo_address, dig_address, plugin)
-        print self.get_func('Modulation_Mode_Get', self.session)#dtype=c_int
-        self.do_func("Modulation_Mode_Set", self.session, 5) #set mod mode to generic
-        print self.get_func('Modulation_Mode_Get', self.session)
-        print self.get_func('IsActive_Get', self.session)
+    @property
+    def is_active(self):
+        return self.get_func('IsActive_Get', prefix=bool)
 
-        self.rf_centre_frequency_set(self.center_frequency)
-        self.rf_rf_input_level_set(self.ref_amplitude)
+    sample_rate=pp('Modulation_GenericSamplingFrequency', dtype=c_double)
+    modulation_mode=pp('Modulation_Mode', prefix='mm') #Generic
+    LO_reference=pp('LO_Reference', prefix='lorm') #OXCO
+    input_level=pp('RF_RFInputLevel', dtype=c_double) 
+    frequency=pp('RF_CentreFrequency', dtype=c_double)
+    
+    trigger_source=pp('Trigger_Source', prefix='ts')
+    edge_gate_polarity=pp('Trigger_EdgeGatePolarity')
+    pre_edge_trigger_samples=pp('Trigger_PreEdgeTriggerSamples')
+    sw_trigger_mode=pp('Trigger_SwTriggerMode', prefix='swt') #Immediate, Armed
+    reclaim_timeout=pp('Capture_IQ_ReclaimTimeout')
+    
+    def start_dig(self, lo_address='3011D1', dig_address='3036D1', plugin=False, mod_mode="Generic"):
+        self.do_func("ClearErrors")
+        self.do_func("BootInstrument", lo_address, dig_address, plugin)
+        self.modulation_mode=mod_mode
+        d.LO_reference='OCXO'
 
-        self.trigger_source_set(self.trigger_source_)
-        self.trigger_edge_gate_polarity_set(self.trigger_edge_)
-        self.trigger_pre_edge_trigger_samples_set(self.pretrigger_samples)
-
-    def set_sampling_frequency(self, sample_rate):
-        self.do_func('Modulation_GenericSamplingFrequency_Get', self.session, c_double(sample_rate))
-        self.sample_rate=sample_rate
-
-    def get_sampling_frequency(self):
-        self.frequency=self.get_func('Modulation_GenericSamplingFrequency_Get', self.session, dtype=c_double)
-        return self.frequency
-
-    def get_trace(self, points=1000, timeout=1000):
-        self.do_func("Capture_IQ_ReclaimTimeout_Set", timeout)
-
-        self.i_buffer = empty(points, dtype=c_float)
-        self.q_buffer = empty(points, dtype=c_float)
+    @property
+    def lc(self):
+        if getattr(self, '_lc', None) is None:
+            self._lc=self.level_correction
+        return self._lc
+            
+    def get_trace(self, points=1000, timeout=10000):
+            
+        self.reclaim_timeout=timeout
+        #self.set_func("Capture_IQ_ReclaimTimeout_Set", timeout)
+        i_avgd = zeros(points)
+        q_avgd = zeros(points)
+        #samples=self.nSamples
+        avgs=1 #self.nAverages_per_trigger
+        #timeout=self.fTimeout
+        #tot_samps=int(self.nTotalSamples)
+      
+        i_buffer = empty(points, dtype=c_float)
+        q_buffer = empty(points, dtype=c_float)
         #self.all_cpx = np.empty(self.averages, dtype=complex)
-        self.i_ctypes = self.i_buffer.ctypes.data_as(POINTER(c_float))
-        self.q_ctypes = self.q_buffer.ctypes.data_as(POINTER(c_float))
-        self.buffer_ref = afDigitizerBufferIQ_t(self.i_ctypes, self.q_ctypes, points)
-        self.buffer_ref_pointer = pointer(self.buffer_ref)
-        self.capture_ref = c_long()
-
-        self.do_func('Capture_IQ_IssueBuffer', self.session, self.buffer_ref, self.timeout, byref(self.capture_ref))
-        self.do_func('Capture_IQ_ReclaimBuffer', self.session, self.capture_ref, byref(self.buffer_ref_pointer))
-        if self.buffer_ref_pointer:
+        i_ctypes = i_buffer.ctypes.data_as(POINTER(c_float))
+        q_ctypes = q_buffer.ctypes.data_as(POINTER(c_float))
+        buffer_ref = afDigitizerBufferIQ_t(i_ctypes, q_ctypes, points)
+        buffer_ref_pointer = pointer(buffer_ref)
+        capture_ref = c_long()
+        tstart=time()
+        self.do_func('Capture_IQ_IssueBuffer', byref(buffer_ref), timeout, byref(capture_ref))
+        self.do_func('Capture_IQ_ReclaimBuffer', capture_ref, byref(buffer_ref_pointer))
+        print tstart-time()
+        if buffer_ref_pointer:
             print "BUFFER POINTER OK"
-            total_samples = self.buffer_ref.samples
+            total_samples = buffer_ref.samples
             print(total_samples)
         else:
-            print "NO BUFFER"
+            raise Exception("NO BUFFER")
             total_samples = 0
 
-        self.samples = total_samples
-        return self.i_buffer[:total_samples], self.q_buffer[:total_samples]
+        #self.samples = total_samples
+        i_avgd += mean(i_buffer[:total_samples].reshape(avgs, points), axis=0)
+        q_avgd += mean(q_buffer[:total_samples].reshape(avgs, points), axis=0)
+        #self.log("acq stopped")                
+        i_avgd = i_avgd/1 #self.nTriggers
+        q_avgd = q_avgd/1 #self.nTriggers
+        self.cpx_avgd = i_avgd + 1j*q_avgd
+
+        return self.cpx_avgd #self.i_buffer[:total_samples], self.q_buffer[:total_samples]
         #I = mean(self.i_buffer[:total_samples])
         #Q = mean(self.q_buffer[:total_samples])
         #self.Mag_vec = np.sqrt(I**2 + Q**2)
@@ -87,28 +108,40 @@ class afDigitizer(PXI_Backbone):
         #print("Data received!")
 
     def stop_dig(self):
-        self.do_func('CloseInstrument', self.session)
-        self.do_func("DestroyObject", self.session)
+        self.do_func('CloseInstrument')
+        self.do_func("DestroyObject")
 
-    #i_buffer = zeros(num_samples, dtype=c_float)
-    #q_buffer = zeros(num_samples, dtype=c_float)
-    #i_ctypes = i_buffer.ctypes.data_as(POINTER(c_float))
-    #q_ctypes = q_buffer.ctypes.data_as(POINTER(c_float))
-
+    def trigger_arm(self, num_samples):
+        self.do_func('Capture_IQ_TriggerArm', 2*num_samples)
+ 
     def captmem(self, num_samples):
         typeBuffer=c_float*num_samples
         i_buffer=typeBuffer()
         q_buffer=typeBuffer()
-        self.do_func("Capture_IQ_CaptMem", self.session, num_samples, byref(i_buffer), byref(q_buffer))
-        return array(i_buffer), array(q_buffer)
+        tstart=time()
+        self.do_func("Capture_IQ_CaptMem", num_samples, byref(i_buffer), byref(q_buffer))
+        print time()-tstart
+        self.cpx_avgd=array(i_buffer)+1j*array(q_buffer)
+        return self.cpx_avgd
+    
+    def full_run(self, num):
+        self.trigger_arm(num)
+        self.captmem(num)
 
-    def get_level_correction(self):
-        self.level_correction=self.get_func('RF_LevelCorrection_Get', self.session, dtype=c_double)
-        return self.level_correction
+    @property
+    def level_correction(self):
+        return self.get_func('RF_LevelCorrection_Get', dtype=c_double)
+ 
+    def calc_mean_power(self):
+        return 20*log10(mean(absolute(self.cpx_lc)))
 
-    def calc_mean_power(self, I, Q):
-        return 10*log10(mean(I**2+Q**2))+self.level_correction
-
+    @property
+    def cpx_lc(self):
+        return self.cpx_avgd*power(10.0, self.lc/20.0)
+        
+    def fftd(self):
+        fftd=20*log10(absolute(fft.fftshift(fft.fft(self.cpx_lc))))
+        return fftd-fftd.max()+d.calc_mean_power()
 #    def capt_test(num):
 #        try:
 #            pDetected=c_long()
@@ -131,8 +164,24 @@ class afDigitizer(PXI_Backbone):
 #            print 'keyboard interaupt'
 
 if __name__=="__main__":
-    try:
-        d=afDigitizer()
+    d=afDigitizer()
+    d.start_dig()
+    d.input_level=0.0
+    d.sample_rate=250.0e6
+    #print d.get_func("Trigger_Source_Get", prefix="ts")
+    #print d.get_func('RF_CentreFrequency_Get', dtype=c_double)
+    print d.get_func('Modulation_Mode_Get')
+    print d.get_func('IsActive_Get')
+    d.sw_trigger_mode='Armed'
+    from afsiggen import afSigGen
+    a=afSigGen()
+    a.start()
+    a.level_set(-30)
+    a.rf_state_set(True)
+    print d.level_correction
+    cpx=d.get_trace()
+    print d.calc_mean_power()
+    if 0:
         d.start_dig()
         I, Q=d.captmem(2000)
         d.get_level_correction()
@@ -141,7 +190,6 @@ if __name__=="__main__":
         print d.calc_mean_power(I, Q)
         plt.plot(20*log10(absolute(fft.fftshift(fft.fft(I+1j*Q)))))
         plt.show()
-    finally:
         d.stop_dig()
         #print get_func("Capture_IQ_GetAbsSampleTime", ses, 0)
 
