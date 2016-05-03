@@ -9,105 +9,95 @@ from taref.physics.qubit import Qubit, transmon_energy_levels
 from numpy import pi, linspace, sin, amax, argmin, argmax, cos
 from scipy.constants import h
 
-from taref.core.api import log_func, log_callable
+from taref.core.api import log_func, log_callable, get_run_params
 from taref.physics.idt import IDT
 from taref.core.extra_setup import tagged_property
 from atom.api import Float, Int
 from taref.core.universal import Array
 from taref.physics.fundamentals import sqrt, pi, e, h, array, eig, delete, sin, sinc_sq, sinc, linspace, zeros, absolute, cos, arange
+from functools import wraps
 
-def coupling_approx(Np, K2, f0):
-    """approximate coupling at center frequency of QDT, in Hz (double finger)"""
-    return 0.55*Np*K2*f0
-
-Ga0_mult={"single":2.871, "double":3.111}
-def Ga0(mult, f0, epsinf, W, Dvv, Np):
-    """Ga0 from morgan"""
-    return mult*2*pi*f0*epsinf*W*Dvv*(Np**2)
-
-coupling_mult={"single" : 0.71775, "double" : 0.54995}
-def Ga0div2C(mult, f0, K2, Np):
-    """coupling at center frequency, in Hz (2 pi removed)"""
-    return mult*f0*K2*Np
-
-def X(Np, f, f0):
-    """standard frequency dependence"""
-    return Np*pi*(f-f0)/f0
-
-def Ga(f, mult, f0, K2, Np, C):
-    return coupling(f, mult, f0, K2, Np)*2*C*2*pi
-
-def Ba(f, mult, f0, K2, Np, C):
-    return -Lamb_shift(f, mult, f0, K2, Np)*2*C*2*pi
-
-def coupling(f, mult, f0, K2, Np):
-    gamma0=Ga0div2C(mult, f0, K2, Np)
-    gX=X(Np, f, f0)
-    return gamma0*(sin(gX)/gX)**2.0
-
-def Lamb_shift(f, mult, f0, K2, Np):
-    """returns Lamb shift"""
-    gamma0=Ga0div2C(mult, f0, K2, Np)
-    gX=X(Np, f, f0)
-    return -gamma0*(sin(2.0*gX)-2.0*gX)/(2.0*gX**2.0)
-
-Ct_mult={"double" : sqrt(2), "single" : 1.0}
-#def calc_Lamb_shift(fq, ft, Np, f0, epsinf, W, Dvv):
-#    """returns Lamb shift in Hz"""
-#    X=Np*pi*(fq-f0)/f0
-#    Ga0=Ga0_mult[ft]*2*pi*f0*epsinf*W*Dvv*(Np**2)
-#    C=Ct_mult[ft]*Np*W*epsinf
-#    Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
-#    return -Ba/(2.0*C)/(2.0*pi)
-#
-#def calc_freq_shift(fq, ft, Np, f0, epsinf, W, Dvv):
-#    """returns Lamb shift in Hz"""
-#    X=Np*pi*(fq-f0)/f0
-#    Ga0=Ga0_mult[ft]*2*pi*f0*epsinf*W*Dvv*(Np**2)
-#    C=Ct_mult[ft]*Np*W*epsinf
-#    Ba=Ga0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
-#    return Ba/C/(2.0*pi)
-#
-#def calc_coupling(fq, ft, Np, f0, Dvv, epsinf, W):
-#    X=Np*pi*(fq-f0)/f0
-#    Ga0=Ga0_mult[ft]*2*pi*f0*epsinf*W*Dvv*(Np**2)
-#    C=Ct_mult[ft]*Np*W*epsinf
-#    Ga=Ga0*(sin(X)/X)**2.0
-#    return Ga/(2.0*C)/(2.0*pi)
-
-def lamb_shifted_transmon_energy(Ej, Ec, m, mult, f0, K2, Np):
-    Em=-Ej+sqrt(8.0*Ej*Ec)*(m+0.5) - (Ec/12.0)*(6.0*m**2+6.0*m+3.0)
-    if m==0:
-        return Em
-    Emm1=-Ej+sqrt(8.0*Ej*Ec)*(m-1+0.5) - (Ec/12.0)*(6.0*(m-1)**2+6.0*(m-1)+3.0)
-    fq=(Em-Emm1)/h
-    fls=Lamb_shift(fq, mult, f0, K2, Np)
-    return Em+h*fls
-
-def lamb_shifted_transmon_energy_levels(EjdivEc, n, mult, f0, K2, Np, C):
-    Ec=e**2/(2.0*C)
-    Ej=EjdivEc*Ec
-    return [lamb_shifted_transmon_energy(Ej, Ec, m, mult, f0, K2, Np) for m in range(n)]
-
-#def lamb_shifted_anharm(EjdivEc, mult, f0, K2, Np, C):
-#    E0, E1, E2=lamb_shifted_transmon_energy_levels(EjdivEc, 3, mult, f0, K2, Np, C)
-#    return (E2-E1)-(E1-E0)
-#
-#def lamb_shifted_fq(EjdivEc, mult, Np, f0, epsinf, W, Dvv):
-#    E0, E1=lamb_shifted_transmon_energy_levels(EjdivEc, 2, ft, Np, f0, epsinf, W, Dvv)
-#    return (E1-E0)/h
-#
-#def lamb_shifted_fq2(EjdivEc, ft, Np, f0, epsinf, W, Dvv):
-#    E0, E1, E2=lamb_shifted_transmon_energy_levels(EjdivEc, 3, ft, Np, f0, epsinf, W, Dvv)
-#    return (E2-E0)/h
+def auto_param(func):
+    @wraps(func)
+    def new_func(self, *args, **kwargs):
+        for param in new_func.run_params[len(args):]:
+            if param not in kwargs:
+                kwargs[param]=getattr(self, param)
+        return func(self, *args, **kwargs)
+    new_func.run_params=get_run_params(func, skip=1)
+    return new_func
 
 class QDT(IDT, Qubit):
     base_name="QDT"
     couple_mult=Float(0.55)
+    Ga0_mult=Float(3.111)
+
+    coupling_mult_dict={"single" : 0.71775, "double" : 0.54995}
+    Ga0_mult_dict={"single":2.871, "double":3.111}
+    Ct_mult_dict={"double" : sqrt(2), "single" : 1.0}
 
     def _observe_ft(self, change):
         if change["type"]=="update":
-            self.couple_mult=coupling_mult[self.ft]
+            self.couple_mult=self.coupling_mult_dict[self.ft]
+            self.Ga0_mult=self.Ga0_mult_dict[self.ft]
+
+    @auto_param
+    def coupling_approx(self, couple_mult, Np, K2, f0):
+        """approximate coupling at center frequency of QDT, in Hz (double finger)"""
+        return couple_mult*Np*K2*f0
+
+    @auto_param
+    def Ga0(self, Ga0_mult, f0, epsinf, W, Dvv, Np):
+        """Ga0 from morgan"""
+        return Ga0_mult*2*pi*f0*epsinf*W*Dvv*(Np**2)
+
+    @auto_param
+    def Ga0div2C(self, couple_mult, f0, K2, Np):
+        """coupling at center frequency, in Hz (2 pi removed)"""
+        return couple_mult*f0*K2*Np
+
+    @auto_param
+    def X(self, Np, f, f0):
+        """standard frequency dependence"""
+        return Np*pi*(f-f0)/f0
+
+    @auto_param
+    def Ga(self, f, couple_mult, f0, K2, Np, C):
+        return self.coupling(f, couple_mult, f0, K2, Np)*2*C*2*pi
+
+    @auto_param
+    def Ba(self, f, mult, f0, K2, Np, C):
+        return -self.Lamb_shift(f, mult, f0, K2, Np)*2*C*2*pi
+
+    @auto_param
+    def coupling(self, f, couple_mult, f0, K2, Np):
+        gamma0=self.Ga0div2C(couple_mult, f0, K2, Np)
+        gX=self.X(Np, f, f0)
+        return gamma0*(sin(gX)/gX)**2.0
+
+    @auto_param
+    def Lamb_shift(self, f, mult, f0, K2, Np):
+        """returns Lamb shift"""
+        gamma0=self.Ga0div2C(mult, f0, K2, Np)
+        gX=self.X(Np, f, f0)
+        return -gamma0*(sin(2.0*gX)-2.0*gX)/(2.0*gX**2.0)
+
+
+    def lamb_shifted_transmon_energy(Ej, Ec, m, mult, f0, K2, Np):
+        Em=-Ej+sqrt(8.0*Ej*Ec)*(m+0.5) - (Ec/12.0)*(6.0*m**2+6.0*m+3.0)
+        if m==0:
+            return Em
+        Emm1=-Ej+sqrt(8.0*Ej*Ec)*(m-1+0.5) - (Ec/12.0)*(6.0*(m-1)**2+6.0*(m-1)+3.0)
+        fq=(Em-Emm1)/h
+        fls=Lamb_shift(fq, mult, f0, K2, Np)
+        return Em+h*fls
+
+    def lamb_shifted_transmon_energy_levels(EjdivEc, n, mult, f0, K2, Np, C):
+        Ec=e**2/(2.0*C)
+        Ej=EjdivEc*Ec
+        return [lamb_shifted_transmon_energy(Ej, Ec, m, mult, f0, K2, Np) for m in range(n)]
+
+
 
     @tagged_property()
     def Ga0(self, ft, f0, epsinf, W, Dvv, Np):

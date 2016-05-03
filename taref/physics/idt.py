@@ -99,7 +99,7 @@ class IDT(Agent):
     def mult(self):
         return {"double" : 2.0, "single" : 1.0}[self.ft]
 
-    Np=Int(7).tag(desc="\# of finger pairs", low=1, tex_str=r"$N_p$", label="\# of finger pairs")
+    Np=Float(7).tag(desc="\# of finger pairs", low=0.5, tex_str=r"$N_p$", label="\# of finger pairs")
 
     ef=Int(0).tag(desc="for edge effect compensation",
                     label="\# of extra fingers", low=0)
