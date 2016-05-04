@@ -6,7 +6,7 @@ Created on Tue Jul  7 21:52:51 2015
 
 """
 
-from atom.api import Atom, Property
+from atom.api import Atom, Property, AtomMeta
 from taref.core.atom_extension import (private_property, get_reserved_names, get_all_params,
 get_all_main_params, lowhigh_check, make_instancemethod, get_type, get_tag)
 from taref.core.extra_setup import extra_setup
@@ -19,12 +19,35 @@ with imports():
     from taref.core.interactive_e import InteractiveWindow, CodeWindow
     from taref.core.log_e import LogWindow
 
+def fset_maker(fget):
+    """creates set function from list of functions"""
+    def setit(obj, value):
+        for fset in fget.fset_list:
+            setattr(obj, fset.pname, fset(obj, value))
+    return setit
+
+class BackboneAtomMeta(AtomMeta):
+    def __new__(meta, name, bases, dct):
+        update_dict={}
+        for param, itm in dct.items():
+            if isinstance(itm, Property): #hasattr(value, "propify"):
+                if itm.metadata is not None:
+                    if not itm.metadata.get("private", False):
+                        func_name=param+"_f"
+                        update_dict[func_name]=itm.fget
+                        if getattr(itm.fget, 'fset_list', [])!= []:
+                            itm.setter(fset_maker(itm.fget))
+        dct.update(update_dict)
+        return AtomMeta.__new__(meta, name, bases, dct)
+
 class Backbone(Atom):
     """
     tarefdoc-process-docstring
     Class combining primary functions for viewer operation.
     Extends __init__ to allow extra setup.
     extends __setattr__ to perform low/high check on params"""
+    __metaclass__=BackboneAtomMeta
+
     unit_dict=UNIT_DICT
     app=QtApplication.instance()
 

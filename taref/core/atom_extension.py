@@ -324,45 +324,80 @@ def set_value_map(obj, name, value):
         return get_map(obj, name, value)
     return value
 
-def log_func(func, pname=None, threaded=False):
-    """logging decorator for Callables that logs call if tag log!=False"""
-    func_name=func.func_name
-    if pname is None:
-        pname=func_name
-
-    log_message=getattr(func, "log_message", "RAN: {0} {1}")
+def log_func(func, log=False, log_message=None, threaded=False):
+    """function decorator that enables logging and threading"""
+    if log_message is None:
+        log_message="RAN: {0} {1}"
     @wraps(func)
     def new_func(self, *args, **kwargs):
-        """logs the call of an instance method and autoinserts kwargs"""
-        if get_tag(self, pname, "log", False):
-            log_debug(log_message.format(getattr(self, "name", ""), func_name), n=2)
-        if len(args)==0:
-            members=get_all_params(self)#.members().keys()
-            for param in get_run_params(new_func):
-                if param in members:
-                    if param in kwargs:
-                        try:
-                            setattr(self, param, kwargs[param])
-                        except TypeError:
-                            set_tag(self, param, do=kwargs[param])
-                    else:
-                        if param in get_property_names(self):
-                            self.get_member(param).reset(self)
-                        value=getattr(self, param)
-                        value=set_value_map(self, param, value)
-                        kwargs[param]=value
-        if threaded: #doesn't return value from thread
-            names=[thread.name for thread in self.thread_list if pname in thread.name]
-            return self.add_thread("{0} {1}".format(pname, len(names)), func, *((self,)+args), **kwargs)
+        if new_func.log:
+            log_debug(new_func.log_message.format(getattr(self, "name", ""), new_func.func_name), n=2)
+        for param in new_func.run_params[len(args):]:
+            if param not in kwargs:
+                kwargs[param]=getattr(self, param)
+        if new_func.threaded: #doesn't return value from thread
+            names=[thread.name for thread in self.thread_list if new_func.func_name in thread.name]
+            return self.add_thread("{0} {1}".format(new_func.func_name, len(names)), func, *((self,)+args), **kwargs)
         else:
             return func(self, *args, **kwargs)
-    new_func.pname=pname
-    new_func.run_params=get_run_params(func)
+        return func(self, *args, **kwargs)
+    new_func.run_params=get_run_params(func, skip=1)
+    new_func.log=log
+    new_func.log_message=log_message
+    new_func.threaded=threaded
     return new_func
 
+class LogFunc(object):
+    """decorator class that exposes logging and threading options in log_func"""
+    def __init__(self, **kwargs):
+        self.threaded=self.kwargs.get("threaded", False)
+        self.log=self.kwargs.get("log", False)
+        self.log_message=self.kwargs.get("log_message", False)
+
+    def __call_(self, func):
+        return log_func(func, log=self.log, log_message=self.log_message, threaded=self.threaded)
+
+#def log_func(func, pname=None, threaded=False):
+#    """logging decorator for Callables that logs call if tag log!=False"""
+#    func_name=func.func_name
+#    if pname is None:
+#        pname=func_name
+#
+#    log_message=getattr(func, "log_message", "RAN: {0} {1}")
+#    @wraps(func)
+#    def new_func(self, *args, **kwargs):
+#        """logs the call of an instance method and autoinserts kwargs"""
+#        if get_tag(self, pname, "log", False):
+#            log_debug(log_message.format(getattr(self, "name", ""), func_name), n=2)
+#        if len(args)==0:
+#            members=get_all_params(self)#.members().keys()
+#            for param in get_run_params(new_func):
+#                if param in members:
+#                    if param in kwargs:
+#                        try:
+#                            setattr(self, param, kwargs[param])
+#                        except TypeError:
+#                            set_tag(self, param, do=kwargs[param])
+#                    else:
+#                        if param in get_property_names(self):
+#                            self.get_member(param).reset(self)
+#                        value=getattr(self, param)
+#                        value=set_value_map(self, param, value)
+#                        kwargs[param]=value
+#        if threaded: #doesn't return value from thread
+#            names=[thread.name for thread in self.thread_list if pname in thread.name]
+#            return self.add_thread("{0} {1}".format(pname, len(names)), func, *((self,)+args), **kwargs)
+#        else:
+#            return func(self, *args, **kwargs)
+#    new_func.pname=pname
+#    new_func.run_params=get_run_params(func)
+#    return new_func
+
 def make_instancemethod(obj, func, name=None):
-    func=log_func(func, name)
-    setattr(obj, func.pname, MethodType(func, obj, type(obj)))
+    if name is None:
+        name=func.func_name
+    new_func=log_func(func)
+    setattr(obj, name, MethodType(new_func, obj, type(obj)))
     return func
 
 class instancemethod(object):
@@ -430,22 +465,39 @@ class tag_Callable(object):
 
 class log_callable(tag_Callable):
     def __call__(self, func):
-        threaded=self.kwargs.get("threaded", False)
-        new_func=log_func(func, pname=None, threaded=threaded)
+        new_func=LogFunc(**self.kwargs)(func)
         return super(log_callable, self).__call__(new_func)
 
 class thread_callable(log_callable):
     default_kwargs=dict(threaded=True)
 
-
 class tag_Property(tag_Callable):
     """disposable decorator class that returns a cached Property tagged with kwargs"""
-    def __init__(self, cached=True, **kwargs):
-        super(tag_Property, self).__init__(**kwargs)
-        self.cached=cached
+    default_kwargs=dict(cached=True)
 
     def __call__(self, func):
-        return Property(func, cached=self.cached).tag(**self.kwargs)
+        cached=self.kwargs.pop("cached")
+        return Property(func, cached=cached).tag(**self.kwargs)
+
+def property_func(func, **kwargs):
+    name_list=func.func_name.split("_get_")
+    if name_list[0]=="":
+        name=name_list[1]
+    else:
+        name=name_list[0]
+    new_func=LogFunc(**kwargs)(func)
+    new_func.fset_list=[]
+    def setter(set_func):
+        s_func=LogFunc(**kwargs)(set_func)
+        s_func.pname=name
+        new_func.fset_list.append(s_func)
+        return s_func
+    new_func.setter=setter
+    return Property(new_func).tag(**kwargs)
+
+class tagged_property(tag_Property):
+    def __call__(self, func):
+        return super(tagged_property, self).__call__(property_func(func, **self.kwargs))
 
 def get_reserved_names(obj):
     """reserved names not to perform standard logging and display operations on,
@@ -514,8 +566,8 @@ def set_log(obj, name, value):
        else:
            log_info("Set {instr} {label} to {value} {unit}".format(
                              instr=obj_name, label=label, value=value, unit=unit))
-   if hasattr(obj, "data_save"):
-       obj.datasave(name, value)
+   #if hasattr(obj, "data_save"):
+   #    obj.datasave(name, value)
 
 def check_initialized(self, change):
     if change["type"]=="update":

@@ -23,17 +23,22 @@ def property_func(func):
     new_func.setter=setter
     return new_func
 
-
+def attr_name(func):
+    name_list=func.func_name.split("_get_")
+    if name_list[0]=="":
+        name=name_list[1]
+    else:
+        name=name_list[0]
+    return name
 def param_decider(obj, value, param, pname):
     if param==pname:
         return value
     return getattr(obj, param)
 
-def fset_maker(fget, name):
+def fset_maker(fget):
     def setit(obj, value):
         for fset in fget.fset_list:
-            argvalues=[param_decider(obj, value, param, name) for param in fset.run_params]
-            setattr(obj, fset.pname, fset(obj, *argvalues))
+            setattr(obj, fset.pname, fset(obj, value))
     return setit
 
 class tagged_property(object):
@@ -46,6 +51,7 @@ class tagged_property(object):
         new_func.fset_list=[]
         def setter(set_func):
             s_func=func_runner(set_func)
+            s_func.pname=attr_name(set_func)
             new_func.fset_list.append(s_func)
             return s_func
         new_func.setter=setter
@@ -55,6 +61,7 @@ class tagged_property(object):
 def func_runner(func, **tags):
     @wraps(func)
     def new_func(self, *args, **kwargs):
+        print "ran", new_func.func_name
         for param in new_func.run_params[len(args):]:
             if param not in kwargs:
                 kwargs[param]=getattr(self, param)
@@ -67,25 +74,20 @@ class NewAtomMeta(AtomMeta):
         update_dict={}
         print dct
         for param, itm in dct.items():
+            if isinstance(itm, Float):
+                itm.tag(dog="funnYY")
             if isinstance(itm, Property): #hasattr(value, "propify"):
-                print param
                 func_name=param+"_func"
                 update_dict[func_name]=itm.fget
                 if getattr(itm.fget, 'fset_list', [])!= []:
-                    print param, itm#.fget.fset_list
-                    def set_it(self, value):
-                        print self, itm, value
-                        self.Dvv=value
-                        #for fset in item.fget.fset_list:
-                        #    fset(self, value)
-                    itm.setter(set_it)
+                    itm.setter(fset_maker(itm.fget))
         dct.update(update_dict)
         return AtomMeta.__new__(meta, name, bases, dct)
 
 class Test(Atom):
     __metaclass__=NewAtomMeta
     Dvv=Float(3)
-    #b=Float(4)
+    b=Float(4)
 
     @tagged_property(desc="coupling strength", unit="%", tex_str=r"K$^2$", expression=r"K$^2=2\Delta v/v$")
     def K2(self, Dvv):
@@ -94,26 +96,36 @@ class Test(Atom):
     @K2.fget.setter
     def _get_Dvv(self, K2):
         return K2/2
+    @K2.fget.setter
+    def _get_Dvv_get_(self, b, K2):
+        return K2*5
 
+    def _observe_Dvv(self, change):
+        print change
     #@tagged_property(propify=True, label="bill")
     #def test_func(self, a, b):
     #    """hi there"""
     #    print a,b
     #    return a
 
-    #@test_func.setter
-    #def _get_a(self, K2):
-    #    print K2
+    @func_runner
+    def _get_a(self, K2):
+        print K2
 
 t=Test()
 #t.a
 #t.a=1
 print t.K2
+print t.get_member("b").metadata
+print t._get_a.func_name
+print t._get_a("hi")
 #print t.test_func()
 #print t.test_func_P
 #t.test_func_P=4
 print t.members()
 print t.K2_func(35)
+print t.K2_func
+print dir(t)
 print t.Dvv
 print t.K2
 t.K2=32
