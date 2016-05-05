@@ -8,7 +8,7 @@ import enaml.qt #work around for Qdate error. import order
 #from taref.core.usertemps_e import UserInstrView
 from enaml.core.api import Conditional, DynamicTemplate, Looper
 from enaml.widgets.api import VGroup, PushButton, Container, GroupBox, Label
-from taref.core.var_e import Var
+from taref.core.var_e import Var, EnumExt
 from taref.core.typedview_e import TypedView
 from taref.core.fundcore_e import aHGroup
 from atom.api import Callable, Typed, Instance
@@ -26,6 +26,7 @@ enamldef DynVar(Var):
         pass
 
 template DynTypedView(AttrType, spec):
+    """Extends TypedView for Dynamic types"""
     TypedView(AttrType, spec): pass
 
 
@@ -91,12 +92,29 @@ enamldef TypedExt(GroupBox):
 
 enamldef TypedVar(Var):
     alias ext
-    TypedExt: ext:
-        pass
+    TypedExt: ext: pass
 
 template DynTypedView(AttrType: Typed, spec):
-    """interface for a Typed member."""
+    """default template for a Typed member."""
     TypedExt: pass
 
 template DynTypedView(AttrType: Instance):
+    """template for Instance member passes to Typed"""
     TypedView(Typed): pass
+
+####################Enum ##########################################
+#enamldef EnumAttrExt(EnumExt):
+#    """extends Var for Enum"""
+#    attr vmodel=parent.vmodel
+#    attr vname=parent.vname
+#    attr vvalue=parent.vvalue
+#    ObjectCombo: oc:
+#        items = list(vmodel.get_member(vname).items)
+#        selected := vvalue
+#    Label:
+#        text<<oc.selected
+#    TypedExt:
+#        vname=
+#template DynTypedView(AttrType: Enum, spec : "attribute"):
+#    """attribute showing template for mapped Enum"""
+#    EnumAttrExt: pass

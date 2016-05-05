@@ -6,8 +6,8 @@ Created on Tue Jul  7 21:52:51 2015
 
 """
 
-from atom.api import Atom, Property, AtomMeta
-from taref.core.atom_extension import (private_property, get_reserved_names, get_all_params,
+from atom.api import Atom, Property, AtomMeta, Value, Unicode
+from taref.core.atom_extension import (private_property, get_reserved_names, get_all_params, LogFunc,
 get_all_main_params, lowhigh_check, make_instancemethod, get_type, get_tag)
 from taref.core.extra_setup import extra_setup
 from enaml.qt.qt_application import QtApplication
@@ -26,13 +26,39 @@ def fset_maker(fget):
             setattr(obj, fset.pname, fset(obj, value))
     return setit
 
+def dictify_fget(private_param, dicty, key):
+    def getit(obj):
+        temp=getattr(obj, private_param)
+        if temp is None:
+            return dicty.get(getattr(obj, key), temp)
+        return temp
+    return getit
+
+def dictify_fset(private_param):
+    def setit(obj, value):
+        return value
+        #setattr(obj, private_param, value)
+        #obj.get_member(param).reset(obj)
+    setit.pname=private_param
+    return setit
+
 class BackboneAtomMeta(AtomMeta):
     def __new__(meta, name, bases, dct):
-        update_dict={}
+        update_dict={} #dict(_name=Unicode().tag(private=True))
         for param, itm in dct.items():
             if isinstance(itm, Property): #hasattr(value, "propify"):
                 if itm.metadata is not None:
                     if not itm.metadata.get("private", False):
+                        dictify=itm.metadata.get("dictify", False)
+                        if dictify:
+                            private_param="_"+param
+                            update_dict[private_param]=Value().tag(private=True)
+                            key=itm.metadata["key"]
+                            get_f=LogFunc(**itm.metadata)(dictify_fget(private_param, dictify, key))
+                            get_f.fset_list=getattr(itm.fget, "fset_list", [])
+                            itm.getter(get_f)
+                            set_f=LogFunc(**itm.metadata)(dictify_fset(private_param))
+                            itm.fget.fset_list.append(set_f)
                         func_name=param+"_f"
                         update_dict[func_name]=itm.fget
                         if getattr(itm.fget, 'fset_list', [])!= []:

@@ -12,7 +12,7 @@ from taref.core.atom_extension import get_tag, get_type, get_map, get_main_param
 from atom.api import Bool, Int, Typed, List, Coerced, Enum, Callable, Float, Str, Unicode, Range, FloatRange, Instance, Property
 from taref.core.universal import msg
 from numpy import ndarray
-from taref.core.var_e import (Var, VarVGroup, FieldExt, MultilineExt, BoolExt, UnitIntFieldExt, UnitSpinBoxExt, UnitRangeExt, UnitFloatExt, UnitFloatRangeExt, EnumExt)
+from taref.core.var_e import (Var, VarVGroup, FieldExt, MultilineExt, BoolExt, CheckBoxExt, UnitIntFieldExt, UnitSpinBoxExt, UnitRangeExt, UnitFloatExt, UnitFloatRangeExt, EnumExt)
 from taref.core.fundcore_e import aHGroup, aVGroup
 from taref.physics.units import unitless
 
@@ -24,33 +24,37 @@ template TypedView(AttrType, spec):
 
 #####################  STRINGS #####################
 template TypedView(AttrType : Unicode, spec):
-    """SpinBox template for Int types"""
+    """Field template for Unicode type"""
     FieldExt: pass
 
 template TypedView(AttrType : Unicode, spec : "multiline"):
-    """SpinBox template for Int types"""
+    """Multiline specialization template for Unicode types"""
     MultilineExt: pass
 
 template TypedView(AttrType : Str, spec):
-    """SpinBox template for Int types"""
+    """String template passes to Unicode"""
     TypedView(Unicode, spec): pass
 
 template TypedView(AttrType : basestring, spec):
-    """SpinBox template for Int types"""
+    """basestring template passes to Unicode"""
     TypedView(Unicode, spec): pass
 
 template TypedView(AttrType : unicode, spec):
-    """SpinBox template for Int types"""
+    """unicode template passes to Unicode"""
     TypedView(Unicode, spec): pass
 
 template TypedView(AttrType : str, spec):
-    """SpinBox template for Int types"""
+    """str template passes to Unicode"""
     TypedView(Unicode, spec): pass
 
 ################### BOOLEANS #########################
 template TypedView(AttrType: Bool, spec):
     """default template for Bool types"""
     BoolExt: pass
+
+template TypedView(AttrType: Bool, spec : "checkbox"):
+    """check box specialization template for Bool types"""
+    CheckBoxExt: pass
 
 template TypedView(AttrType : bool, spec):
     """bool template flows through to Bool template"""
@@ -120,18 +124,18 @@ enamldef ListExt(aHGroup):
 enamldef ListSpinBoxVar(Var):
     ListExt: pass
 
-def unitize(value, unit=unitless):
-    if type(value)==int:
-        return int(value/unit)
-    elif type(value)==float:
-        return float(value/unit)
-    return value
-
-def unitize_array(arr, unit=unitless):
-    try:
-        return arr/unit
-    except TypeError:
-        return arr
+#def unitize(value, unit=unitless):
+#    if type(value)==int:
+#        return int(value/unit)
+#    elif type(value)==float:
+#        return float(value/unit)
+#    return value
+#
+#def unitize_array(arr, unit=unitless):
+#    try:
+#        return arr/unit
+#    except TypeError:
+#        return arr
 
 def list2string(arr, separator="\n"):
     try:
@@ -139,37 +143,37 @@ def list2string(arr, separator="\n"):
     except AttributeError:
         return separator.join(arr)
 
-def display_unit_array(arr, unit=unitless):
-    try:
-        return arr*unit
-    except TypeError:
-        return arr
+#def display_unit_array(arr, unit=unitless):
+#    try:
+#        return arr*unit
+#    except TypeError:
+#        return arr
 
 from numpy import array2string
 
 enamldef ListReadOnlyExt(aHGroup):
-    attr unit = get_tag(parent.vmodel, parent.vname, "unit", unitless)
-    attr display_unit = get_tag(parent.vmodel, parent.vname, "display_unit", None)
+    #attr unit = get_tag(parent.vmodel, parent.vname, "unit", unitless)
+    #attr display_unit = get_tag(parent.vmodel, parent.vname, "display_unit", None)
     MultilineField:
         read_only=True
-        text<<list2string(unitize_array(parent.parent.vvalue, unit), separator="\n")
-    Conditional:
-        condition = unit!=unitless
-        Label:
-            text = unicode(unit.unit)
+        text<<list2string(parent.parent.vvalue, unit, separator="\n")
+#    Conditional:
+#        condition = unit!=unitless
+#        Label:
+#            text = unicode(unit.unit)
 #    Conditional:
 #        condition = show_uvalue
 #        Label:
 #            text << unit.show_unit(uvalue)
-    Conditional:
-        condition = display_unit is not None
-        Label:
-            text << "["+display_unit.unit+"]"
-        MultilineField:
-            read_only=True
-            text<<list2string(display_unit_array(parent.parent.vvalue, display_unit), separator="\n")
-        Label:
-            text << "["+display_unit.output_unit+"]"
+#    Conditional:
+#        condition = display_unit is not None
+#        Label:
+#            text << "["+display_unit.unit+"]"
+#        MultilineField:
+#            read_only=True
+#            text<<list2string(display_unit_array(parent.parent.vvalue, display_unit), separator="\n")
+#        Label:
+#            text << "["+display_unit.output_unit+"]"
 
 template TypedView(AttrType: List, spec):
     """default template for List"""
@@ -189,24 +193,6 @@ template TypedView(AttrType: ndarray, spec):
 template TypedView(AttrType: Enum, spec):
     """default template for Enum"""
     EnumExt: pass
-
-enamldef EnumAttrExt(aHGroup):
-    """extends Var for Enum"""
-    attr vmodel=parent.vmodel
-    attr vname=parent.vname
-    attr vvalue=parent.vvalue
-    ObjectCombo: oc:
-        items = list(vmodel.get_member(vname).items)
-        selected := vvalue
-    Label:
-        text<<oc.selected
-#    DynVar:
-#        vname<< oc.selected
-#
-template TypedView(AttrType: Enum, spec : "attribute"):
-    """attribute showing template for mapped Enum"""
-    EnumAttrExt: pass
-
 
 
 ################test window##########################

@@ -68,66 +68,48 @@ enamldef UnitHGroup(aHGroup):
     attr minimum = None
     attr maximum = None
     attr unit  = unitless
-    attr show_uvalue : bool = False
-    attr display_unit = None
+    attr show_uvalue : bool = unit!=unitless
 
     alias unit_field
-    alias read_only:unit_field.read_only
+    alias read_only : unit_field.read_only
     Field: unit_field:
         pass
     Conditional:
-        condition = unit!=unitless
-        Label:
-            text = unicode(unit.unit)
-    Conditional:
         condition = show_uvalue
         Label:
-            text << unit.show_unit(uvalue)
-    Conditional:
-        condition = display_unit is not None
-        Label:
-            text << "["+display_unit.unit+" "+display_unit.show_unit(uvalue*display_unit)+"]"
+            text << "{0} ({1:g} {2})".format(unit.output_unit, uvalue/unit, unit.unit)
 
 enamldef UnitIntField(UnitHGroup):
     """ A field that only accept integer inputs and normalizes them by a unit factor"""
     attr uvalue = 0
     attr base=10
     unit_field.validator<< IntValidator(base=base, minimum=minimum, maximum=maximum)
-    unit_field.text << unicode(int(uvalue/unit))
-    unit_field.text :: parent.uvalue=int(int(text)*unit)
+    unit_field.text << unicode(int(uvalue))
+    unit_field.text :: parent.uvalue=int(text)
     unit_field.activated::
         if not validator.validate(text):
             if parent.minimum is None:
                 if parent.maximum is None:
                     parent.uvalue=0
                 else:
-                    parent.uvalue=int(parent.maximum*unit)
+                    parent.uvalue=int(parent.maximum)
             else:
-                parent.uvalue=int(parent.minimum*unit)
+                parent.uvalue=int(parent.minimum)
 
 enamldef UnitSpinBox(aHGroup):
     """A SpinBox for integers with units"""
     attr uvalue = 0
     attr unit : unit_func = unitless
-    attr show_uvalue : bool = False
-    attr display_unit = None
+    attr show_uvalue : bool = unit!=unitless
     alias maximum : sb.maximum
     alias minimum : sb.minimum
     SpinBox: sb:
-        value << int(uvalue/unit)
-        value :: parent.uvalue=int(value*unit)
-    Conditional:
-        condition = unit!=unitless
-        Label:
-            text = unicode(unit.unit)
+        value << int(uvalue)
+        value :: parent.uvalue=int(value)
     Conditional:
         condition = show_uvalue
         Label:
-            text << unit.show_unit(uvalue)
-    Conditional:
-        condition = display_unit is not None
-        Label:
-            text << "["+display_unit.unit+" "+display_unit.show_unit(uvalue*display_unit)+"]"
+            text << "{0} ({1:g} {2})".format(unit.output_unit, uvalue/unit, unit.unit)
 
 
 enamldef UnitFloatField(UnitHGroup):
@@ -135,17 +117,17 @@ enamldef UnitFloatField(UnitHGroup):
     attr allow_exponent : bool = True
     attr uvalue : float = 0.0
     unit_field.validator<<FloatValidator(minimum=minimum, maximum=maximum, allow_exponent=allow_exponent)
-    unit_field.text << unicode(uvalue/unit)
-    unit_field.text :: parent.uvalue=float(text)*unit
+    unit_field.text << "{0:g}".format(uvalue)
+    unit_field.text :: parent.uvalue=float(text)
     unit_field.activated::
         if not validator.validate(text):
             if parent.minimum is None:
                 if parent.maximum is None:
                     parent.uvalue=0.0
                 else:
-                    parent.uvalue=parent.maximum*unit
+                    parent.uvalue=parent.maximum
             else:
-                parent.uvalue=parent.minimum*unit
+                parent.uvalue=parent.minimum
 
 ################ test window ###################
 from taref.physics.units import GHz, dBm, mW
@@ -162,40 +144,41 @@ enamldef Main(Window):
     """test window"""
     VGroup:
         UnitFloatField: uff:
-            uvalue = 0.1e9
+            uvalue = 0.2e9
             unit=GHz
-            show_uvalue=True
-            minimum=1.0
-            maximum=10.0
+            #show_uvalue=True
+            minimum=1.0e9
+            maximum=10.0e9
         UnitFloatField:
-            uvalue = 1.0*dBm/mW
-            unit=dBm/mW #"Hz"
-            show_uvalue=True
-            minimum=-30.0
-            maximum=0.0
+            uvalue = 1.0#*dBm/mW
+            unit=mW/dBm#/mW #"Hz"
+            #show_uvalue=True
+            #minimum=-30.0
+            #maximum=0.0
         UnitFloatField:
             uvalue = 1.0
-            display_unit=dBm/mW #"Hz"
+            #display_unit=dBm/mW #"Hz"
             show_uvalue=True
-            minimum=-30.0
-            maximum=0.0
+            #minimum=-30.0
+            #maximum=0.0
 
         UnitIntField:
             uvalue=10*GHz
-            show_uvalue=True
-            #unit=GHz
-            minimum=10
-            maximum=20
+            #show_uvalue=True
+            unit=GHz
+            minimum=int(10e9)
+            maximum=int(20e9)
+
         UnitSpinBox: isb:
-            uvalue=10
-            #unit=GHz
-            maximum = 100000
-            show_uvalue=True
+            uvalue=10e9
+            unit=GHz
+            maximum = int(100e9)
+
         UnitFloatField:
             #uvalue = unit_func(0.5)
             unit=sqrd(unit=r"^2", format_str=r"$^2$")
             #unit_factor=0.25
             #unit="Hz"
-            show_uvalue=True
+            #show_uvalue=True
             #display_func=sq
 

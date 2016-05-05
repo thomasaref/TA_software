@@ -11,10 +11,10 @@ from enaml.widgets.api import (Window, Container, HGroup, Label, CheckBox, Slide
                                VGroup, ScrollArea, SpinBox, Form, Field, MultilineField,
                                PushButton, ObjectCombo, GroupBox)
 from enaml.layout.api import spacer
-from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params, get_run_params, mult_unit
-from taref.core.fundcore_e import UnitIntField, UnitSpinBox, UnitFloatField, aHGroup, aVGroup#, mult_unit_factor
+from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params, get_run_params
+from taref.core.fundcore_e import UnitIntField, UnitSpinBox, UnitFloatField, aHGroup, aVGroup, CheckButton
 from taref.core.universal import msg
-from atom.api import Property
+from atom.api import Property, ReadOnly
 from taref.physics.units import unitless
 from enaml.stdlib.slider_transform import FloatTransform
 
@@ -59,7 +59,9 @@ enamldef ReadOnlyVar(Var):
 
 def rdonly(vmodel, vname):
     member=vmodel.get_member(vname)
-    if type(member) is Property:
+    if type(member) is ReadOnly:
+        return True
+    elif type(member) is Property:
         if member.fset is None:
             return True
     return get_tag(vmodel, vname, "read_only", False)
@@ -86,7 +88,30 @@ enamldef MultilineVar(Var):
         pass
 
 ################### BOOLEANS #########################
-enamldef BoolExt2(CheckBox):
+#
+#enamldef BoolExt2(PushButton):
+#    attr read_only : bool = rdonly(parent.vmodel, parent.vname)
+#    text << unicode(parent.vvalue)
+#    checkable = True
+#    checked << parent.vvalue
+#    clicked ::
+#        if not read_only:
+#            parent.vvalue=self.checked
+#        else:
+#            self.checked=parent.vvalue
+
+enamldef BoolExt(CheckButton):
+    read_only = rdonly(parent.vmodel, parent.vname)
+    value := parent.vvalue
+    True_text=get_map(parent.vmodel, parent.vname, True)
+    False_text=get_map(parent.vmodel, parent.vname, False)
+
+enamldef BoolVar(Var):
+    alias ext
+    BoolExt: ext:
+        pass
+
+enamldef CheckBoxExt(CheckBox):
     """boolean shown as CheckBox with extensions for read_only option"""
     attr read_only : bool = rdonly(parent.vmodel, parent.vname)
     checked << parent.vvalue
@@ -96,21 +121,9 @@ enamldef BoolExt2(CheckBox):
         else:
             self.checked=parent.vvalue
 
-enamldef BoolExt(PushButton):
-    attr read_only : bool = rdonly(parent.vmodel, parent.vname)
-    text << unicode(parent.vvalue)
-    checkable = True
-    checked << parent.vvalue
-    clicked ::
-        if not read_only:
-            parent.vvalue=self.checked
-        else:
-            self.checked=parent.vvalue
-
-enamldef BoolVar(Var):
+enamldef CheckBoxVar(Var):
     alias ext
-    BoolExt: ext:
-        pass
+    CheckBoxExt: ext: pass
 
 ##################### INTS ##############################
 def None_passer(value, coercer=float):
@@ -122,10 +135,10 @@ enamldef UnitIntFieldExt(UnitIntField):
     """integer shown as IntField with units"""
     uvalue:=parent.vvalue
     unit=get_tag(parent.vmodel, parent.vname, "unit", unitless)
-    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
+    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", unit!=unitless)
     minimum=None_passer(get_tag(parent.vmodel, parent.vname, 'low'), int)
     maximum=None_passer(get_tag(parent.vmodel, parent.vname, 'high'), int)
-    display_unit=get_tag(parent.vmodel, parent.vname, "display_unit", None)
+    #display_unit=get_tag(parent.vmodel, parent.vname, "display_unit", None)
     read_only=rdonly(parent.parent.vmodel, parent.parent.vname)
 
 enamldef UnitIntVar(Var):
@@ -137,10 +150,10 @@ enamldef UnitSpinBoxExt(UnitSpinBox):
     """integer shown as SpinBox with units"""
     uvalue:=parent.vvalue
     unit=get_tag(parent.vmodel, parent.vname, "unit", unitless)
-    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
+    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", unit != unitless)
     minimum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'low', -2147483648))
     maximum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'high', 2147483647))
-    display_unit=get_tag(parent.vmodel, parent.vname, "display_func", None)
+    #display_unit=get_tag(parent.vmodel, parent.vname, "display_func", None)
 
 
 enamldef UnitSpinBoxVar(Var):
@@ -153,11 +166,11 @@ enamldef UnitFloatExt(UnitFloatField):
     """extends Var for float types"""
     uvalue:=parent.vvalue
     unit=get_tag(parent.vmodel, parent.vname, "unit", unitless)
-    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
+    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", unit != unitless)
     minimum=None_passer(get_tag(parent.vmodel, parent.vname, 'low'), float)
     maximum=None_passer(get_tag(parent.vmodel, parent.vname, 'high'), float)
     read_only=rdonly(parent.parent.vmodel, parent.parent.vname)
-    display_unit=get_tag(parent.vmodel, parent.vname, "display_unit", None)
+    #display_unit=get_tag(parent.vmodel, parent.vname, "display_unit", None)
 
 enamldef UnitFloatVar(Var):
     alias ext
@@ -181,7 +194,7 @@ enamldef UnitRangeExt(UnitIntField): uif:
     """a Range control with units"""
     uvalue:=parent.vvalue
     unit=get_tag(parent.vmodel, parent.vname, "unit", unitless)
-    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
+    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", unit != unitless)
     minimum = get_minimum(parent.vmodel, parent.vname)
     maximum = get_maximum(parent.vmodel, parent.vname)
     attr tracking : bool = get_tag(parent.vmodel, parent.vname, "tracking", False)
@@ -204,7 +217,7 @@ enamldef UnitFloatRangeExt(UnitFloatField): uff:
     """ A form control template specialization for Float members"""
     uvalue:=parent.vvalue
     unit=get_tag(parent.vmodel, parent.vname, "unit", unitless)
-    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", False)
+    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", unit != unitless)
     minimum = get_minimum(parent.vmodel, parent.vname)
     maximum = get_maximum(parent.vmodel, parent.vname)
     attr tracking : bool = get_tag(parent.vmodel, parent.vname, "tracking", False)
@@ -277,7 +290,7 @@ if __name__=="__main__":
             return self.t_field
 
 
-        t_bool=Bool(True).tag(desc="default boolean template")
+        t_bool=Bool(True).tag(desc="default boolean template", mapping={True : "On", False : "Off"})
 
         def _observe_t_bool(self, change):
             reset_property(self, "t_readonly_bool")

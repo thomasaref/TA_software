@@ -17,15 +17,15 @@ from taref.core.universal import Array
 from taref.physics.fundamentals import sqrt, pi, e, h, array, eig, delete, sin, sinc_sq, sinc, linspace, zeros, absolute, cos, arange
 from functools import wraps
 
-def auto_param(func):
-    @wraps(func)
-    def new_func(self, *args, **kwargs):
-        for param in new_func.run_params[len(args):]:
-            if param not in kwargs:
-                kwargs[param]=getattr(self, param)
-        return func(self, *args, **kwargs)
-    new_func.run_params=get_run_params(func, skip=1)
-    return new_func
+#def auto_param(func):
+#    @wraps(func)
+#    def new_func(self, *args, **kwargs):
+#        for param in new_func.run_params[len(args):]:
+#            if param not in kwargs:
+#                kwargs[param]=getattr(self, param)
+#        return func(self, *args, **kwargs)
+#    new_func.run_params=get_run_params(func, skip=1)
+#    return new_func
 
 class QDT(IDT, Qubit):
     base_name="QDT"
@@ -41,41 +41,41 @@ class QDT(IDT, Qubit):
             self.couple_mult=self.coupling_mult_dict[self.ft]
             self.Ga0_mult=self.Ga0_mult_dict[self.ft]
 
-    @auto_param
+    @tagged_property
     def coupling_approx(self, couple_mult, Np, K2, f0):
         """approximate coupling at center frequency of QDT, in Hz (double finger)"""
         return couple_mult*Np*K2*f0
 
-    @auto_param
+    @tagged_property
     def Ga0(self, Ga0_mult, f0, epsinf, W, Dvv, Np):
         """Ga0 from morgan"""
         return Ga0_mult*2*pi*f0*epsinf*W*Dvv*(Np**2)
 
-    @auto_param
+    @tagged_property
     def Ga0div2C(self, couple_mult, f0, K2, Np):
         """coupling at center frequency, in Hz (2 pi removed)"""
         return couple_mult*f0*K2*Np
 
-    @auto_param
+    @tagged_property
     def X(self, Np, f, f0):
         """standard frequency dependence"""
         return Np*pi*(f-f0)/f0
 
-    @auto_param
+    @tagged_property
     def Ga(self, f, couple_mult, f0, K2, Np, C):
         return self.coupling(f, couple_mult, f0, K2, Np)*2*C*2*pi
 
-    @auto_param
+    @tagged_property
     def Ba(self, f, mult, f0, K2, Np, C):
         return -self.Lamb_shift(f, mult, f0, K2, Np)*2*C*2*pi
 
-    @auto_param
+    @tagged_property
     def coupling(self, f, couple_mult, f0, K2, Np):
         gamma0=self.Ga0div2C(couple_mult, f0, K2, Np)
         gX=self.X(Np, f, f0)
         return gamma0*(sin(gX)/gX)**2.0
 
-    @auto_param
+    @tagged_property
     def Lamb_shift(self, f, mult, f0, K2, Np):
         """returns Lamb shift"""
         gamma0=self.Ga0div2C(mult, f0, K2, Np)

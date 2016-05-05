@@ -71,15 +71,14 @@ from taref.physics.units import UNIT_DICT
 #                self.get_member(param).setter(do_nothing_set)
 
 def _setup_callables(self, param, typer):
-    """auto makes Callables into instance methods"""
+    """Auto makes Callables into instance methods"""
     if typer == Callable:
         func=getattr(self, param)
         if func is not None:
-            #func.log_message=get_tag(self, param, "log_message", "RAN: {0} {1}")
             make_instancemethod(self, func)
 
 def _setup_ranges(self, param, typer):
-    """autosets low/high tags for Range and FloatRange"""
+    """Autosets low/high tags for Range and FloatRange"""
     if typer in [Range, FloatRange]:
         set_tag(self, param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
 
@@ -90,11 +89,11 @@ def _setup_units(self, param, typer):
         unit_dict=getattr(self, "unit_dict", UNIT_DICT)
         if unit in unit_dict:
             set_tag(self, param, unit=unit_dict[unit])
-    display_unit=get_tag(self, param, "display_unit")
-    if display_unit is not None:# and get_tag(self, param, "unit_factor") is None and get_tag(self, param, "unit_func") is None:
-        unit_dict=getattr(self, "unit_dict", UNIT_DICT)
-        if display_unit in unit_dict:
-            set_tag(self, param, display_unit=unit_dict[display_unit])
+    #display_unit=get_tag(self, param, "display_unit")
+    #if display_unit is not None:# and get_tag(self, param, "unit_factor") is None and get_tag(self, param, "unit_func") is None:
+    #    unit_dict=getattr(self, "unit_dict", UNIT_DICT)
+    #    if display_unit in unit_dict:
+    #        set_tag(self, param, display_unit=unit_dict[display_unit])
 
 
 def extra_setup(self, param, typer):

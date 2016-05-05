@@ -19,6 +19,8 @@ from taref.physics.fundamentals import dB, inv_dB, dB_pwr, inv_dB_pwr
 from enaml.application import Application, schedule, deferred_call
 from contextlib import contextmanager
 
+_MAPPING_SUFFIX_="_mapping"
+
 #def mult_unit_maker(unit_factor):
 #    def mult_unit_func(value):
 #        return value*unit_factor
@@ -35,138 +37,138 @@ from contextlib import contextmanager
 #def inv_dB_maker():
 #    return inv_dB
 
-class unit_func(object):
-    def __init__(self, unit="", format_str=None, coercer=float, output_unit=""):
-        self.unit=unit
-        if format_str is None:
-            format_str=r"{0} "+unit
-        else:
-            format_str=r"{0} "+format_str
-        self.format_str=format_str
-        self.coercer=coercer
-        self.output_unit=output_unit
-
-    def __call__(self, value):
-        return self.func(self.coercer(value))
-
-    def inv(self, value):
-        if value is None:
-            return value
-        return self.inv_func(self.coercer(value))
-
-
-class mult_unit(unit_func):
-    def __init__(self, unit_factor=None, unit="", format_str=None, coercer=float, output_unit=""):
-        self.unit_factor=unit_factor
-        super(mult_unit, self).__init__(unit=unit, format_str=format_str, coercer=coercer, output_unit=output_unit)
-
-    def __call__(self, value):
-        if self.unit_factor is None:
-            return value
-        return super(mult_unit, self).__call__(value)
-
-    def inv(self, value):
-        if self.unit_factor is None:
-            return value
-        return super(mult_unit, self).inv(value)
-
-    def func(self, value):
-        return value*self.unit_factor
-
-    def inv_func(self, value):
-        return value/self.unit_factor
-
-class dB_unit(unit_func):
-    def func(self, value):
-        return dB(value)
-
-    def inv_func(self, value):
-        return inv_dB(value)
-
-class inv_dB_unit(unit_func):
-    def func(self, value):
-        return inv_dB(value)
-
-    def inv_func(self, value):
-        return dB(value)
-
-class dBm_unit(mult_unit):
-    def func(self, value):
-        return 0.001*inv_dB_pwr(value)/self.unit_factor
-
-    def inv_func(self, value):
-        return dB_pwr(value*self.unit_factor/0.001)
-
-class inv_dBm_unit(mult_unit):
-    def inv_func(self, value):
-        return 0.001*inv_dB_pwr(value)/self.unit_factor
-
-    def func(self, value):
-        return dB_pwr(value*self.unit_factor/0.001)
-
-def dBm_Float(value=-100.0):
-    unit_f=dBm_unit(unit="dBm", output_unit="mW", unit_factor=0.001)
-    uvalue=unit_f(value)
-    return Float(uvalue).tag(unit="dBm", unit_func=unit_f)
-
-def mW_Float(value=1.0e-10):
-    return Float(value).tag(unit="mW", unit_func=inv_dBm_unit(unit="mW", output_unit="dBm", unit_factor=0.001))
-
-_MAPPING_SUFFIX_="_mapping"
-
-def generate_unit_dict():
-    PREFIX_DICT={"f":1.0e-15, "p":1.0e-12, "n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2, "":1.0,
-           "k":1.0e3, "M":1.0e6, "G":1.0e9, "T" : 1.0e12 }
-
-    unit_dict={"%": mult_unit(unit_factor=1.0/100.0, unit="%", format_str=r"$\%$"),
-               "dB": dB_unit(unit="dB"),
-               "inv_dB": inv_dB_unit(unit="inv dB"),
-               }
-    for unit in ("m", "Hz", "W", "F", "Ohm"):
-        if  unit=="Ohm":
-            unit_format = "$\Omega$"
-        else:
-            unit_format = unit
-        for prefix, unit_factor in PREFIX_DICT.iteritems():
-            if prefix=="u":
-                if unit=="Ohm":
-                    format_str="$\mu \Omega$"
-                else:
-                    format_str="$\mu$"+unit_format
-            else:
-                format_str=prefix+unit_format
-            unit_dict[prefix+unit]= mult_unit(unit_factor=unit_factor, unit=prefix+unit, format_str=format_str)
-    return unit_dict
+#class unit_func(object):
+#    def __init__(self, unit="", format_str=None, coercer=float, output_unit=""):
+#        self.unit=unit
+#        if format_str is None:
+#            format_str=r"{0} "+unit
+#        else:
+#            format_str=r"{0} "+format_str
+#        self.format_str=format_str
+#        self.coercer=coercer
+#        self.output_unit=output_unit
+#
+#    def __call__(self, value):
+#        return self.func(self.coercer(value))
+#
+#    def inv(self, value):
+#        if value is None:
+#            return value
+#        return self.inv_func(self.coercer(value))
+#
+#
+#class mult_unit(unit_func):
+#    def __init__(self, unit_factor=None, unit="", format_str=None, coercer=float, output_unit=""):
+#        self.unit_factor=unit_factor
+#        super(mult_unit, self).__init__(unit=unit, format_str=format_str, coercer=coercer, output_unit=output_unit)
+#
+#    def __call__(self, value):
+#        if self.unit_factor is None:
+#            return value
+#        return super(mult_unit, self).__call__(value)
+#
+#    def inv(self, value):
+#        if self.unit_factor is None:
+#            return value
+#        return super(mult_unit, self).inv(value)
+#
+#    def func(self, value):
+#        return value*self.unit_factor
+#
+#    def inv_func(self, value):
+#        return value/self.unit_factor
+#
+#class dB_unit(unit_func):
+#    def func(self, value):
+#        return dB(value)
+#
+#    def inv_func(self, value):
+#        return inv_dB(value)
+#
+#class inv_dB_unit(unit_func):
+#    def func(self, value):
+#        return inv_dB(value)
+#
+#    def inv_func(self, value):
+#        return dB(value)
+#
+#class dBm_unit(mult_unit):
+#    def func(self, value):
+#        return 0.001*inv_dB_pwr(value)/self.unit_factor
+#
+#    def inv_func(self, value):
+#        return dB_pwr(value*self.unit_factor/0.001)
+#
+#class inv_dBm_unit(mult_unit):
+#    def inv_func(self, value):
+#        return 0.001*inv_dB_pwr(value)/self.unit_factor
+#
+#    def func(self, value):
+#        return dB_pwr(value*self.unit_factor/0.001)
+#
+#def dBm_Float(value=-100.0):
+#    unit_f=dBm_unit(unit="dBm", output_unit="mW", unit_factor=0.001)
+#    uvalue=unit_f(value)
+#    return Float(uvalue).tag(unit="dBm", unit_func=unit_f)
+#
+#def mW_Float(value=1.0e-10):
+#    return Float(value).tag(unit="mW", unit_func=inv_dBm_unit(unit="mW", output_unit="dBm", unit_factor=0.001))
 
 
-myUNIT_DICT=generate_unit_dict()
-#for key in myUNIT_DICT:
-#    print myUNIT_DICT[key].unit, myUNIT_DICT[key](1.0), myUNIT_DICT[key].inv(1.0)
 
-def united(obj, name, value=None, inv=False):
-    if value is None:
-        value=getattr(obj, name)
-    unit_func=get_tag(obj, name, "unit_func")
-    if unit_func is None:
-        return value
-    if inv:
-        return unit_func.inv(value)
-    return unit_func(value)
-
-PREFIX_DICT={"f":1.0e-15, "p":1.0e-12, "n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
-           "k":1.0e3, "M":1.0e6, "G":1.0e9, "T" : 1.0e12 }
-
-
-UNIT_DICT={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
-           "G":1.0e9, "M":1.0e6, "k":1.0e3,
-           "%":1.0/100.0,
-           "nm":1.0e-9, "um":1.0e-6, "mm":1.0e-3, "cm":1.0e-2, "km":1.0e3,
-           "GHz":1.0e9, "MHz":1.0e6, "kHz":1.0e3,
-           "mW" : 1.0e-3,
-           "fF" : 1.0e-15,
-           "kOhm" : 1.0e3
-           #"dB":dB_func(), "inv_dB":inv_dB_func(),
-}
+#def generate_unit_dict():
+#    PREFIX_DICT={"f":1.0e-15, "p":1.0e-12, "n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2, "":1.0,
+#           "k":1.0e3, "M":1.0e6, "G":1.0e9, "T" : 1.0e12 }
+#
+#    unit_dict={"%": mult_unit(unit_factor=1.0/100.0, unit="%", format_str=r"$\%$"),
+#               "dB": dB_unit(unit="dB"),
+#               "inv_dB": inv_dB_unit(unit="inv dB"),
+#               }
+#    for unit in ("m", "Hz", "W", "F", "Ohm"):
+#        if  unit=="Ohm":
+#            unit_format = "$\Omega$"
+#        else:
+#            unit_format = unit
+#        for prefix, unit_factor in PREFIX_DICT.iteritems():
+#            if prefix=="u":
+#                if unit=="Ohm":
+#                    format_str="$\mu \Omega$"
+#                else:
+#                    format_str="$\mu$"+unit_format
+#            else:
+#                format_str=prefix+unit_format
+#            unit_dict[prefix+unit]= mult_unit(unit_factor=unit_factor, unit=prefix+unit, format_str=format_str)
+#    return unit_dict
+#
+#
+#myUNIT_DICT=generate_unit_dict()
+##for key in myUNIT_DICT:
+##    print myUNIT_DICT[key].unit, myUNIT_DICT[key](1.0), myUNIT_DICT[key].inv(1.0)
+#
+#def united(obj, name, value=None, inv=False):
+#    if value is None:
+#        value=getattr(obj, name)
+#    unit_func=get_tag(obj, name, "unit_func")
+#    if unit_func is None:
+#        return value
+#    if inv:
+#        return unit_func.inv(value)
+#    return unit_func(value)
+#
+#PREFIX_DICT={"f":1.0e-15, "p":1.0e-12, "n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
+#           "k":1.0e3, "M":1.0e6, "G":1.0e9, "T" : 1.0e12 }
+#
+#
+#UNIT_DICT={"n":1.0e-9, "u":1.0e-6, "m":1.0e-3, "c":1.0e-2,
+#           "G":1.0e9, "M":1.0e6, "k":1.0e3,
+#           "%":1.0/100.0,
+#           "nm":1.0e-9, "um":1.0e-6, "mm":1.0e-3, "cm":1.0e-2, "km":1.0e3,
+#           "GHz":1.0e9, "MHz":1.0e6, "kHz":1.0e3,
+#           "mW" : 1.0e-3,
+#           "fF" : 1.0e-15,
+#           "kOhm" : 1.0e3
+#           #"dB":dB_func(), "inv_dB":inv_dB_func(),
+#}
 
 def safe_call(func, *args, **kwargs):
     """utility function for safely calling functions that doesn't return anything"""
@@ -189,53 +191,16 @@ def safe_log_debug(*args, **kwargs):
 def safe_set_tag(obj, name, **kwargs):
     safe_call(set_tag, obj, name, **kwargs)
 
-#def safe_getattr(obj, name, default=None):
-#    """thread safe function for getting. not so useful"""
-#    if Application.instance() is None:
-#        return getattr(obj, name, default)
-#    return schedule(getattr, args=(obj, name, default))
-
-#@contextmanager
-#def safe_run(obj):
-#    """generates a context which safely turns off abort and busy when done"""
-#    yield
-#    safe_setattr(obj, "abort", False)
-#    safe_setattr(obj, "busy", False)
-
-
-#@contextmanager
-#def busy_run(obj):
-#    """generates a context which safely turns off progress, abort and busy when done"""
-#    safe_setattr(obj, "progress", 0)
-#    safe_setattr(obj, "busy", True)
-#    with safe_run(obj):
-#        yield
-#    safe_setattr(obj, "progress", 0)
-#    #safe_setattr(obj, "abort", False)
-    #safe_setattr(obj, "busy", False)
-
-
-
-
 def get_value_check(obj, name, value):
-        """coerces and checks value when getting. For Enum this allows the inverse mapping.
-        For List, this calls the get_value_check for the respective parameter in the List"""
+        """Coerces value when getting. For Enum, this allows the inverse mapping."""
         if get_type(obj, name) is Enum:
             return get_inv(obj, name, value)
         else:
             return type(getattr(obj, name))(value)
-#        elif get_type(obj, name) is List:
-#            for key, item in value.iteritems():
-#                temp=get_tag(obj, key, 'send_now', obj.send_now)
-#                set_tag(obj, key, send_now=False)
-#                setattr(obj, key, get_value_check(obj, key, item))
-#                set_tag(obj, key, send_now=temp)
-#            return value.keys()
- #       return value
 
-def get_display(obj, name):
-    disp_unit=get_tag(obj, name, "display_unit")
-    return disp_unit.show_unit(getattr(obj, name)*disp_unit)
+#def get_display(obj, name):
+#    disp_unit=get_tag(obj, name, "display_unit")
+#    return disp_unit.show_unit(getattr(obj, name)*disp_unit)
 
 def set_tag(obj, name, **kwargs):
     """sets the tag of a member using Atom's built in tag functionality"""
@@ -350,11 +315,11 @@ def log_func(func, log=False, log_message=None, threaded=False):
 class LogFunc(object):
     """decorator class that exposes logging and threading options in log_func"""
     def __init__(self, **kwargs):
-        self.threaded=self.kwargs.get("threaded", False)
-        self.log=self.kwargs.get("log", False)
-        self.log_message=self.kwargs.get("log_message", False)
+        self.threaded=kwargs.get("threaded", False)
+        self.log=kwargs.get("log", False)
+        self.log_message=kwargs.get("log_message", None)
 
-    def __call_(self, func):
+    def __call__(self, func):
         return log_func(func, log=self.log, log_message=self.log_message, threaded=self.threaded)
 
 #def log_func(func, pname=None, threaded=False):
@@ -479,24 +444,44 @@ class tag_Property(tag_Callable):
         cached=self.kwargs.pop("cached")
         return Property(func, cached=cached).tag(**self.kwargs)
 
+def fset_maker(fget):
+    """creates set function from list of functions"""
+    def setit(obj, value):
+        for fset in fget.fset_list:
+            setattr(obj, fset.pname, fset(obj, value))
+    return setit
+
 def property_func(func, **kwargs):
-    name_list=func.func_name.split("_get_")
-    if name_list[0]=="":
-        name=name_list[1]
-    else:
-        name=name_list[0]
     new_func=LogFunc(**kwargs)(func)
     new_func.fset_list=[]
     def setter(set_func):
         s_func=LogFunc(**kwargs)(set_func)
-        s_func.pname=name
+        s_func.pname=s_func.func_name.split("_get_")[1]
         new_func.fset_list.append(s_func)
         return s_func
     new_func.setter=setter
-    return Property(new_func).tag(**kwargs)
+    return new_func
+
+class tom_Property(Property):
+    def fset_maker(self):
+        def fset_clt(obj, value):
+            for fset in fset_clt.fset_list:
+                setattr(obj, fset.pname, fset(obj, value))
+        fset_clt.fset_list=[]
+        return fset_clt
+
+    def setter(self, func):
+        fset=self.fset
+        if fset is None:
+            fset=super(tom_Property, self).setter(self.fset_maker())
+        fset.fset_list.append(func)
+        return super(tom_Property, self).setter(fset)
 
 class tagged_property(tag_Property):
-    def __call__(self, func):
+
+
+    def __call__(self, func=None):
+        self.fset=self.fset_maker()
         return super(tagged_property, self).__call__(property_func(func, **self.kwargs))
 
 def get_reserved_names(obj):
@@ -556,13 +541,13 @@ def set_log(obj, name, value):
        elif typer in (Unicode, Str):
            log_info("Set {instr} {label} to {length} length string".format(instr=obj_name, label=label, length=len(value)))
        elif typer==Float:
-           unit_factor=get_tag(obj, name, 'unit_factor', 1.0)
-           log_info("Set {instr} {label} to {value} {unit}".format(
-                             instr=obj_name, label=label, value=float(value)/unit_factor, unit=unit), n=1)
+           #unit_factor=get_tag(obj, name, 'unit_factor', 1.0)
+           log_info("Set {instr} {label} to {value:g} {unit}".format(
+                             instr=obj_name, label=label, value=float(value), unit=unit), n=1)
        elif typer==Int:
-           unit_factor=get_tag(obj, name, 'unit_factor', 1)
+           #unit_factor=get_tag(obj, name, 'unit_factor', 1)
            log_info("Set {instr} {label} to {value} {unit}".format(
-                             instr=obj_name, label=label, value=int(value)/unit_factor, unit=unit))
+                             instr=obj_name, label=label, value=int(value), unit=unit))
        else:
            log_info("Set {instr} {label} to {value} {unit}".format(
                              instr=obj_name, label=label, value=value, unit=unit))
@@ -574,20 +559,3 @@ def check_initialized(self, change):
         if get_tag(self, change["name"], "initialized", False):
             raise Exception("{0} already initialized".format(change["name"]))
 
-#def code_caller(topdog, code, *args, **kwargs):
-#    result=code(*args, **kwargs)
-#    try:
-#        deferred_call(setattr, topdog, 'busy', False)
-#        deferred_call(setattr, topdog, 'progress', 0)
-#        deferred_call(setattr, topdog, 'abort', False)
-#    except RuntimeError:
-#        topdog.busy=False
-#        topdog.progress=0
-#        topdog.abort=False
-#    return result
-#
-#def do_it_if_needed(topdog, code, *args, **kwargs):
-#    if not topdog.busy:
-#        topdog.busy = True
-#        thread = Thread(target=code_caller, args=(topdog, code)+args, kwargs=kwargs)
-#        thread.start()
