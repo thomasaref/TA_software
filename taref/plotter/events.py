@@ -8,7 +8,7 @@ Created on Thu Feb  4 12:53:43 2016
 #from plotter_backbone import PlotUpdate
 from numpy import argmin, absolute, amin, amax#, arange
 from atom.api import Atom, Float, Int, Bool, observe#, cache_property
-from taref.core.atom_extension import tag_Property
+from taref.core.property import tag_property
 from numpy import sqrt
 
 class MPLEventHandler(Atom):
@@ -17,18 +17,18 @@ class MPLEventHandler(Atom):
     xstart=Float()
     xend=Float()
 
-    @tag_Property()
+    @tag_property()
     def xdist(self):
         return self.xend-self.xstart
 
     ystart=Float()
     yend=Float()
 
-    @tag_Property()
+    @tag_property()
     def ydist(self):
         return self.yend-self.ystart
 
-    @tag_Property()
+    @tag_property()
     def total_dist(self):
         self.get_member("xdist").reset(self)
         self.get_member("ydist").reset(self)

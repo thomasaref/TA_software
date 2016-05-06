@@ -10,19 +10,17 @@ from .atom_extension import set_tag, set_all_tags, get_tag, get_all_tags, get_ty
 from .atom_extension import get_reserved_names, get_all_params, get_all_main_params, get_main_params, set_attr,set_log, check_initialized
 
 #thread safe calls
-from .atom_extension import safe_call, safe_setattr, safe_set_attr, safe_log_debug, safe_set_tag
+from .threadsafe import safe_call, safe_setattr, safe_set_attr, safe_log_debug, safe_set_tag
 
 #value checking/Enum related
 from .atom_extension import get_value_check, lowhigh_check, set_value_map, get_map, get_inv
 
 #Property related
-from .atom_extension import get_property_names, get_property_values, reset_property, reset_properties, private_property, tag_Property
+from .property import (get_property_names, get_property_values, reset_property, reset_properties, private_property, tag_property,
+                       SProperty, TProperty, s_property, t_property)
 
 #Callable related
-from .atom_extension import log_func, make_instancemethod, instancemethod, get_run_params, tag_Callable, log_callable, thread_callable
-
-#Unsure
-from .atom_extension import call_func, get_display
+from .callable import log_func, make_instancemethod, instancemethod, get_run_params, tag_callable, log_callable, thread_callable
 
 from .agent import Operative, Spy, Agent
 

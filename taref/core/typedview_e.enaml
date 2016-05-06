@@ -8,7 +8,8 @@ Created on Fri Jan 22 19:49:53 2016
 from taref.core.log import log_debug
 from enaml.core.api import Conditional, DynamicTemplate, Looper
 from enaml.widgets.api import (MultilineField, Window, Container, Label, HGroup, VGroup, ScrollArea, ObjectCombo, SpinBox, PushButton,  GroupBox, CheckBox, Form)
-from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params, get_run_params, set_tag
+from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params, set_tag
+from taref.core.callable import get_run_params
 from atom.api import Bool, Int, Typed, List, Coerced, Enum, Callable, Float, Str, Unicode, Range, FloatRange, Instance, Property
 from taref.core.universal import msg
 from numpy import ndarray
@@ -156,7 +157,7 @@ enamldef ListReadOnlyExt(aHGroup):
     #attr display_unit = get_tag(parent.vmodel, parent.vname, "display_unit", None)
     MultilineField:
         read_only=True
-        text<<list2string(parent.parent.vvalue, unit, separator="\n")
+        #text<<list2string(parent.parent.vvalue, separator="\n")
 #    Conditional:
 #        condition = unit!=unitless
 #        Label:

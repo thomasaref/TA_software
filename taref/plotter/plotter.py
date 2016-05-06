@@ -7,7 +7,7 @@ Created on Fri Apr 22 14:50:17 2016
 
 from taref.plotter.fig_format import Fig
 from taref.plotter.plotter_backbone import process_kwargs
-from taref.core.atom_extension import private_property
+from taref.core.property import private_property
 from taref.plotter.plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh_plot, multiline_plot
 
 

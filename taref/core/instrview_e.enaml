@@ -12,7 +12,8 @@ from taref.core.var_e import Var, EnumExt
 from taref.core.typedview_e import TypedView
 from taref.core.fundcore_e import aHGroup
 from atom.api import Callable, Typed, Instance
-from taref.core.atom_extension import get_type, get_tag, set_tag, get_run_params, get_main_params
+from taref.core.atom_extension import get_type, get_tag, set_tag, get_main_params
+from taref.core.callable import get_run_params
 from types import MethodType
 
 ##########################DYNAMIC################################

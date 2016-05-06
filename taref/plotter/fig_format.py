@@ -14,7 +14,7 @@ from atom.api import Bool, Unicode, Float, Enum, Int, cached_property#, Typed
 from taref.core.agent import Operative
 from enaml import imports
 #from plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh, multiline_plot
-from taref.core.atom_extension import private_property
+from taref.core.property import private_property
 
 from matplotlib import rcParams
 #print rcParams

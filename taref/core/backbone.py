@@ -6,10 +6,12 @@ Created on Tue Jul  7 21:52:51 2015
 
 """
 
-from atom.api import Atom, Property, AtomMeta, Value, Unicode
-from taref.core.atom_extension import (private_property, get_reserved_names, get_all_params, LogFunc,
-get_all_main_params, lowhigh_check, make_instancemethod, get_type, get_tag)
-from taref.core.extra_setup import extra_setup
+from atom.api import Atom, Property, AtomMeta
+from taref.core.atom_extension import (get_reserved_names, get_all_params,
+get_all_main_params, lowhigh_check, get_type, get_tag)
+from taref.core.property import TProperty, private_property
+from taref.core.callable import make_instancemethod
+from taref.core.extra_setup import setup_callables, setup_units, setup_ranges
 from enaml.qt.qt_application import QtApplication
 from taref.physics.units import UNIT_DICT
 
@@ -19,50 +21,15 @@ with imports():
     from taref.core.interactive_e import InteractiveWindow, CodeWindow
     from taref.core.log_e import LogWindow
 
-def fset_maker(fget):
-    """creates set function from list of functions"""
-    def setit(obj, value):
-        for fset in fget.fset_list:
-            setattr(obj, fset.pname, fset(obj, value))
-    return setit
-
-def dictify_fget(private_param, dicty, key):
-    def getit(obj):
-        temp=getattr(obj, private_param)
-        if temp is None:
-            return dicty.get(getattr(obj, key), temp)
-        return temp
-    return getit
-
-def dictify_fset(private_param):
-    def setit(obj, value):
-        return value
-        #setattr(obj, private_param, value)
-        #obj.get_member(param).reset(obj)
-    setit.pname=private_param
-    return setit
-
 class BackboneAtomMeta(AtomMeta):
+    @classmethod
+    def extra_setup(cls, param, itm, update_dict):
+        TProperty.extra_setup(param, itm, update_dict)
+
     def __new__(meta, name, bases, dct):
-        update_dict={} #dict(_name=Unicode().tag(private=True))
+        update_dict={}
         for param, itm in dct.items():
-            if isinstance(itm, Property): #hasattr(value, "propify"):
-                if itm.metadata is not None:
-                    if not itm.metadata.get("private", False):
-                        dictify=itm.metadata.get("dictify", False)
-                        if dictify:
-                            private_param="_"+param
-                            update_dict[private_param]=Value().tag(private=True)
-                            key=itm.metadata["key"]
-                            get_f=LogFunc(**itm.metadata)(dictify_fget(private_param, dictify, key))
-                            get_f.fset_list=getattr(itm.fget, "fset_list", [])
-                            itm.getter(get_f)
-                            set_f=LogFunc(**itm.metadata)(dictify_fset(private_param))
-                            itm.fget.fset_list.append(set_f)
-                        func_name=param+"_f"
-                        update_dict[func_name]=itm.fget
-                        if getattr(itm.fget, 'fset_list', [])!= []:
-                            itm.setter(fset_maker(itm.fget))
+            BackboneAtomMeta.extra_setup(param, itm, update_dict)
         dct.update(update_dict)
         return AtomMeta.__new__(meta, name, bases, dct)
 
@@ -112,7 +79,7 @@ class Backbone(Atom):
     @private_property
     def property_dict(self):
         """returns a dict mapping property_names to Property items"""
-        return dict([(name, self.get_member(name)) for name in self.all_params if type(self.get_member(name)) is Property])
+        return dict([(name, self.get_member(name)) for name in self.all_params if isinstance(self.get_member(name), Property)])
 
     @private_property
     def property_names(self):
@@ -127,7 +94,9 @@ class Backbone(Atom):
     def extra_setup(self, param, typer):
         """Performs extra setup during initialization where param is name of parameter and typer is it's Atom type.
         Can be customized in child classes. default extra setup handles units, auto tags low and high for Ranges, and makes Callables into instancemethods"""
-        extra_setup(self, param, typer)
+        setup_callables(self, param, typer)
+        setup_ranges(self, param, typer)
+        setup_units(self, param, typer)
 
     def call_func(self, name, **kwargs):
         """calls a func using keyword assignments. If name corresponds to a Property, calls the get func.
@@ -143,14 +112,6 @@ class Backbone(Atom):
         if name in self.all_params:
             value=lowhigh_check(self, name, value)
         super(Backbone, self).__setattr__(name, value)
-
-    #def reset_property(self, name):
-    #    self.get_member(name).reset(self)
-
-    #def reset_properties(self):
-    #    """resets all Properties in main_params"""
-    #    for item in self.property_dict.values():
-    #        item.reset(self)
 
     def instancemethod(self, func):
         """decorator for adding instancemethods defined outside of class (meant for Callables)"""

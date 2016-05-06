@@ -7,7 +7,9 @@ Created on Sat Jul  4 13:03:26 2015
 from taref.core.log import log_debug
 from atom.api import Unicode, ContainerList, Float, Bool, Int, Typed, Instance, Event, Property, ReadOnly
 from taref.core.backbone import Backbone
-from taref.core.atom_extension import private_property, set_log, reset_properties, safe_setattr, check_initialized, set_tag
+from taref.core.atom_extension import set_log, check_initialized, set_tag
+from taref.core.property import private_property, reset_properties
+from taref.core.threadsafe import safe_setattr
 from collections import OrderedDict
 from taref.core.shower import shower
 from time import time, sleep
@@ -206,7 +208,6 @@ class Operative(Backbone):
         set_tag(self, "name", initialized=False)
         super(Operative, self).__init__(**kwargs)
         set_tag(self, "name", initialized=True)
-        #self.name=agent_name
         self.add_func(*self.cls_run_funcs)
 
 
@@ -235,6 +236,7 @@ class Agent(Operative):
         super(Agent, self).__setattr__(name, value)
         if name in self.all_params:
             set_log(self, name, value)
+            reset_properties(self)
             reset_properties(self)
 
     def extra_setup(self, param, typer):

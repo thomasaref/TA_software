@@ -11,7 +11,8 @@ from enaml.widgets.api import (Window, Container, HGroup, Label, CheckBox, Slide
                                VGroup, ScrollArea, SpinBox, Form, Field, MultilineField,
                                PushButton, ObjectCombo, GroupBox)
 from enaml.layout.api import spacer
-from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params, get_run_params
+from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params
+from taref.core.callable import get_run_params
 from taref.core.fundcore_e import UnitIntField, UnitSpinBox, UnitFloatField, aHGroup, aVGroup, CheckButton
 from taref.core.universal import msg
 from atom.api import Property, ReadOnly

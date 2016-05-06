@@ -6,7 +6,7 @@ Created on Sat Apr 23 14:04:56 2016
 """
 
 from taref.core.agent import Operative
-from taref.core.atom_extension import tag_Property
+#from taref.core.atom_extension import tag_property
 from taref.plotter.plotter import line, Plotter
 from atom.api import Typed, Unicode
 
