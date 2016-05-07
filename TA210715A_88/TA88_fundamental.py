@@ -7,7 +7,7 @@ Created on Mon Feb 15 14:08:41 2016
 
 from taref.physics.qdt import QDT
 from taref.physics.idt import IDT
-from taref.core.atom_extension import get_tag, tag_Property
+#from taref.core.atom_extension import get_tag, tag_property
 from taref.filer.read_file import Read_HDF5
 from taref.filer.filer import Folder
 from taref.core.agent import Agent

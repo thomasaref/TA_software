@@ -5,16 +5,16 @@ Created on Sun Apr 24 12:42:53 2016
 @author: thomasaref
 """
 
-from taref.core.api import Agent, Array, tag_Property, log_debug
+from taref.core.api import Agent, Array, tag_property, log_debug, s_property
 from taref.filer.read_file import Read_HDF5
-from taref.physics.qubit import fq, Ej, flux_over_flux0
-from taref.physics.fitting_functions import fano, lorentzian, refl_lorentzian, full_fano_fit
-from taref.physics.fundamentals import fft_filter
-from taref.plotter.api import line, colormesh
+from taref.physics.qdt import QDT
+from taref.physics.fitting_functions import fano, lorentzian, refl_lorentzian, full_fano_fit, full_fit
+from taref.physics.fundamentals import fft_filter, hann_ifft, fft_filter2, fft_filter3, filt_prep, fft_filter5
+from taref.plotter.api import line, colormesh, scatter
 from atom.api import Float, Typed, Unicode, Int, Callable, Enum
 from h5py import File
 from numpy import float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array
-from scipy.optimize import leastsq
+from scipy.optimize import leastsq, curve_fit
 from taref.physics.qdt import QDT
 
 class LyzerBase(Agent):
@@ -65,31 +65,72 @@ class Lyzer(LyzerBase):
     on_res_ind=Int()
     start_ind=Int()
     stop_ind=Int()
-    filt_end_ind=Int(58)
-    filt_start_ind=Int(5)
+    filt_center=Int()
+    filt_halfwidth=Int()
+    #filt_end_ind=Int(58)
+    #filt_start_ind=Int(5)
+
+    @tag_property()
+    def filt_start_ind(self):
+        return self.filt_center-self.filt_halfwidth
+
+    @tag_property()
+    def filt_end_ind(self):
+        return self.filt_center+self.filt_halfwidth#-1
+
+    #@s_property()
+    #def filt_center_ind(self, filt_start_ind, filt_end_ind):
+    #    return (filt_start_ind+filt_end_ind)/2
+
+    #@filt_center_ind.setter
+    #def _get_filt_start_ind(self, filt_center_ind, filt_width):
+    #    return
+
+    #def _get_filt_end_ind(self, filt_center_ind, filt_width):
+    #    return
+
+    #@s_property()
+    #def filt_width(self, filt_start_ind, filt_end_ind):
+    #    return filt_end_ind-filt_start_ind
+
+    #@filt_center_ind.setter
+    #def _get_filt_start_ind(self, filt_center_ind, filt_width):
+    #    return (2*filt_center_ind-filt_width)/2
+
+    #@filt_width.setter
+    #def _get_filt_start_ind_get_(self, filt_width, filt_center_ind):
+    #    return (2*filt_center_ind-filt_width)/2
+
+    #@filt_center_ind.setter
+    #def _get_filt_end_ind(self, filt_center_ind, filt_width):
+    #    return (2*filt_center_ind+filt_width)/2
+
+    #@filt_width.setter
+    #def _get_filt_end_ind_get_(self, filt_width, filt_center_ind):
+    #    return (2*filt_center_ind+filt_width)/2
 
     fit_func=Callable(fano).tag(private=True)
     read_data=Callable(read_data).tag(private=True)
 
     fit_type=Enum("Transmission", "Reflection")
 
-    @tag_Property(plot=True, sub=True)
+    @tag_property(plot=True, sub=True)
     def fq(self):
-        return fq(Ej=self.Ej, Ec=self.qdt.Ec)
+        return self.qdt._get_fq(Ej=self.Ej, Ec=self.qdt.Ec)
 
-    @tag_Property(plot=True, sub=True)
+    @tag_property(plot=True, sub=True)
     def Ej(self):
-        return Ej(Ejmax=self.qdt.Ejmax, flux_over_flux0=self.flux_over_flux0)
+        return self.qdt._get_Ej(Ejmax=self.qdt.Ejmax, flux_over_flux0=self.flux_over_flux0)
 
-    @tag_Property(sub=True)
+    @tag_property(sub=True)
     def flux_over_flux0(self):
-        return flux_over_flux0(voltage=self.yoko, offset=self.offset, flux_factor=self.qdt.flux_factor)
+        return self.qdt._get_flux_over_flux0(voltage=self.yoko, offset=self.offset, flux_factor=self.qdt.flux_factor)
 
-    @tag_Property()
+    @tag_property()
     def p_guess(self):
         return [200e6,4.5e9, 0.002, 0.022, 0.1]
 
-    @tag_Property(sub=True)
+    @tag_property(sub=True)
     def indices(self):
         return range(len(self.frequency))
         #return [range(81, 120+1), range(137, 260+1), range(269, 320+1), range(411, 449+1)]#, [490]]#, [186]]
@@ -102,25 +143,25 @@ class Lyzer(LyzerBase):
             myifft[-self.filt_start_ind:]=0.0
         return fft.fft(myifft)
 
-    @tag_Property(plot=True, sub=True)
+    @tag_property(plot=True, sub=True)
     def MagdB(self):
         return 10.0*log10(self.MagAbs)
 
-    @tag_Property(plot=True, sub=True)
+    @tag_property(plot=True, sub=True)
     def MagAbs(self):
         return absolute(self.Magcom)
 
-    @tag_Property(plot=True, sub=True)
+    @tag_property(plot=True, sub=True)
     def MagAbsFilt(self):
         return absolute(self.MagcomFilt)
 
-    @tag_Property(plot=True, sub=True)
+    @tag_property(plot=True, sub=True)
     def MagdBFilt(self):
         return 10.0*log10(self.MagAbsFilt)
 
-    @tag_Property(plot=True, sub=True)
+    @tag_property(plot=True, sub=True)
     def MagcomFilt(self):
-        return array([fft_filter(self.Magcom[:,n], self.filt_start_ind, self.filt_end_ind) for n in range(len(self.yoko))]).transpose()
+        return array([fft_filter3(self.Magcom[:,n], self.filt_start_ind, self.filt_end_ind) for n in range(len(self.yoko))]).transpose()
 
     def magabs_colormesh(self):
         pl, pf=colormesh(self.yoko, self.frequency/1e9, self.MagAbs, plotter="magabs_{}".format(self.name))
@@ -137,13 +178,27 @@ class Lyzer(LyzerBase):
              plot_name="strt {}".format(self.start_ind), label="i {}".format(self.start_ind))
         line(absolute(fft.ifft(self.Magcom[:,self.stop_ind])), plotter=p,
              plot_name="stop {}".format(self.stop_ind), label="i {}".format(self.stop_ind))
+        return p
+
+    def hann_ifft_plot(self):
+        p, pf=line(absolute(hann_ifft(self.Magcom[:,self.on_res_ind])), plotter="ifft_{}".format(self.name),
+               plot_name="onres_{}".format(self.on_res_ind),label="i {}".format(self.on_res_ind))
+        line(absolute(hann_ifft(self.Magcom[:,self.start_ind])), plotter=p,
+             plot_name="strt {}".format(self.start_ind), label="i {}".format(self.start_ind))
+        line(absolute(hann_ifft(self.Magcom[:,self.stop_ind])), plotter=p,
+             plot_name="stop {}".format(self.stop_ind), label="i {}".format(self.stop_ind))
+
+        filt=filt_prep(self.Magcom.shape[1], self.filt_start_ind, self.filt_end_ind)
+        line(filt*0.001, plotter=p)
+
+        return p
 
     def filt_compare(self, ind):
         p=line(self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)", plotter="filtcomp_{}".format(self.name))
         line(self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)", plotter=p)
 
     def magabsfilt_colormesh(self):
-        p=colormesh(self.yoko, self.frequency/1e9, self.MagAbsFilt, plotter="magabsfilt_{}".format(self.name))
+        p, pf=colormesh(self.yoko, self.frequency/1e9, self.MagAbsFilt, plotter="magabsfilt_{}".format(self.name))
         p.set_ylim(min(self.frequency/1e9), max(self.frequency/1e9))
         p.set_xlim(min(self.yoko), max(self.yoko))
         p.xlabel="Yoko (V)"
@@ -154,7 +209,7 @@ class Lyzer(LyzerBase):
                     xlabel="Yoko (V)", ylabel="Frequency (GHz)")
 
     def magdBfiltbgsub_colormesh(self):
-        return colormesh(self.yoko, self.frequency/1e9, self.MagdBFilt-self.MagdBFilt[0, :],
+        return colormesh(self.yoko, self.frequency/1e9, (self.MagdBFilt.transpose()-self.MagdBFilt[:, self.start_ind]).transpose(),
                          plotter="magdBfiltbgsub_{}".format(self.name), xlabel="Yoko (V)", ylabel="Frequency (GHz)")
 
     def full_fano_fit(self):
@@ -166,13 +221,23 @@ class Lyzer(LyzerBase):
 
     def full_fano_fit2(self):
         MagAbsFilt_sq=self.MagAbsFilt**2
-        fit_params=[full_fano_fit(self.fit_func, self.p_guess, MagAbsFilt_sq[n, :], self.fq) for n in self.indices]
-        fit_params=array(zip(*fit_params))
-        return fit_params
+        return full_fano_fit(self.fit_func, self.p_guess, MagAbsFilt_sq, self.fq, indices=self.indices)
+
+        #fit_params=[full_fano_fit(self.fit_func, self.p_guess, MagAbsFilt_sq[n, :], self.fq) for n in self.indices]
+        #fit_params=array(zip(*fit_params))
+        #return fit_params
+
+    def full_fano_fit3(self):
+        MagAbsFilt_sq=self.MagAbsFilt**2
+        return full_fit(self.fit_func, self.p_guess, MagAbsFilt_sq, self.fq, indices=self.indices)
 
     def plot_widths(self, plotter=None):
         fit_params=self.full_fano_fit()
-        scatter_plot(fit_params[0, :], absolute(fit_params[1, :]), color="red", label=self.name, plot_name="widths_{}".format(self.name), plotter=plotter)
+        scatter(fit_params[0, :], absolute(fit_params[1, :]), color="red", label=self.name, plot_name="widths_{}".format(self.name), plotter=plotter)
+
+    def resid_func(self, p, y, x):
+        """residuals of fitting function"""
+        return y-self.fit_func(x, p)
 
     def fano_fit(self, n):
         pbest= leastsq(self.resid_func, self.p_guess, args=(self.MagAbsFilt_sq[n, :], self.flux_par), full_output=1)

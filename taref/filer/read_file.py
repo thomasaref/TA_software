@@ -8,8 +8,7 @@ Created on Tue Mar 24 16:21:06 2015
 from taref.core.log import log_info#, log_debug
 from taref.filer.filer import Filer
 from atom.api import Dict, Event, Typed, Unicode, cached_property, Atom, observe, Bool, List
-from taref.core.atom_extension import tag_Callable#, tag_Property
-
+from taref.core.api import tag_callable
 from taref.core.universal import read_text
 #from DXF_functions import readdxflayer
 from taref.filer.HDF5_functions import read_hdf5, group
@@ -29,7 +28,7 @@ class Read_File(Filer):
     def _default_show_simple(self):
         return False
 
-    @tag_Callable(button_label="Read")
+    @tag_callable(button_label="Read")
     def file_action(self):
         self.read()
 
