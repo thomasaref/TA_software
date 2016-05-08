@@ -12,7 +12,7 @@ from numpy import array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, ar
 from atom.api import FloatRange
 from taref.core.api import tag_property
 from taref.plotter.api import LineFitter
-from taref.physics.fundamentals import h, filt_prep
+from taref.physics.fundamentals import h#, filt_prep
 from scipy.optimize import fsolve
 from scipy.signal import freqz
 
@@ -20,19 +20,21 @@ s3a4_wg=TA88_Lyzer(filt_center=50, filt_halfwidth=20, on_res_ind=256,# VNA_name=
               rd_hdf=TA88_Read(main_file="Data_0506/S1A4_lowfrq_trans_3and4_sidelobe.hdf5")) #33, 70
 print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
 
-s3a4_wg.read_data(s3a4_wg)
+s3a4_wg.read_data()
 
 
 if __name__=="__main__":
     pl=s3a4_wg.magabs_colormesh()#magabs_colormesh3(s3a4_wg)
     pl=s3a4_wg.hann_ifft_plot()
+    pl=s3a4_wg.ifft_plot()
+    s3a4_wg.filt_compare(s3a4_wg.on_res_ind)
     #filt=filt_prep(601, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind)
     #line(filt*0.001, plotter=pl)
-    colormesh(s3a4_wg.MagAbsFilt)#, plotter="magabsfilt_{}".format(self.name))
+    #colormesh(s3a4_wg.MagAbsFilt)#, plotter="magabsfilt_{}".format(self.name))
 
-    #s3a4_wg.magabsfilt_colormesh()
-    #s3a4_wg.magdBfilt_colormesh()
-    #s3a4_wg.magdBfiltbgsub_colormesh()
+    s3a4_wg.magabsfilt_colormesh()
+    s3a4_wg.magdBfilt_colormesh()
+    s3a4_wg.magdBfiltbgsub_colormesh()
 
 
     #flux_par3(s3a4_wg, pl=pl)

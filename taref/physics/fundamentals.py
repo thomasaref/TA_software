@@ -82,62 +82,6 @@ def sinc_sq(X):
     """sinc squared which doesn't autoinclude pi"""
     return (sinc(X))**2
 
-
-def fft_filter(Magcom, filt_start_ind=0, filt_end_ind=0):
-    myifft=fft.ifft(Magcom)
-    if filt_end_ind!=0:
-        myifft[filt_end_ind:-filt_end_ind]=0.0
-    if filt_start_ind!=0:
-        myifft[:filt_start_ind]=0.0
-        myifft[-filt_start_ind:]=0.0
-    return fft.fft(myifft)
-
-def filt_prep(length, start_ind, stop_ind, filt_func=hann):
-    filt=zeros(length)
-    if stop_ind==0:
-        stop_ind=length
-    filt[start_ind:stop_ind]=filt_func(stop_ind-start_ind)
-    return filt
-
-def fft_filter2(Magcom, filt_start_ind=0, filt_end_ind=0, filt_func=hann):
-    filt=filt_prep(len(Magcom), filt_start_ind, filt_end_ind, filt_func=filt_func)
-    return fft.fft(fft.ifft(Magcom)*filt)
-
-def hann_ifft(Magcom):
-    return fft.ifft(Magcom*hann(len(Magcom)))
-
-def fft_filter3(Magcom, filt_start_ind=0, filt_end_ind=0, filt_func=hann):
-
-    filt=filt_prep(len(Magcom), filt_start_ind, filt_end_ind, filt_func=filt_func)
-    return fft.fft(hann_ifft(Magcom)*filt)/hann(len(Magcom))
-
-def filt_prep2(length, start_ind, stop_ind, numtaps=128, window="hamming"):
-    return firwin(numtaps, [start_ind, stop_ind], pass_zero=False, nyq=length, window=window)
-
-def fft_filter4(Magcom, filt_start_ind=0, filt_end_ind=0, window='hamming'):
-    filt=filt_prep2(len(Magcom), filt_start_ind, filt_end_ind, window=window)#, numtaps=len(Magcom))
-    return filtfilt(filt, [1.0], Magcom)#[:, len(filt) - 1:]
-    #return convolve(Magcom, filt)# mode='valid')
-    return fftconvolve(Magcom, filt)#b[np.newaxis, :], mode='valid')
-
-def fft_filter5(Magcom, filt_start_ind=0, filt_end_ind=0, filt_func=hann):
-
-    filt=filt_prep(len(Magcom), filt_start_ind, filt_end_ind, filt_func=filt_func)
-    return fftconvolve(filt, Magcom) #fft.fft(hann_ifft(Magcom)*filt)/hann(len(Magcom))
-
-if __name__=="__main__":
-    import matplotlib.pyplot as plt
-    filt=filt_prep(101, 5, 50)
-    plt.plot(filt)
-    filt=filt_prep(101, 5, 50, hann)
-    plt.plot(filt)
-    filt=filt_prep(101, 5, 50, hanning)
-    plt.plot(filt)
-    filt=filt_prep2(101, 5, 50)
-    plt.plot(absolute(freqz(filt, worN=101)[1]))
-
-    plt.show()
-
 #
 #_material_dict=dict(
 #    LiNbYZ=dict(epsinf=46.0*eps0,

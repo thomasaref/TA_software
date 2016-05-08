@@ -58,7 +58,7 @@ class Qubit(Agent):
     def _get_loop_area(self, loop_width, loop_height):
         return loop_width*loop_height
 
-    Cq=Float(1.0e-13).tag(desc="shunt capacitance", unit="fF", tex_str=r"$C_q$")
+    C=Float(1.0e-13).tag(desc="shunt capacitance", unit="fF", tex_str=r"$C_q$")
 
     Rn=Float(10.0e3).tag(desc="Normal resistance of SQUID", unit="kOhm", label="DC Junction resistance", tex_str=r"$R_n$")
 
@@ -87,12 +87,12 @@ class Qubit(Agent):
 
     Ec=SProperty().tag(desc="Charging Energy", unit="hGHz")#, unit_factor=1.0e9*h)
     @Ec.getter
-    def _get_Ec(self, Cq):
+    def _get_Ec(self, C):
         """Charging energy"""
-        return e**2/(2.0*Cq)
+        return e**2/(2.0*C)
 
     @Ec.setter
-    def _get_Cq(self, Ec):
+    def _get_C(self, Ec):
         """inverse charging energy"""
         return e**2/(2.0*Ec)
 
@@ -123,7 +123,7 @@ class Qubit(Agent):
     fq_approx=SProperty()
     @fq_approx.getter
     def _get_fq_approx(self, Ej, Ec):
-        return sqrt(8.0*Ej*Ec)/h
+        return (sqrt(8.0*Ej*Ec)-Ec)/h
 
     fq_max=SProperty().tag(unit="hGHz", label="fq max full")
     @fq_approx.getter
@@ -140,6 +140,11 @@ class Qubit(Agent):
     def _get_Ej_get_fq(self, fq, Ec):
         """h*fq=sqrt(8.0*Ej*Ec) - Ec"""
         return ((h*fq+Ec)**2)/(8.0*Ec)
+
+    L=SProperty()
+    @L.getter
+    def _get_L(self, fq, C):
+        return 1.0/(C*(2*pi*fq)**2)
 
     anharm=SProperty().tag(desc="absolute anharmonicity", unit="hGHz")
     @anharm.getter

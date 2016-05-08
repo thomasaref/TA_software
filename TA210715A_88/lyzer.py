@@ -9,11 +9,11 @@ from taref.core.api import Agent, Array, tag_property, log_debug, s_property
 from taref.filer.read_file import Read_HDF5
 from taref.physics.qdt import QDT
 from taref.physics.fitting_functions import fano, lorentzian, refl_lorentzian, full_fano_fit, full_fit
-from taref.physics.fundamentals import fft_filter, hann_ifft, fft_filter2, fft_filter3, filt_prep, fft_filter5
+from taref.physics.filtering import fft_filter, hann_ifft, fft_filter2, fft_filter3, filt_prep
 from taref.plotter.api import line, colormesh, scatter
-from atom.api import Float, Typed, Unicode, Int, Callable, Enum
+from atom.api import Float, Typed, Unicode, Int, Callable, Enum, List
 from h5py import File
-from numpy import float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array
+from numpy import float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin
 from scipy.optimize import leastsq, curve_fit
 from taref.physics.qdt import QDT
 
@@ -51,6 +51,7 @@ def read_data(self):
         self.stop_ind=len(self.yoko)-1
 
 class Lyzer(LyzerBase):
+    base_name="lyzer"
     #def _default_main_params(self):
     #    return ["rt_atten", "fridge_atten", "fridge_gain", "rt_gain", "comment", "flux_factor", "offset", "fit_type",
     #            "on_res_ind", "start_ind", "stop_ind", "filt_start_ind", "filt_end_ind"]
@@ -67,12 +68,15 @@ class Lyzer(LyzerBase):
     stop_ind=Int()
     filt_center=Int()
     filt_halfwidth=Int()
+    indices=List()
+    port_name=Unicode('S21')
+    VNA_name=Unicode("RS VNA")
     #filt_end_ind=Int(58)
     #filt_start_ind=Int(5)
 
     @tag_property()
     def filt_start_ind(self):
-        return self.filt_center-self.filt_halfwidth
+        return self.filt_center-self.filt_halfwidth+1
 
     @tag_property()
     def filt_end_ind(self):
@@ -110,7 +114,7 @@ class Lyzer(LyzerBase):
     #    return (2*filt_center_ind+filt_width)/2
 
     fit_func=Callable(fano).tag(private=True)
-    read_data=Callable(read_data).tag(private=True)
+    read_data=Callable(read_data).tag(sub=True)
 
     fit_type=Enum("Transmission", "Reflection")
 
@@ -130,8 +134,7 @@ class Lyzer(LyzerBase):
     def p_guess(self):
         return [200e6,4.5e9, 0.002, 0.022, 0.1]
 
-    @tag_property(sub=True)
-    def indices(self):
+    def _default_indices(self):
         return range(len(self.frequency))
         #return [range(81, 120+1), range(137, 260+1), range(269, 320+1), range(411, 449+1)]#, [490]]#, [186]]
 
@@ -161,6 +164,7 @@ class Lyzer(LyzerBase):
 
     @tag_property(plot=True, sub=True)
     def MagcomFilt(self):
+        #return array([fft_filter4(self.Magcom[:,n], self.filt_center) for n in range(len(self.yoko))]).transpose()
         return array([fft_filter3(self.Magcom[:,n], self.filt_start_ind, self.filt_end_ind) for n in range(len(self.yoko))]).transpose()
 
     def magabs_colormesh(self):
@@ -173,34 +177,40 @@ class Lyzer(LyzerBase):
 
     def ifft_plot(self):
         p, pf=line(absolute(fft.ifft(self.Magcom[:,self.on_res_ind])), plotter="ifft_{}".format(self.name),
-               plot_name="onres_{}".format(self.on_res_ind),label="i {}".format(self.on_res_ind))
-        line(absolute(fft.ifft(self.Magcom[:,self.start_ind])), plotter=p,
+               plot_name="onres_{}".format(self.on_res_ind),label="i {}".format(self.on_res_ind), color="red")
+        line(absolute(fft.ifft(self.Magcom[:,self.start_ind])), plotter=p, linewidth=1.0,
              plot_name="strt {}".format(self.start_ind), label="i {}".format(self.start_ind))
-        line(absolute(fft.ifft(self.Magcom[:,self.stop_ind])), plotter=p,
+        line(absolute(fft.ifft(self.Magcom[:,self.stop_ind])), plotter=p, linewidth=1.0,
              plot_name="stop {}".format(self.stop_ind), label="i {}".format(self.stop_ind))
         return p
 
     def hann_ifft_plot(self):
-        p, pf=line(absolute(hann_ifft(self.Magcom[:,self.on_res_ind])), plotter="ifft_{}".format(self.name),
+        on_res=hann_ifft(self.Magcom[:,self.on_res_ind])
+        strt=hann_ifft(self.Magcom[:,self.start_ind])
+        stop=hann_ifft(self.Magcom[:,self.stop_ind])
+
+        p, pf=line(absolute(on_res), plotter="hann_ifft_{}".format(self.name), color="red",
                plot_name="onres_{}".format(self.on_res_ind),label="i {}".format(self.on_res_ind))
-        line(absolute(hann_ifft(self.Magcom[:,self.start_ind])), plotter=p,
+        line(absolute(strt), plotter=p, linewidth=1.0,
              plot_name="strt {}".format(self.start_ind), label="i {}".format(self.start_ind))
-        line(absolute(hann_ifft(self.Magcom[:,self.stop_ind])), plotter=p,
+        line(absolute(stop), plotter=p, linewidth=1.0,
              plot_name="stop {}".format(self.stop_ind), label="i {}".format(self.stop_ind))
 
-        filt=filt_prep(self.Magcom.shape[1], self.filt_start_ind, self.filt_end_ind)
-        line(filt*0.001, plotter=p)
+        filt=filt_prep(len(on_res), self.filt_start_ind, self.filt_end_ind)
+        top=max([amax(absolute(on_res)), amax(absolute(strt)), amax(absolute(stop))])
+        line(filt*top, plotter=p, color="green")
 
         return p
 
     def filt_compare(self, ind):
-        p=line(self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)", plotter="filtcomp_{}".format(self.name))
+        p, pf=line(self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)", plotter="filtcomp_{}".format(self.name))
         line(self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)", plotter=p)
 
     def magabsfilt_colormesh(self):
-        p, pf=colormesh(self.yoko, self.frequency/1e9, self.MagAbsFilt, plotter="magabsfilt_{}".format(self.name))
-        p.set_ylim(min(self.frequency/1e9), max(self.frequency/1e9))
-        p.set_xlim(min(self.yoko), max(self.yoko))
+        p, pf=colormesh(self.yoko[10:-10], self.frequency[10:-10]/1e9, self.MagAbsFilt[10:-10, 10:-10], plotter="magabsfilt_{}".format(self.name))
+        p.set_ylim(min(self.frequency[10:-10]/1e9), max(self.frequency[10:-10]/1e9))
+        p.set_xlim(min(self.yoko[10:-10]), max(self.yoko[10:-10]))
+        #pf.set_clim(amin(self.MagAbsFilt), amax(self.MagAbsFilt))
         p.xlabel="Yoko (V)"
         p.ylabel="Frequency (GHz)"
 
