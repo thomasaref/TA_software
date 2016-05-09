@@ -46,7 +46,7 @@ def fft_filter4(Magcom, filt_center=0):
     filt[filt_center]=1
     return fft.fft(hann_ifft(Magcom)*filt)/hann(len(Magcom))
 
-def filt_prep2(length, start_ind, stop_ind, numtaps=1001, window="flattop"):
+def filt_prep2(length, start_ind, stop_ind, numtaps=101, window="flattop"):
     return firwin(numtaps, [start_ind, stop_ind], pass_zero=False, nyq=length, window=window)
 
 #def filt_prep3(length, start_ind, stop_ind, n=1001, window="flattop"):#blackmanharris
@@ -59,9 +59,9 @@ def filt_prep2(length, start_ind, stop_ind, numtaps=1001, window="flattop"):
 #    d[n/2] = d[n/2] + 1
 #    return d
 #
-#def fft_filter4(Magcom, filt_start_ind=0, filt_end_ind=0, window='flattop'):
-#    filt=filt_prep2(len(Magcom), filt_start_ind, filt_end_ind, window=window)#, numtaps=len(Magcom))
-#    return filtfilt(filt, [1.0], Magcom)#[:, len(filt) - 1:]
+def fft_filter5(Magcom, filt_start_ind=0, filt_end_ind=0, window='flattop'):
+    filt=filt_prep2(len(Magcom), filt_start_ind, filt_end_ind, window=window)#, numtaps=len(Magcom))
+    return filtfilt(filt, [1.0], Magcom)#[:, len(filt) - 1:]
 #    #return convolve(Magcom, filt)# mode='valid')
 #    return fftconvolve(Magcom, filt)#b[np.newaxis, :], mode='valid')
 #

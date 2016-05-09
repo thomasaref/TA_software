@@ -10,7 +10,7 @@ Collection of functions relating to qubits, particularly transmons
 from scipy.constants import e, h, hbar, k as kB, epsilon_0 as eps0, pi
 c_eta = 0.8
 
-from numpy import (sin, cos, sqrt, exp, empty, mean, exp, log10, arange, array, ndarray, delete,
+from numpy import (sin, cos, arccos, sqrt, exp, empty, mean, exp, log10, arange, array, ndarray, delete,
                    absolute, dtype, angle, amin, amax, linspace, zeros, shape)
 
 
@@ -108,7 +108,11 @@ class Qubit(Agent):
     Ej=SProperty().tag(unit="hGHz")
     @Ej.getter
     def _get_Ej(self, Ejmax, flux_over_flux0):
-        return Ejmax*absolute(cos(pi*flux_over_flux0))
+        return Ejmax*absolute(cos(flux_over_flux0)) #*pi
+
+    @Ej.setter
+    def _get_flux_over_flux0_get_Ej(self, Ej, Ejmax):
+        return arccos(Ej/Ejmax)#/pi
 
     EjdivEc=SProperty().tag(desc="Ej over Ec")
     @EjdivEc.getter

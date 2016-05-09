@@ -15,27 +15,81 @@ from taref.plotter.api import LineFitter
 from taref.physics.fundamentals import h#, filt_prep
 from scipy.optimize import fsolve
 from scipy.signal import freqz
+from taref.physics.fitting_functions import lorentzian, rpt_fit, lorentzian2
+from time import time
+a=TA88_Lyzer(filt_center=50, filt_halfwidth=20, on_res_ind=256, VNA_name="RS VNA",
+              rd_hdf=TA88_Read(main_file="Data_0505/S1A4_lowfrq_trans_3and4_sidelobe.hdf5"),
+            fit_func=lorentzian, p_guess=[50e6,4.1e9, 3e-7, 7.5e-7], #[0.2,2.3, 3e-7, 7.5e-7],
+            offset=0.0) #33, 70
+#print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
 
-s3a4_wg=TA88_Lyzer(filt_center=50, filt_halfwidth=20, on_res_ind=256,# VNA_name="RS VNA",
-              rd_hdf=TA88_Read(main_file="Data_0506/S1A4_lowfrq_trans_3and4_sidelobe.hdf5")) #33, 70
-print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
 
-s3a4_wg.read_data()
+a.read_data()
 
 
 if __name__=="__main__":
-    pl=s3a4_wg.magabs_colormesh()#magabs_colormesh3(s3a4_wg)
-    pl=s3a4_wg.hann_ifft_plot()
-    pl=s3a4_wg.ifft_plot()
-    s3a4_wg.filt_compare(s3a4_wg.on_res_ind)
+    pl=a.magabs_colormesh()#magabs_colormesh3(s3a4_wg)
+    pl=a.hann_ifft_plot()
+    pl=a.ifft_plot()
+    a.filt_compare(a.on_res_ind)
     #filt=filt_prep(601, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind)
     #line(filt*0.001, plotter=pl)
     #colormesh(s3a4_wg.MagAbsFilt)#, plotter="magabsfilt_{}".format(self.name))
 
-    s3a4_wg.magabsfilt_colormesh()
-    s3a4_wg.magdBfilt_colormesh()
-    s3a4_wg.magdBfiltbgsub_colormesh()
+    a.magabsfilt_colormesh()
+    a.magdBfilt_colormesh()
+    a.magdBfiltbgsub_colormesh()
 
+    def flux_par3(self, offset=-0.0, flux_factor=0.52, Ejmax=h*44.0e9, f0=5.35e9, alpha=0.0, pl=None):
+        #fq_vec=array([f-self.qdt._get_Lamb_shift(f=f, f0=f0) for f in self.frequency])
+        fq_vec=array([sqrt(f*(f-2*self.qdt._get_Lamb_shift(f=f))) for f in self.frequency])
+        Ej=self.qdt._get_Ej_get_fq(fq=fq_vec) #Ej_from_fq(fq_vec, qdt.Ec)
+        flux_d_flux0=self.qdt._get_flux_over_flux0_get_Ej(Ej=Ej)
+        #flux_d_flux0=arccos(Ej/Ejmax)#-pi/2
+        #flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax))
+        #flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax)+pi)
+        #flux_d_flux0=append(flux_d_flux0, arccos(Ej/Ejmax)-pi)
+
+        return self.qdt._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
+
+    def plot_widths(self, plotter=None):
+        print "first fit"
+        tstart=time()
+        #fit_p=self.fano_fit(440)
+        #print self.p_guess, fit_p
+        #fit=lorentzian(self.yoko, fit_p[1:])
+        #pl, pf=line(self.yoko, self.MagAbsFilt_sq[440, :])
+        #line(self.yoko, fit, plotter=pl, color="red")
+        fit_params=self.full_fano_fit()
+        pl, pf=scatter(self.frequency, absolute(fit_params[1, :]), color="red", label=self.name, plot_name="widths_{}".format(self.name))
+
+        line(self.frequency, self.qdt._get_coupling(self.frequency)+18e6, plotter=pl)
+
+        pl, pf=scatter(self.frequency, fit_params[2, :], color="red", label=self.name, plot_name="widths_{}".format(self.name))
+        line(self.frequency, flux_par3(self), plotter=pl)
+        print "fit second", tstart-time()
+        tstart=time()
+
+        fq_vec=array([sqrt(f*(f-2*self.qdt._get_Lamb_shift(f=f))) for f in self.frequency])
+
+        pl, pf = scatter(fit_params[2, :], fq_vec, color="red")
+        #flux_d_flux0=self.qdt._get_flux_over_flux0(voltage=self.yoko, offset=0.0)
+        fq=self.qdt._get_flux_parabola(voltage=self.yoko, offset=0.0)
+        line(self.yoko, fq, plotter=pl)
+        #fit_params=self.full_fano_fit2()
+        #def rpt_fit2(self):
+        #    MagAbsFilt_sq=self.MagAbsFilt**2
+        #    return rpt_fit(lorentzian2, self.p_guess, MagAbsFilt_sq[440, :], self.yoko)
+        #fit2_p=rpt_fit2(self)
+        #print fit2_p
+        #fit2=lorentzian2(self.yoko, *fit2_p)
+        #line(self.yoko, fit2, plotter=pl, color="green")
+        #scatter(absolute(fit_params[1, :]), color="red", label=self.name, plot_name="widths_{}".format(self.name))
+        print "fit third", tstart-time()
+        tstart=time()
+        #fit_params=self.full_fano_fit3()
+        #scatter(absolute(fit_params[1, :]), color="red", label=self.name, plot_name="widths_{}".format(self.name))
+        print "fit done", tstart-time()
 
     #flux_par3(s3a4_wg, pl=pl)
     #magfilt_cmesh(s3a4_wg)
@@ -44,7 +98,7 @@ if __name__=="__main__":
     #fit_params=s3a4_wg.full_fano_fit2()
     print "done"
     #scatter(absolute(fit_params[1, :]))
-    #s3a4_wg.plot_widths()
+    plot_widths(a)
     pl.show()
 
 

@@ -15,7 +15,7 @@ from shutil import move#, copyfile
 from numpy import ndarray, size
 #from taref.core.read_file import Read_HDF5, Read_NP, Read_TXT, Read_DXF
 #from collections import OrderedDict
-from taref.core.atom_extension import tag_Callable
+from taref.core.api import tag_callable
 
 from taref.filer.HDF5_functions import rewrite_hdf5, group, dataset#, File
 from taref.core.universal import write_text
@@ -40,7 +40,7 @@ class Save_File(Filer):
     def _default_show_simple(self):
         return False
 
-    @tag_Callable(button_label="Save")
+    @tag_callable(button_label="Save")
     def file_action(self):
         self.save()
 

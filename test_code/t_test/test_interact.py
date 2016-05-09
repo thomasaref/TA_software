@@ -5,7 +5,7 @@ Created on Sat Apr  9 19:30:11 2016
 @author: thomasaref
 """
 
-from taref.test.interact import Interact
+from taref.core.interact import Interact
 from atom.api import Atom, Float, Typed
 from enaml.qt.qt_application import QtApplication
 

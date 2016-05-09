@@ -104,8 +104,9 @@ enamldef MultilineVar(Var):
 enamldef BoolExt(CheckButton):
     read_only = rdonly(parent.vmodel, parent.vname)
     value := parent.vvalue
-    True_text=get_map(parent.vmodel, parent.vname, True)
-    False_text=get_map(parent.vmodel, parent.vname, False)
+    mapping = get_tag(parent.vmodel, parent.vname, {})
+    #True_text=get_map(parent.vmodel, parent.vname, True)
+    #False_text=get_map(parent.vmodel, parent.vname, False)
 
 enamldef BoolVar(Var):
     alias ext

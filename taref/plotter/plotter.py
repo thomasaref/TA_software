@@ -16,25 +16,25 @@ class Plotter(Fig):
         kwargs=process_kwargs(self, kwargs)
         return line_plot(self, *args, **kwargs)
 
-    def vline(self, plot_name="", *args, **kwargs):
+    def vline(self, *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
-        return vline_plot(self, plot_name, *args, **kwargs)
+        return vline_plot(self, *args, **kwargs)
 
-    def hline(self, plot_name="", *args, **kwargs):
+    def hline(self, *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
-        return hline_plot(self, plot_name, *args, **kwargs)
+        return hline_plot(self, *args, **kwargs)
 
-    def scatter(self, plot_name="", *args, **kwargs):
+    def scatter(self, *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
-        return scatter_plot(self, plot_name, *args, **kwargs)
+        return scatter_plot(self, *args, **kwargs)
 
     def colormesh(self, *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
         return colormesh_plot(self, *args, **kwargs)
 
-    def multiline(self, plot_name="", *args,**kwargs):
+    def multiline(self, *args,**kwargs):
         kwargs=process_kwargs(self, kwargs)
-        return multiline_plot(self, plot_name=plot_name, *args,**kwargs)
+        return multiline_plot(self, *args,**kwargs)
 
     def savefig(self, dir_path="/Users/thomasaref/Documents/TA_software/", fig_name="test_colormap_plot.png"):
         """saves the figure. if a canvas does not exist, the window will be shown and hidden to create it.

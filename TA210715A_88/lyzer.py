@@ -8,8 +8,8 @@ Created on Sun Apr 24 12:42:53 2016
 from taref.core.api import Agent, Array, tag_property, log_debug, s_property
 from taref.filer.read_file import Read_HDF5
 from taref.physics.qdt import QDT
-from taref.physics.fitting_functions import fano, lorentzian, refl_lorentzian, full_fano_fit, full_fit
-from taref.physics.filtering import fft_filter, hann_ifft, fft_filter2, fft_filter3, filt_prep
+from taref.physics.fitting_functions import fano, lorentzian, refl_lorentzian, full_fano_fit, full_fit, lorentzian2
+from taref.physics.filtering import fft_filter5, hann_ifft, fft_filter2, fft_filter3, filt_prep
 from taref.plotter.api import line, colormesh, scatter
 from atom.api import Float, Typed, Unicode, Int, Callable, Enum, List
 from h5py import File
@@ -29,6 +29,12 @@ class LyzerBase(Agent):
 
     offset=Float(-0.035)
     flux_factor=Float(0.2925)
+
+    def _default_offset(self):
+        return 0.0
+
+    def _default_flux_factor(self):
+        return self.qdt.flux_factor
 
     comment=Unicode().tag(read_only=True, spec="multiline")
 
@@ -69,10 +75,14 @@ class Lyzer(LyzerBase):
     filt_center=Int()
     filt_halfwidth=Int()
     indices=List()
+    p_guess=List()
     port_name=Unicode('S21')
     VNA_name=Unicode("RS VNA")
     #filt_end_ind=Int(58)
     #filt_start_ind=Int(5)
+
+    def _default_p_guess(self):
+        return [200e6,4.5e9, 0.002, 0.022, 0.1]
 
     @tag_property()
     def filt_start_ind(self):
@@ -128,11 +138,8 @@ class Lyzer(LyzerBase):
 
     @tag_property(sub=True)
     def flux_over_flux0(self):
-        return self.qdt._get_flux_over_flux0(voltage=self.yoko, offset=self.offset, flux_factor=self.qdt.flux_factor)
+        return self.qdt._get_flux_over_flux0(voltage=self.yoko, offset=self.offset, flux_factor=self.flux_factor)
 
-    @tag_property()
-    def p_guess(self):
-        return [200e6,4.5e9, 0.002, 0.022, 0.1]
 
     def _default_indices(self):
         return range(len(self.frequency))
@@ -156,7 +163,7 @@ class Lyzer(LyzerBase):
 
     @tag_property(plot=True, sub=True)
     def MagAbsFilt(self):
-        return absolute(self.MagcomFilt)
+        return absolute(self.MagcomFilt)#.transpose()-absolute(self.MagcomFilt[:,0])).transpose()
 
     @tag_property(plot=True, sub=True)
     def MagdBFilt(self):
@@ -222,6 +229,10 @@ class Lyzer(LyzerBase):
         return colormesh(self.yoko, self.frequency/1e9, (self.MagdBFilt.transpose()-self.MagdBFilt[:, self.start_ind]).transpose(),
                          plotter="magdBfiltbgsub_{}".format(self.name), xlabel="Yoko (V)", ylabel="Frequency (GHz)")
 
+    @tag_property(plot=True, sub=True)
+    def MagAbsFilt_sq(self):
+        return (self.MagAbsFilt)**2
+
     def full_fano_fit(self):
         log_debug("started fano fitting")
         fit_params=[self.fano_fit(n)  for n in self.indices]
@@ -239,7 +250,7 @@ class Lyzer(LyzerBase):
 
     def full_fano_fit3(self):
         MagAbsFilt_sq=self.MagAbsFilt**2
-        return full_fit(self.fit_func, self.p_guess, MagAbsFilt_sq, self.fq, indices=self.indices)
+        return full_fit(lorentzian2, self.p_guess, MagAbsFilt_sq, self.fq, indices=self.indices)
 
     def plot_widths(self, plotter=None):
         fit_params=self.full_fano_fit()
@@ -250,7 +261,7 @@ class Lyzer(LyzerBase):
         return y-self.fit_func(x, p)
 
     def fano_fit(self, n):
-        pbest= leastsq(self.resid_func, self.p_guess, args=(self.MagAbsFilt_sq[n, :], self.flux_par), full_output=1)
+        pbest= leastsq(self.resid_func, self.p_guess, args=(self.MagAbsFilt_sq[n, :], self.fq), full_output=1)
         best_parameters = pbest[0]
         #log_debug(best_parameters)
         #if 0:#n==539 or n==554:#n % 10:

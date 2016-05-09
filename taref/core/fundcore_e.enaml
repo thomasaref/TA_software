@@ -52,9 +52,10 @@ enamldef CheckButton(PushButton):
     """a PushButton that stays checked depending on value. Can be made read only. A substitute for CheckBox"""
     attr value : bool = False
     attr read_only : bool = False
-    attr True_text = "True"
-    attr False_text = "False"
-    text << unicode(True_text if value else False_text)
+    attr mapping : dict = {} #{True : "True", False : "False"}
+    #attr True_text = "True"
+    #attr False_text = "False"
+    text << unicode(mapping.get(value, value))#unicode(True_text if value else False_text)
     checkable = True
     checked << value
     clicked ::

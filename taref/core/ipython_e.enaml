@@ -8,6 +8,7 @@ Created on Sat Jan 30 13:51:10 2016
 from enaml.widgets.api import DockPane, MultilineField, MainWindow, IPythonConsole, VGroup, PushButton
 from atom.api import Atom, Float, Unicode, Int, Typed, cached_property
 from taref.core.log import log_debug
+from taref.core.fundcore_e import CheckButton
 
 #class IPythonCatch(Atom):
 #    """a stream catching class for use with the IPython window"""
@@ -50,64 +51,38 @@ from taref.core.log import log_debug
 #            if outstr is not None:
 #                self.ipy_stream.write("#{0}\n".format(outstr))
 
-def update_and_return(indict, updict):
-    """utility function for one line combination of two dictionaries"""
-    indict.update(updict)
-    return indict
+#def update_and_return(indict, updict):
+#    """utility function for one line combination of two dictionaries"""
+#    indict.update(updict)
+#    return indict
 
-#class MyField(MultilineField):
-#    def _observe_text(self, change):
-#        log_debug(change)
 enamldef InteractiveWindow(MainWindow): main:
     destroy_on_close=False
-    #attr input_dict : dict = {}
     attr interact
     name="mypython"
     title = "myPython"
-    #initial_position=ipython_stream.initial_position
-    #initial_size=ipython_stream.initial_size
+    initial_position=interact.initial_position
+    initial_size=interact.initial_size
     activated ::
         interact.redirect_stdout(True)
     closed ::
         self.set_size(self.size())
         self.set_position(self.position())
         interact.redirect_stdout(False)
-
     VGroup:
         alias ipc
         MultilineField: ipc:
             text := interact.input_code
-            #text :: print dir(self)
-            #text ::
-            #    if do.checked:
-            #        log_debug(self.text)
-            #attr InOut_text = "#IPython Log (Outputs appear with comment # in front)\n\n"
-            #activated::
-            #    self.proxy.text_control.textChanged.connect(text_ev(ipy_console=ipc, ipy_stream=ipython_stream))
-            #initial_ns=update_and_return({"wd" : dict([(w.name, w) for w in main.windows])}, input_dict)
-
         MultilineField: runtxt:
             read_only=True
             text<<interact.log_str
-        PushButton:
-            checkable = True
-            checked := interact.exec_on_enter
-            text<< {True : "Execute on enter", False : "Execute on Run"}[self.checked]
-            #clicked ::
-
-
+        CheckButton:
+            value := interact.exec_on_enter
+            mapping = {True : "Execute on enter", False : "Execute on Run"}
         PushButton: do:
                 text = "Run"
-                #checkable = True
-                #checked = True #get_tag(vmodel, vname, "do", False)
-                clicked :: #set_tag(vmodel, vname, do=self.checked)
+                clicked ::
                     interact.exec_code()
-                    #log_debug(ipc.field_text())
-                    #locals()[self.file_reader.local_name]=self
-                    #for key in self.locals_dict:
-                    #    locals()[key]=self.locals_dict[key]
-                    #self.tex_list=[]
-                    #exec(self.input_code)
 
 
 #enamldef CodeWindow(MainWindow):

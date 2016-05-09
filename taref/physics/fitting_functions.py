@@ -30,6 +30,9 @@ def full_fano_fit(fit_func, p_guess, y, x, indices=None):
 def lorentzian(x,p):
     return p[2]*(((x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]
 
+def lorentzian2(x,*p):
+    return p[2]*(((x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]
+
 def refl_lorentzian(x,p):
     return p[2]*(p[0]**2/(p[0]**2+(x-p[1])**2))+p[3]
 

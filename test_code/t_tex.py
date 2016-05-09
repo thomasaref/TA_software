@@ -5,7 +5,7 @@ Created on Thu Feb 11 13:33:17 2016
 @author: thomasaref
 """
 
-from taref.tex.tex import TEX
+from taref.tex.tex2 import TEX
 from taref.core.shower import shower
 
 tx=TEX(source_path="/Users/thomasaref/Dropbox/Current stuff/test_data/source/report.tex")
@@ -49,6 +49,7 @@ tx.mult_fig_start()
 tx.mult_fig_end()
 tx.include_image("test_colormap_plot.png", "image include test", "whats the label")
 tx.TEX_end()
+print tx.locals_dict
 
 #tx.make_tex_file()
 #tx.compile_tex()

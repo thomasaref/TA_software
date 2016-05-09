@@ -173,7 +173,8 @@ class VaxisLine(LineFormat):
         self.remove_collection()
         self.clt=self.plotter.axes.axvline(*args, **kwargs)
 
-def vline_plot(plotter, plot_name="", *args, **kwargs):
+def vline_plot(plotter, *args, **kwargs):
+    plot_name=kwargs.pop("plot_name", "")
     pl0t=VaxisLine(plot_name=plot_name, plotter=plotter)
     pl0t.axvline(*args, **kwargs)
     return pl0t
@@ -187,7 +188,8 @@ class HaxisLine(LineFormat):
         self.remove_collection()
         self.clt=self.plotter.axes.axhline(y, **kwargs)
 
-def hline_plot(plotter, plot_name="", *args, **kwargs):
+def hline_plot(plotter, *args, **kwargs):
+    plot_name=kwargs.pop("plot_name", "")
     pl0t=HaxisLine(plot_name=plot_name, plotter=plotter)
     pl0t.axhline(*args, **kwargs)
     return pl0t
@@ -270,7 +272,8 @@ class ScatterFormat(LineFormat):
         lf.line_plot(self.xdata, self.ydata)
         return lf
 
-def scatter_plot(plotter, plot_name="", *args, **kwargs):
+def scatter_plot(plotter, *args, **kwargs):
+    plot_name=kwargs.pop("plot_name", "")
     pl0t=ScatterFormat(plot_name=plot_name, plotter=plotter)
     pl0t.scatter_plot(*args, **kwargs)
     return pl0t
@@ -421,7 +424,8 @@ class MultiLineFormat(LineFormat, ColormeshFormat):
         cmf.pcolormesh(self.xdata, self.ydata, self.zdata)
         return cmf
 
-def multiline_plot(plotter, plot_name="", *args, **kwargs):
+def multiline_plot(plotter, *args, **kwargs):
+    plot_name=kwargs.pop("plot_name", "")
     pl0t=MultiLineFormat(plot_name=plot_name, plotter=plotter)
     pl0t.multiline_plot(*args, **kwargs)
     return pl0t

@@ -20,7 +20,7 @@ from taref.core.log import log_debug
 from taref.plotter.plotter import line, colormesh #Plotter
 from taref.physics.units import dBm, dB
 from taref.physics.fitting_functions import fano, lorentzian, refl_lorentzian, refl_fano
-#from taref.physics.fundamentals import Ej, fq, flux_over_flux0
+from taref.physics.fundamentals import h#Ej, fq, flux_over_flux0
 
 from lyzer import Lyzer
 
@@ -38,9 +38,11 @@ qdt=QDT(material='LiNbYZ',
         Rn=3780.0, #(3570.0+4000.0)/2.0, Ejmax=h*44.0e9,
         W=25.0e-6,
         eta=0.5,
-        flux_factor=0.2945, #0.52,
+        flux_factor=0.52, #0.2945, #0.52,
         voltage=1.21,
         offset=0.0)
+qdt.Ejmax=h*44.0e9
+qdt.f0=5.35e9
 
 idt=IDT(material='LiNbYZ',
         ft="double",
