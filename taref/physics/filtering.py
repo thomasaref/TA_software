@@ -38,6 +38,9 @@ def hann_ifft(Magcom):
 
 def fft_filter3(Magcom, filt_start_ind=0, filt_end_ind=0, filt_func=hann):
     """hann windows the data before filtering and then divides by hann window at the end"""
+    #newMagcom=Magcom #zeros(padlen*2+len(Magcom))
+    #newMagcom[padlen:-padlen]=Magcom
+
     filt=filt_prep(len(Magcom), filt_start_ind, filt_end_ind, filt_func=filt_func)
     return fft.fft(hann_ifft(Magcom)*filt)/hann(len(Magcom))
 
@@ -46,8 +49,11 @@ def fft_filter4(Magcom, filt_center=0):
     filt[filt_center]=1
     return fft.fft(hann_ifft(Magcom)*filt)/hann(len(Magcom))
 
-def filt_prep2(length, start_ind, stop_ind, numtaps=101, window="flattop"):
-    return firwin(numtaps, [start_ind, stop_ind], pass_zero=False, nyq=length, window=window)
+def filt_prep2(length, start_ind, stop_ind, numtaps=300, window="flattop"):
+    numtaps=length/3
+    return firwin(numtaps, [start_ind, stop_ind], pass_zero=False,
+                  nyq=length/2.0,
+                  window=window)
 
 #def filt_prep3(length, start_ind, stop_ind, n=1001, window="flattop"):#blackmanharris
 #    """creates a bandpass filter by creating a lowpass and highpass fir filters,
@@ -59,7 +65,7 @@ def filt_prep2(length, start_ind, stop_ind, numtaps=101, window="flattop"):
 #    d[n/2] = d[n/2] + 1
 #    return d
 #
-def fft_filter5(Magcom, filt_start_ind=0, filt_end_ind=0, window='flattop'):
+def fft_filter5(Magcom, filt_start_ind=0, filt_end_ind=0, window='blackmanharris'):
     filt=filt_prep2(len(Magcom), filt_start_ind, filt_end_ind, window=window)#, numtaps=len(Magcom))
     return filtfilt(filt, [1.0], Magcom)#[:, len(filt) - 1:]
 #    #return convolve(Magcom, filt)# mode='valid')
@@ -82,7 +88,10 @@ if __name__=="__main__":
     #td2=filt_prep(101, 10,11, filt_func=boxcar)
 
     #td_ifft=fft.fftshift(fft.ifft(td+td2))
-    filt=filt_prep2(800, 15,25, 200)#, "blackmanharris")
+    filt=filt_prep2(800, 250, 300, 1001)#, window="blackmanharris")
+    print filt
+    plt.plot(filt)
+    #plt.plot(absolute(fft.fft(filt)))
     #impulse = zeros(1000)
     #impulse[500] = 1
     #imp_ff = filtfilt(filt, [1.0], impulse)
@@ -92,19 +101,19 @@ if __name__=="__main__":
     #plt.plot(20*log10(absolute(rfft(imp_ff))))
 
 
-    sig = sin(3.14*arange(800)/20.0)+0.1*randn(800)  # Brownian noise
-    plt.plot(absolute(fft.ifft(sig)))
+    #sig = sin(3.14*arange(800)/20.0)+0.1*randn(800)  # Brownian noise
+    #plt.plot(absolute(fft.ifft(sig)))
     print "start filt"
-    sig_ff = filtfilt(filt, [1.0], sig)
+    #sig_ff = filtfilt(filt, [1.0], sig)
     print "end filt"
-    sig_f=fft_filter3(sig, 15, 25, blackmanharris)
+    #sig_f=fft_filter3(sig, 15, 25, blackmanharris)
     #sig_lf = lfilter(filt, [1.0], lfilter(filt, [1.0], sig))
-    plt.figure()
-    plt.plot(sig, color='silver', label='Original')
-    plt.plot(sig_ff, color='#3465a4', label='filtfilt')
-    plt.plot(absolute(sig_f), color='#cc0000', label='lfilter')
-    plt.legend(loc="best")
-    plt.ylim(-1, 1)
+    #plt.figure()
+    #plt.plot(sig, color='silver', label='Original')
+    #plt.plot(sig_ff, color='#3465a4', label='filtfilt')
+    #plt.plot(absolute(sig_f), color='#cc0000', label='lfilter')
+    #plt.legend(loc="best")
+    #plt.ylim(-1, 1)
     #td_f=lfilter(filt, [1.0], td_ifft)
     #plt.plot(td_ifft)
     #plt.plot(td_f, '.')

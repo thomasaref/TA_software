@@ -13,21 +13,20 @@ class unit_func(object):
     def __init__(self, unit="", format_str=None, output_unit="", output_format_str=None):
         self.unit=unit
         if format_str is None:
-            format_str=r"{0:g} "+unit
-        else:
-            format_str=r"{0:g} "+format_str
+            format_str=unit
         self.format_str=format_str
         self.output_unit=output_unit
         if output_format_str is None:
-            output_format_str=r"{0} "+output_unit
-        else:
-            output_format_str=r"{0} "+output_format_str
+            output_format_str=output_unit
+        self.output_format_str=output_format_str
 
-    def show_unit(self, value):
-        """a utility function for displaying a value with output unit added on as a string"""
+    def show_unit(self, value, precision=3):
+        """a utility function for displaying a value with unit added on as a string"""
         if self.output_unit=="":
-            return "({0:g})".format(value)
-        return "({0:g} {1})".format(value, self.output_unit)
+            form_str="({0:." + str(precision) + "g})"
+            return form_str.format(value)
+        form_str="({0:." + str(precision) + "g} {1})"
+        return "({0:g} {1})".format(value, self.format_str)
 
     def __rmul__(self, value):
         if value is None:

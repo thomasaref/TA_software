@@ -20,6 +20,8 @@ s4a1_mp.read_data()
 s4a1_mp.magabs_colormesh()#"colormesh S4A1")
 s4a1_mp.magabsfilt_colormesh()#"filtcolormesh S4A1")
 s4a1_mp.filt_compare(s4a1_mp.on_res_ind )
+s4a1_mp.filt_compare(s4a1_mp.start_ind )
+
 s4a1_mp.magdBfilt_colormesh()
 s4a1_mp.magdBfiltbgsub_colormesh()
 #s4a1_mp.filt_compare("filt_compare_on_res", s4a1_mp.on_res_ind)

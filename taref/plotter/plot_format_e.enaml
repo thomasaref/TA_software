@@ -108,8 +108,7 @@ enamldef AllVGroup(VGroup):
     attr plot_format
     CheckButton:
         value := plot_format.visible
-        True_text="Visible"
-        False_text = "Hidden"
+        mapping = {True : "Visible", False : "Hidden"}
 
 def reset_dyn_items(dyn_items, pf):
     dyn_items.objects=[]

@@ -109,13 +109,6 @@ class TEX(Interact):
         """syncs changes in the output tex of the GUI to tex_list"""
         self.tex_list=self.output_tex.split("\n")
 
-#    def make_input_code(self):
-#        """process the called code to allow access in the GUI and save a copy of the code when saving the laTeX report"""
-#        fb=f_top()
-#        with open(fb.f_code.co_filename, "r") as f:
-#            file_text=f.read()
-#        self.input_code="\n".join([line for line in file_text.split("\n") if self.file_reader(line)])
-
     def simulate_tex(self):
         """simulates the python code producing the output texlist"""
         self.exec_code()
@@ -170,10 +163,12 @@ class TEX(Interact):
         self.compile_tex()
         #self.open_pdf()
 
-    def TEX_start(self, clear=True):
+    def TEX_start(self, clear=True, refresh=True):
         """starts the tex file and serves as a start marker for self.file_reader"""
         if clear:
             self.tex_list=[]
+        if refresh:
+            self.tex_start=self._default_tex_start()
         self.extend(self.tex_start)
         self.make_input_code()
 

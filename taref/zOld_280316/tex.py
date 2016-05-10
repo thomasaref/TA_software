@@ -19,12 +19,43 @@ from taref.filer.read_file import Read_TXT
 from taref.filer.save_file import Save_TXT
 from subprocess import call
 from os.path import relpath
-from taref.core.interact import Interact
+
 from enaml import imports
 with imports():
     from tex_e import TEX_Window
 
-class TEX(Interact):
+class File_Parser(object):
+    """a callable object for extracting the strings in a list between starter and stopper. For use when parsing text files"""
+    def __init__(self, starter, stopper, inblock=False):
+        """starter is the string that marks the beginning of being inblock, stopper is the string that marks the end of being inblock.
+        The local name, preamble and postamble will be extracted during call"""
+        self.starter=starter
+        self.stopper=stopper
+        self.inblock=inblock
+        self.local_name=None
+        self.preamble=[]
+        self.postamble=[]
+
+    def __call__(self, line):
+        """meant for use inside a list comprehension. will return True or False depending on if line is inbetween starter and stopper.
+        local name is extracted as the first thing before starter.
+        preamble is the list of lines before starter is reached, (indicated by local_name not being set)
+        postamble is the list of lines after stopper."""
+        line=line.strip()
+        if self.starter in line:
+            self.inblock=True
+            self.local_name=line.split(self.starter)[0]
+        elif self.stopper in line:
+            self.inblock=False
+            return True
+        if not self.inblock:
+            if self.local_name is None:
+                self.preamble.append(line)
+            else:
+                self.postamble.append(line)
+        return self.inblock
+
+class TEX(Operative):
     """A laTeX/python report maker. source tex and images are included from the source folder. tex and python are written out to the save_file and save_code.
     various subfunctions give easy access to including analysis written in python in a laTeX report"""
 
@@ -36,9 +67,8 @@ class TEX(Interact):
 
     def __init__(self, **kwargs):
         source_path=kwargs.pop("source_path", None)
-        kwargs["starter"]=kwargs.pop("starter", "TEX_start")
-        kwargs["stopper"]=kwargs.pop("stopper", "TEX_end")
-        super(TEX, self).__init__(**kwargs)
+        super(Operative, self).__init__(**kwargs)
+        self.make_input_code()
         if source_path is not None:
             self.read_file.file_path=source_path
         if self.read_file.folder.main_dir!="":
@@ -56,6 +86,7 @@ class TEX(Interact):
     source_dict=Typed(OrderedDict, ())
     tex_list=List()
     output_tex=Unicode()
+    input_code=Unicode()
 
     user_name=Unicode("Thomas Aref")
     tex_title=Unicode("Sample TA210715A46 in Speedy 3-10-15 cooldown")
@@ -66,6 +97,11 @@ class TEX(Interact):
     caption=Unicode()
     locals_dict=Dict()
 
+    @cached_property
+    def file_reader(self):
+        """a stored form of the File_Parser which allows access within various functions of the TEX object"""
+        return File_Parser(".TEX_start", ".TEX_end")
+
     def _default_tex_start(self):
         """This list specifies the starting preamble for the laTeX document and should contain \begin{document} as well as any packages desired"""
         return [r"\documentclass[12pt,a4paper]{article}",
@@ -74,7 +110,6 @@ class TEX(Interact):
                 r"\usepackage{graphicx}",
                 r"\usepackage{hyperref}",
                 r"\usepackage{color}",
-                r"\usepackage{placeins}",
                 r"%\usepackage{tikz}",
                 r"%\usepackage[siunitx]{circuitikz}",
                 r"%\usepackage{cite}",
@@ -110,9 +145,21 @@ class TEX(Interact):
         """syncs changes in the output tex of the GUI to tex_list"""
         self.tex_list=self.output_tex.split("\n")
 
+    def make_input_code(self):
+        """process the called code to allow access in the GUI and save a copy of the code when saving the laTeX report"""
+        fb=f_top()
+        with open(fb.f_code.co_filename, "r") as f:
+            file_text=f.read()
+        self.input_code="\n".join([line for line in file_text.split("\n") if self.file_reader(line)])
+
     def simulate_tex(self):
         """simulates the python code producing the output texlist"""
-        self.exec_code()
+        locals()[self.file_reader.local_name]=self
+        for key in self.locals_dict:
+            locals()[key]=self.locals_dict[key]
+        self.tex_list=[]
+        exec(self.input_code)
+        self.output_tex="\n".join(self.tex_list)
 
     def restore_source(self):
         """process the source_dict to make the tex list just show the \pyb/\pye entries in source_dict"""
@@ -164,19 +211,15 @@ class TEX(Interact):
         self.compile_tex()
         #self.open_pdf()
 
-    def TEX_start(self, clear=True, refresh=True):
+    def TEX_start(self, clear=True):
         """starts the tex file and serves as a start marker for self.file_reader"""
         if clear:
             self.tex_list=[]
-        if refresh:
-            self.tex_start=self._default_tex_start()
         self.extend(self.tex_start)
-        self.make_input_code()
 
     def TEX_end(self):
         """ends the tex file and serves as a stop marker for self.file_reader"""
         self.extend(self.tex_end)
-        self.output_tex="\n".join(self.tex_list)
 
     def ext(self, block_name):
         """inserts the item corresponding to key block name from source_dict"""
@@ -235,10 +278,6 @@ class TEX(Interact):
 
     @cached_property
     def view_window(self):
-        return TEX_Window(agent=self)
-
-    @cached_property
-    def interact_window(self):
         return TEX_Window(agent=self)
 
 if __name__=="__main__":

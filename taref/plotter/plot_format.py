@@ -235,7 +235,7 @@ class ScatterFormat(LineFormat):
     clt=Typed(PathCollection)
 
     marker = Enum(*markers_tuple)
-    marker_size = Float(30.0).tag(former="s")
+    marker_size = Float(1.0).tag(former="s")
 
     facecolor=Enum(*colors_tuple[1:]).tag(former="facecolor")
     edgecolor=Enum(*colors_tuple[1:]).tag(former="edgecolor")

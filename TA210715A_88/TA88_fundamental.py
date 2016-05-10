@@ -30,6 +30,17 @@ class TA88_Read(Read_HDF5):
 
 #read_dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216"
 
+ideal_qdt=QDT(name="idealQDT",
+        material='LiNbYZ',
+        ft="double",
+        a=80.0e-9, #f0=5.35e9,
+        Np=9,
+        Rn=(3570.0+4000.0)/2.0,# Ejmax=h*44.0e9,
+        W=25.0e-6,
+        eta=0.5,
+        flux_factor=0.52, #0.2945, #0.52,
+        voltage=1.21,
+        offset=0.0)
 
 qdt=QDT(material='LiNbYZ',
         ft="double",
@@ -43,6 +54,14 @@ qdt=QDT(material='LiNbYZ',
         offset=0.0)
 qdt.Ejmax=h*44.0e9
 qdt.f0=5.35e9
+
+ideal_idt=IDT(name="idealIDT",
+              material='LiNbYZ',
+        ft="double",
+        Np=36,
+        W=25.0e-6,
+        eta=0.5,
+        a=96.0e-9)
 
 idt=IDT(material='LiNbYZ',
         ft="double",

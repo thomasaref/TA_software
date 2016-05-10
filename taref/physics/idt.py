@@ -35,7 +35,7 @@ class IDT(Agent):
         return {"STquartz" : 0.06e-2, 'GaAs' : 0.035e-2, 'LiNbYZ' : 2.4e-2,
                  'LiNb128' : 2.7e-2, 'LiNbYZX'  : 0.8e-2}[material]
 
-    @t_property(desc="speed of SAW on free surface", unit="m/s", tex_str=r"$v_f$")
+    @t_property(desc="speed of SAW on free surface", unit="m/s", tex_str=r"$v_f$", format_str=r"{0:.4g} m/s")
     def vf(self, material):
         return {"STquartz" : 3159.0, 'GaAs' : 2900.0, 'LiNbYZ' : 3488.0,
                  'LiNb128' : 3979.0, 'LiNbYZX' : 3770.0}[material]

@@ -18,7 +18,7 @@ from scipy.optimize import leastsq, curve_fit
 from taref.physics.qdt import QDT
 
 class LyzerBase(Agent):
-    qdt=QDT()
+    #qdt=QDT()
     base_name="lyzer_base"
     fridge_atten=Float(60)
     fridge_gain=Float(45)
@@ -214,7 +214,8 @@ class Lyzer(LyzerBase):
         line(self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)", plotter=p)
 
     def magabsfilt_colormesh(self):
-        p, pf=colormesh(self.yoko[10:-10], self.frequency[10:-10]/1e9, self.MagAbsFilt[10:-10, 10:-10], plotter="magabsfilt_{}".format(self.name))
+        p, pf=colormesh(self.yoko[10:-10], self.frequency[10:-10]/1e9,
+                        self.MagAbsFilt[10:-10, 10:-10], plotter="magabsfilt_{}".format(self.name))
         p.set_ylim(min(self.frequency[10:-10]/1e9), max(self.frequency[10:-10]/1e9))
         p.set_xlim(min(self.yoko[10:-10]), max(self.yoko[10:-10]))
         #pf.set_clim(amin(self.MagAbsFilt), amax(self.MagAbsFilt))

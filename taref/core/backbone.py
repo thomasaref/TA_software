@@ -14,6 +14,7 @@ from taref.core.callable import make_instancemethod
 from taref.core.extra_setup import setup_callables, setup_units, setup_ranges
 from enaml.qt.qt_application import QtApplication
 from taref.physics.units import UNIT_DICT
+from numpy import float64
 
 from enaml import imports
 with imports():
@@ -130,7 +131,12 @@ class Backbone(Atom):
         lt = [[self.name,  r"Value",  r"Expression", r"Comment"],]
         for param in param_list:
             unit=get_tag(self, param, "unit")
-            format_str=getattr(unit, "format_str", r"{0}")
+            #print param, type(getattr(self, param)) in (int, float, float64)
+            if type(getattr(self, param)) in (int, float, float64):
+                format_str=getattr(unit, "format_str", r"{0:.3g}")
+            else:
+                format_str=getattr(unit, "format_str", "{0}")
+            print param, format_str
             if unit is not None:
                 value=getattr(self, param)/unit
             else:

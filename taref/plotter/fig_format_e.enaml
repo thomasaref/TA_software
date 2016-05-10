@@ -70,14 +70,12 @@ enamldef FigureVGroup(VGroup):
             value:=pltr.y_max
     CheckButton:
         value := pltr.show_legend
-        True_text="Legend"
-        False_text = "No Legend"
+        mapping = {True : "Legend", False : "No Legend"}
     pHGroup:
         constraints = [autob.width==drawb.width]
         CheckButton: autob:
             value := pltr.auto_draw
-            True_text="Auto draw"
-            False_text = "Manual draw"
+            mapping ={True : "Auto draw", False : "Manual draw"}
         PushButton: drawb:
             text = "Draw"
             clicked :: pltr.draw()
@@ -116,8 +114,7 @@ enamldef FigureVGroup(VGroup):
                 other.objects=[]
                 mpc.constraints=[]
 
-        True_text = "hide CS"
-        False_text = "show CS"
+        mapping = {True : "hide CS", False : "show CS"}
     CheckButton:
         value := pltr.show_cross_cursor
         value ::
@@ -136,8 +133,8 @@ enamldef FigureVGroup(VGroup):
                     #    cc.move_cursor(cpf.xcoord, cpf.ycoord)
 
 
-        True_text = "Hide Cursor"
-        False_text = "Show_Cursor"
+        mapping = {True : "Hide Cursor", False : "Show_Cursor"}
+
 enamldef FigureFormatPane(DockPane):
     dock_area="left"
     title = "Figure Format"
