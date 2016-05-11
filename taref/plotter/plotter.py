@@ -9,9 +9,11 @@ from taref.plotter.fig_format import Fig
 from taref.plotter.plotter_backbone import process_kwargs
 from taref.core.property import private_property
 from taref.plotter.plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh_plot, multiline_plot
-
+from atom.api import Unicode
 
 class Plotter(Fig):
+    fig_name=Unicode()
+
     def line(self, *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
         return line_plot(self, *args, **kwargs)

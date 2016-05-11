@@ -8,6 +8,7 @@ Created on Thu Feb 11 13:33:17 2016
 from taref.tex.tex import TEX
 from taref.core.shower import shower
 from TA88_fundamental import qdt, idt, ideal_qdt, ideal_idt
+from taref.physics.qdt import energy_level_plot
 
 tx=TEX(source_path=r"/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/TA210715A88_writeup.tex")
 #"/Users/thomasaref/Dropbox/Current stuff/test_data/source/TA210715A88_source/TA210715A88_writeup.tex")
@@ -92,11 +93,14 @@ tx.make_table(calc_idt, r"|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|")
 
 
 tx.mult_fig_start()
+#tx.add_mult_fig(energy_level_plot, "energy_levels.pdf", qdt=qdt, fig_width=4.0, fig_height=4.0)
 #tx.add_mult_fig(tx.add_mult_fig, "test_colormap_plot.png")
 tx.mult_fig_end()
 #tx.include_image("fridgewiring", "Fridge Wiring", "fridgewiring")
 #tx.include_image("switchwiring", "Switch Wiring", "switchwiring")
 #tx.include_image("test_colormap_plot.png", "image include test", "whats the label")
+tx.ext("qubit model")
+
 tx.TEX_end()
 
 #tx.make_tex_file()

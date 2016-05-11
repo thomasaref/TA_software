@@ -5,7 +5,7 @@ Created on Fri Oct  9 17:17:26 2015
 @author: thomasaref
 """
 
-from atom.api import Unicode, Typed, List, cached_property, Float, Dict
+from atom.api import Unicode, Typed, List, cached_property, Float, Dict, List
 from taref.tex.tex_backbone import (make_table, mult_fig_start, mult_fig_end, include_image, compile_tex)
 
 from collections import OrderedDict
@@ -33,6 +33,7 @@ class TEX(Interact):
     read_file=Typed(Read_TXT)
     save_file=Typed(Save_TXT)
     save_code=Typed(Save_TXT)
+    plots_to_save=List()
 
     def __init__(self, **kwargs):
         source_path=kwargs.pop("source_path", None)
@@ -152,10 +153,13 @@ class TEX(Interact):
     def make_tex_file(self):
         """saves the tex file using the latest version of input_code and tex_list if the GUI is active.
         also saves a copy of the input_code with the preamble and postamble reattached"""
+        self.plots_to_save=[]
         if QtApplication.instance() is not None:
             self.process_source()
             self.simulate_tex()
         self.save_file.save(self.tex_list, write_mode="w", flush_buffer=True)
+        for pl in self.plots_to_save:
+            pl.savefig(dir_path=self.folder.dir_path+self.folder.divider, fig_name=pl.fig_name)
         self.save_code.save(["\n".join(self.file_reader.preamble), self.input_code, "\n".join(self.file_reader.postamble)], write_mode="w", flush_buffer=True)
 
     def make_and_show(self):
@@ -195,7 +199,7 @@ class TEX(Interact):
 
     def include_figure(graph_gen, tex, fig_name, caption="", label="", **kwargs):
         """uses the passed function graph_gen and kwargs to generate a figure and save it to the given file path"""
-        #graph_gen(**kwargs)
+        pl=graph_gen(**kwargs)
         file_name=graph_gen.func_code.co_filename.split("Documents")[1]
         caption="{0}  Analysis: \\verb;{1};".format(caption, file_name)
         tex.append(r"\begin{figure}[ht!]")
@@ -209,11 +213,14 @@ class TEX(Interact):
 
     def add_mult_fig(self, graph_gen, fig_name, **kwargs):
         """adds a graph to a multi figure using the function graph_gen and given kwargs"""
-        #graph_gen(**kwargs)
+        if fig_name not in [p.fig_name for p in self.plots_to_save]:
+            pl=graph_gen(**kwargs)
+            pl.fig_name=fig_name
+            self.plots_to_save.append(pl)
+
         file_name=graph_gen.func_code.co_filename.split("Documents")[1]
         #savefig(dir_path+fig_name, bbox_inches='tight')
         #close()
-
         self.tex_list.extend(["\\begin{{subfigure}}[b]{{{}\\textwidth}}".format(self.fig_width),
                    "\\includegraphics[width=\\textwidth]{{{}}}".format(fig_name),
                    #"\\cprotect\\caption{{{}}}".format(caption),

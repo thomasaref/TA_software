@@ -7,7 +7,7 @@ Created on Sun Apr 24 13:05:32 2016
 
 from numpy import pi, linspace, sin, amax, argmin, argmax, cos
 from scipy.constants import h
-
+from taref.plotter.api import Plotter, line
 from taref.core.api import SProperty, s_property
 from taref.physics.idt import IDT
 from taref.physics.qubit import Qubit
@@ -61,8 +61,8 @@ class QDT(IDT, Qubit):
     def _get_C_get_Cq(self, Cq):
         return Cq
 
-def energy_level_plot(qdt):
-    pl=Plotter(fig_width=9.0, fig_height=6.0)
+def energy_level_plot(qdt, fig_width=9.0, fig_height=6.0):
+    pl=Plotter(fig_width=fig_width, fig_height=fig_height)
     EjdivEc=linspace(0.1, 300, 3000)
     Ej=EjdivEc*qdt.Ec
     E0, E1, E2=qdt._get_transmon_energy_levels(Ej=Ej, n_energy=3)

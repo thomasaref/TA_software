@@ -13,7 +13,7 @@ from taref.core.property import TProperty, private_property
 from taref.core.callable import make_instancemethod
 from taref.core.extra_setup import setup_callables, setup_units, setup_ranges
 from enaml.qt.qt_application import QtApplication
-from taref.physics.units import UNIT_DICT
+from taref.physics.units import UNIT_DICT, unitless, dB, dBm
 from numpy import float64
 
 from enaml import imports
@@ -125,7 +125,41 @@ class Backbone(Atom):
             self.extra_setup(param, typer)
         super(Backbone, self).__init__(**kwargs)
 
+    def latex_table_entry(self, param=None, value=None, expression=None, comment=None):
+        if param is None:
+            return [self.name,  r"Value",  r"Expression", r"Comment"]
+
+        tex_str=get_tag(self, param, "tex_str")
+        if tex_str is None:
+            tex_str=param.replace("_", " ")
+        label=get_tag(self, param, "label")
+        if label is not None:
+            tex_str=label+", "+tex_str
+        unit=get_tag(self, param, "unit")
+        if value is None:
+            if unit is None:
+                if type(getattr(self, param)) in (int, float, float64):
+                    value=(r"{0:."+str(get_tag(self, param, "precision", 4))+"g}").format(getattr(self, param))
+                else:
+                    value = str(getattr(self, param))
+            else:
+                value=unit.show_unit(getattr(self, param)/unit, get_tag(self, param, "precision", 4))
+        if expression is None:
+            expression=get_tag(self, param, "expression", r"{}")
+        if comment is None:
+            comment=get_tag(self, param, "desc", r"{}")
+        return [tex_str, value, expression, comment]
+
+
     def latex_table(self, param_list=None):
+        if param_list is None:
+            param_list=self.main_params
+        lt=[self.latex_table_entry()]
+        for param in param_list:
+            lt.append(self.latex_table_entry(param))
+        return lt
+
+    def latex_table2(self, param_list=None):
         if param_list is None:
             param_list=self.main_params
         lt = [[self.name,  r"Value",  r"Expression", r"Comment"],]
@@ -138,6 +172,7 @@ class Backbone(Atom):
                 format_str=getattr(unit, "format_str", "{0}")
             print param, format_str
             if unit is not None:
+                unit.show_unit()
                 value=getattr(self, param)/unit
             else:
                 value=getattr(self, param)

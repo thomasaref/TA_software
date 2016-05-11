@@ -22,11 +22,11 @@ class unit_func(object):
 
     def show_unit(self, value, precision=3):
         """a utility function for displaying a value with unit added on as a string"""
-        if self.output_unit=="":
-            form_str="({0:." + str(precision) + "g})"
+        form_str="{0:." + str(precision) + "g}"
+        if self.format_str=="":
             return form_str.format(value)
-        form_str="({0:." + str(precision) + "g} {1})"
-        return "({0:g} {1})".format(value, self.format_str)
+        form_str+=" {1}"
+        return form_str.format(value, self.format_str)
 
     def __rmul__(self, value):
         if value is None:

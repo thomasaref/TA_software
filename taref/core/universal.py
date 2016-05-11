@@ -29,6 +29,11 @@ def read_text(file_path):
 
 def write_text(file_path, text_list, mode="w"):
     """writes a list of text to a file with newlines appended. default is to overwrite file"""
+#    for line in text_list:
+#        print unicode(line)
+    #temp_str=u"\n".join(text_list)
+    #print temp_str[21440:21460]
+    #temp_str.encode('utf8') #foo.encode('utf8')
     with open(file_path, mode) as f:
         f.write("\n".join(text_list))
 
