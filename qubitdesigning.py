@@ -15,7 +15,7 @@ from scipy.constants import k, e, pi, h, hbar, epsilon_0 as eps0
 
 
 zerogp = 200e-6 #200 uV, gap of aluminum at zero temperature
-Tc=1.3
+Tc=1.3  # Should be 0 
 Delta=1.76*k*Tc
 #print Delta*1e6
 #T=0.3
