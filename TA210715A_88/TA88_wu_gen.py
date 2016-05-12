@@ -8,19 +8,19 @@ Created on Thu Feb 11 13:33:17 2016
 from taref.tex.tex import TEX
 from taref.core.shower import shower
 from TA88_fundamental import qdt, idt, ideal_qdt, ideal_idt
-from taref.physics.qdt import energy_level_plot
+from taref.physics.qdt import energy_level_plot, anton_anharm_plot
 
-tx=TEX(source_path=r"/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/TA210715A88_writeup.tex")
+tx=TEX(source_path=r"/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/TA210715A88_writeup.tex")
 #"/Users/thomasaref/Dropbox/Current stuff/test_data/source/TA210715A88_source/TA210715A88_writeup.tex")
 tx.save_file.file_name="TA210715A88_writeup"
 tx.tex_title="Sample TA210715A88 in Lumi 21-02-16 cooldown"
+print tx.source_folder.dir_path
 #tx.locals_dict=dict(idt=idt, qdt=qdt)
 #sample holder 12
 
 
 tx.TEX_start()
 tx.ext("summary")
-tx.ext("switch")
 
 tx.add(r"\subsection{Material values}")
 tx.make_table(qdt.latex_table(["material", "epsinf", "vf", "K2", "Dvv"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
@@ -91,14 +91,21 @@ calc_idt=[[r"Calculated values IDT"          ,  r"Value"                        
           #[r"F width at half max"            ,  r"115"                 ,  r"Ejmax/Ec"                            , r"transmon limit"         ]]
 tx.make_table(calc_idt, r"|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|")
 
-
+tx.ext("giant atom theory")
 tx.mult_fig_start()
-#tx.add_mult_fig(energy_level_plot, "energy_levels.pdf", qdt=qdt, fig_width=4.0, fig_height=4.0)
+tx.add_mult_fig(energy_level_plot, "energy_levels.pdf", qdt=qdt, fig_width=4.0, fig_height=4.0)
+tx.add_mult_fig(anton_anharm_plot, "anton_anharm_plot.pdf", fig_width=4.0, fig_height=4.0)
+tx.add_mult_image("Anton_anharm.png", "Anharmonicity", "anharm")
 #tx.add_mult_fig(tx.add_mult_fig, "test_colormap_plot.png")
-tx.mult_fig_end()
-#tx.include_image("fridgewiring", "Fridge Wiring", "fridgewiring")
-#tx.include_image("switchwiring", "Switch Wiring", "switchwiring")
-#tx.include_image("test_colormap_plot.png", "image include test", "whats the label")
+tx.mult_fig_end(caption="Theory plots based on QDT parameters")
+tx.add(r"\FloatBarrier")
+
+tx.ext("switch")
+tx.add(r"\subsection{Wiring details}")
+tx.include_image("fridgewiring.png", "Fridge Wiring", "fridgewiring")
+tx.include_image("switchwiring", "Switch Wiring", "switchwiring")
+tx.add(r"\FloatBarrier")
+
 tx.ext("qubit model")
 
 tx.TEX_end()

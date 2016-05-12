@@ -78,24 +78,38 @@ def energy_level_plot(qdt, fig_width=9.0, fig_height=6.0):
     pl.ylabel="Frequency (GHz)"
     return pl
 
-def anharm_plot(qdt):
-    """reproduces anharm plot in Anton's paper"""
-    pl=Plotter(fig_width=9.0, fig_height=6.0)
+antonqdt=QDT(name="antonqdt", material='LiNbYZ', #10 finger QDT used for anharmonicity plot in Anton's paper
+        ft="double",
+        a=80.0e-9,
+        Np=10,
+        Rn=3780.0, #(3570.0+4000.0)/2.0,
+        W=25.0e-6,
+        eta=0.5,
+        flux_factor=0.2945,
+        voltage=1.21,
+        offset=0.0)
+antonqdt.Ec=antonqdt.f0*0.1*h #Ec is 1/10 of f0
 
-    print qdt.f0*h/qdt.Ec, qdt.epsinf/3.72
-    qdt.Np=10
-    qdt.Ec=qdt.f0*0.1*h
+
+def anton_anharm_plot(fig_width, fig_height):
+    """reproduces anharm plot in Anton's paper"""
+
+    pl=Plotter(fig_width=fig_width, fig_height=fig_height)
+
+    #print qdt.f0*h/qdt.Ec, qdt.epsinf/3.72
+    #qdt.Np=10
+    #qdt.Ec=qdt.f0*0.1*h
 
     EjdivEc=linspace(0.1, 300, 3000)
-    Ej=EjdivEc*qdt.Ec
+    Ej=EjdivEc*antonqdt.Ec
 
-    print qdt.C, qdt.Cq, qdt.Ec, qdt._get_Ec(qdt.C)
+    print antonqdt.C, antonqdt.C, antonqdt.Ec, antonqdt._get_Ec(antonqdt.C)
 
-    print qdt.max_coupling, qdt.epsinf, qdt.f0*h/qdt.Ec
-    E0, E1, E2=qdt._get_transmon_energy_levels(Ej=Ej, n_energy=3)
+    print antonqdt.max_coupling, antonqdt.epsinf, antonqdt.f0*h/antonqdt.Ec
+    E0, E1, E2=antonqdt._get_transmon_energy_levels(Ej=Ej, n_energy=3)
     anharm=(E2-E1)-(E1-E0)
 
-    E0p, E1p, E2p=qdt._get_lamb_shifted_transmon_energy_levels(Ej=Ej, n_energy=3)
+    E0p, E1p, E2p=antonqdt._get_lamb_shifted_transmon_energy_levels(Ej=Ej, n_energy=3)
 
     anharmp=(E2p-E1p)-(E1p-E0p)
 
@@ -104,9 +118,9 @@ def anharm_plot(qdt):
     fq2=(E2-E1)/h
     ls_fq2=(E2p-E1p)/h #qdt.call_func("lamb_shifted_fq2", EjdivEc=EjdivEc)
 
-    line(fq/qdt.f0, (anharmp/h-anharm/h)/(2.0*qdt.max_coupling), plotter=pl, linewidth=0.5, color="black", label=r"$\Delta_{2,1}-\Delta_{1,0}$")
-    line(fq/qdt.f0, (ls_fq-fq)/(2.0*qdt.max_coupling), plotter=pl, color="blue", linewidth=0.5, label=r"$\Delta_{1,0}$")
-    line(fq/qdt.f0, (ls_fq2-fq2)/(2.0*qdt.max_coupling), plotter=pl, color="red", linewidth=0.5, label=r"$\Delta_{2,1}$")
+    line(fq/antonqdt.f0, (anharmp/h-anharm/h)/(2.0*antonqdt.max_coupling), plotter=pl, linewidth=0.5, color="black", label=r"$\Delta_{2,1}-\Delta_{1,0}$")
+    line(fq/antonqdt.f0, (ls_fq-fq)/(2.0*antonqdt.max_coupling), plotter=pl, color="blue", linewidth=0.5, label=r"$\Delta_{1,0}$")
+    line(fq/antonqdt.f0, (ls_fq2-fq2)/(2.0*antonqdt.max_coupling), plotter=pl, color="red", linewidth=0.5, label=r"$\Delta_{2,1}$")
     pl.set_ylim(-1.0, 0.6)
     pl.set_xlim(0.7, 1.3)
     pl.xlabel=r"$f_{10}/f_{IDT}$"
@@ -118,7 +132,52 @@ def anharm_plot(qdt):
     #line(EjdivEc, E1p, plotter=pl, color="green", linewidth=0.5)
     #line(EjdivEc, E2p, plotter=pl, color="purple", linewidth=0.5)
     return pl
+
+def anton_lamb_shift_plot(fig_width=9.0, fig_height=6.0):
+    """reproduces coupling/lamb shift plot in Anton's paper"""
+
+    pl=Plotter(fig_width=fig_width, fig_height=fig_height)
+
+    #print qdt.f0*h/qdt.Ec, qdt.epsinf/3.72
+    #qdt.Np=10
+    #qdt.Ec=qdt.f0*0.1*h
+
+    EjdivEc=linspace(0.1, 300, 10000)
+    Ej=EjdivEc*antonqdt.Ec
+
+    #E0, E1, E2=antonqdt._get_transmon_energy_levels(Ej=Ej, n_energy=3)
+    fq=antonqdt._get_fq(Ej)
+    #anharm=(E2-E1)-(E1-E0)
+
+    #E0p, E1p, E2p=antonqdt._get_lamb_shifted_transmon_energy_levels(Ej=Ej, n_energy=3)
+
+    #anharmp=(E2p-E1p)-(E1p-E0p)
+
+    #fq= (E1-E0)/h#qdt.call_func("fq", Ej=EjdivEc*qdt.Ec)
+    coup=antonqdt._get_coupling(fq)
+    ls=antonqdt._get_Lamb_shift(fq)
+    line(fq/antonqdt.f0, 2.0*coup/(2.0*antonqdt.max_coupling), plotter=pl, linewidth=0.5, color="red", label=r"$\Gamma$, $N=10$")
+    line(fq/antonqdt.f0, ls/(2.0*antonqdt.max_coupling), plotter=pl, color="green", linewidth=0.5, label=r"$\Delta$, $N=10$")
+
+    antonqdt.Np=3
+    Ej=EjdivEc*antonqdt.Ec
+    fq=antonqdt._get_fq(Ej)
+
+    coup=antonqdt._get_coupling(fq)
+    ls=antonqdt._get_Lamb_shift(fq)
+    line(fq/antonqdt.f0, 2.0*coup/(2.0*antonqdt.max_coupling), plotter=pl, linewidth=0.5, color="blue", label=r"$\Gamma$, $N=3$")
+    line(fq/antonqdt.f0, ls/(2.0*antonqdt.max_coupling), plotter=pl, color="black", linewidth=0.5, label=r"$\Delta$, $N=3$")
+
+    #line(fq/antonqdt.f0, (ls_fq2-fq2)/(2.0*antonqdt.max_coupling), plotter=pl, color="red", linewidth=0.5, label=r"$\Delta_{2,1}$")
+    pl.set_ylim(-0.4, 1.0)
+    pl.set_xlim(0.2, 1.8)
+    pl.xlabel=r"$f_{10}/f_{IDT}$"
+    pl.ylabel=r"$\Delta/\Gamma_{10}^{MAX}$"
+    pl.legend(loc='lower left')
+    return pl
 if __name__=="__main__":
+    anton_lamb_shift_plot().show()
+
     qdt=QDT(material='LiNbYZ',
         ft="double",
         a=80.0e-9,
