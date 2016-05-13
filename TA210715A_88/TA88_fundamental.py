@@ -17,7 +17,7 @@ from numpy import array, log10, fft, exp, float64, linspace, shape, reshape, squ
 from h5py import File
 from scipy.optimize import leastsq
 from taref.core.log import log_debug
-from taref.plotter.plotter import line, colormesh #Plotter
+from taref.plotter.plotter import line, colormesh, Plotter
 from taref.physics.units import dBm, dB
 from taref.physics.fitting_functions import fano, lorentzian, refl_lorentzian, refl_fano
 from taref.physics.fundamentals import h#Ej, fq, flux_over_flux0
@@ -73,6 +73,26 @@ idt=IDT(material='LiNbYZ',
 class TA88_Lyzer(Lyzer):
     qdt=qdt
 
+
+def coupling_plot():
+    pl=Plotter(fig_width=6.0, fig_height=4.0)
+    fw0=linspace(4e9, 7e9, 2000)
+    line(fw0/1e9, qdt._get_coupling(fw0)/1e9, label=r"$G_a/2C$", color="blue", plotter=pl)
+    line(fw0/1e9, qdt._get_Lamb_shift(fw0)/1e9, label=r"$-B_a/2C$", color="red", plotter=pl)
+    line(fw0/1e9, idt._get_coupling(fw0)/4/1e9, label=r"$G_a^{IDT}/2C/4$", color="green", linewidth=1.0, plotter=pl)
+    pl.set_ylim(-1.0, 1.5)
+    pl.legend(loc='lower right')
+    return pl
+
+if __name__=="__main__":
+    from taref.physics.qdt import anharm_plot
+    print qdt.max_coupling
+    #anharm_plot(qdt).show()
+
+    coupling_plot().show()
+#        dd.line_plot("asdf", fw0/1e9, calc_Coupling(fw0)/1e9, label=r"$G_a/2C$", color="blue")
+#        dd.line_plot("asdfd", fw0/1e9, calc_Lamb_shift(fw0)/1e9, label=r"$-B_a/2C$", color="red")
+#        dd.line_plot("listen", fw0/1e9, listen_coupling(fw0)/4/1e9, label=r"$G_a^{IDT}/2C^{IDT}/4$", color="green")
 
 #class TransTimeLyzer(Lyzer):
 #    f_ind=Int()

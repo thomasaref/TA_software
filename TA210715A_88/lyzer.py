@@ -13,7 +13,7 @@ from taref.physics.filtering import fft_filter5, hann_ifft, fft_filter2, fft_fil
 from taref.plotter.api import line, colormesh, scatter
 from atom.api import Float, Typed, Unicode, Int, Callable, Enum, List
 from h5py import File
-from numpy import float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin
+from numpy import float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin, sqrt
 from scipy.optimize import leastsq, curve_fit
 from taref.physics.qdt import QDT
 
@@ -132,6 +132,26 @@ class Lyzer(LyzerBase):
     def fq(self):
         return self.qdt._get_fq(Ej=self.Ej, Ec=self.qdt.Ec)
 
+    @tag_property(sub=True)
+    def ls_f(self):
+        #return array([f-self.qdt._get_Lamb_shift(f=f) for f in self.frequency])
+        return array([sqrt(f*(f-2*self.qdt._get_Lamb_shift(f=f))) for f in self.frequency])
+
+    @tag_property(sub=True)
+    def voltage_from_flux_par(self):
+        Ej=self.qdt._get_Ej_get_fq(fq=self.ls_f)
+        flux_d_flux0=self.qdt._get_flux_over_flux0_get_Ej(Ej=Ej)
+        #flux_d_flux0=arccos(Ej/Ejmax)#-pi/2
+        #flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax))
+        #flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax)+pi)
+        #flux_d_flux0=append(flux_d_flux0, arccos(Ej/Ejmax)-pi)
+        return self.qdt._get_voltage(flux_over_flux0=flux_d_flux0, offset=self.offset, flux_factor=self.flux_factor)
+
+    @tag_property(sub=True)
+    def ls_flux_par(self):
+        return self.qdt._get_ls_flux_parabola(voltage=self.yoko, offset=self.offset, flux_factor=self.flux_factor)
+    #def rpt_voltage_from_flux_par(self):
+    #    fk
     @tag_property(plot=True, sub=True)
     def Ej(self):
         return self.qdt._get_Ej(Ejmax=self.qdt.Ejmax, flux_over_flux0=self.flux_over_flux0)
@@ -214,10 +234,22 @@ class Lyzer(LyzerBase):
         line(self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)", plotter=p)
 
     def magabsfilt_colormesh(self):
-        p, pf=colormesh(self.yoko[10:-10], self.frequency[10:-10]/1e9,
+        p, pf=colormesh(self.yoko[10:-10], self.ls_f[10:-10]/1e9,
                         self.MagAbsFilt[10:-10, 10:-10], plotter="magabsfilt_{}".format(self.name))
-        p.set_ylim(min(self.frequency[10:-10]/1e9), max(self.frequency[10:-10]/1e9))
+        line(self.yoko[10:-10], self.fq[10:-10]/1e9, plotter=p)
+        p.set_ylim(min(self.ls_f[10:-10]/1e9), max(self.ls_f[10:-10]/1e9))
         p.set_xlim(min(self.yoko[10:-10]), max(self.yoko[10:-10]))
+        #pf.set_clim(amin(self.MagAbsFilt), amax(self.MagAbsFilt))
+        p.xlabel="Yoko (V)"
+        p.ylabel="Frequency (GHz)"
+
+    def magabsfilt2_colormesh(self):
+        p, pf=colormesh(self.frequency[10:-10]/1e9, self.yoko[10:-10],
+                        self.MagAbsFilt.transpose()[10:-10, 10:-10], plotter="magabsfilt2_{}".format(self.name))
+        line(self.frequency[10:-10]/1e9, self.voltage_from_flux_par[10:-10], plotter=p)
+        print max(self.voltage_from_flux_par), min(self.voltage_from_flux_par)
+        p.set_xlim(min(self.frequency[10:-10]/1e9), max(self.frequency[10:-10]/1e9))
+        p.set_ylim(min(self.yoko[10:-10]), max(self.yoko[10:-10]))
         #pf.set_clim(amin(self.MagAbsFilt), amax(self.MagAbsFilt))
         p.xlabel="Yoko (V)"
         p.ylabel="Frequency (GHz)"
@@ -234,9 +266,9 @@ class Lyzer(LyzerBase):
     def MagAbsFilt_sq(self):
         return (self.MagAbsFilt)**2
 
-    def full_fano_fit(self):
+    def full_fano_fit(self, fq):
         log_debug("started fano fitting")
-        fit_params=[self.fano_fit(n)  for n in self.indices]
+        fit_params=[self.fano_fit(n, fq)  for n in self.indices]
         fit_params=array(zip(*fit_params))
         log_debug("ended fano fitting")
         return fit_params
@@ -261,8 +293,8 @@ class Lyzer(LyzerBase):
         """residuals of fitting function"""
         return y-self.fit_func(x, p)
 
-    def fano_fit(self, n):
-        pbest= leastsq(self.resid_func, self.p_guess, args=(self.MagAbsFilt_sq[n, :], self.fq), full_output=1)
+    def fano_fit(self, n, fq):
+        pbest= leastsq(self.resid_func, self.p_guess, args=(self.MagAbsFilt_sq[n, :], fq), full_output=1)
         best_parameters = pbest[0]
         #log_debug(best_parameters)
         #if 0:#n==539 or n==554:#n % 10:

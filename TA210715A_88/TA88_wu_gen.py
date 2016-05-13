@@ -8,7 +8,6 @@ Created on Thu Feb 11 13:33:17 2016
 from taref.tex.tex import TEX
 from taref.core.shower import shower
 from TA88_fundamental import qdt, idt, ideal_qdt, ideal_idt
-from taref.physics.qdt import energy_level_plot, anton_anharm_plot
 
 tx=TEX(source_path=r"/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/TA210715A88_writeup.tex")
 #"/Users/thomasaref/Dropbox/Current stuff/test_data/source/TA210715A88_source/TA210715A88_writeup.tex")
@@ -92,12 +91,20 @@ calc_idt=[[r"Calculated values IDT"          ,  r"Value"                        
 tx.make_table(calc_idt, r"|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|")
 
 tx.ext("giant atom theory")
+from taref.physics.qdt import energy_level_plot, anton_anharm_plot, anton_lamb_shift_plot, anharm_plot
+
 tx.mult_fig_start()
-tx.add_mult_fig(energy_level_plot, "energy_levels.pdf", qdt=qdt, fig_width=4.0, fig_height=4.0)
-tx.add_mult_fig(anton_anharm_plot, "anton_anharm_plot.pdf", fig_width=4.0, fig_height=4.0)
 tx.add_mult_image("Anton_anharm.png", "Anharmonicity", "anharm")
-#tx.add_mult_fig(tx.add_mult_fig, "test_colormap_plot.png")
+tx.add_mult_fig(anton_anharm_plot, "anton_anharm_plot.pdf", fig_width=6.0, fig_height=4.0)
+tx.add_mult_image("anton_lamb_shift.png", "Lamb shift", "anharm")
+tx.add_mult_fig(anton_lamb_shift_plot, "anton_lamb_shift_plot.pdf", fig_width=6.0, fig_height=4.0)
+tx.mult_fig_end(caption="Comparison to Anton's plots")
+
+tx.mult_fig_start()
+tx.add_mult_fig(energy_level_plot, "energy_levels.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
+tx.add_mult_fig(anharm_plot, "theory_anharm.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
 tx.mult_fig_end(caption="Theory plots based on QDT parameters")
+
 tx.add(r"\FloatBarrier")
 
 tx.ext("switch")

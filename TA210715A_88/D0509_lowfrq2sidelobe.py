@@ -55,19 +55,22 @@ if __name__=="__main__":
     def plot_widths(self, plotter=None):
         print "first fit"
         tstart=time()
-        fit_p=self.fano_fit(263)
-        print self.p_guess, fit_p
-        fit=lorentzian(self.fq, fit_p[1:])
-        pl, pf=line(self.fq, self.MagAbsFilt_sq[263, :])
-        line(self.fq, fit, plotter=pl, color="red")
+        fq_vec=array([sqrt(f*(f-2*self.qdt._get_Lamb_shift(f=f))) for f in self.frequency])
+
+        #fit_p=self.fano_fit(263, fq_vec)
+        #print self.p_guess, fit_p
+
+        #fit=lorentzian(fq_vec, fit_p[1:])
+        #pl, pf=line(fq_vec, self.MagAbsFilt_sq[263, :])
+        #line(fq_vec, fit, plotter=pl, color="red")
         #pl.show()
-        fit_params=self.full_fano_fit()
+        fit_params=self.full_fano_fit(fq_vec)
         pl, pf=scatter(self.frequency, absolute(fit_params[1, :]), color="red", label=self.name, plot_name="widths_{}".format(self.name))
 
         line(self.frequency, self.qdt._get_coupling(self.frequency)+18e6, plotter=pl)
 
         pl, pf=scatter(self.frequency, fit_params[2, :], color="red", label=self.name, plot_name="widths_{}".format(self.name))
-        line(self.frequency, self.fq, #flux_par3(self),
+        line(self.frequency, fq_vec, #flux_par3(self),
         plotter=pl)
         print "fit second", tstart-time()
         tstart=time()
