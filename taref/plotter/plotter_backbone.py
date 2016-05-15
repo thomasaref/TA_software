@@ -8,12 +8,14 @@ Created on Thu Feb  4 12:48:42 2016
 
 from taref.core.log import log_debug
 from taref.core.atom_extension import get_all_tags, get_tag, get_all_params
-from atom.api import observe, Atom, Typed, Bool, cached_property, Float, Unicode
+from atom.api import observe, Atom, Typed, Bool, cached_property, Float, Unicode, Instance
 #from matplotlib import cm
 from collections import OrderedDict
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
+from matplotlib.colorbar import Colorbar
+
 
 class plot_observe(object):
     """decorator object that adds auto drawing of plot to observe decorator"""
@@ -57,6 +59,8 @@ class PlotMaster(Atom):
     figure=Typed(Figure)
     fig_height=Float(4.0)
     fig_width=Float(4.0)
+    colorbar=Instance(Colorbar)
+
     axes=Typed(Axes)
     auto_draw=Bool(True)
     show_legend=Bool(False)
@@ -77,7 +81,7 @@ class PlotMaster(Atom):
 
     def _default_axes(self):
          axes=self.figure.add_subplot(111)
-         axes.autoscale_view(True)
+         #axes.autoscale_view(True)
          return axes
 
     def draw(self):

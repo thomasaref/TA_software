@@ -9,7 +9,8 @@ Universal functions useful in many instances
 
 from itertools import chain
 from numpy import ndarray, array
-from atom.api import Coerced
+from atom.api import Coerced, Typed
+from collections import OrderedDict
 
 def sqze(*args):
     if len(args)==1:
@@ -39,6 +40,11 @@ def write_text(file_path, text_list, mode="w"):
 
 def Array(shape=1):
     return Coerced(ndarray, args=(shape,), coercer=array)#.tag(typer=list)
+
+def ODict(default=None):
+    if default is None:
+        return Typed(OrderedDict, ())
+    return Typed(OrderedDict, (default,))
 
 def do_nothing(*args, **kwargs):
         pass

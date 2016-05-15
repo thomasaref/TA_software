@@ -236,10 +236,12 @@ class Lyzer(LyzerBase):
     def magabsfilt_colormesh(self):
         p, pf=colormesh(self.yoko[10:-10], self.ls_f[10:-10]/1e9,
                         self.MagAbsFilt[10:-10, 10:-10], plotter="magabsfilt_{}".format(self.name))
+        colormesh(self.yoko[10:-10], self.frequency[10:-10]/1e9,
+                        self.MagAbsFilt[10:-10, 10:-10], plot_name="magabsfiltf_{}".format(self.name), plotter=p)
+
+        #fq=array([sqrt(f*(f-2*self.qdt._get_Lamb_shift(f=f))) for f in self.fq])
+        #fq=self.fq+self.qdt._get_Lamb_shift(f=self.fq)/2
         line(self.yoko[10:-10], self.fq[10:-10]/1e9, plotter=p)
-        p.set_ylim(min(self.ls_f[10:-10]/1e9), max(self.ls_f[10:-10]/1e9))
-        p.set_xlim(min(self.yoko[10:-10]), max(self.yoko[10:-10]))
-        #pf.set_clim(amin(self.MagAbsFilt), amax(self.MagAbsFilt))
         p.xlabel="Yoko (V)"
         p.ylabel="Frequency (GHz)"
 
@@ -247,10 +249,7 @@ class Lyzer(LyzerBase):
         p, pf=colormesh(self.frequency[10:-10]/1e9, self.yoko[10:-10],
                         self.MagAbsFilt.transpose()[10:-10, 10:-10], plotter="magabsfilt2_{}".format(self.name))
         line(self.frequency[10:-10]/1e9, self.voltage_from_flux_par[10:-10], plotter=p)
-        print max(self.voltage_from_flux_par), min(self.voltage_from_flux_par)
-        p.set_xlim(min(self.frequency[10:-10]/1e9), max(self.frequency[10:-10]/1e9))
-        p.set_ylim(min(self.yoko[10:-10]), max(self.yoko[10:-10]))
-        #pf.set_clim(amin(self.MagAbsFilt), amax(self.MagAbsFilt))
+        #print max(self.voltage_from_flux_par), min(self.voltage_from_flux_par)
         p.xlabel="Yoko (V)"
         p.ylabel="Frequency (GHz)"
 

@@ -127,24 +127,28 @@ class Line2DFormat(LineFormat):
 
     def alter_xy(self, *args):
         """appends points x and y if 2 args are passed and just y and len of xdata if one args is passed"""
-        if len(args)==1:
-            y=args[0]
-            x=None #range(len(self.xdata))
-        elif len(args)==2:
-            x=args[0]
-            y=args[1]
-        if self.append:
-            if x is None:
-                x=len(self.xdata)
-            self.xdata=append(self.xdata, x)
-            self.ydata=append(self.ydata, y)
-        else:
-            if x is None:
-                x=self.clt.get_xdata()
-            self.xdata=x
-            self.ydata=y
+        #if len(args)==1:
+        #    y=args[0]
+        #    x=None #range(len(self.xdata))
+        #elif len(args)==2:
+        #    print "arg 2"
+        x=args[0]
+        y=args[1]
+        #print x.shape, y.shape
+        #if self.append:
+        #    if x is None:
+        #        x=len(self.xdata)
+        #    self.xdata=append(self.xdata, x)
+        #    self.ydata=append(self.ydata, y)
+        #else:
+        #    if x is None:
+        #        x=self.clt.get_xdata()
+        self.xdata=x
+        self.ydata=y
         self.clt.set_xdata(self.xdata)
         self.clt.set_ydata(self.ydata)
+        self.plotter.set_xlim(min(self.xdata), max(self.xdata))
+        self.plotter.set_ylim(min(self.ydata), max(self.ydata))
         self.update_plot(update_legend=False)
         #fig=self.clt.get_figure()
 
@@ -287,9 +291,32 @@ class ColormeshFormat(PlotFormat):
     @plot_observe("cmap")
     def colormap_update(self, change):
         self.plot_set(change["name"])
+        self.set_colorbar()
+
+    @plot_observe("plotter.selected")
+    def colorbar_update(self, change):
+        print change
+        if self.plotter.selected==self.plot_name:
+            self.set_colorbar()
+
+    def get_colorbar(self):
+        if self.plotter.colorbar is None:
+            self.plotter.colorbar=self.plotter.figure.colorbar(self.clt)
+        return self.plotter.colorbar
+
+    def set_colorbar(self):
+        self.get_colorbar().update_bruteforce(self.clt)
+        #self.set_clim(self.vmin, self.vmax)
 
     def set_clim(self, vmin, vmax):
+        self.vmin=float(vmin)
+        self.vmax=float(vmax)
         self.clt.set_clim(vmin, vmax)
+        self.set_colorbar()
+        #self.get_colorbar().update_normal(self.clt)
+        #self.set_colorbar()
+        #print vmin, vmax
+        #self.get_colorbar().set_clim(vmin, vmax)
 
     @plot_observe("vmin", "vmax")
     def clim_update(self, change):
@@ -297,10 +324,9 @@ class ColormeshFormat(PlotFormat):
 
     vmin=Float()
     vmax=Float()
-    colorbar=Instance(Colorbar)
 
-    def _default_colorbar(self):
-        self.plotter.figure.colorbar(self.clt)
+    #def _default_colorbar(self):
+    #    self.plotter.figure.colorbar(self.clt)
 
     def _default_plot_type(self):
         return "colormap"
@@ -374,7 +400,7 @@ def colormesh_plot(plotter, *args, **kwargs):
     plot_name=kwargs.pop("plot_name", "")
     pl0t=ColormeshFormat(plot_name=plot_name, plotter=plotter)
     pl0t.pcolormesh(*args, **kwargs)
-    pl0t.colorbar
+    #pl0t.colorbar
     return pl0t
 
 class MultiLineFormat(LineFormat, ColormeshFormat):

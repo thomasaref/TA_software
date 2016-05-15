@@ -32,7 +32,7 @@ s4a1_mp.filt_compare(s4a1_mp.start_ind )
 #s4a1_mp.magdBfiltbgsub_colormesh()
 #s4a1_mp.filt_compare("filt_compare_on_res", s4a1_mp.on_res_ind)
 s4a1_mp.hann_ifft_plot()
-s4a1_mp.ifft_plot().show()#"ifft_S4A1")
+s4a1_mp.ifft_plot()#.show()#"ifft_S4A1")
 def ifft_plot(self):
     pl=Plotter(fig_width=6, fig_height=4)
 
@@ -59,9 +59,9 @@ def plot_widths(self, plotter=None):
 
     fit_params=self.full_fano_fit(self.fq)
     print (fit_params[1, :]).shape
-    pl, pf=scatter(self.ls_f[self.indices], absolute(fit_params[1, :]), color="red", label=self.name, plot_name="widths_{}".format(self.name))
+    pl, pf=scatter(self.frequency[self.indices], absolute(fit_params[1, :]), color="red", label=self.name, plot_name="widths_{}".format(self.name))
 
-    line(self.ls_f, self.qdt._get_coupling(self.frequency)+0*1.8e6, plotter=pl)
+    line(self.frequency, self.qdt._get_coupling(self.frequency)+0*1.8e6, plotter=pl)
     return pl
 
 plot_widths(s4a1_mp) .show()
