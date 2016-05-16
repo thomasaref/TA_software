@@ -10,6 +10,7 @@ displays for log
 from enaml.widgets.api import ( Window, Field, PushButton, ToolBar, Action, MainWindow,
     Container, MultilineField, DockPane, HGroup)
 from taref.core.log import log_stream
+from taref.core.fundcore_e import BottomMultilineField
 
 enamldef LogWindow(Window):
     """window for display the log window"""
@@ -20,7 +21,7 @@ enamldef LogWindow(Window):
     alias log_str : mlf.text
     destroy_on_close=False
     Container:
-        MultilineField: mlf:
+        BottomMultilineField: mlf:
             read_only=True
             text<<log_stream.log_str
 
@@ -29,8 +30,11 @@ enamldef LogPane(DockPane):
     dock_area='bottom'
     title = "Log"
     alias log_str : mlf.text
+    visible :: log_stream.redirect_stdout(visible)
+    #activated :: log_stream.redirect_stdout(True)
+    #closed :: log_stream.redirect_stdout(False)
     Container:
-        MultilineField: mlf:
+        BottomMultilineField: mlf:
             read_only=True
             text << log_stream.log_str
 

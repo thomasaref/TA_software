@@ -13,6 +13,7 @@ from logging.handlers import MemoryHandler
 from atom.api import Atom, Unicode, Int, cached_property
 from sys import exc_info
 from os.path import basename
+import sys
 
 #redefine DEBUG level so doesn't catch debug warnings from IPythonConsole in enaml
 
@@ -24,7 +25,6 @@ LOGFORMATTER='%(asctime)s %(levelname)s  @ %(message)s'
 LOGLEVEL=MYDEBUG #INFO #DEBUG
 
 basicConfig(format=LOGFORMATTER, level=LOGLEVEL)
-
 
 def f_top_finder(fb):
     """recursive top frame finder"""
@@ -90,11 +90,10 @@ class StreamCatch(Atom):
 
     log_str=Unicode()
 
-    def write(self,str):
-        self.log_str=str+self.log_str
+    def write(self, instr):
+        self.log_str+=instr#+self.log_str
 
     def redirect_stdout(self, visible):
-        import sys
         if visible:
             sys.stdout=self
             sys.stderr=self

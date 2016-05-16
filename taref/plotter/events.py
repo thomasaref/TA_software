@@ -10,6 +10,7 @@ from numpy import argmin, absolute, amin, amax#, arange
 from atom.api import Atom, Float, Int, Bool, observe#, cache_property
 from taref.core.property import tag_property
 from numpy import sqrt
+from collections import OrderedDict
 
 class MPLEventHandler(Atom):
     drawline=Bool()
@@ -87,42 +88,43 @@ class mpl_drag(mpl_event):
 
 class mpl_cross_section(mpl_event):
     def __init__(self, plot_format):
-        self.pf=plot_format
-        self.pltr=self.pf.plotter
-        self.h_line=None
-        self.v_line=None
+        #self.pf=plot_format
+        self.pltr=plot_format.plotter
+        #self.h_line=None
+        #self.v_line=None
+        self.pfs=[pf for pf in self.pltr.plot_dict.values() if pf.plot_type=="colormap"]
 
     def __call__(self, event):
         if event.inaxes is not None:
-            xpos=argmin(absolute(event.xdata-self.pf.xdata))
-            ypos=argmin(absolute(event.ydata-self.pf.ydata))
-            self.pf.xcoord=event.xdata
-            self.pf.ycoord=event.ydata
-            self.pf.xind=xpos
-            self.pf.yind=ypos
+            for pf in self.pfs:
+                xpos=argmin(absolute(event.xdata-pf.xdata))
+                ypos=argmin(absolute(event.ydata-pf.ydata))
+                pf.xcoord=event.xdata
+                pf.ycoord=event.ydata
+                pf.xind=xpos
+                pf.yind=ypos
+                if self.pltr.show_cross_section: #self.pf.plot_type=="colormap" and
+                    if pf.h_line is None:
+                        pf.h_line=self.pltr.horiz_axe.plot(pf.xdata, pf.zdata[ypos, :])[0]
+                        self.pltr.horiz_axe.set_xlim(min(pf.xdata), max(pf.xdata))
+                        pf.v_line=self.pltr.vert_axe.plot(pf.zdata[:, xpos], pf.ydata)[0]
+                        self.pltr.horiz_axe.set_ylim(min(pf.ydata), max(pf.ydata))
+                    else:
+                        h_data=pf.zdata[ypos, :]
+                        pf.h_line.set_ydata(h_data)
+                        self.pltr.horiz_axe.set_ylim(min(h_data), max(h_data))
+                        v_data=pf.zdata[:, xpos]
+                        pf.v_line.set_xdata(v_data)
+                        self.pltr.vert_axe.set_xlim(min(v_data), max(v_data))
+                    if self.pltr.horiz_fig.canvas!=None:
+                        self.pltr.horiz_fig.canvas.draw()
+                    if self.pltr.vert_fig.canvas!=None:
+                        self.pltr.vert_fig.canvas.draw()
 
             cc=self.pltr.plot_dict.get("cross_cursor", None)
             if cc is not None and self.pltr.show_cross_cursor:
                 cc.move_cursor(event.xdata, event.ydata)
                 self.pltr.draw()
-            if self.pf.plot_type=="colormap" and self.pltr.show_cross_section:
-                if self.h_line is None:
-                    self.min=amin(self.pf.zdata)
-                    self.max=amax(self.pf.zdata)
-                    self.h_line=self.pltr.horiz_axe.plot(self.pf.xdata, self.pf.zdata[ypos, :])[0]
-                    self.v_line=self.pltr.vert_axe.plot(self.pf.zdata[:, xpos], self.pf.ydata)[0]
-                else:
-                    h_data=self.pf.zdata[ypos, :]
-                    self.h_line.set_ydata(h_data)
-                    self.pltr.horiz_axe.set_ylim(min(h_data), max(h_data))
-                    v_data=self.pf.zdata[:, xpos]
-                    self.v_line.set_xdata(v_data)
-                    self.pltr.vert_axe.set_xlim(min(v_data), max(v_data))
-
-                if self.pltr.horiz_fig.canvas!=None:
-                    self.pltr.horiz_fig.canvas.draw()
-                if self.pltr.vert_fig.canvas!=None:
-                    self.pltr.vert_fig.canvas.draw()
             #xmin, xmax=self.pltr.axe.get_xlim()
             #ymin, ymax=self.pltr.axe.get_ylim()
 

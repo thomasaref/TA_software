@@ -98,30 +98,24 @@ enamldef WindowToolBar(ToolBar):
 enamldef TopToolBar(ToolBar):
     dock_area="top"
     Conditional:
-        condition = hasattr(chief_cls, "log_window")
+        condition = hasattr(chief_cls, "interact")
         Action:
             text="Log"
             triggered::
-                chief_cls.log_window.show()
-                chief_cls.log_window.send_to_front()
+                chief_cls.interact.log_window.show()
+                chief_cls.interact.log_window.send_to_front()
             tool_tip = "Show log"
-
-    Conditional:
-        condition = hasattr(chief_cls, "interactive_window")
         Action:
-            text="IPython"
+            text="Interactive"
             triggered::
-                chief_cls.interactive_window.show()
-                chief_cls.interactive_window.send_to_front()
-            tool_tip = "Show IPython window"
-
-    Conditional:
-        condition = hasattr(chief_cls, "code_window")
+                chief_cls.interact.interactive_window.show()
+                chief_cls.interact.interactive_window.send_to_front()
+            tool_tip = "Show interactive window"
         Action:
             text="Code"
             triggered::
-                chief_cls.code_window.show()
-                chief_cls.code_window.send_to_front()
+                chief_cls.interact.code_window.show()
+                chief_cls.interact.code_window.send_to_front()
             tool_tip = "Show code window"
 
 #from taref.core.plotter import Plotter

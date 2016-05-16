@@ -6,11 +6,12 @@ Created on Thu Feb  4 12:51:21 2016
 """
 from taref.core.log import log_debug
 from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names, simple_set, process_kwargs
-from taref.core.universal import Array
-from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict, Instance
+from taref.core.universal import Array, name_generator
+from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict, observe, ReadOnly
 from numpy import linspace, arange, asanyarray, append, amax, amin
 from taref.core.shower import shower
-from taref.core.atom_extension import get_all_tags, get_tag, set_tag, check_initialized
+from taref.core.atom_extension import get_all_tags, get_tag, set_tag, check_initialized, defaulter
+
 from enaml import imports
 with imports():
     from taref.core.interactive_e import InteractiveWindow
@@ -19,15 +20,34 @@ from matplotlib.collections import PolyCollection, LineCollection, QuadMesh, Pat
 from matplotlib.lines import Line2D
 from matplotlib.colorbar import Colorbar
 
+#def defaulter(self, name, kwargs):
+#    if name in kwargs:
+#        return kwargs.pop(name)
+#    default=self.get_member(name).default_value_mode
+#    if default[0]==1:
+#        return default[1]
+#    elif default[0]==8:
+#        return getattr(self, default[1])()
+#    elif default[0]==5:
+#        return default[1]()
+#
+#def name_generator(self, name, indict, suffix="__{0}"):
+#    if name in indict:
+#        name+=suffix.format(len(indict.keys()))
+#    return name
+
 class PlotFormat(PlotUpdate):
     """base class corresponding to one graph or collection on axes"""
-    plot_name=Unicode()
+    plot_name=ReadOnly()
 
-    def _observe_plot_name(self, change):
-        check_initialized(self, change)
+    #def _default_plot_name(self):
+    #    return self.plot_type
+
+    #def _observe_plot_name(self, change):
+    #    check_initialized(self, change)
 
     append=Bool(False)
-    remove=Bool(True)
+    remove=Bool(False)
 
     xcoord=Float()
     ycoord=Float()
@@ -63,17 +83,34 @@ class PlotFormat(PlotUpdate):
                 self.clt.remove()
 
     def __init__(self, **kwargs):
+        plot_name=defaulter(self, "plot_name", kwargs)
+        plotter=kwargs["plotter"]
+        #if plot_name in plotter.plot_dict:
+        #    if self.remove:
+        #        self.remove_collection()
+        #    else:
+        plot_name=name_generator(plot_name, plotter.plot_dict, kwargs.get("plot_type", self.plot_type))
+        self.plot_name=plot_name
+
         super(PlotFormat, self).__init__(**kwargs)
-        set_tag(self, "plot_name", initialized=False)
-        if self.plot_name=="":
-            self.plot_name=self.plot_type
-        if self.plot_name in self.plotter.plot_dict:
-            if self.remove:
-                self.remove_collection()
-            else:
-                self.plot_name+="__{0}".format(len(self.plotter.plot_dict.keys()))
+        #if plot_name is None:
+        #    plot_name=self.plot_type
+        #if agent_name in Operative.agent_dict:
+        #    agent_name="{name}__{num}".format(name=agent_name, num=len(Operative.agent_dict))
+        #kwargs["name"]=agent_name
+        #Operative.agent_dict[agent_name]=self
+        #        plot_name+="__{0}".format(len(self.plotter.plot_dict.keys()))
+        #self.plot_name=plot_name
+        #set_tag(self, "plot_name", initialized=False)
+        #if self.plot_name=="":
+        #    self.plot_name=self.plot_type
+        #if self.plot_name in self.plotter.plot_dict:
+        #    if self.remove:
+        #        self.remove_collection()
+        #    else:
+        #        self.plot_name+="__{0}".format(len(self.plotter.plot_dict.keys()))
         self.plotter.plot_dict[self.plot_name]=self
-        set_tag(self, "plot_name", initialized=True)
+        #set_tag(self, "plot_name", initialized=True)
 
     @cached_property
     def view_window(self):
@@ -162,7 +199,7 @@ class Line2DFormat(LineFormat):
         return sf
 
 def line_plot(plotter, *args, **kwargs):
-    plot_name=kwargs.pop("plot_name", "")
+    plot_name=kwargs.pop("plot_name", None)
     pl0t=Line2DFormat(plot_name=plot_name, plotter=plotter)
     pl0t.line_plot(*args, **kwargs)
     return pl0t
@@ -295,7 +332,6 @@ class ColormeshFormat(PlotFormat):
 
     @plot_observe("plotter.selected")
     def colorbar_update(self, change):
-        print change
         if self.plotter.selected==self.plot_name:
             self.set_colorbar()
 
@@ -306,17 +342,12 @@ class ColormeshFormat(PlotFormat):
 
     def set_colorbar(self):
         self.get_colorbar().update_bruteforce(self.clt)
-        #self.set_clim(self.vmin, self.vmax)
 
     def set_clim(self, vmin, vmax):
         self.vmin=float(vmin)
         self.vmax=float(vmax)
         self.clt.set_clim(vmin, vmax)
         self.set_colorbar()
-        #self.get_colorbar().update_normal(self.clt)
-        #self.set_colorbar()
-        #print vmin, vmax
-        #self.get_colorbar().set_clim(vmin, vmax)
 
     @plot_observe("vmin", "vmax")
     def clim_update(self, change):
@@ -325,11 +356,30 @@ class ColormeshFormat(PlotFormat):
     vmin=Float()
     vmax=Float()
 
-    #def _default_colorbar(self):
-    #    self.plotter.figure.colorbar(self.clt)
-
     def _default_plot_type(self):
         return "colormap"
+
+    h_line=Typed(Line2D)
+    v_line=Typed(Line2D)
+
+    cs_alpha=Float(1.0)
+    cs_color=Enum(*colors_tuple[1:])
+    cs_linewidth=Float(2.0)
+    cs_linestyle=Enum('solid', 'dashed', 'dashdot', 'dotted')
+
+    def cs_set(self, param):
+        getattr(self.h_line, "set_"+param[3:])(getattr(self, param))
+        getattr(self.v_line, "set_"+param[3:])(getattr(self, param))
+
+    @observe("cs_alpha", "cs_linewidth", "cs_linestyle", "cs_color")
+    def cs_update(self, change):
+        if change["type"]=="update":
+            self.cs_set(change["name"])
+            if self.plotter.horiz_fig.canvas!=None:
+                self.plotter.horiz_fig.canvas.draw()
+            if self.plotter.vert_fig.canvas!=None:
+                self.plotter.vert_fig.canvas.draw()
+
 
     def pcolormesh(self, *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
@@ -397,7 +447,7 @@ class ColormeshFormat(PlotFormat):
         return mlf
 
 def colormesh_plot(plotter, *args, **kwargs):
-    plot_name=kwargs.pop("plot_name", "")
+    plot_name=kwargs.pop("plot_name", None)
     pl0t=ColormeshFormat(plot_name=plot_name, plotter=plotter)
     pl0t.pcolormesh(*args, **kwargs)
     #pl0t.colorbar

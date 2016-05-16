@@ -487,3 +487,66 @@ def Ga_f(Ga_0, Np, f, f0):
 #        return func(self, *args, **kwargs)
 #    new_func.run_params=get_run_params(func, skip=1)
 #    return new_func
+
+import sys
+
+def f_top_finder(fb):
+    """A recursive top frame finder"""
+    if fb.f_back is None:
+        return fb
+    return f_top_finder(fb.f_back)
+
+def f_top_limited(fb, n=100):
+    """A limited recursion top frame finder"""
+    for m in range(n):
+        if fb.f_back is None:
+            return fb
+        fb=fb.f_back
+    return fb
+
+def f_top(n=100):
+    """returns the top frame after n steps. n defaults to 100"""
+    try:
+        raise Exception
+    except:
+        fb=exc_info()[2].tb_frame.f_back
+    return f_top_limited(fb, n)
+
+def msg(*args, **kwargs):
+    """log msg that accepts multiple args with file info"""
+    n=kwargs.pop("n", 1)
+    fb=f_top(n)
+    return "{0} {1} {2}: {3}".format(fb.f_lineno, basename(fb.f_code.co_filename),
+              fb.f_code.co_name, ", ".join([str(arg) for arg in args]))
+
+    def write(self, in_str):
+        self.log_str+=in_str
+
+    def redirect_stdout(self, visible):
+        if visible:
+            sys.stdout=self
+            sys.stderr=self
+        else:
+            sys.stdout=sys.__stdout__ #old_stdout
+            sys.stderr=sys.__stderr__
+
+
+            fb=f_top()
+            if hasattr(chief_cls, "code_window"):
+                file_location=fb.f_code.co_filename
+                with open(file_location) as f:
+                    showfile=f.read()
+                view=chief_cls.code_window
+                view.show_code.text=showfile
+                view.show()
+                view.send_to_back()
+                if not show_code:
+                    view.hide()
+
+            locals_dict=dict(([(key, item) for key, item in fb.f_locals.items() if not key.startswith("_")]))
+            view=chief_cls.interactive_window
+            view.input_dict=locals_dict
+            view.show()
+            view.send_to_back()
+            if not show_ipy:
+                view.hide()

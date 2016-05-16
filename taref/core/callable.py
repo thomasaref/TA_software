@@ -52,6 +52,13 @@ def make_instancemethod(obj, func, name=None):
     setattr(obj, name, MethodType(new_func, obj, type(obj)))
     return func
 
+def setup_callables(obj, param, typer):
+    """Auto makes Callables into instance methods"""
+    if typer == Callable:
+        func=getattr(obj, param)
+        if func is not None:
+            make_instancemethod(obj, func)
+
 class instancemethod(object):
     """disposable decorator object for instancemethods defined outside of Atom class"""
     def __init__(self, obj, name=None):

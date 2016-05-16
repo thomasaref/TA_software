@@ -15,6 +15,8 @@ from enaml.core.api import Conditional, Include
 #from enaml.layout.api import vbox, hbox, align, spacer
 from taref.core.fundcore_e import aHGroup, CheckButton
 from taref.core.log import log_debug
+from taref.plotter.events import mpl_cross_section
+
 
 enamldef ColorMap(VGroup):
     attr plot_format
@@ -31,6 +33,25 @@ enamldef ColorMap(VGroup):
         text = "vmax:"
     FloatField:
         value:=plot_format.vmax
+    Label:
+        text = "Color"
+    ObjectCombo:
+        items=list(plot_format.get_member('cs_color').items)
+        selected:=plot_format.cs_color
+    Label:
+        text = "Alpha:"
+    FloatField:
+        value := plot_format.cs_alpha
+    Label:
+        text = "Line Width:"
+    FloatField:
+        value := plot_format.cs_linewidth
+    Label:
+        text = "Line Style:"
+    ObjectCombo:
+        items=list(plot_format.get_member('cs_linestyle').items)
+        selected:=plot_format.cs_linestyle
+
     PushButton:
         text = "test append"
         clicked ::
@@ -102,7 +123,6 @@ enamldef ScatterVGroup(VGroup):
         items=list(plot_format.get_member('marker').items)
         selected:=plot_format.marker
 
-from taref.plotter.events import mpl_cross_section
 
 enamldef AllVGroup(VGroup):
     attr plot_format

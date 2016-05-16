@@ -6,21 +6,22 @@ Created on Tue Jul  7 21:52:51 2015
 
 """
 
-from atom.api import Atom, Property, AtomMeta
+from atom.api import Atom, Property, AtomMeta, Range, FloatRange, Constant, ReadOnly
 from taref.core.atom_extension import (get_reserved_names, get_all_params,
-get_all_main_params, lowhigh_check, get_type, get_tag)
+get_all_main_params, lowhigh_check, get_type, get_tag, set_tag)
 from taref.core.property import TProperty, private_property
-from taref.core.callable import make_instancemethod
-from taref.core.extra_setup import setup_callables, setup_units, setup_ranges
+from taref.core.callable import make_instancemethod, setup_callables
 from enaml.qt.qt_application import QtApplication
-from taref.physics.units import UNIT_DICT, unitless, dB, dBm
+from taref.physics.units import UNIT_DICT#, unitless, dB, dBm
 from numpy import float64
+from taref.core.interact import Interact
 
 from enaml import imports
 with imports():
     from taref.core.agent_e import AutoAgentView, BasicView
     from taref.core.interactive_e import InteractiveWindow, CodeWindow
     from taref.core.log_e import LogWindow
+
 
 class BackboneAtomMeta(AtomMeta):
     @classmethod
@@ -34,6 +35,19 @@ class BackboneAtomMeta(AtomMeta):
         dct.update(update_dict)
         return AtomMeta.__new__(meta, name, bases, dct)
 
+def setup_ranges(self, param, typer):
+    """Autosets low/high tags for Range and FloatRange"""
+    if typer in [Range, FloatRange]:
+        set_tag(self, param, low=self.get_member(param).validate_mode[1][0], high=self.get_member(param).validate_mode[1][1])
+
+def setup_units(self, param, typer):
+    """autosets units using unit_dict"""
+    unit=get_tag(self, param, "unit")
+    if unit is not None:
+        unit_dict=getattr(self, "unit_dict", UNIT_DICT)
+        if unit in unit_dict:
+            set_tag(self, param, unit=unit_dict[unit])
+
 class Backbone(Atom):
     """
     tarefdoc-process-docstring
@@ -43,6 +57,7 @@ class Backbone(Atom):
     __metaclass__=BackboneAtomMeta
 
     unit_dict=UNIT_DICT
+
     app=QtApplication.instance()
 
     @private_property
@@ -51,11 +66,7 @@ class Backbone(Atom):
 
     chief_window=BasicView()
 
-    #interactive_window=InteractiveWindow()
-
-    log_window=LogWindow()
-
-    code_window=CodeWindow()
+    interact=Interact()
 
     @private_property
     def reserved_names(self):
@@ -99,14 +110,14 @@ class Backbone(Atom):
         setup_ranges(self, param, typer)
         setup_units(self, param, typer)
 
-    def call_func(self, name, **kwargs):
-        """calls a func using keyword assignments. If name corresponds to a Property, calls the get func.
-        otherwise, if name_mangled func "_get_"+name exists, calls that. Finally calls just the name if these are not the case"""
-        if name in self.property_names:
-            return self.property_dict[name].fget(self, **kwargs)
-        elif name in self.all_params and hasattr(self, "_get_"+name):
-            return getattr(self, "_get_"+name)(self, **kwargs)
-        return getattr(self, name)(**kwargs)
+#    def call_func(self, name, **kwargs):
+#        """calls a func using keyword assignments. If name corresponds to a Property, calls the get func.
+#        otherwise, if name_mangled func "_get_"+name exists, calls that. Finally calls just the name if these are not the case"""
+#        if name in self.property_names:
+#            return self.property_dict[name].fget(self, **kwargs)
+#        elif name in self.all_params and hasattr(self, "_get_"+name):
+#            return getattr(self, "_get_"+name)(self, **kwargs)
+#        return getattr(self, name)(**kwargs)
 
     def __setattr__(self, name, value):
         """uses __setattr__ perform lowhigh_check on all_params"""
@@ -120,10 +131,10 @@ class Backbone(Atom):
 
     def __init__(self, **kwargs):
         """extends __init__ to allow extra setup for all params"""
+        super(Backbone, self).__init__(**kwargs)
         for param in self.all_params:
             typer=get_type(self, param)
             self.extra_setup(param, typer)
-        super(Backbone, self).__init__(**kwargs)
 
     def latex_table_entry(self, param=None, value=None, expression=None, comment=None):
         if param is None:

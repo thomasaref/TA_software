@@ -7,9 +7,10 @@ Created on Sat Jul  4 13:03:26 2015
 from taref.core.log import log_debug
 from atom.api import Unicode, ContainerList, Float, Bool, Int, Typed, Instance, Event, Property, ReadOnly
 from taref.core.backbone import Backbone
-from taref.core.atom_extension import set_log, check_initialized, set_tag
+from taref.core.atom_extension import set_log, check_initialized, set_tag, defaulter
 from taref.core.property import private_property, reset_properties
 from taref.core.threadsafe import safe_setattr
+from taref.core.universal import name_generator
 from collections import OrderedDict
 from taref.core.shower import shower
 from time import time, sleep
@@ -22,12 +23,22 @@ class AgentError(Exception):
     """An Error for use by Operatives, Agents and Spies"""
     pass
 
+
+
+#def name_generator(name, indict, suffix="{name}__{num}"):
+#    """checks indict to see if name is in it and generates a new name based on length of indict if it is"""
+#    if name in indict:
+#        name="{name}__{num}".format(name=name, num=len(indict))
+#    return name
+
 class Operative(Backbone):
     """Adds functionality for auto showing to Backbone"""
-    name=Unicode().tag(private=True, desc="Name of agent. This name will be modified to be unique, if necessary", initialized=False)
+    name=ReadOnly().tag(private=True, desc="Name of agent. This name will be modified to be unique, if necessary", initialized=False)
 
-    def _observe_name(self, change):
-        check_initialized(self, change)
+    #def _default_name(self):
+    #    return self.base_name
+    #def _observe_name(self, change):
+    #    check_initialized(self, change)
 
     desc=Unicode().tag(private=True, desc="Optional description of agent")
 
@@ -200,14 +211,15 @@ class Operative(Backbone):
     def __init__(self, **kwargs):
         """extends Backbone __init__ to add agent to boss's agent list
         and give unique default name."""
-        agent_name=kwargs.pop("name", self.base_name)
-        if agent_name in Operative.agent_dict:
-            agent_name="{name}__{num}".format(name=agent_name, num=len(Operative.agent_dict))
-        kwargs["name"]=agent_name
-        Operative.agent_dict[agent_name]=self
-        set_tag(self, "name", initialized=False)
+        agent_name=defaulter(self, "name", kwargs)
+        agent_name=name_generator(agent_name, Operative.agent_dict, self.base_name)
+        #if agent_name in Operative.agent_dict:
+        #    agent_name="{name}__{num}".format(name=agent_name, num=len(Operative.agent_dict))
+        self.name=agent_name
+        Operative.agent_dict[self.name]=self
+        #set_tag(self, "name", initialized=False)
         super(Operative, self).__init__(**kwargs)
-        set_tag(self, "name", initialized=True)
+        #set_tag(self, "name", initialized=True)
         self.add_func(*self.cls_run_funcs)
 
 
@@ -252,9 +264,11 @@ class Agent(Operative):
             reset_properties(self)
 
 if __name__=="__main__":
-    a=Agent()
-    b=Agent(desc="blah")
+    a=Agent(name="bob")
+    b=Agent(name="bob", desc="blah")
+    print b.desc
     print a.name, b.name
     print a.agent_dict
-    b.name="yoya"
+    #b.name="yoya"
     print Agent, type(a), type(a)==Agent
+    b.show()

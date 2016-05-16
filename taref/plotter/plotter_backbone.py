@@ -108,14 +108,14 @@ class PlotMaster(Atom):
         return plt.figure(figsize=(self.fig_width, 1.0))
 
     def _default_horiz_axe(self):
-        h_axe=self.horiz_fig.add_subplot(111, sharex=self.axes)
+        h_axe=self.horiz_fig.add_subplot(111)#, sharex=self.axes)
         return h_axe
 
     def _default_vert_fig(self):
         return plt.figure(figsize=(1.0, self.fig_height))
 
     def _default_vert_axe(self):
-        v_axe=self.vert_fig.add_subplot(111, sharey=self.axes)
+        v_axe=self.vert_fig.add_subplot(111)#, sharey=self.axes)
         return v_axe
 
     def update_plot(self, update_legend=True):

@@ -19,14 +19,17 @@ from taref.filer.read_file import Read_TXT
 from taref.filer.save_file import Save_TXT
 from subprocess import call
 from os.path import relpath
-from taref.core.interact import Interact
+from taref.core.interact import Interact, File_Parser
 from enaml import imports
 with imports():
     from tex_e import TEX_Window
 
-class TEX(Interact):
+class TEX(Operative):
     """A laTeX/python report maker. source tex and images are included from the source folder. tex and python are written out to the save_file and save_code.
     various subfunctions give easy access to including analysis written in python in a laTeX report"""
+
+    base_name="tex"
+    #initial_size=(800,800)
 
     folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data")
     source_folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data", main_dir="", quality="")
@@ -37,9 +40,10 @@ class TEX(Interact):
 
     def __init__(self, **kwargs):
         source_path=kwargs.pop("source_path", None)
-        kwargs["starter"]=kwargs.pop("starter", "TEX_start")
-        kwargs["stopper"]=kwargs.pop("stopper", "TEX_end")
+        starter=kwargs.pop("starter", "TEX_start")
+        stopper=kwargs.pop("stopper", "TEX_end")
         super(TEX, self).__init__(**kwargs)
+        self.interact.file_reader=File_Parser(starter=starter, stopper=stopper)
         if source_path is not None:
             self.read_file.file_path=source_path
         if self.read_file.folder.main_dir!="":
@@ -113,7 +117,7 @@ class TEX(Interact):
 
     def simulate_tex(self):
         """simulates the python code producing the output texlist"""
-        self.exec_code()
+        self.interact.exec_code()
 
     def restore_source(self):
         """process the source_dict to make the tex list just show the \pyb/\pye entries in source_dict"""
@@ -175,7 +179,7 @@ class TEX(Interact):
         if refresh:
             self.tex_start=self._default_tex_start()
         self.extend(self.tex_start)
-        self.make_input_code()
+        #self.interact.make_input_code()
 
     def TEX_end(self):
         """ends the tex file and serves as a stop marker for self.file_reader"""
@@ -252,10 +256,6 @@ class TEX(Interact):
 
     @cached_property
     def view_window(self):
-        return TEX_Window(agent=self)
-
-    @cached_property
-    def interact_window(self):
         return TEX_Window(agent=self)
 
 if __name__=="__main__":

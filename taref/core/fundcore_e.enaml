@@ -6,14 +6,12 @@ Created on Thu Jul  9 16:51:22 2015
 
 A core collection of enamldefs including units for ints and floats and non-padded containers
 """
-from taref.core.log import log_debug
 from enaml.widgets.api import  ( HGroup, Container, GroupBox,  Field, Label, SpinBox,
                                 MultilineField, VGroup, ScrollArea, Window, MainWindow, PushButton)
 from enaml.core.api import Conditional
 from enaml.validator import IntValidator, FloatValidator
 from enaml.layout.api import spacer
 from taref.physics.units import unit_func, unitless
-
 
 enamldef aWindow(Window):
     """a Window that is not destroyed on close"""
@@ -52,10 +50,8 @@ enamldef CheckButton(PushButton):
     """a PushButton that stays checked depending on value. Can be made read only. A substitute for CheckBox"""
     attr value : bool = False
     attr read_only : bool = False
-    attr mapping : dict = {} #{True : "True", False : "False"}
-    #attr True_text = "True"
-    #attr False_text = "False"
-    text << unicode(mapping.get(value, value))#unicode(True_text if value else False_text)
+    attr mapping : dict = {}
+    text << unicode(mapping.get(value, value))
     checkable = True
     checked << value
     clicked ::
@@ -63,6 +59,18 @@ enamldef CheckButton(PushButton):
             self.value=self.checked
         else:
             self.checked=self.value
+
+#def scrollbar_bottom_out(self, value=None):
+#    vsb=self.proxy.widget.verticalScrollBar()
+#    if value is None:
+#        value=vsb.maximum()
+#    vsb.setSliderPosition(value)
+
+enamldef BottomMultilineField(MultilineField):
+    """a MultilineField that scrolls automatically to the bottom when text is updated"""
+    text ::
+        vsb=self.proxy.widget.verticalScrollBar()
+        vsb.setSliderPosition(vsb.maximum())
 
 enamldef UnitHGroup(aHGroup):
     """shared structure between UnitIntField and UnitFloatField"""

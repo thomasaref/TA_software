@@ -5,45 +5,14 @@ Created on Sat Apr  9 19:14:03 2016
 @author: thomasaref
 """
 
-from sys import exc_info
-from os.path import basename
-from atom.api import Atom, Unicode, Bool, List, Typed, Dict, cached_property, Int
+#from sys import exc_info
+#from os.path import basename
+from atom.api import Atom, Unicode, Bool, List, Typed, Dict, cached_property#, Int
+from taref.core.log import f_top
 from enaml import imports
 with imports():
-    from taref.core.ipython_e import InteractiveWindow
-
-import sys
-
-def f_top_finder(fb):
-    """A recursive top frame finder"""
-    if fb.f_back is None:
-        return fb
-    return f_top_finder(fb.f_back)
-
-def f_top_limited(fb, n=100):
-    """A limited recursion top frame finder"""
-    for m in range(n):
-        if fb.f_back is None:
-            return fb
-        fb=fb.f_back
-    return fb
-
-def f_top(n=100):
-    """returns the top frame after n steps. n defaults to 100"""
-    try:
-        raise Exception
-    except:
-        fb=exc_info()[2].tb_frame.f_back
-    return f_top_limited(fb, n)
-
-def msg(*args, **kwargs):
-    """log msg that accepts multiple args with file info"""
-    n=kwargs.pop("n", 1)
-    fb=f_top(n)
-    return "{0} {1} {2}: {3}".format(fb.f_lineno, basename(fb.f_code.co_filename),
-              fb.f_code.co_name, ", ".join([str(arg) for arg in args]))
-
-
+    from taref.core.interactive_e import InteractiveWindow, CodeWindow
+    from taref.core.log_e import LogWindow
 
 class File_Parser(Atom):
     """a callable object for extracting the strings in a list between starter and stopper. For use when parsing text files"""
@@ -83,32 +52,32 @@ class Interact(Atom):
     file_read=False
     exec_on_enter=Bool(False)
 
-    log_height=Int(100)
-    log_width=Int(300)
-    log_str=Unicode()
+    log_pane_visible=Bool(False)
+    code_pane_visible=Bool(False)
 
     @cached_property
     def initial_position(self):
-        return (0, self.log_height)
+        return (0, 100)
 
     @cached_property
     def initial_size(self):
-        return (self.log_width, self.log_height)
-
-    def write(self, in_str):
-        self.log_str+=in_str
-
-    def redirect_stdout(self, visible):
-        if visible:
-            sys.stdout=self
-            sys.stderr=self
-        else:
-            sys.stdout=sys.__stdout__ #old_stdout
-            sys.stderr=sys.__stderr__
+        return (500, 600)
 
     @cached_property
-    def interact_window(self):
+    def code_str(self):
+        return "\n".join(self.file_reader.preamble)+"\n"+self.input_code+"\n"+"\n".join(self.file_reader.postamble)
+
+    @cached_property
+    def interactive_window(self):
         return InteractiveWindow(interact=self)
+
+    @cached_property
+    def code_window(self):
+        return CodeWindow(interact=self)
+
+    @cached_property
+    def log_window(self):
+        return LogWindow()
 
     def __init__(self, **kwargs):
         starter="."+kwargs.pop("starter", "")
@@ -119,13 +88,13 @@ class Interact(Atom):
     def make_input_code(self):
         """process the topmost called code to allow access in the GUI and allow saving of a copy of the code"""
         if not self.file_read:
-            print "reading code"
             Interact.file_read=True
             fb=f_top()
             self.locals_dict=fb.f_locals
             with open(fb.f_code.co_filename, "r") as f:
                 file_text=f.read()
             self.input_code="\n".join([line for line in file_text.split("\n") if self.file_reader(line)])
+            self.get_member("code_str").reset(self)
 
     def _observe_input_code(self, change):
         if change["type"]=="update":
@@ -133,10 +102,9 @@ class Interact(Atom):
             if nn!=0 and self.exec_on_enter:
                 self.exec_code()
 
-
     def exec_code(self):
         """simulates the python code producing the output texlist"""
-        self.log_str=""
         exec(self.input_code, {}, self.locals_dict)
         self.locals_dict.update(locals())
+        self.get_member("code_str").reset(self)
 

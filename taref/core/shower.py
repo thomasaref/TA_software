@@ -4,7 +4,7 @@ Created on Mon Aug 24 12:38:54 2015
 
 @author: thomasaref
 """
-from taref.core.log import f_top#, log_debug
+#from taref.core.log import f_top#, log_debug
 from taref.core.shower_backbone import get_view_window
 from taref.core.backbone import Backbone
 from enaml import imports
@@ -39,42 +39,13 @@ def shower(*agents, **kwargs):
 
     if start_it:
         chief_cls=kwargs.pop("chief_cls", agents[0] if agents!=() else Backbone)
-        show_log=kwargs.pop("show_log", False)
-        show_ipy=kwargs.pop("show_ipy", False)
-        show_code=kwargs.pop("show_code", False)
-
-        if hasattr(chief_cls, "log_window"):
-            view=chief_cls.log_window
-            view.show()
-            view.send_to_back()
-            if not show_log:
-                view.hide()
-
         chief_view=getattr(chief_cls, "chief_window", Backbone.chief_window)
         chief_view.chief_cls=chief_cls
         for key in kwargs:
             setattr(chief_view, key, kwargs[key])
         chief_view.show()
-        if hasattr(chief_cls, "interactive_window"):
-            fb=f_top()
-            if hasattr(chief_cls, "code_window"):
-                file_location=fb.f_code.co_filename
-                with open(file_location) as f:
-                    showfile=f.read()
-                view=chief_cls.code_window
-                view.show_code.text=showfile
-                view.show()
-                view.send_to_back()
-                if not show_code:
-                    view.hide()
-
-            locals_dict=dict(([(key, item) for key, item in fb.f_locals.items() if not key.startswith("_")]))
-            view=chief_cls.interactive_window
-            view.input_dict=locals_dict
-            view.show()
-            view.send_to_back()
-            if not show_ipy:
-                view.hide()
+        if hasattr(chief_cls, "interact"):
+            chief_cls.interact.make_input_code()
 
         try:
             app.start()

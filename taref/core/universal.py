@@ -56,3 +56,11 @@ def pass_factory(*args, **kwargs):
 
 def msg(*args):
     return ", ".join([unicode(arg) for arg in args])
+
+def name_generator(name, indict,  default_value="NO_NAME", suffix="{name}__{num}"):
+    """checks indict to see if name is in it and generates a new name based on length of indict if it is"""
+    if name is None:
+        name=default_value
+    if name in indict:
+        name="{name}__{num}".format(name=name, num=len(indict))
+    return name
