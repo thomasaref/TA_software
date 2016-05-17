@@ -9,7 +9,7 @@ from matplotlib import use#('Agg')
 use('Agg')
 
 from taref.plotter.plotter_backbone import plot_observe, PlotMaster, simple_set, process_kwargs
-from atom.api import Bool, Unicode, Float, Enum, Int, cached_property#, Typed
+from atom.api import Bool, Unicode, Float, Enum, Int, observe, cached_property#, Typed
 
 from taref.core.agent import Operative
 from enaml import imports
@@ -52,6 +52,67 @@ class Fig(PlotMaster, Operative):
     x_max=Float()
     y_min=Float()
     y_max=Float()
+
+    def _default_x_min(self):
+        first_plot=self.plot_dict.values()[0]
+        return float(min(first_plot.xdata))
+
+    def _default_x_max(self):
+        first_plot=self.plot_dict.values()[0]
+        return float(max(first_plot.xdata))
+
+    def _default_y_min(self):
+        first_plot=self.plot_dict.values()[0]
+        return float(min(first_plot.ydata))
+
+    def _default_y_max(self):
+        first_plot=self.plot_dict.values()[0]
+        return float(max(first_plot.ydata))
+
+    auto_cs_xlim=Bool(True)
+    auto_cs_ylim=Bool(True)
+
+    cs_x_min=Float()
+    cs_x_max=Float()
+    cs_y_min=Float()
+    cs_y_max=Float()
+
+#    def _default_cs_x_min(self):
+#        first_plot=self.plot_dict.values()[0]
+#        return float(min(first_plot.xdata))
+#
+#    def _default_x_max(self):
+#        first_plot=self.plot_dict.values()[0]
+#        return float(max(first_plot.xdata))
+#
+#    def _default_y_min(self):
+#        first_plot=self.plot_dict.values()[0]
+#        return float(min(first_plot.ydata))
+#
+#    def _default_y_max(self):
+#        first_plot=self.plot_dict.values()[0]
+#        return float(max(first_plot.ydata))
+
+    def _default_cs_x_min(self):
+        return self.x_min
+
+    def _default_cs_x_max(self):
+        return self.x_max
+
+    def _default_cs_y_min(self):
+        return self.y_min
+
+    def _default_cs_y_max(self):
+        return self.y_max
+
+    @observe("cs_x_min", "cs_x_max", "cs_y_min", "cs_y_max")
+    def cs_lim_update(self, change):
+        self.horiz_axe.set_ylim(self.cs_y_min, self.cs_y_max)
+        self.vert_axe.set_xlim(self.cs_x_min, self.cs_x_max)
+        #if self.horiz_fig.canvas!=None:
+        #    self.horiz_fig.canvas.draw()
+        #if self.vert_fig.canvas!=None:
+        #    self.vert_fig.canvas.draw()
 
     transparent=Bool(True)
     save_type=Enum("png", "pdf", "ps", "eps","svg")
@@ -117,10 +178,21 @@ class Fig(PlotMaster, Operative):
     @plot_observe("x_min", "x_max")
     def x_lim_update(self, change):
         self.set_xlim(self.x_min, self.x_max)
+        if self.show_cross_section:
+            self.horiz_axe.set_xlim(self.x_min, self.x_max)
+            if self.horiz_fig.canvas!=None:
+                self.horiz_fig.canvas.draw()
+
 
     @plot_observe("y_min", "y_max")
     def y_lim_update(self, change):
         self.set_ylim(self.y_min, self.y_max)
+        if self.show_cross_section:
+            self.vert_axe.set_ylim(self.y_min, self.y_max)
+            if self.vert_fig.canvas!=None:
+                self.vert_fig.canvas.draw()
+
+
 
     @plot_observe("show_legend")
     def legend_update(self, change):

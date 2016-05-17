@@ -88,15 +88,13 @@ class mpl_drag(mpl_event):
 
 class mpl_cross_section(mpl_event):
     def __init__(self, plot_format):
-        #self.pf=plot_format
         self.pltr=plot_format.plotter
-        #self.h_line=None
-        #self.v_line=None
         self.pfs=[pf for pf in self.pltr.plot_dict.values() if pf.plot_type=="colormap"]
 
     def __call__(self, event):
         if event.inaxes is not None:
-            for pf in self.pfs:
+            #xmin, xmax, ymin, ymax=None, None, None, None
+            for n, pf in enumerate(self.pfs):
                 xpos=argmin(absolute(event.xdata-pf.xdata))
                 ypos=argmin(absolute(event.ydata-pf.ydata))
                 pf.xcoord=event.xdata
@@ -104,18 +102,40 @@ class mpl_cross_section(mpl_event):
                 pf.xind=xpos
                 pf.yind=ypos
                 if self.pltr.show_cross_section: #self.pf.plot_type=="colormap" and
+                    h_data=pf.zdata[ypos, :]
+                    v_data=pf.zdata[:, xpos]
                     if pf.h_line is None:
-                        pf.h_line=self.pltr.horiz_axe.plot(pf.xdata, pf.zdata[ypos, :])[0]
-                        self.pltr.horiz_axe.set_xlim(min(pf.xdata), max(pf.xdata))
-                        pf.v_line=self.pltr.vert_axe.plot(pf.zdata[:, xpos], pf.ydata)[0]
-                        self.pltr.horiz_axe.set_ylim(min(pf.ydata), max(pf.ydata))
+                        pf.h_line=self.pltr.horiz_axe.plot(pf.xdata, h_data)[0]
+                        pf.v_line=self.pltr.vert_axe.plot(v_data, pf.ydata)[0]
                     else:
-                        h_data=pf.zdata[ypos, :]
                         pf.h_line.set_ydata(h_data)
-                        self.pltr.horiz_axe.set_ylim(min(h_data), max(h_data))
-                        v_data=pf.zdata[:, xpos]
                         pf.v_line.set_xdata(v_data)
-                        self.pltr.vert_axe.set_xlim(min(v_data), max(v_data))
+                        #self.pltr.vert_axe.set_xlim(min(v_data), max(v_data))
+                    if self.pltr.auto_cs_ylim:
+                        if n==0:
+                            ymin=min(h_data)
+                            ymax=max(h_data)
+                        else:
+                            ymin=min((min(h_data), ymin))
+                            ymax=max((max(h_data), ymax))
+                        self.pltr.cs_y_min=float(ymin)
+                        self.pltr.cs_y_max=float(ymax)
+                    if self.pltr.auto_cs_xlim:
+                        if n==0:
+                            xmin=min(v_data)
+                            xmax=max(v_data)
+                        else:
+                            xmin=min((min(v_data), xmin))
+                            xmax=max((max(v_data), xmax))
+                        self.pltr.cs_x_min=float(xmin)
+                        self.pltr.cs_x_max=float(xmax)
+
+                        #self.pltr.cs_x_min=float(min((self.pltr.cs_x_min, min(v_data))))
+                        #self.pltr.cs_x_max=float(max((self.pltr.cs_x_max, max(v_data))))
+
+                        #self.pltr.horiz_axe.set_xlim(min(pf.xdata), max(pf.xdata))
+                    #if self.pltr.auto_cs_ylim:
+                        #self.pltr.horiz_axe.set_ylim(min(pf.ydata), max(pf.ydata))
                     if self.pltr.horiz_fig.canvas!=None:
                         self.pltr.horiz_fig.canvas.draw()
                     if self.pltr.vert_fig.canvas!=None:

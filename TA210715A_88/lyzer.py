@@ -10,7 +10,7 @@ from taref.filer.read_file import Read_HDF5
 from taref.physics.qdt import QDT
 from taref.physics.fitting_functions import fano, lorentzian, refl_lorentzian, full_fano_fit, full_fit, lorentzian2
 from taref.physics.filtering import fft_filter5, hann_ifft, fft_filter2, fft_filter3, filt_prep
-from taref.plotter.api import line, colormesh, scatter
+from taref.plotter.api import line, colormesh, scatter, Plotter
 from atom.api import Float, Typed, Unicode, Int, Callable, Enum, List
 from h5py import File
 from numpy import float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin, sqrt
@@ -123,10 +123,10 @@ class Lyzer(LyzerBase):
     #def _get_filt_end_ind_get_(self, filt_width, filt_center_ind):
     #    return (2*filt_center_ind+filt_width)/2
 
-    fit_func=Callable(fano).tag(private=True)
+    fit_func=Callable(lorentzian).tag(private=True)
     read_data=Callable(read_data).tag(sub=True)
 
-    fit_type=Enum("Transmission", "Reflection")
+    fit_type=Enum("fq", "yoko")
 
     @tag_property(plot=True, sub=True)
     def fq(self):
@@ -194,6 +194,34 @@ class Lyzer(LyzerBase):
         #return array([fft_filter4(self.Magcom[:,n], self.filt_center) for n in range(len(self.yoko))]).transpose()
         return array([fft_filter3(self.Magcom[:,n], self.filt_start_ind, self.filt_end_ind) for n in range(len(self.yoko))]).transpose()
 
+    @tag_property(sub=True)
+    def MagAbsFit(self):
+        return sqrt(array([lorentzian(self.fq, fp) for fp in self.fit_params]))
+
+    @tag_property(sub=True)
+    def fit_params(self):
+        return self.full_fano_fit(self.fq)
+
+    def widths_plot(self, pl=None):
+        if pl is None:
+            pl=Plotter()
+        scatter(self.frequency[self.indices]/1e9, absolute([fp[0] for fp in self.fit_params]), plotter=pl)
+        line(self.frequency/1e9, self.qdt._get_coupling(self.frequency), plotter=pl, color="red")
+        return pl
+
+    def center_plot(self):
+        pl, pf=line(self.frequency[self.indices]/1e9, array([fp[1] for fp in self.fit_params]))
+        line(self.frequency/1e9, self.ls_f, plotter=pl, color="red")
+
+    def heights_plot(self):
+        pl, pf=line(self.frequency[self.indices]/1e9, array([fp[3]-fp[2] for fp in self.fit_params]))
+
+    def background_plot(self):
+        pl, pf=line(self.frequency[self.indices]/1e9, array([fp[2]+fp[3] for fp in self.fit_params]))
+        line(self.frequency[self.indices]/1e9, self.MagAbsFilt_sq[self.indices,0], plotter=pl, color="red")
+        return pl
+
+
     def magabs_colormesh(self):
         pl, pf=colormesh(self.yoko, self.frequency/1e9, self.MagAbs, plotter="magabs_{}".format(self.name))
         pl.set_ylim(min(self.frequency/1e9), max(self.frequency/1e9))
@@ -233,17 +261,27 @@ class Lyzer(LyzerBase):
         p, pf=line(self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)", plotter="filtcomp_{}".format(self.name))
         line(self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)", plotter=p)
 
-    def magabsfilt_colormesh(self):
-        p, pf=colormesh(self.yoko[10:-10], self.ls_f[10:-10]/1e9,
-                        self.MagAbsFilt[10:-10, 10:-10], plotter="magabsfilt_{}".format(self.name))
-        colormesh(self.yoko[10:-10], self.frequency[10:-10]/1e9,
-                        self.MagAbsFilt[10:-10, 10:-10], plot_name="magabsfiltf_{}".format(self.name), plotter=p)
+    def magabsfilt_colormesh(self, pl=None):
+        if pl is None:
+            pl=Plotter()
+        colormesh(self.yoko[10:-10], self.ls_f[10:-10]/1e9,
+                        self.MagAbsFilt[10:-10, 10:-10], plotter=pl)#"magabsfilt_{}".format(self.name))
+        #colormesh(self.yoko[10:-10], self.frequency[10:-10]/1e9,
+        #                self.MagAbsFilt[10:-10, 10:-10], #plot_name="magabsfiltf_{}".format(self.name),
+        #                plotter=p)
+        colormesh(self.yoko[10:-10], self.ls_f[self.indices][10:-10]/1e9,
+                        self.MagAbsFit[10:-10, 10:-10], plotter=pl)
+        colormesh(self.yoko[10:-10], self.ls_f[10:-10]/1e9,
+                        self.MagAbs[10:-10, 10:-10], plotter=pl)
 
         #fq=array([sqrt(f*(f-2*self.qdt._get_Lamb_shift(f=f))) for f in self.fq])
         #fq=self.fq+self.qdt._get_Lamb_shift(f=self.fq)/2
-        line(self.yoko[10:-10], self.fq[10:-10]/1e9, plotter=p)
-        p.xlabel="Yoko (V)"
-        p.ylabel="Frequency (GHz)"
+        #xmin, xmax, ymin, ymax=p.x_min, p.x_max, p.y_min, p.y_max
+        #line(self.yoko[10:-10], self.fq[10:-10]/1e9, plotter=p)
+        #p.x_min, p.x_max, p.y_min, p.y_max=xmin, xmax, ymin, ymax
+        pl.xlabel="Yoko (V)"
+        pl.ylabel="Frequency (GHz)"
+        return pl
 
     def magabsfilt2_colormesh(self):
         p, pf=colormesh(self.frequency[10:-10]/1e9, self.yoko[10:-10],
@@ -268,7 +306,7 @@ class Lyzer(LyzerBase):
     def full_fano_fit(self, fq):
         log_debug("started fano fitting")
         fit_params=[self.fano_fit(n, fq)  for n in self.indices]
-        fit_params=array(zip(*fit_params))
+        #fit_params=array(zip(*fit_params))
         log_debug("ended fano fitting")
         return fit_params
 
@@ -293,13 +331,16 @@ class Lyzer(LyzerBase):
         return y-self.fit_func(x, p)
 
     def fano_fit(self, n, fq):
-        pbest= leastsq(self.resid_func, self.p_guess, args=(self.MagAbsFilt_sq[n, :], fq), full_output=1)
+        dat=self.MagAbsFilt_sq[n, :]
+        datamax=max(dat)
+        datamin=min(dat)
+        if self.fit_type=="yoko":
+            p_guess=[0.2, self.yoko[self.on_res_ind], datamax-datamin, dat[0]]
+        else:
+            p_guess=[5e6, self.ls_f[n], datamax-datamin, dat[0]]
+        pbest= leastsq(self.resid_func, p_guess, args=(dat, fq), full_output=1)
         best_parameters = pbest[0]
-        #log_debug(best_parameters)
-        #if 0:#n==539 or n==554:#n % 10:
-            #b.line_plot("magabs_flux", self.flux_par*1e-9, (self.MagAbsFilt_sq[n, :], label="{}".format(n), linewidth=0.2)
-            #b.line_plot("lorentzian", self.flux_par*1e-9, self.fit_func(self.flux_par,best_parameters), label="fit {}".format(n), linewidth=0.5)
-        return (self.frequency[n], best_parameters[0], best_parameters[1], best_parameters[2], best_parameters[3])
+        return (best_parameters[0], best_parameters[1], best_parameters[2], best_parameters[3])
 
 class TransLyzer(Lyzer):
     def _default_fit_func(self):

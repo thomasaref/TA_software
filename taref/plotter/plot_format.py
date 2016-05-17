@@ -8,7 +8,7 @@ from taref.core.log import log_debug
 from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names, simple_set, process_kwargs
 from taref.core.universal import Array, name_generator
 from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict, observe, ReadOnly
-from numpy import linspace, arange, asanyarray, append, amax, amin
+from numpy import linspace, arange, asanyarray, append, amax, amin, ndarray, nanmax, nanmin
 from taref.core.shower import shower
 from taref.core.atom_extension import get_all_tags, get_tag, set_tag, check_initialized, defaulter
 
@@ -35,6 +35,8 @@ from matplotlib.colorbar import Colorbar
 #    if name in indict:
 #        name+=suffix.format(len(indict.keys()))
 #    return name
+def Array2():
+    return Typed(ndarray)
 
 class PlotFormat(PlotUpdate):
     """base class corresponding to one graph or collection on axes"""
@@ -54,8 +56,34 @@ class PlotFormat(PlotUpdate):
     xind=Int()
     yind=Int()
 
-    xdata=Array()
-    ydata=Array()
+#    x_min=Float()
+#    x_max=Float()
+#    y_min=Float()
+#    y_max=Float()
+#
+#    def _default_x_min(self):
+#        return min(self.xdata)
+#
+#    def _default_x_max(self):
+#        return max(self.xdata)
+#
+#    def _default_y_min(self):
+#        return min(self.ydata)
+#
+#    def _default_y_max(self):
+#        return max(self.ydata)
+
+    def do_autolim(self):
+        if self.plotter.auto_xlim:
+            self.plotter.x_min=float(min((self.plotter.x_min, nanmin(self.xdata))))
+            self.plotter.x_max=float(max((self.plotter.x_max, nanmax(self.xdata))))
+        if self.plotter.auto_ylim:
+            self.plotter.y_min=float(min((self.plotter.y_min, nanmin(self.ydata))))
+            self.plotter.y_max=float(max((self.plotter.y_max, nanmax(self.ydata))))
+
+
+    xdata=Array2()
+    ydata=Array2()
 
     plot_type=Enum("line", "scatter", "multiline", "colormap", "vline", "hline", "polygon", "cross_cursor")
 
@@ -159,8 +187,7 @@ class Line2DFormat(LineFormat):
         self.xdata=x
         self.ydata=y
         self.clt=self.plotter.axes.plot(*args, **kwargs)[0]
-        print type(self.clt.get_xdata())
-        #print self.clt.get_ydata()
+        self.do_autolim()
 
     def alter_xy(self, *args):
         """appends points x and y if 2 args are passed and just y and len of xdata if one args is passed"""
@@ -306,6 +333,7 @@ class ScatterFormat(LineFormat):
             self.xdata=args[0]
             self.ydata=args[1]
         self.clt=self.plotter.axes.scatter(self.xdata, self.ydata, **kwargs)
+        self.do_autolim()
 
     @transformation
     def scatter2line(self):
@@ -321,7 +349,7 @@ def scatter_plot(plotter, *args, **kwargs):
 
 class ColormeshFormat(PlotFormat):
     clt=Typed(QuadMesh)
-    zdata=Array()
+    zdata=Array2()
 
     cmap=Enum(*colormap_names).tag(former="cmap")
 
@@ -362,6 +390,7 @@ class ColormeshFormat(PlotFormat):
     h_line=Typed(Line2D)
     v_line=Typed(Line2D)
 
+
     cs_alpha=Float(1.0)
     cs_color=Enum(*colors_tuple[1:])
     cs_linewidth=Float(2.0)
@@ -380,6 +409,10 @@ class ColormeshFormat(PlotFormat):
             if self.plotter.vert_fig.canvas!=None:
                 self.plotter.vert_fig.canvas.draw()
 
+    def do_autolim(self):
+        if self.plotter.auto_zlim:
+            self.set_clim(nanmin(self.zdata), nanmax(self.zdata))
+        super(ColormeshFormat, self).do_autolim()
 
     def pcolormesh(self, *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
@@ -398,12 +431,20 @@ class ColormeshFormat(PlotFormat):
         elif len(args) == 3:
             self.xdata, self.ydata, self.zdata = [asanyarray(a) for a in args]
         self.clt=self.plotter.axes.pcolormesh(self.xdata, self.ydata, self.zdata, **kwargs)
-        if self.plotter.auto_zlim:
-            self.set_clim(amin(self.zdata), amax(self.zdata))
-        if self.plotter.auto_xlim:
-            self.plotter.set_xlim(min(self.xdata), max(self.xdata))
-        if self.plotter.auto_ylim:
-            self.plotter.set_ylim(min(self.ydata), max(self.ydata))
+        self.do_autolim()
+        #if self.plotter.auto_xlim:
+        #    self.plotter.set_xlim(min(self.xdata), max(self.xdata))
+        #if self.plotter.auto_ylim:
+        #    self.plotter.set_ylim(min(self.ydata), max(self.ydata))
+        #if self.plotter.auto_xlim:
+        #    self.plotter.x_min=float(min((self.plotter.x_min, min(self.xdata))))
+        #    self.plotter.x_min=float(max((self.plotter.x_min, max(self.xdata))))
+
+            #self.plotter.set_xlim(min(self.xdata), max(self.xdata))
+        #if self.plotter.auto_ylim:
+        #    self.plotter.y_min=float(min((self.plotter.y_min, min(self.ydata))))
+        #    self.plotter.y_min=float(max((self.plotter.y_min, max(self.ydata))))
+
 
     count=Int()
     def append_xy(self, z, index=None, axis=1):
