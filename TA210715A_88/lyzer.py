@@ -209,10 +209,13 @@ class Lyzer(LyzerBase):
         line(self.frequency/1e9, self.qdt._get_coupling(self.frequency), plotter=pl, color="red")
         return pl
 
-    def center_plot(self):
-        pl, pf=line(self.frequency[self.indices]/1e9, array([fp[1] for fp in self.fit_params]))
-        line(self.frequency/1e9, self.ls_f, plotter=pl, color="red")
-
+    def center_plot(self, pl=None):
+        if pl is None:
+            pl=Plotter()
+        line(self.frequency[self.indices]/1e9, array([fp[1] for fp in self.fit_params]), plotter=pl)
+        line(self.frequency/1e9, self.ls_f, plotter=pl, color="red", linewidth=1.0)
+        return pl
+        
     def heights_plot(self):
         pl, pf=line(self.frequency[self.indices]/1e9, array([fp[3]-fp[2] for fp in self.fit_params]))
 
@@ -264,22 +267,22 @@ class Lyzer(LyzerBase):
     def magabsfilt_colormesh(self, pl=None):
         if pl is None:
             pl=Plotter()
-        colormesh(self.yoko[10:-10], self.ls_f[10:-10]/1e9,
+        colormesh(self.flux_over_flux0[10:-10], self.ls_f[10:-10]/1e9,
                         self.MagAbsFilt[10:-10, 10:-10], plotter=pl)#"magabsfilt_{}".format(self.name))
         #colormesh(self.yoko[10:-10], self.frequency[10:-10]/1e9,
         #                self.MagAbsFilt[10:-10, 10:-10], #plot_name="magabsfiltf_{}".format(self.name),
         #                plotter=p)
-        colormesh(self.yoko[10:-10], self.ls_f[self.indices][10:-10]/1e9,
+        colormesh(self.flux_over_flux0[10:-10], self.ls_f[self.indices][10:-10]/1e9,
                         self.MagAbsFit[10:-10, 10:-10], plotter=pl)
-        colormesh(self.yoko[10:-10], self.ls_f[10:-10]/1e9,
-                        self.MagAbs[10:-10, 10:-10], plotter=pl)
+        #colormesh(self.yoko[10:-10], self.ls_f[10:-10]/1e9,
+        #                self.MagAbs[10:-10, 10:-10], plotter=pl)
 
         #fq=array([sqrt(f*(f-2*self.qdt._get_Lamb_shift(f=f))) for f in self.fq])
         #fq=self.fq+self.qdt._get_Lamb_shift(f=self.fq)/2
         #xmin, xmax, ymin, ymax=p.x_min, p.x_max, p.y_min, p.y_max
         #line(self.yoko[10:-10], self.fq[10:-10]/1e9, plotter=p)
         #p.x_min, p.x_max, p.y_min, p.y_max=xmin, xmax, ymin, ymax
-        pl.xlabel="Yoko (V)"
+        pl.xlabel="$\Phi/\Phi_0$"
         pl.ylabel="Frequency (GHz)"
         return pl
 
