@@ -13,7 +13,7 @@ from taref.physics.filtering import fft_filter5, hann_ifft, fft_filter2, fft_fil
 from taref.plotter.api import line, colormesh, scatter, Plotter
 from atom.api import Float, Typed, Unicode, Int, Callable, Enum, List
 from h5py import File
-from numpy import float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin, sqrt
+from numpy import pi, append, arccos, float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin, sqrt
 from scipy.optimize import leastsq, curve_fit
 from taref.physics.qdt import QDT
 
@@ -148,6 +148,17 @@ class Lyzer(LyzerBase):
         return self.qdt._get_voltage(flux_over_flux0=flux_d_flux0, offset=self.offset, flux_factor=self.flux_factor)
 
     @tag_property(sub=True)
+    def voltage_from_flux_par2(self):
+        Ej=self.qdt._get_Ej_get_fq(fq=self.ls_f)
+        fdf0=self.qdt._get_flux_over_flux0_get_Ej(Ej=Ej)
+        flux_d_flux0=append(fdf0, -fdf0)
+        flux_d_flux0=append(flux_d_flux0, -fdf0+pi)
+        flux_d_flux0=append(flux_d_flux0, fdf0-pi)
+        freq=append(self.frequency, self.frequency)
+        freq=append(freq, freq)
+        return freq, self.qdt._get_voltage(flux_over_flux0=flux_d_flux0, offset=self.offset, flux_factor=self.flux_factor)
+
+    @tag_property(sub=True)
     def ls_flux_par(self):
         return self.qdt._get_ls_flux_parabola(voltage=self.yoko, offset=self.offset, flux_factor=self.flux_factor)
     #def rpt_voltage_from_flux_par(self):
@@ -215,7 +226,7 @@ class Lyzer(LyzerBase):
         line(self.frequency[self.indices]/1e9, array([fp[1] for fp in self.fit_params]), plotter=pl)
         line(self.frequency/1e9, self.ls_f, plotter=pl, color="red", linewidth=1.0)
         return pl
-        
+
     def heights_plot(self):
         pl, pf=line(self.frequency[self.indices]/1e9, array([fp[3]-fp[2] for fp in self.fit_params]))
 
@@ -243,19 +254,19 @@ class Lyzer(LyzerBase):
         return p
 
     def hann_ifft_plot(self):
-        on_res=hann_ifft(self.Magcom[:,self.on_res_ind])
-        strt=hann_ifft(self.Magcom[:,self.start_ind])
-        stop=hann_ifft(self.Magcom[:,self.stop_ind])
+        on_res=log10(absolute(hann_ifft(self.Magcom[:,self.on_res_ind])))
+        strt=log10(absolute(hann_ifft(self.Magcom[:,self.start_ind])))
+        stop=log10(absolute(hann_ifft(self.Magcom[:,self.stop_ind])))
 
-        p, pf=line(absolute(on_res), plotter="hann_ifft_{}".format(self.name), color="red",
+        p, pf=line(on_res, plotter="hann_ifft_{}".format(self.name), color="red",
                plot_name="onres_{}".format(self.on_res_ind),label="i {}".format(self.on_res_ind))
-        line(absolute(strt), plotter=p, linewidth=1.0,
+        line(strt, plotter=p, linewidth=1.0,
              plot_name="strt {}".format(self.start_ind), label="i {}".format(self.start_ind))
-        line(absolute(stop), plotter=p, linewidth=1.0,
+        line(stop, plotter=p, linewidth=1.0,
              plot_name="stop {}".format(self.stop_ind), label="i {}".format(self.stop_ind))
 
         filt=filt_prep(len(on_res), self.filt_start_ind, self.filt_end_ind)
-        top=max([amax(absolute(on_res)), amax(absolute(strt)), amax(absolute(stop))])
+        top=max([amax(on_res), amax(strt), amax(stop)])
         line(filt*top, plotter=p, color="green")
 
         return p
@@ -269,9 +280,9 @@ class Lyzer(LyzerBase):
             pl=Plotter()
         colormesh(self.flux_over_flux0[10:-10], self.ls_f[10:-10]/1e9,
                         self.MagAbsFilt[10:-10, 10:-10], plotter=pl)#"magabsfilt_{}".format(self.name))
-        #colormesh(self.yoko[10:-10], self.frequency[10:-10]/1e9,
-        #                self.MagAbsFilt[10:-10, 10:-10], #plot_name="magabsfiltf_{}".format(self.name),
-        #                plotter=p)
+        colormesh(self.flux_over_flux0[10:-10], self.frequency[10:-10]/1e9,
+                        self.MagAbsFilt[10:-10, 10:-10], #plot_name="magabsfiltf_{}".format(self.name),
+                        plotter=pl)
         colormesh(self.flux_over_flux0[10:-10], self.ls_f[self.indices][10:-10]/1e9,
                         self.MagAbsFit[10:-10, 10:-10], plotter=pl)
         #colormesh(self.yoko[10:-10], self.ls_f[10:-10]/1e9,
@@ -279,9 +290,9 @@ class Lyzer(LyzerBase):
 
         #fq=array([sqrt(f*(f-2*self.qdt._get_Lamb_shift(f=f))) for f in self.fq])
         #fq=self.fq+self.qdt._get_Lamb_shift(f=self.fq)/2
-        #xmin, xmax, ymin, ymax=p.x_min, p.x_max, p.y_min, p.y_max
-        #line(self.yoko[10:-10], self.fq[10:-10]/1e9, plotter=p)
-        #p.x_min, p.x_max, p.y_min, p.y_max=xmin, xmax, ymin, ymax
+        xmin, xmax, ymin, ymax=pl.x_min, pl.x_max, pl.y_min, pl.y_max
+        line(self.flux_over_flux0[10:-10], self.fq[10:-10]/1e9, plotter=pl)
+        pl.x_min, pl.x_max, pl.y_min, pl.y_max=xmin, xmax, ymin, ymax
         pl.xlabel="$\Phi/\Phi_0$"
         pl.ylabel="Frequency (GHz)"
         return pl
@@ -289,10 +300,12 @@ class Lyzer(LyzerBase):
     def magabsfilt2_colormesh(self):
         p, pf=colormesh(self.frequency[10:-10]/1e9, self.yoko[10:-10],
                         self.MagAbsFilt.transpose()[10:-10, 10:-10], plotter="magabsfilt2_{}".format(self.name))
-        line(self.frequency[10:-10]/1e9, self.voltage_from_flux_par[10:-10], plotter=p)
+        print self.voltage_from_flux_par2[0].shape,self.voltage_from_flux_par2[1].shape
+        line(self.voltage_from_flux_par2[0]/1e9, self.voltage_from_flux_par2[1], plotter=p)
         #print max(self.voltage_from_flux_par), min(self.voltage_from_flux_par)
         p.xlabel="Yoko (V)"
         p.ylabel="Frequency (GHz)"
+        return p
 
     def magdBfilt_colormesh(self):
         return colormesh(self.yoko, self.frequency/1e9, self.MagdBFilt, plotter="magdBfilt_{}".format(self.name),

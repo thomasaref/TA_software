@@ -151,7 +151,7 @@ antonqdt=QDT(name="antonqdt", material='LiNbYZ', #10 finger QDT used for anharmo
 antonqdt.Ec=antonqdt.f0*0.1*h #Ec is 1/10 of f0
 
 
-def anton_anharm_plot(fig_width, fig_height):
+def anton_anharm_plot(fig_width=9, fig_height=6):
     """reproduces anharm plot in Anton's paper"""
 
     pl=Plotter(fig_width=fig_width, fig_height=fig_height)
@@ -236,7 +236,8 @@ def anton_lamb_shift_plot(fig_width=9.0, fig_height=6.0):
     return pl
 
 if __name__=="__main__":
-    anharm_plot(antonqdt).show()
+    anton_anharm_plot()
+    #anharm_plot(antonqdt).show()
     anton_lamb_shift_plot().show()
 
     qdt=QDT(material='LiNbYZ',

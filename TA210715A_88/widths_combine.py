@@ -23,9 +23,9 @@ d0506.center_plot(pl=pl)#.show()
 d0509.center_plot(pl=pl)#.show()
 d0503.center_plot(pl=pl)#.show()
 
-pl=d0514.magabsfilt_colormesh()
-d0316.magabsfilt_colormesh(pl=pl)#.show()
-d0506.magabsfilt_colormesh(pl=pl)#.show()
-d0509.magabsfilt_colormesh(pl=pl)#.show()
+#pl=d0514.magabsfilt_colormesh()
+#d0316.magabsfilt_colormesh(pl=pl)#.show()
+#d0506.magabsfilt_colormesh(pl=pl)#.show()
+#d0509.magabsfilt_colormesh(pl=pl)#.show()
 d0503.magabsfilt_colormesh(pl=pl).show()
 

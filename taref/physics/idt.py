@@ -10,8 +10,9 @@ from taref.physics.fundamentals import sinc_sq, pi, eps0
 from taref.core.agent import Agent
 from atom.api import Float, Int, Enum, Value, Property
 from taref.core.api import private_property, get_tag, SProperty, log_func, t_property, s_property
-from numpy import arange, linspace, sqrt, sin
+from numpy import arange, linspace, sqrt, imag, real, sin, cos
 from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
+from scipy.signal import hilbert
 
 class IDT(Agent):
     """Theoretical description of IDT"""
@@ -84,7 +85,7 @@ class IDT(Agent):
 
     f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
 
-    Np=Float(7).tag(desc="\# of finger pairs", low=0.5, tex_str=r"$N_p$", label="\# of finger pairs")
+    Np=Float(9).tag(desc="\# of finger pairs", low=0.5, tex_str=r"$N_p$", label="\# of finger pairs")
 
     ef=Int(0).tag(desc="for edge effect compensation",
                     label="\# of extra fingers", low=0)
@@ -145,6 +146,7 @@ class IDT(Agent):
     def _get_coupling(self, f, couple_mult, f0, K2, Np):
         gamma0=self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
         gX=self._get_X(Np=Np, f=f, f0=f0)
+        return gamma0*(sqrt(2)*cos(pi*f/(4*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
         return gamma0*(sin(gX)/gX)**2.0
 
     max_coupling=SProperty().tag(desc="""Coupling at IDT center frequency""", unit="GHz",
@@ -159,6 +161,8 @@ class IDT(Agent):
         """returns Lamb shift"""
         gamma0=self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
         gX=self._get_X(Np=Np, f=f, f0=f0)
+        #return imag(hilbert(self._get_coupling(f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)))
+        return gamma0*(1.0/Np)**2*2*(Np*sin(2*gX/Np)-sin(2*gX))/(2*(1-cos(2*gX/Np)))
         return -gamma0*(sin(2.0*gX)-2.0*gX)/(2.0*gX**2.0)
 
     Ga=SProperty().tag(desc="Ga adjusted for frequency f")
@@ -228,8 +232,29 @@ class IDT(Agent):
         return IDT_View(idt=self)
 
 if __name__=="__main__":
-    from taref.core.shower import shower
     a=IDT()
+    from taref.plotter.api import line, Plotter
+    from scipy.signal import hilbert
+    from numpy import imag, real, sin, cos
+
+    frq=linspace(0.001e9, 20e9, 1000)
+    X=a._get_X(f=frq)
+    Np=a.Np
+    f0=a.f0
+    coup=(sqrt(2)*cos(pi*frq/(4*f0))*(1.0/Np)*sin(X)/sin(X/Np))**2
+    #coup=(sin(X)/X)**2
+    pl=Plotter()
+    line(frq, a._get_coupling(frq)/a.max_coupling, plotter=pl)
+    line(frq, a._get_Lamb_shift(frq)/a.max_coupling, plotter=pl, color="red")
+    line(frq, coup, color="purple", plotter=pl)
+    hb=hilbert(coup) #a._get_coupling(frq))
+    line(frq, real(hb), plotter=pl, color="green", linewidth=0.3)
+    line(frq, imag(hb), plotter=pl, color="black", linewidth=0.3)
+    Baa= (1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
+    line(frq, Baa, plotter=pl, color="cyan", linewidth=0.3)
+
+    pl.show()
+
     b=IDT(ft="single")
     a.ft_mult=5
     print a.mu_mult, a.ft_mult, b.mu_mult, b.ft_mult
