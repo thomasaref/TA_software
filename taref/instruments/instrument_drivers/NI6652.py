@@ -2,7 +2,7 @@
 """
 Created on Mon Apr 04 14:33:04 2016
 
-@author: Morran or Lumi
+@author: Morran or Lumi blah
 """
 
 from ctypes import c_long, byref, c_bool, WinDLL, c_char_p, create_string_buffer, c_double
