@@ -5,8 +5,10 @@ Created on Sat Feb  6 15:29:48 2016
 @author: thomasaref
 """
 
-from read_file_e import DataStrConditional
-from enaml.widgets.api import
+from taref.filer.read_file_e import DataStrConditional
+from taref.filer.filer_e import FilerInterface, FilerExt
+from taref.core.fundcore_e import AgentWindow
+#from enaml.widgets.api import
 
 enamldef SaveFileInterface(FilerInterface):
     DataStrConditional:

@@ -1,0 +1,41 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun 29 14:41:36 2015
+
+@author: thomasaref
+
+User defined templates
+"""
+
+from enaml.widgets.api import  Field, PushButton, MultilineField, VGroup, Window, GroupBox
+from enaml.stdlib.fields import FloatField, IntField
+
+#from taref.filer.filer_e import ReadWrap, SaveWrap
+from taref.filer.read_file_e import ReadFileInterface
+from taref.filer.save_file_e import SaveFileInterface
+from taref.core.var_e import Var
+from taref.core.fundcore_e import AgentWindow, aHGroup
+
+enamldef TextEditorExt(VGroup):
+    """Text Editor container"""
+    ReadFileInterface:
+        filer:=parent.parent.vmodel.read_file
+    GroupBox:
+        SaveFileInterface:
+            filer:=parent.parent.parent.vmodel.save_file
+    MultilineField:
+        text:=parent.parent.vmodel.data
+        text<<parent.parent.vmodel.read_file.data_str
+
+enamldef TextEditorVar(Var):
+    #trailing_spacer=None
+    TextEditorExt:
+        pass
+
+enamldef TextEditorWindow(AgentWindow):
+    """displays a text editor in a standalone window"""
+    activated :: self.maximize()
+    attr vmodel=agent
+    TextEditorExt:
+        pass
+

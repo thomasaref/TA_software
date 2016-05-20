@@ -15,6 +15,7 @@ from comtypes.gen import AFCOMSIGGENLib
 
 class afSigGen(PXI_Backbone):
     def __init__(self):
+        """initializes using PXI_Bacbone __init__ with particular arguments"""
         super(afSigGen, self).__init__(lib_name='afSigGenDll_32.dll', com_lib=AFCOMSIGGENLib)
 
     mode=pp('Mode', prefix='m') #Manual
@@ -90,20 +91,24 @@ class afSigGen(PXI_Backbone):
 
     def reset(self):
         self.do_func("Manual_Reset")
-        
+
     def scenario_set(self, scen):
+        """sets a scenario in the routing matrix"""
         self.set_func("RF_Routing_SetScenario", scen, prefix="rs")
-    
+
     def scenario_remove(self, scen):
+        """removes a scenario from the routing matrix"""
         self.set_func('RF_Routing_RemoveScenario', scen, prefix="rs")
- 
+
     def scenario_append(self, scen):
+        """appends a scenario to the routing matrix"""
         self.set_func('RF_Routing_AppendScenario', scen, prefix="rs")
-        
+
     #def get_scen_list_size(self):
     #    return self.get_func("RF_Routing_ScenarioListSize_Get", dtype=c_ulong)
-        
+
     def scenario_list_get(self, n=None):
+        """gets the scenario list stored in the routing matrix"""
         if n is None:
             n=self.get_func("RF_Routing_ScenarioListSize_Get", dtype=c_ulong)
         scen_list=(c_long*n)()

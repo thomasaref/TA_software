@@ -3,6 +3,7 @@
 Created on Tue May  3 11:36:04 2016
 
 @author: thomasaref
+Test script for PXI signal generator, digitizer and timing module working together
 """
 from af302xC_packager import af302xCPackager
 from afsiggen import afSigGen
@@ -73,7 +74,7 @@ if 1:
             i_avgd+=array(d.i_buffer)
             q_avgd+=array(d.q_buffer)
         return (i_avgd+1j*q_avgd)#/(n+1)
-            
+
     def test(o=100, r=1000, w=20, m=d.BUFFER_SIZE):
         a.arb_stop_playing()
         a.arb_play_file(aiq.aiq_file_path)
@@ -95,7 +96,7 @@ if 1:
         #return d.captmem_from_offset(o, w)
 
     from numpy import mean, array, zeros
-    
+
     def testwrap(o=100, r=1000, w=20, m=d.BUFFER_SIZE, run_both=True):
         tstart=time()
         d1=test(o,r,w,m)
@@ -118,14 +119,14 @@ if 1:
             print time()-tstart
             return d1, d2
         return d1
-        
+
     #plt.show()
     def test_run(m=1000, n=10000000):
         d.trigger_arm(n)
         for i in range(100):
             print d.get_sample_captured(m)
         d.captmem(m)
-        
+
     def stop():
         d.stop_dig()
         a.stop()
@@ -145,4 +146,3 @@ if 0:
     a.arb_play_file(aiq.aiq_file_path)
     a.arb_stop_playing()
     a.modulation_source="CW"
-    
