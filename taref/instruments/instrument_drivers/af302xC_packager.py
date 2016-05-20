@@ -38,15 +38,13 @@ class af302xCPackager(object):
                  marker_type='No Markers', scaling_factor=100.0, marker_file_name=None,
                  I_file_name='TA_pyI.txt', Q_file_name='TA_pyQ.txt', aiq_file_name='TA_pyaiq.aiq',
                  description='pyARB',
-                 dir_path=r'C:\Users\Morran or Lumi\Documents\Thomas\'):
+                 dir_path=r"C:\Users\Morran or Lumi\Documents\Thomas"+"\\", waveform=None):
 
         self.msg=create_string_buffer(256)
         self.afP=WinDLL('af302xCPackager')
 
         if output_sampling_rate is None:
             output_sampling_rate=input_sampling_rate
-
-
 
         self.p=Pack(IQ_file_format=IQ_file_format_dict[IQ_file_format],
                     IQ_data_format=IQ_data_format_dict[IQ_data_format],
@@ -64,33 +62,36 @@ class af302xCPackager(object):
         self.aiq_file_name=aiq_file_name
         self.description=description
         self.dir_path=dir_path
-
+        if waveform is not None:
+            self.save_waveform(waveform)
+            
     def get_error_message(self, error_code):
         """utility function that returns last error message"""
         self.afP.GetPackagerErrorString(error_code, self.msg)
         return self.msg.value
-
+    
     def error_check(self):
         """utility function for error checking"""
         if self.error_code==0:
-            print "No error: {}".format(self.error_code)
+            print "[{0}] No error: {1}".format(str(type(self)), self.error_code)
             return
         msg=self.get_error_message()
-        if self.error_code<0:
-            raise Exception("{0}: {1}".format(self.error_code, msg))
-        elif self.error_code>0:
-            print "WARNING: {0}: {1}".format(self.error_code, msg)
+        err_msg="[{name}] {code}: {msg}".format(str(type(self)), code=self.error_code, msg=msg)
+        if self.error_code>0:
+            print "WARNING: "+err_msg
+            return
+        raise Exception("ERROR: "+err_msg)
 
-    def gen_waveform(self):
-        temp=[str(0) for n in range(300)]
-        #a.extend([str(1) for n in range(300)])
-        temp[10]='1'
-        temp=','.join(temp)
-        return temp, temp
+#    def gen_waveform(self):
+#        temp=[str(0) for n in range(300)]
+#        #a.extend([str(1) for n in range(300)])
+#        temp[10]='1'
+#        temp=','.join(temp)
+#        return temp, temp
 
     @property
     def group_IQ(self):
-        return self.p.IQ_file_format==IQ_file_format['User IQ']
+        return self.p.IQ_file_format==IQ_file_format_dict['User IQ']
 
     @property
     def I_file_path(self):
@@ -106,31 +107,31 @@ class af302xCPackager(object):
     def aiq_file_path(self):
         return self.dir_path+self.aiq_file_name
 
-    def save_waveform(self):
+    def save_waveform(self, waveform):
         Q=None
         if self.group_IQ:
-            I=self.gen_waveform(self)
+            I=waveform
         else:
-            I, Q=self.gen_waveform(self)
+            I, Q=waveform
         with open(self.I_file_path, 'w') as f:
             f.write(I)
         if Q is not None:
             with open(self.Q_file_path, 'w') as f:
                 f.write(Q)
 
-        def marker_file:
-            pass
-        #        if os.path.isfile(sMpath):
+    def marker_file(self):
+        pass
+    #        if os.path.isfile(sMpath):
         #            del(sMpath)
         #with open('tom_marker.mkr', 'w') as Mref:
         #    Mref.write('FrameLength=' + str(4) + '\r\n')
         #    Mref.write('Oversampling=1  \r\nDecimation=1 \r\nMkr1=General \r\nMarker 1 \r\n')
         #    Mref.write(str(0) + ',' + str(3) + '\r\n')
 
-    def package_waveform(self, generate=True):
-        if generate:
-            self.save_waveform()
-        self.error_code=self.afP.PackageToAiq(self.I_file_path, self.Q_file_path,,
+    def package_waveform(self, waveform=None):
+        if waveform is not None:
+            self.save_waveform(waveform)
+        self.error_code=self.afP.PackageToAiq(self.I_file_path, self.Q_file_path,
                                self.aiq_file_path, self.description,
                                byref(self.p))
         self.error_check()

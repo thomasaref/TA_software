@@ -23,9 +23,10 @@ class NISYNC_VAL_Lib(object):
     NISYNC_VAL_UPDATE_EDGE_FALLING=1
 
 class NI6652(PXI_Backbone):
-    def __init__(self):
-        super(NI6652, self).__init__('niSync.dll', func_prefix='niSync_')#,
-                  #com_lib=NISYNC_VAL_Lib, const_prefix="NISYNC_VAL_")
+    def __init__(self, reset=True):
+        super(NI6652, self).__init__('niSync.dll', func_prefix='niSync_')
+        if reset:
+            self.reset()
 
     def create_object(self, address="PXI7::15::INSTR"):
         self.address=address
@@ -33,15 +34,17 @@ class NI6652(PXI_Backbone):
         self.do_func_no_session('init', address, False, False, byref(ses))
         return ses.value
 
+    def reset(self):
+        self.do_func("reset")
     #msg=create_string_buffer(256)
 
-    def get_error_message(self, error_code):
+    def get_error_message(self):
         self.do_func('error_message', self.error_code, self.error_msg)
         return self.error_msg.value
 
-    def connect_SW_trigger(self):
+    def connect_SW_trigger(self, terminal='PXI_Star1'): #PXI_Star5
         self.do_func('ConnectSWTrigToTerminal', 'GlobalSoftwareTrigger',
-                    'PXI_Star5', "SyncClkFullSpeed", 0, 0, c_double(0.0))
+                    terminal, "SyncClkFullSpeed", 0, 0, c_double(0.0))
 
     def send_software_trigger(self):
         self.do_func('SendSoftwareTrigger', 'GlobalSoftwareTrigger')
@@ -51,18 +54,26 @@ class NI6652(PXI_Backbone):
              self.send_software_trigger()
              sleep(0.1)
 
-    def disconnect_software_trigger(self):
-        self.do_func('DisconnectSWTrigFromTerminal', 'GlobalSoftwareTrigger', 'PXI_Star1')
+    def disconnect_software_trigger(self, terminal='PXI_Star1'):
+        self.do_func('DisconnectSWTrigFromTerminal', 'GlobalSoftwareTrigger', terminal)
 
     #_lib.niSync_ConnectSWTrigToTerminal(session, 'GlobalSoftwareTrigger', 'PXI_Star1', "SyncClkFullSpeed", 0, 0, c_double(0.0))
     def close(self):
         self.do_func('close')
-
+        
+    def stop(self, reset=True):
+        if reset:
+            self.reset()
+        self.close()
+        
 if __name__=="__main__":
     try:
         m=NI6652()
         m.connect_SW_trigger()
         m.send_software_trigger()
+    except Exception as e:
+        m.close()
+        raise e
     finally:
         if 0:
             m.close()

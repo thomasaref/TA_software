@@ -24,6 +24,8 @@ class afDigitizerBufferIQ_t(Structure):
         ('userData', c_void_p)]
         
 class afDigitizer(PXI_Backbone):
+    BUFFER_SIZE=67108608
+
     def __init__(self):
         super(afDigitizer, self).__init__(lib_name='afDigitizerDll_32.dll', com_lib=AFCOMDIGITIZERLib)
 
@@ -31,6 +33,14 @@ class afDigitizer(PXI_Backbone):
     def is_active(self):
         return self.get_func('IsActive_Get', prefix=bool)
 
+    @property
+    def reference_locked(self):
+        return self.get_func('LO_ReferenceLocked_Get', prefix=bool)
+
+    @property
+    def ADC_overload(self):
+        return self.get_func("Capture_IQ_ADCOverload_Get", prefix=bool)
+        
     sample_rate=pp('Modulation_GenericSamplingFrequency', dtype=c_double)
     modulation_mode=pp('Modulation_Mode', prefix='mm') #Generic
     LO_reference=pp('LO_Reference', prefix='lorm') #OXCO
@@ -42,19 +52,42 @@ class afDigitizer(PXI_Backbone):
     pre_edge_trigger_samples=pp('Trigger_PreEdgeTriggerSamples')
     sw_trigger_mode=pp('Trigger_SwTriggerMode', prefix='swt') #Immediate, Armed
     reclaim_timeout=pp('Capture_IQ_ReclaimTimeout')
+    pipelining_enable=pp("Capture_PipeliningEnable", prefix=bool)
     
-    def start_dig(self, lo_address='3011D1', dig_address='3036D1', plugin=False, mod_mode="Generic"):
+    int_trig_source=pp("Trigger_IntTriggerSource", prefix="its")
+    int_trig_abs_threshold=pp("Trigger_IntTriggerAbsThreshold", dtype=c_double)
+    
+    timer_advance=pp("Timer_Advance", dtype=c_ulong)
+    timer_period=pp("Timer_Period", dtype=c_double)
+    
+    def get_abs_sample_time(self, ind=0):
+        return self.get_func("Capture_IQ_GetAbsSampleTime", ind, dtype=c_double)
+
+    def get_sample_captured(self, ind=0):
+        return self.get_func("Capture_IQ_GetSampleCaptured", ind, prefix=bool)
+
+    @property
+    def trigger_detected(self):
+        return self.get_func("Capture_IQ_TriggerDetected_Get")
+    
+    def start_dig(self, lo_address='3011D1', dig_address='3036D1', plugin=False, modulation_mode="Generic", lo_reference="OCXO"):
+        self.address=dig_address
+        self.lo_address=lo_address
         self.do_func("ClearErrors")
         self.do_func("BootInstrument", lo_address, dig_address, plugin)
-        self.modulation_mode=mod_mode
-        d.LO_reference='OCXO'
+        self.modulation_mode=modulation_mode
+        self.LO_reference=lo_reference
 
     @property
     def lc(self):
         if getattr(self, '_lc', None) is None:
             self._lc=self.level_correction
         return self._lc
-            
+
+    @lc.setter
+    def lc(self, value):
+        self._lc=value
+         
     def get_trace(self, points=1000, timeout=10000):
             
         self.reclaim_timeout=timeout
@@ -114,16 +147,36 @@ class afDigitizer(PXI_Backbone):
     def trigger_arm(self, num_samples):
         self.do_func('Capture_IQ_TriggerArm', 2*num_samples)
  
-    def captmem(self, num_samples):
+    def captmem(self):
+        #tstart=time()
+        self.do_func("Capture_IQ_CaptMem", self.num_samples, byref(self.i_buffer), byref(self.q_buffer))
+        #return self.i_buffer, self.q_buffer
+        #print time()-tstart
+        #return array(self.i_buffer), array(self.q_buffer)
+        #return cpx_avgd
+
+    def prep_captmem2(self, num_samples): 
+        self.num_samples=num_samples
+        typeBuffer=c_float*num_samples
+        self.i_buffer=typeBuffer()
+        self.q_buffer=typeBuffer()
+        #return i_buffer, q_buffer
+        
+    def prep_captmem(self, num_samples): 
+        #self.num_samples=num_samples
         typeBuffer=c_float*num_samples
         i_buffer=typeBuffer()
         q_buffer=typeBuffer()
-        tstart=time()
-        self.do_func("Capture_IQ_CaptMem", num_samples, byref(i_buffer), byref(q_buffer))
-        print time()-tstart
-        self.cpx_avgd=array(i_buffer)+1j*array(q_buffer)
-        return self.cpx_avgd
-    
+        return i_buffer, q_buffer
+
+    def captmem_from_offset2(self, offset):
+        self.do_func("Capture_IQ_GetCaptMemFromOffset", offset, self.num_samples, byref(self.i_buffer), byref(self.q_buffer))
+        
+    def captmem_from_offset(self, offset, num_samples, i_buffer, q_buffer):
+        self.do_func("Capture_IQ_GetCaptMemFromOffset", offset, num_samples, byref(i_buffer), byref(q_buffer))
+        #return i_buffer[:], q_buffer[:] #array(i_buffer), array(q_buffer)
+        #return self.cpx_avgd
+     
     def full_run(self, num):
         self.trigger_arm(num)
         self.captmem(num)
@@ -141,7 +194,7 @@ class afDigitizer(PXI_Backbone):
         
     def fftd(self):
         fftd=20*log10(absolute(fft.fftshift(fft.fft(self.cpx_lc))))
-        return fftd-fftd.max()+d.calc_mean_power()
+        return fftd-fftd.max()+self.calc_mean_power()
 #    def capt_test(num):
 #        try:
 #            pDetected=c_long()
@@ -163,7 +216,9 @@ class afDigitizer(PXI_Backbone):
 #        except KeyboardInterrupt:
 #            print 'keyboard interaupt'
 
-if __name__=="__main__":
+if __name__=="__main2__":
+    d.get_func("Capture_IQ_GetAbsSampleTime", 1000, dtype=c_double)
+    d.get_func("Capture_IQ_GetSampleCaptured", 3000, prefix=bool)
     d=afDigitizer()
     d.start_dig()
     d.input_level=0.0
@@ -176,8 +231,8 @@ if __name__=="__main__":
     from afsiggen import afSigGen
     a=afSigGen()
     a.start()
-    a.level_set(-30)
-    a.rf_state_set(True)
+    a.level=-30
+    a.output=True
     print d.level_correction
     cpx=d.get_trace()
     print d.calc_mean_power()

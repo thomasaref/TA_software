@@ -6,7 +6,7 @@ Created on Sat Apr 30 12:37:18 2016
 """
 
 from pxi_backbone import PXI_Backbone, pp
-from ctypes import create_string_buffer, byref, c_double, c_ulong
+from ctypes import create_string_buffer, byref, c_double, c_ulong, c_long
 
 if 0:  #Code for generating COM module
     from comtypes.client import CreateObject
@@ -22,6 +22,9 @@ class afSigGen(PXI_Backbone):
     modulation_source=pp('Manual_ModulationSource', prefix='ms') #CW, LVDS, ARB, AM, FM, ExtAnalog
     frequency=pp('Manual_Frequency', dtype=c_double)
     level=pp('Manual_Level', dtype=c_double)
+    level_mode=pp("Manual_LevelMode", prefix="lm") #Auto, Frozen, Peak, Rms,
+
+    #level_max=pp("Manual_LevelMax", dtype=c_double)
     output=pp('Manual_RfState', prefix=bool)
 
     arb_external_trigger_enable=pp('ARB_ExternalTrigger_Enable', prefix=bool)
@@ -61,11 +64,12 @@ class afSigGen(PXI_Backbone):
     #def ARB_find_file(self, filename):
     #    self.get_func('ARB_Catalogue_FindFile')
 
-    def start(self, lo_resource_name="3010S1", dig_resource_name="3025S1", plugin=False):
-        self.do_func('BootInstrument', lo_resource_name, dig_resource_name, plugin)
-        #self.set_func('LO_Reference_Set', 'ExternalTerminated', prefix='lorm')
+    def start(self, lo_address="3010S1", sig_address="3025S1", plugin=False):
+        self.address=sig_address
+        self.lo_address=lo_address
+        self.do_func("ClearErrors")
+        self.do_func('BootInstrument', lo_address, sig_address, plugin)
         self.LO_reference='ExternalTerminated'
-        #self.set_func('Mode_Set', 'Manual', prefix='m')
         self.mode='Manual'
 
     def stop(self):
@@ -78,31 +82,60 @@ class afSigGen(PXI_Backbone):
 
     @property
     def is_active(self):
-        return self.get_func('IsActive_Get')
+        return self.get_func('IsActive_Get', prefix=bool)
 
     @property
     def frequency_max(self):
-        return self.get_func('Manual_FrequencyMax_Get')
+        return self.get_func('Manual_FrequencyMax_Get', dtype=c_double)
 
-    def manual_arb_file_set(self, ArbFile):
-        self.set_func('Manual_ArbFile_Set', byref(ArbFile))
-        return (ArbFile.value)
+    def reset(self):
+        self.do_func("Manual_Reset")
+        
+    def scenario_set(self, scen):
+        self.set_func("RF_Routing_SetScenario", scen, prefix="rs")
+    
+    def scenario_remove(self, scen):
+        self.set_func('RF_Routing_RemoveScenario', scen, prefix="rs")
+ 
+    def scenario_append(self, scen):
+        self.set_func('RF_Routing_AppendScenario', scen, prefix="rs")
+        
+    #def get_scen_list_size(self):
+    #    return self.get_func("RF_Routing_ScenarioListSize_Get", dtype=c_ulong)
+        
+    def scenario_list_get(self, n=None):
+        if n is None:
+            n=self.get_func("RF_Routing_ScenarioListSize_Get", dtype=c_ulong)
+        scen_list=(c_long*n)()
+        self.do_func("RF_Routing_GetScenarioList", byref(scen_list), n)
+        return [self.clib.get_map(item, "rs") for item in scen_list]
+        #return scen_list[:]
+    #def manual_arb_file_set(self, ArbFile):
+    #    self.set_func('Manual_ArbFile_Set', byref(ArbFile))
+    #    return (ArbFile.value)
 
-    @property
-    def manual_arb_file(self, arbFileBuffer, arbFileBufLen):
-        self.msg=create_string_buffer(256)
-        self.do_func('Manual_ArbFile_Get', byref(self.msg), 256)
-        return self.msg.value
+    #@property
+    #def manual_arb_file(self, arbFileBuffer, arbFileBufLen):
+    #    self.msg=create_string_buffer(256)
+    #    self.do_func('Manual_ArbFile_Get', byref(self.msg), 256)
+    #    return self.msg.value
 
-    @property
-    def manual_arb_file_name_length(self):
-        return self.get_func('Manual_ArbFileNameLength')
+    #@property
+    #def manual_arb_file_name_length(self):
+    #    return self.get_func('Manual_ArbFileNameLength')
 
-    def manual_arb_stop_playing(self):
-        self.do_func('Manual_ArbStopPlaying')
+    #def manual_arb_stop_playing(self):
+    #    self.do_func('Manual_ArbStopPlaying')
 
 if __name__=='__main__':
     a=afSigGen()
+    a.start()
+    if 0:
+        r"C:\Users\Morran or Lumi\Documents\Thomas\tom_out.aiq"
+        a.arb_add_file(r"C:\Users\Morran or Lumi\Documents\Thomas\tom_out.aiq")
+        a.arb_play_file(r"C:\Users\Morran or Lumi\Documents\Thomas\tom_out.aiq")
+        a.arb_stop_playing()
+        a.modulation_source="CW"
     #a.get_func('LO_Reference_Get', prefix="lorm")
     #a.get_func('LO_ReferenceLocked_Get', prefix=bool)
 

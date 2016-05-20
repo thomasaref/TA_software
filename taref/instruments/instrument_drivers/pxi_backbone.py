@@ -59,9 +59,10 @@ class Const_Lib(object):
 
 class PXI_Backbone(object):
     """A backbone structure for working with PXI instruments, particularly Aeroflex instruments"""
-
+    
     def __init__(self, lib_name, func_prefix=None, com_lib=None, const_prefix=None, *args, **kwargs):
         """initialization sets the library, creates error_msg and creates an object stored in session"""
+        self.address=str(type(self))
         self._lib = WinDLL(lib_name)
         if func_prefix is None:
             func_prefix=lib_name.split('_')[0]
@@ -72,6 +73,7 @@ class PXI_Backbone(object):
         self.clib=Const_Lib(com_lib=com_lib, const_prefix=const_prefix)
         self.error_msg=create_string_buffer(256)
         self.session=self.create_object(*args, **kwargs)
+
 
     def create_object(self):
         ses=c_long()
@@ -86,14 +88,15 @@ class PXI_Backbone(object):
     def error_check(self):
         """utility function for error checking"""
         if self.error_code==0:
-            print "No error: {}".format(self.error_code)
+            #print "[{name}] No error: {code}".format(name=self.address, code=self.error_code)
             return
         msg=self.get_error_message()
-        if self.error_code<0:
-            raise Exception("{0}: {1}".format(self.error_code, msg))
-        elif self.error_code>0:
-            print "WARNING: {0}: {1}".format(self.error_code, msg)
-
+        err_msg="[{name}] {code}: {msg}".format(name=self.address, code=self.error_code, msg=msg)
+        if self.error_code>0:
+            print "WARNING: "+err_msg
+            return
+        raise Exception("ERROR: "+err_msg)
+            
     def do_func_no_session(self, func_name, *args):
         """basic execution of function"""
         self.error_code=getattr(self._lib, self.func_prefix+func_name)(*args)
