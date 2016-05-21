@@ -164,7 +164,8 @@ class TEX(Operative):
         self.save_file.save(self.tex_list, write_mode="w", flush_buffer=True)
         for pl in self.plots_to_save:
             pl.savefig(dir_path=self.folder.dir_path+self.folder.divider, fig_name=pl.fig_name)
-        self.save_code.save(["\n".join(self.file_reader.preamble), self.input_code, "\n".join(self.file_reader.postamble)], write_mode="w", flush_buffer=True)
+        self.interact.get_member("code_str").reset(self)
+        self.save_code.save(self.interact.code_str, write_mode="w", flush_buffer=True)
 
     def make_and_show(self):
         """makes the tex file, compiles the tex file and opens the pdf"""
