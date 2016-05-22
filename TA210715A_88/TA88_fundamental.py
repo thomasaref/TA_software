@@ -51,9 +51,10 @@ qdt=QDT(material='LiNbYZ',
         eta=0.5,
         flux_factor=0.52, #0.2945, #0.52,
         voltage=1.21,
-        offset=0.0)
-qdt.Ejmax=h*44.0e9
-qdt.f0=5.35e9
+        offset=-0.07)
+qdt.Ejmax=h*41.0e9 #h*44.0e9
+qdt.f0=5.368e9 #5.35e9
+qdt.C=1.2e-13
 
 ideal_idt=IDT(name="idealIDT",
               material='LiNbYZ',

@@ -31,7 +31,7 @@ class LyzerBase(Agent):
     flux_factor=Float(0.2925)
 
     def _default_offset(self):
-        return 0.0
+        return self.qdt.offset
 
     def _default_flux_factor(self):
         return self.qdt.flux_factor
