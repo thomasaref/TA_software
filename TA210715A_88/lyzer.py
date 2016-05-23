@@ -352,9 +352,10 @@ class Lyzer(LyzerBase):
         datamin=min(dat)
         if self.fit_type=="yoko":
             p_guess=[0.2, self.yoko[self.on_res_ind], datamax-datamin, dat[0]]
+            pbest= leastsq(self.resid_func, p_guess, args=(dat, self.yoko), full_output=1)
         else:
-            p_guess=[5e6, self.ls_f[n], datamax-datamin, dat[0]]
-        pbest= leastsq(self.resid_func, p_guess, args=(dat, fq), full_output=1)
+            p_guess=[self.qdt._get_coupling(self.frequency[n]), self.ls_f[n], datamax-datamin, dat[0]]
+            pbest= leastsq(self.resid_func, p_guess, args=(dat, fq), full_output=1)
         best_parameters = pbest[0]
         return (best_parameters[0], best_parameters[1], best_parameters[2], best_parameters[3])
 

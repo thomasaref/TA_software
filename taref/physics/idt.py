@@ -147,7 +147,9 @@ class IDT(Agent):
         gamma0=self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
         gX=self._get_X(Np=Np, f=f, f0=f0)
         #return gamma0*(1.0/Np*sin(gX)/sin(gX/Np))**2
-        return gamma0*(sqrt(2)*cos(pi*f/(4*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
+        return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*sin(pi*f/(2*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
+
+        #return gamma0*(sqrt(2)*cos(pi*f/(4*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
         #return gamma0*(sin(gX)/gX)**2.0
 
     max_coupling=SProperty().tag(desc="""Coupling at IDT center frequency""", unit="GHz",
@@ -265,7 +267,7 @@ if __name__=="__main__":
     #hb=hilbert(coup) #a._get_coupling(frq))
     #line(frq, real(hb), plotter=pl, color="green", linewidth=0.3)
     #line(frq, imag(hb), plotter=pl, color="black", linewidth=0.3)
-    Baa= (1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
+    Baa= (1+cos(X/(4*Np)))*(1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
     #Baa=-(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
 
     line(frq, Baa, plotter=pl, color="cyan", linewidth=0.3)

@@ -16,15 +16,17 @@ a=TA88_Lyzer(name="S4A1_midpeak", filt_center=31, filt_halfwidth=22,
               indices=range(65, 984+1),
               fit_func=lorentzian,
               flux_factor=qdt.flux_factor*1000.0/560.0,
-              offset=0.0)
+              offset=-0.025)#, fit_type="yoko")
 a.read_data()
 
 if __name__=="__main__":
     pl=a.magabsfilt_colormesh()
+    #line(a.frequency, a.ls_f)[0].show()
     a.widths_plot()
     a.center_plot()
     a.heights_plot()
     a.background_plot().show()
+
     s4a1_mp.magabs_colormesh()#"colormesh S4A1")
     s4a1_mp.magabsfilt_colormesh()#"filtcolormesh S4A1")
     s4a1_mp.magabsfilt2_colormesh()#"filtcolormesh S4A1")

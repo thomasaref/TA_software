@@ -10,6 +10,7 @@ from D0316_S4A1_coupling_midpeak import a as d0316
 from D0506_lowfrq34sidelobe import a as d0506
 from D0509_lowfrq2sidelobe import a as d0509
 from D0503_lowfrq1sidelobe import a as d0503
+from D0518_highfrq3sidelobe import a as d0518
 from numpy import sqrt, linspace
 from atom.api import FloatRange
 from taref.plotter.fitter import LineFitter2
@@ -21,7 +22,7 @@ d0316.widths_plot(pl=pl)#.show()
 d0506.widths_plot(pl=pl)#.show()
 d0509.widths_plot(pl=pl)#.show()
 d0503.widths_plot(pl=pl)#.show()
-
+d0518.widths_plot(pl=pl)
 
 class Fitter(LineFitter2):
             f0=FloatRange(4.0, 6.0, d0514.qdt.f0/1e9).tag(tracking=True)
@@ -37,7 +38,7 @@ class Fitter(LineFitter2):
             @tag_property(private=True)
             def data(self):
                 frq=linspace(3e9,7e9, 1000)
-                return frq/1e9, self.alpha*1e9*sqrt(d0514.qdt._get_coupling(f=frq, f0=1e9*self.f0)/d0514.qdt.max_coupling)**2
+                return frq/1e9, self.alpha*1e9*sqrt(d0514.qdt._get_coupling(f=frq, f0=1e9*self.f0)/d0514.qdt.max_coupling)
 
 fit=Fitter()
 fit.plotter
@@ -47,7 +48,7 @@ d0316.center_plot(pl=pl)#.show()
 d0506.center_plot(pl=pl)#.show()
 d0509.center_plot(pl=pl)#.show()
 d0503.center_plot(pl=pl)#.show()
-
+d0518.center_plot(pl=pl)
 #pl=d0514.magabsfilt_colormesh()
 #d0316.magabsfilt_colormesh(pl=pl)#.show()
 #d0506.magabsfilt_colormesh(pl=pl)#.show()
