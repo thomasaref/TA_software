@@ -233,9 +233,9 @@ class afDigitizer(PXI_Backbone):
 #        except KeyboardInterrupt:
 #            print 'keyboard interaupt'
 
-if __name__=="__main2__":
-    d.get_func("Capture_IQ_GetAbsSampleTime", 1000, dtype=c_double)
-    d.get_func("Capture_IQ_GetSampleCaptured", 3000, prefix=bool)
+if __name__=="__main__":
+    #d.get_func("Capture_IQ_GetAbsSampleTime", 1000, dtype=c_double)
+    #d.get_func("Capture_IQ_GetSampleCaptured", 3000, prefix=bool)
     d=afDigitizer()
     d.start_dig()
     d.input_level=0.0
@@ -245,14 +245,15 @@ if __name__=="__main2__":
     print d.get_func('Modulation_Mode_Get')
     print d.get_func('IsActive_Get')
     d.sw_trigger_mode='Armed'
-    from afsiggen import afSigGen
-    a=afSigGen()
-    a.start()
-    a.level=-30
-    a.output=True
-    print d.level_correction
-    cpx=d.get_trace()
-    print d.calc_mean_power()
+    if 0:
+        from afsiggen import afSigGen
+        a=afSigGen()
+        a.start()
+        a.level=-30
+        a.output=True
+        print d.level_correction
+        cpx=d.get_trace()
+        print d.calc_mean_power()
     if 0:
         d.start_dig()
         I, Q=d.captmem(2000)
