@@ -1,8 +1,7 @@
 import ctypes
-from ctypes import c_int, c_long, c_float, c_double, c_ulong, POINTER, byref, pointer, Structure, c_void_p
-
+from ctypes import c_int, c_long, c_float, c_double, c_ulong, POINTER, byref, create_string_buffer, pointer, Structure, c_void_p
+from numpy import zeros, mean
 BUFFER_SIZE = 20000000 
-
 
 # open dll
 _lib = ctypes.WinDLL('afDigitizerDll_32')
@@ -10,168 +9,92 @@ _lib = ctypes.WinDLL('afDigitizerDll_32')
 # define data types used by this dll
 STRING = ctypes.c_char_p
 AFBOOL = c_long
-afDigitizerInstance_t = c_long
-afDigitizerCaptureIQ_t = c_long
+#afDigitizerInstance_t = c_long
+#afDigitizerCaptureIQ_t = c_long
 
 class afDigitizerBufferIQ_t(Structure):
-    pass
-
-afDigitizerBufferIQ_t._fields_ = [
+    _fields_ = [
         ('iBuffer', POINTER(c_float)),
         ('qBuffer', POINTER(c_float)),
         ('samples', c_ulong),
         ('userData', c_void_p)]
-
-# define dll function objects in python
-CreateObject = _lib.afDigitizerDll_CreateObject
-CreateObject.restype = c_long
-CreateObject.argtypes = [POINTER(afDigitizerInstance_t)]
-DestroyObject = _lib.afDigitizerDll_DestroyObject
-DestroyObject.restype = c_long
-DestroyObject.argtypes = [afDigitizerInstance_t]
-BootInstrument = _lib.afDigitizerDll_BootInstrument
-BootInstrument.restype = c_long
-BootInstrument.argtypes = [afDigitizerInstance_t, STRING, STRING, AFBOOL]
-CloseInstrument = _lib.afDigitizerDll_CloseInstrument
-CloseInstrument.restype = c_long
-CloseInstrument.argtypes = [afDigitizerInstance_t]
-ErrorMessage_Get = _lib.afDigitizerDll_ErrorMessage_Get
-ErrorMessage_Get.restype = c_long
-ErrorMessage_Get.argtypes = [afDigitizerInstance_t, STRING, c_ulong]
-
-
-def getDllObject(sName, argtypes=[afDigitizerInstance_t], restype=c_long):
-    """Create a dll ojbect with input and output types"""    
-    obj = getattr(_lib, sName)
-    obj.restype = restype
-    obj.argypes = argtypes
-    return obj
-
-
+    
 class afDigitizer():
     """Represent a signal generator, redefines the dll function in python"""
-
-    def __init__(self):
-        """The init case defines a session ID, used to identify the instrument"""
-        # create a session id
-        self.session = afDigitizerInstance_t()
-
+    def do_func(self, sName, *args):
+        error=getattr(_lib, "afDigitizerDll_"+sName)(self.session, *args)
+        self.check_error(error)
+        
+    def get_func(self, sName, *args, **kwargs):
+        dtype=kwargs.pop("dtype", c_long)
+        dValue=dtype()
+        self.do_func(sName, *(args+(byref(dValue),)))
+        return dValue.value
+        
     def create_object(self):
-        error = CreateObject(self.session)
+        ses=c_long()
+        error=_lib.afDigitizerDll_CreateObject(byref(ses))
+        self.session=ses.value
         self.check_error(error)
 
     def destroy_object(self):
-        error = DestroyObject(self.session)
+        _lib.afDigitizerDll_DestroyObject(self.session)
 
     def boot_instrument(self, sLoResource, sRfResource, bLoIsPlugin=False):
         cLoResource = STRING(sLoResource)
         cRfResource = STRING(sRfResource)
-        error = BootInstrument(self.session, cLoResource,
+        self.do_func("BootInstrument", cLoResource,
                                cRfResource, AFBOOL(bLoIsPlugin))
-        self.check_error(error)
         return (cLoResource.value, cRfResource.value)
 
     def close_instrument(self, bCheckError=True):
-        error = CloseInstrument(self.session)
-        if bCheckError:
-            self.check_error(error)
+        self.do_func("CloseInstrument")
             
     def lo_reference_set(self, lLORef):
         """Modes are [lormOCXO=0, lormInternal=1, lormExternalDaisy=2, lormExternalTerminated=3]"""
-        obj = getDllObject('afDigitizerDll_LO_Reference_Set',
-                           argtypes=[afDigitizerInstance_t, c_long])
-        error = obj(self.session, c_long(lLORef))
-        self.check_error(error)
+        self.do_func('LO_Reference_Set', lLORef)
         
     def lo_reference_get(self):
         """Modes are [lormOCXO=0, lormInternal=1, lormExternalDaisy=2, lormExternalTerminated=3]"""
-        obj = getDllObject('afDigitizerDll_LO_Reference_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(c_long)])
-        dValue = c_long()
-        error = obj(self.session, byref(dValue))
-        self.check_error(error)
-        return dValue.value
+        return self.get_func('LO_Reference_Get', dtype=c_long)
 
     def ref_is_locked(self):
         #Returns whether LO is locked to the external 10 Mhz reference when 
         #Reference is set to ExternalDaisy or ExternalTerminated.
-        obj = getDllObject('afDigitizerDll_LO_ReferenceLocked_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(c_long)])
-        dValue = c_long()
-        error = obj(self.session, byref(dValue))
-        self.check_error(error)
-        return dValue.value
+        return self.get_func('LO_ReferenceLocked_Get')
  
     def rf_centre_frequency_set(self, dFreq):
-        obj = getDllObject('afDigitizerDll_RF_CentreFrequency_Set',
-                           argtypes=[afDigitizerInstance_t, c_double])
-        error = obj(self.session, c_double(dFreq))
-        self.check_error(error)
+        self.do_func('RF_CentreFrequency_Set', c_double(dFreq))
 
     def rf_centre_frequency_get(self):
-        obj = getDllObject('afDigitizerDll_RF_CentreFrequency_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(c_double)])
-        dValue = c_double()
-        error = obj(self.session, byref(dValue))
-        self.check_error(error)
-        return dValue.value
+        return self.get_func('RF_CentreFrequency_Get', dtype=c_double)
 
     def rf_rf_input_level_set(self, dValue):
-        obj = getDllObject('afDigitizerDll_RF_RFInputLevel_Set',
-                           argtypes=[afDigitizerInstance_t, c_double])
-        error = obj(self.session, c_double(dValue))
-        self.check_error(error)
+        self.do_func('RF_RFInputLevel_Set', c_double(dValue))
 
     def rf_rf_input_level_get(self):
-        obj = getDllObject('afDigitizerDll_RF_RFInputLevel_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(c_double)])
-        dValue = c_double()
-        error = obj(self.session, byref(dValue))
-        self.check_error(error)
-        return dValue.value
-
+        return self.get_func('RF_RFInputLevel_Get', dtype=c_double)
 
     def modulation_generic_sampling_frequency_set(self, dValue):
-        obj = getDllObject('afDigitizerDll_Modulation_SetGenericSamplingFreqRatio',
-                           argtypes=[afDigitizerInstance_t, c_long, c_long])
-        error = obj(self.session, c_long(int(dValue)), c_long(1))
-        self.check_error(error)
+        self.do_func('Modulation_GenericSamplingFrequency_Set', c_double(dValue))
 
     def modulation_generic_sampling_frequency_get(self):
-        obj = getDllObject('afDigitizerDll_Modulation_GenericSamplingFrequency_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(c_double)])
-        dValue = c_double()
-        error = obj(self.session, byref(dValue))
-        self.check_error(error)
+        dValue=c_double()
+        self.do_func('Modulation_GenericSamplingFrequency_Get', byref(dValue))
         return dValue.value
 
     def rf_remove_dc_offset_set(self, bOn=True):
-        obj = getDllObject('afDigitizerDll_RF_RemoveDCOffset_Set',
-                           argtypes=[afDigitizerInstance_t, AFBOOL])
-        error = obj(self.session, AFBOOL(bOn))
-        self.check_error(error)
+        self.do_func('RF_RemoveDCOffset_Set', AFBOOL(bOn))
 
     def rf_remove_dc_offset_get(self):
-        obj = getDllObject('afDigitizerDll_RF_RemoveDCOffset_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(AFBOOL)])
-        pOn = AFBOOL()
-        error = obj(self.session, byref(pOn))
-        self.check_error(error)
-        return bool(pOn.value)
+        return bool(self.get_func('RF_RemoveDCOffset_Get'))
 
     def capture_iq_capt_mem(self, nSamples):
-        # define buffer type
         nSamples = int(nSamples)
         typeBuffer = c_float*nSamples
-        obj = getDllObject('afDigitizerDll_Capture_IQ_CaptMem',
-                           argtypes=[afDigitizerInstance_t, c_ulong,
-                                     POINTER(typeBuffer),
-                                     POINTER(typeBuffer)])
-        # pre-allocate memory
         lValueI = typeBuffer()
         lValueQ = typeBuffer()
-        error = obj(self.session, c_ulong(nSamples), byref(lValueI), byref(lValueQ))
-        self.check_error(error)
+        self.do_func('Capture_IQ_CaptMem', c_ulong(nSamples), byref(lValueI), byref(lValueQ))
         return (list(lValueI), list(lValueQ))
 
     def trigger_source_set(self, iOption=0):
@@ -183,10 +106,7 @@ class afDigitizer():
         PXI_LBL_9=18, PXI_LBL_10=19, PXI_LBL_11=20, PXI_LBL_12=21, LVDS_MARKER_0=22, LVDS_MARKER_1=23, 
         LVDS_MARKER_2=24, LVDS_MARKER_3=25, LVDS_AUX_0=26, LVDS_AUX_1=27, LVDS_AUX_2=28, LVDS_AUX_3=29,
         LVDS_AUX_4=30, LVDS_SPARE_0=31, SW_TRIG=32, LVDS_MARKER_4=33, INT_TIMER=34, INT_TRIG=35, FRONT_SMB=36]"""
-        obj = getDllObject('afDigitizerDll_Trigger_Source_Set',
-                           argtypes=[afDigitizerInstance_t, c_long])
-        error = obj(self.session, c_long(iOption))
-        self.check_error(error)
+        self.do_func('Trigger_Source_Set', iOption)
 
     def trigger_source_get(self):
         """Options for the trigger source are found in the .ini file for the digitizer
@@ -197,100 +117,52 @@ class afDigitizer():
         PXI_LBL_9=18, PXI_LBL_10=19, PXI_LBL_11=20, PXI_LBL_12=21, LVDS_MARKER_0=22, LVDS_MARKER_1=23, 
         LVDS_MARKER_2=24, LVDS_MARKER_3=25, LVDS_AUX_0=26, LVDS_AUX_1=27, LVDS_AUX_2=28, LVDS_AUX_3=29,
         LVDS_AUX_4=30, LVDS_SPARE_0=31, SW_TRIG=32, LVDS_MARKER_4=33, INT_TIMER=34, INT_TRIG=35, FRONT_SMB=36]"""
-        obj = getDllObject('afDigitizerDll_Trigger_Source_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(c_long)])
-        iOption = c_long()
-        error = obj(self.session, byref(iOption))
-        self.check_error(error)
-        return int(iOption.value)
+        return self.get_func('Trigger_Source_Get')
 
     def modulation_mode_set(self, iOption=0):
         """Modes are [mmUMTS=0, mmGSM=1, mmCDMA20001x=2, mmEmu2319=4, mmGeneric=5]"""
-        obj = getDllObject('afDigitizerDll_Modulation_Mode_Set',
-                           argtypes=[afDigitizerInstance_t, c_int])
-        error = obj(self.session, c_int(iOption))
-        self.check_error(error)
-
+        self.do_func('Modulation_Mode_Set', iOption)
 
     def modulation_mode_get(self):
         """Modes are [mmUMTS=0, mmGSM=1, mmCDMA20001x=2, mmEmu2319=4, mmGeneric=5]"""
-        obj = getDllObject('afDigitizerDll_Modulation_Mode_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(c_int)])
-        iOption = c_int()
-        error = obj(self.session, byref(iOption))
-        self.check_error(error)
-        return int(iOption.value)
+        return self.get_func('Modulation_Mode_Get', dtype=c_int)
 
     #Added 2014-02-22 by Philip    
     #Detects whether Whether a trigger event has occurred after arming the 
     #AF3070 trigger with the afRfDigitizerDll_Trigger_Arm method. Read-only
     def trigger_detected_get(self):
-        obj = getDllObject('afRfDigitizerDll_Trigger_Detected_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(AFBOOL)])
-        pOn = AFBOOL()
-        error = obj(self.session, byref(pOn))
-        self.check_error(error)
-        return bool(pOn.value)
-
-    #Added 2014-02-22 by Philip
-    #Sets the trigger polarity
+        return bool(self.get_func('Trigger_Detected_Get'))
 
     def trigger_polarity_set(self, iOption=0):
         """Modes are [Positive=0, Negative=1]"""
-        obj = getDllObject('afDigitizerDll_Trigger_EdgeGatePolarity_Set',
-                           argtypes=[afDigitizerInstance_t, c_int])
-        error = obj(self.session, c_int(iOption))
-        self.check_error(error)
+        self.do_func('Trigger_EdgeGatePolarity_Set', iOption)
         
     def trigger_polarity_get(self):
         """Modes are [Positive=0, Negative=1]"""
-        obj = getDllObject('afDigitizerDll_Trigger_EdgeGatePolarity_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(c_int)])
-        dValue = c_int()
-        error = obj(self.session, byref(c_int))
-        self.check_error(error)
-        return dValue.value
+        return self.get_func('Trigger_EdgeGatePolarity_Get', dtype=c_int)
  
     def trigger_type_set(self, iOption=0):
         """Modes are [Edge=0, Gate=1]"""
-        obj = getDllObject('afDigitizerDll_Trigger_TType_Set',
-                           argtypes=[afDigitizerInstance_t, c_int])
-        error = obj(self.session, c_int(iOption))
-        self.check_error(error)
+        self.do_func('Trigger_TType_Set', iOption)
         
     def trigger_type_get(self):
         """Modes are [Positive=0, Negative=1]"""
-        obj = getDllObject('afDigitizerDll_Trigger_TType_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(c_int)])
-        dValue = c_int()
-        error = obj(self.session, byref(c_int))
-        self.check_error(error)
-        return dValue.value
+        self.get_func('Trigger_TType_Get', dtype=c_int)
  
     def trigger_arm_set(self, inSamples=0):
-        obj = getDllObject('afDigitizerDll_Trigger_Arm',
-                           argtypes=[afDigitizerInstance_t, c_int])
-        error = obj(self.session, c_int(inSamples))
-        self.check_error(error)
+        self.do_func('Trigger_Arm', inSamples)
 
     def data_capture_complete_get(self):
-        obj = getDllObject('afDigitizerDll_Capture_IQ_CaptComplete_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(AFBOOL)])
-        dValue = AFBOOL()
-        error = obj(self.session, byref(dValue))
-        self.check_error(error)
-        return bool(dValue.value)
+        return bool(self.get_func('Capture_IQ_CaptComplete_Get'))
  
     def error_message_get(self):
-        bufferLen = c_ulong(256)
-        msgBuffer = STRING(' '*256)
-        ErrorMessage_Get(self.session, msgBuffer, bufferLen)
+        msgBuffer=create_string_buffer(256)
+        _lib.afDigitizerDll_ErrorMessage_Get(self.session, msgBuffer, 256)
         return msgBuffer.value
+
     def clear_errors(self):
-        obj = getDllObject('afDigitizerDll_ClearErrors',
-                           argtypes=[afDigitizerInstance_t])
-        error = obj(self.session)
-        #self.check_error(error)
+        _lib.afDigitizerDll_ClearErrors(self.session)
+        
     def check_error(self, error=0):
         """If error occurred, get error message and raise error"""
         if error>0:
@@ -299,95 +171,123 @@ class afDigitizer():
             raise Exception(str(error)+": "+self.error_message_get())
             
     def rf_level_correction_get(self):
-        obj = getDllObject('afDigitizerDll_RF_LevelCorrection_Get',
-                           argtypes=[afDigitizerInstance_t, POINTER(c_double)])
-        dValue = c_double()
-        error = obj(self.session, byref(dValue))
-        self.check_error(error)
-        return dValue.value      
+        return self.get_func('RF_LevelCorrection_Get', dtype=c_double)
         
     def trigger_pre_edge_trigger_samples_get(self):
-        afDigitizerDll_Trigger_PreEdgeTriggerSamples_Get = getDllObject('afDigitizerDll_Trigger_PreEdgeTriggerSamples_Get', 
-                                                                       argtypes = [afDigitizerInstance_t, POINTER(c_ulong)])
-        dValue=c_ulong()
-        error = afDigitizerDll_Trigger_PreEdgeTriggerSamples_Get(self.session, byref(dValue))
-        self.check_error(error)
-        return dValue.value
+        return self.get_func('Trigger_PreEdgeTriggerSamples_Get', dtype=c_ulong)
         
     def trigger_pre_edge_trigger_samples_set(self, preEdgeTriggerSamples):
-        afDigitizerDll_Trigger_PreEdgeTriggerSamples_Set = getDllObject('afDigitizerDll_Trigger_PreEdgeTriggerSamples_Set', 
-                                                              argtypes = [afDigitizerInstance_t, c_ulong])
-        error = afDigitizerDll_Trigger_PreEdgeTriggerSamples_Set(self.session, c_ulong(preEdgeTriggerSamples))
-        self.check_error(error)    
+        self.do_func('Trigger_PreEdgeTriggerSamples_Set', c_ulong(preEdgeTriggerSamples))
         
-    def trigger_IQ_bandwidth_set(self, dBandWidth, iOption=0):
-        afDigitizerDll_Trigger_SetIntIQTriggerDigitalBandwidth = getDllObject('afDigitizerDll_Trigger_SetIntIQTriggerDigitalBandwidth', 
-                                                                       argtypes = [afDigitizerInstance_t, c_double, c_int, POINTER(c_double)])
-        dValue=c_double()
-        error = afDigitizerDll_Trigger_SetIntIQTriggerDigitalBandwidth(self.session, c_double(dBandWidth), c_int(iOption), byref(dValue))
-        self.check_error(error)
-        return dValue.value
+    #def trigger_IQ_bandwidth_set(self, dBandWidth, iOption=0):
+    #    self.do_func('Trigger_SetIntIQTriggerDigitalBandwidth', c_double(dBandWidth), c_int(iOption), byref(dValue))
+    #    self.check_error(error)
+    #    return dValue.value
  
     def check_ADCOverload(self):
-        afDigitizerDll_Capture_IQ_ADCOverload_Get = getDllObject('afDigitizerDll_Capture_IQ_ADCOverload_Get',
-                                                                 argtypes =[afDigitizerInstance_t, POINTER(AFBOOL)])
-        bADCOverload = AFBOOL()
-        error = afDigitizerDll_Capture_IQ_ADCOverload_Get(self.session, byref(bADCOverload))
-        self.check_error(error)
-        return bADCOverload.value
+        return bool(self.get_func('Capture_IQ_ADCOverload_Get'))
         
     def rf_userLOPosition_get(self):
-        afDigitizerDll_RF_UserLOPosition_Get = getDllObject('afDigitizerDll_RF_UserLOPosition_Get', argtypes=[afDigitizerInstance_t, POINTER(c_int)])
-        iValue = c_int()
-        error = afDigitizerDll_RF_UserLOPosition_Get(self.session, byref(iValue))
-        self.check_error(error)
-        return iValue.value
+        return self.get_func('RF_UserLOPosition_Get')
         
     def rf_userLOPosition_set(self, iLOPosition):
-        afDigitizerDll_RF_UserLOPosition_Set = getDllObject('afDigitizerDll_RF_UserLOPosition_Set', argtypes = [afDigitizerInstance_t, c_int])
-        error = afDigitizerDll_RF_UserLOPosition_Set(self.session, iLOPosition)
-        self.check_error(error)
+        self.do_func('RF_UserLOPosition_Set', iLOPosition)
 
     def capture_iq_reclaim_timeout_set(self, timeoutMillisecs=1000):
-        afDigitizerDll_Capture_IQ_ReclaimTimeout_Set = getDllObject('afDigitizerDll_Capture_IQ_ReclaimTimeout_Set',
-                                    argtypes = [afDigitizerInstance_t, c_long])
-        error = afDigitizerDll_Capture_IQ_ReclaimTimeout_Set(self.session, c_long(timeoutMillisecs))
-        self.check_error( error)
+        self.do_func('Capture_IQ_ReclaimTimeout_Set', timeoutMillisecs)
     
     def capture_iq_reclaim_timeout_get(self):
-        afDigitizerDll_Capture_IQ_ReclaimTimeout_Get = getDllObject('afDigitizerDll_Capture_IQ_ReclaimTimeout_Get', 
-                                    argtypes = [afDigitizerInstance_t, POINTER(c_long)])
-        dValue=c_long()
-        error = afDigitizerDll_Capture_IQ_ReclaimTimeout_Get(self.session, byref(dValue))
-        self.check_error( error)
-        return (dValue.value)
+        return self.get_func('Capture_IQ_ReclaimTimeout_Get') 
     
     def capture_iq_issue_buffer(self, buffer_ref, capture_ref, timeout=1):
-        obj=getDllObject('afDigitizerDll_Capture_IQ_IssueBuffer',
-                          argtypes = [afDigitizerInstance_t, POINTER(afDigitizerBufferIQ_t), c_long, POINTER(afDigitizerCaptureIQ_t)])
-        error=obj(self.session, byref(buffer_ref), 1000*timeout, byref(capture_ref))
-        self.check_error(error)
-        
+        self.do_func('Capture_IQ_IssueBuffer',
+                     byref(buffer_ref), 1000*timeout, byref(capture_ref))
+                     
     def capture_iq_reclaim_buffer(self, capture_ref, buffer_ref_pointer):
-        obj=getDllObject('afDigitizerDll_Capture_IQ_ReclaimBuffer',
-                          argtypes = [afDigitizerInstance_t, afDigitizerCaptureIQ_t, POINTER(POINTER(afDigitizerBufferIQ_t))])
-        error = obj(self.session, capture_ref, byref(buffer_ref_pointer))
-        self.check_error(error)   
+        self.do_func('Capture_IQ_ReclaimBuffer', capture_ref, byref(buffer_ref_pointer))
 
+    def capture_to_buffer(self, samples=1000, avgs=1, timeout=10, nTriggers=1):
+        print self.check_ADCOverload()
+        i_avgd = zeros(samples)
+        q_avgd = zeros(samples)
+        #samples=self.nSamples
+        #avgs=self.nAverages_per_trigger
+        #timeout=self.fTimeout
+        tot_samps=int(samples*avgs)
+        capture_ref=[c_long() for avgidx in range(nTriggers)]
+        #buffer_ref=range(self.nTriggers)
+        #buffer_ref_pointer=range(self.nTriggers)
+        #i_buffer=range(self.nTriggers)
+        #q_buffer=range(self.nTriggers)
+        i_buffer = zeros(tot_samps, dtype=c_float)
+        q_buffer = zeros(tot_samps, dtype=c_float)
+        i_ctypes = i_buffer.ctypes.data_as(POINTER(c_float))
+        q_ctypes = q_buffer.ctypes.data_as(POINTER(c_float))
+        buffer_ref = afDigitizerBufferIQ_t(i_ctypes, q_ctypes, tot_samps)
+        buffer_ref_pointer = pointer(buffer_ref)
+
+        start_idx=nTriggers-1
+        #self.log("acq started")
+        for avgidx in range(1+start_idx):#self.nTriggers):
+            #self.log(avgidx)
+            self.capture_iq_issue_buffer(buffer_ref=buffer_ref, capture_ref=capture_ref[avgidx], 
+                                               timeout = timeout)
+
+        for avgidx in range(nTriggers):
+            self.capture_iq_reclaim_buffer(capture_ref=capture_ref[avgidx],
+                                                     buffer_ref_pointer=buffer_ref_pointer)
+            if avgidx+start_idx < (nTriggers-1):
+                self.capture_iq_issue_buffer(buffer_ref=buffer_ref, capture_ref=capture_ref[avgidx+start_idx+1], 
+                                               timeout = timeout)
+                                                     
+            if buffer_ref_pointer:
+                #self.log("BUFFER POINTER OK - Trigger {}".format(avgidx))
+                total_samples = buffer_ref.samples
+            else:
+                #self.log("NO BUFFER!", 30)
+                samples = 0
+                
+            i_avgd += mean(i_buffer[:total_samples].reshape(avgs, samples), axis=0)
+            q_avgd += mean(q_buffer[:total_samples].reshape(avgs, samples), axis=0)
+        #self.log("acq stopped")                
+        i_avgd = i_avgd/nTriggers
+        q_avgd = q_avgd/nTriggers
+        cpx_avgd = i_avgd + 1j*q_avgd
+        #self.log((avgs, samples))
+        #self.log(i_buffer.reshape(avgs, samples).shape)
+        #ibuf= np.mean(i_buffer.reshape(avgs, samples), axis=0)
+        #qbuf= np.mean(q_buffer.reshape(avgs, samples), axis=0)
+        #ibuf= i_buffer.reshape(avgs, samples)[:, 130]#, axis=0)
+        #qbuf= q_buffer.reshape(avgs, samples)[:, 130]
+
+        #cpx_buffer=i_buffer+1j*q_buffer
+        #return cpx_buffer
+        return cpx_avgd
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    from numpy import log10, absolute, power
     # test driver
-    Digitizer = afDigitizer()
-    Digitizer.create_object()
+    d = afDigitizer()
+    d.create_object()
+    d.clear_errors()
     #Digitizer.boot_instrument('PXI8::15::INSTR', 'PXI8::14::INSTR')
-    Digitizer.boot_instrument('PXI7::15::INSTR', 'PXI6::10::INSTR')
-    print Digitizer.modulation_mode_get()
-    dFreq = Digitizer.modulation_generic_sampling_frequency_get()
+    d.boot_instrument('3011D1', '3036D1')
+    print d.modulation_mode_get()
+    d.modulation_mode_set(5)
+    print d.modulation_mode_get()
+    d.lo_reference_set(0)
+    d.rf_rf_input_level_set(-20)
+    lc=d.rf_level_correction_get()
+    dFreq = d.modulation_generic_sampling_frequency_get()
     print 'Current frequency: ' + str(dFreq)
-    Digitizer.modulation_generic_sampling_frequency_set(250E6)
-    dFreq = Digitizer.modulation_generic_sampling_frequency_get()
+    d.modulation_generic_sampling_frequency_set(250E6)
+    dFreq = d.modulation_generic_sampling_frequency_get()
     print 'Current frequency: ' + str(dFreq)
-    [lI, lQ] = Digitizer.capture_iq_capt_mem(2048)
-    print Digitizer.modulation_mode_get()
+    #[lI, lQ] = Digitizer.capture_iq_capt_mem(2048)
+    cpx_avgd=d.capture_to_buffer()
+    plt.plot(20*log10(absolute(cpx_avgd*power(10.0, lc/20.0))))
+    plt.show()
 #    print lI, lQ
-    Digitizer.close_instrument()
-    Digitizer.destroy_object()
+    if 0:
+        d.close_instrument()
+        d.destroy_object()
