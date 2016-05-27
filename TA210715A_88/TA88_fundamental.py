@@ -49,12 +49,13 @@ qdt=QDT(material='LiNbYZ',
         Rn=3780.0, #(3570.0+4000.0)/2.0, Ejmax=h*44.0e9,
         W=25.0e-6,
         eta=0.5,
-        flux_factor=0.52, #0.2945, #0.52,
+        flux_factor=0.515, #0.2945, #0.52,
         voltage=1.21,
         offset=-0.07)
-qdt.Ejmax=h*41.0e9 #h*44.0e9
-qdt.f0=5.368e9 #5.35e9
-qdt.C=1.2e-13
+qdt.Ejmax=h*44.0e9 #h*44.0e9
+qdt.f0=5.38e9 #5.35e9
+qdt.C=1.25e-13
+qdt.K2=qdt.K2*0.9
 
 ideal_idt=IDT(name="idealIDT",
               material='LiNbYZ',
@@ -91,40 +92,48 @@ def anharm_plot2(qdt, fig_width=9.0, fig_height=6.0, ymin=-1.5, ymax=1.0):
     fw0=linspace(2e9, 7e9, 2000)
     lsfw0=array([sqrt(f*(f-2*qdt._get_Lamb_shift(f=f))) for f in fw0])
     Ej=qdt._get_Ej_get_fq(fq=lsfw0)
-
-    #EjdivEc=linspace(0.1, 300, 3000)
-    #Ej=EjdivEc*qdt.Ec
     E0, E1, E2=qdt._get_transmon_energy_levels(Ej=Ej, n_energy=3)
     anharm=(E2-E1)-(E1-E0)
-
     E0p, E1p, E2p=qdt._get_lamb_shifted_transmon_energy_levels(Ej=Ej, n_energy=3)
-
     anharmp=(E2p-E1p)-(E1p-E0p)
-
-    #fq= (E1-E0)/h
-    #ls_fq=(E1p-E0p)/h
-    #fq2=(E2-E1)/h
-    #ls_fq2=(E2p-E1p)/h
-
-
     line(lsfw0/1e9, anharm/h/1e9, plotter=pl, linewidth=0.5, color="purple", label=r"anharm")
     line(lsfw0/1e9, anharmp/h/1e9, plotter=pl, linewidth=0.5, color="black", label=r"ls anharm")
-    #line(ls_fq/1e9, anharmp/h/1e9, plotter=pl, linewidth=0.5, color="green", label=r"ls anharm")
     line(fw0/1e9, qdt._get_coupling(fw0)/qdt.max_coupling, label=r"$G_a/2C$", color="blue", plotter=pl)
-
-    #line(EjdivEc, (ls_fq-fq)/1e9, plotter=pl, color="blue", linewidth=0.5, label=r"$\Delta_{1,0}$")
-    #line(EjdivEc, (ls_fq2-fq2)/1e9, plotter=pl, color="red", linewidth=0.5, label=r"$\Delta_{2,1}$")
-    #pl.set_ylim(ymin, ymax)
-    #pl.set_xlim(0.7, 1.3)
     pl.xlabel=r"$E_J/E_C$"
     pl.ylabel=r"$\Delta$ (GHz)"
     pl.legend(loc='lower left')
+    return pl
+
+def mag_theory(qdt, fig_width=9.0, fig_height=6.0):
+    pl=Plotter(fig_width=fig_width, fig_height=fig_height)
+    fw0=linspace(2e9, 8e9, 2000)
+    voltage=linspace(-5, 5, 1000)
+    fq=qdt._get_flux_parabola(voltage=voltage)
+    L=qdt._get_L(fq=fq)
+    S11=qdt._get_S11(f=fw0, L=L)
+    colormesh(fw0/1e9, voltage, 10*log10(absolute(S11)), plotter=pl)
+    line(*qdt._get_ls_voltage_from_flux_par_many(f=fw0), plotter=pl, linewidth=0.5, alpha=0.5, color="cyan")
+    return pl
+
+def phase_theory(qdt, fig_width=9.0, fig_height=6.0):
+    pl=Plotter(fig_width=fig_width, fig_height=fig_height)
+    fw0=linspace(2e9, 8e9, 2000)
+    voltage=linspace(-5, 5, 1000)
+    fq=qdt._get_flux_parabola(voltage=voltage)
+    L=qdt._get_L(fq=fq)
+    S11=qdt._get_S11(f=fw0, L=L)
+    colormesh(fw0/1e9, voltage, angle(S11), plotter=pl)
+    line(*qdt._get_ls_voltage_from_flux_par_many(f=fw0), plotter=pl, linewidth=0.5, alpha=0.5, color="cyan")
+    return pl
+
 if __name__=="__main__":
     from taref.physics.qdt import anharm_plot
     print qdt.max_coupling
     anharm_plot2(qdt)#.show()
 
-    coupling_plot().show()
+    coupling_plot()#.show()
+    mag_theory(qdt)#.show()
+    phase_theory(qdt).show()
 #        dd.line_plot("asdf", fw0/1e9, calc_Coupling(fw0)/1e9, label=r"$G_a/2C$", color="blue")
 #        dd.line_plot("asdfd", fw0/1e9, calc_Lamb_shift(fw0)/1e9, label=r"$-B_a/2C$", color="red")
 #        dd.line_plot("listen", fw0/1e9, listen_coupling(fw0)/4/1e9, label=r"$G_a^{IDT}/2C^{IDT}/4$", color="green")

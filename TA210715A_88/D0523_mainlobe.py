@@ -9,7 +9,7 @@ from TA88_fundamental import TA88_Lyzer, TA88_Read#, qdt
 from taref.plotter.api import colormesh, line, Plotter, scatter
 from taref.core.api import set_tag, set_all_tags
 from numpy import array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape, linspace, interp, absolute, fft, log10, angle, unwrap
-from atom.api import FloatRange, Int
+from atom.api import FloatRange, Int, Float
 from taref.core.api import tag_property
 from taref.plotter.api import LineFitter
 from taref.physics.fundamentals import h#, filt_prep
@@ -19,8 +19,8 @@ from taref.physics.fitting_functions import lorentzian, rpt_fit, lorentzian2
 from time import time
 a=TA88_Lyzer(filt_center=51, filt_halfwidth=20, on_res_ind=440, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0523/S1A4_trans_mainlobe.hdf5"),
-            fit_func=lorentzian, p_guess=[5e6,4.9e9, 5e-5, 4e-5], #[0.2,2.3, 3e-7, 7.5e-7],
-            offset=0.0, #indices=range(50, 534),
+            fit_func=lorentzian,  #[0.2,2.3, 3e-7, 7.5e-7],
+            offset=0.07, fit_type="yoko", #indices=range(50, 534),
             ) #33, 70
 #print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
 
@@ -39,11 +39,53 @@ if __name__=="__main__":
     #colormesh(s3a4_wg.MagAbsFilt)#, plotter="magabsfilt_{}".format(self.name))
 
     pl=a.magabsfilt_colormesh()
-    a.magabsfilt2_colormesh()
+    a.magabsfit_colormesh(pl=pl)
+    #a.magabsfilt2_colormesh()
     a.widths_plot()
-    a.center_plot()
+    pl=a.center_plot()
     a.heights_plot()
-    a.background_plot()
+    a.background_plot()#.show()
+
+    from taref.plotter.fitter import LineFitter2
+
+    class Fitter(LineFitter2):
+        Ejmax=Float(a.qdt.Ejmax/h/1e9)#.tag(tracking=True)
+        offset=Float(a.offset)#.tag(tracking=True)
+        flux_factor=Float(a.flux_factor)#.tag(tracking=True)
+        f0=Float(a.qdt.f0/1e9)#.tag(tracking=True)
+        alpha=Float( 1.0)#.tag(tracking=True)
+        Ct=Float(a.qdt.C*1e13)#.tag(tracking=True)
+
+        def _default_plotter(self):
+            line(*self.data, plot_name=self.plot_name, plotter=pl, color="green", linewidth=0.3, alpha=0.6)
+            return pl
+
+        def _default_plot_name(self):
+            return "myplot"
+
+#        @tag_property(private=True)
+#        def freq(self):
+#            freq=append(a.frequency, a.frequency)
+#            freq=append(freq, freq)
+#            return freq
+
+
+        @tag_property(private=True)
+        def data(self):
+            ls_f=array([sqrt(f*(f-self.alpha*2*a.qdt._get_Lamb_shift(f=f, f0=self.f0*1e9))) for f in a.frequency])#, couple_mult, K2, Np)
+            Ec=a.qdt._get_Ec(C=self.Ct*1e-13)
+            Ej=a.qdt._get_Ej_get_fq(fq=ls_f, Ec=Ec)
+            flux_d_flux0=a.qdt._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=self.Ejmax*h*1e9)
+            #flux_d_flux0=append(fdf0, -fdf0)
+            #flux_d_flux0=append(flux_d_flux0, -fdf0+pi)
+            #flux_d_flux0=append(flux_d_flux0, fdf0-pi)
+            return a.frequency/1e9, a.qdt._get_voltage(flux_over_flux0=flux_d_flux0, offset=self.offset, flux_factor=self.flux_factor)
+
+            #return flux_par3(s3a4_wg, offset=self.offset, flux_factor=self.flux_factor,
+            #                 C=self.Ct*1e-13, Ejmax=self.Ejmax*h*1e9, f0=self.f0*1e9, alpha=self.alpha)
+
+    d=Fitter()
+    d.plotter.show()
 
     #colormesh(plotter=pl)
     #a.magdBfilt_colormesh()
@@ -58,7 +100,7 @@ if __name__=="__main__":
         @tag_property(plot="lorentx", sub=True)
         def data(self):
             fit_p=a.fano_fit(self.ind, a.fq)
-            print a.p_guess, fit_p
+            #print a.p_guess, fit_p
             return a.fq, lorentzian(a.fq, fit_p)
 
         @tag_property(plot="adata", sub=True)

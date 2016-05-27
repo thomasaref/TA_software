@@ -177,7 +177,24 @@ class IDT(Agent):
         frq=linspace(-5e9, 15e9, 20000)
         return frq, imag(hilbert(self._get_coupling(f=frq)))
 
+    ZL=Float(50.0)
+    GL=Float(1/50.0)
 
+    S11=SProperty()
+    @S11.getter
+    def _get_S11(self, f, couple_mult, f0, K2, Np, C, ZL):
+        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+        w=2*pi*f
+        return Ga/(Ga+1j*Ba+1j*w*C+1.0/ZL)
+
+    S13=SProperty()
+    @S13.getter
+    def _get_S13(self, f, couple_mult, f0, K2, Np, C, ZL, GL):
+        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+        w=2*pi*f
+        return 1j*sqrt(2*Ga*GL)/(Ga+1j*Ba+1j*w*C+1.0/ZL)
 
     Ga=SProperty().tag(desc="Ga adjusted for frequency f")
     @Ga.getter
@@ -186,7 +203,7 @@ class IDT(Agent):
 
     Ba=SProperty()
     @Ba.getter
-    def Ba(self, f, couple_mult, f0, K2, Np, C):
+    def _get_Ba(self, f, couple_mult, f0, K2, Np, C):
         return -self._get_Lamb_shift(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)*2*C*2*pi
 
     lbda=SProperty()

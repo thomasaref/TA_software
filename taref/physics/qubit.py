@@ -11,7 +11,7 @@ from scipy.constants import e, h, hbar, k as kB, epsilon_0 as eps0, pi
 c_eta = 0.8
 
 from numpy import (sin, cos, arccos, sqrt, exp, empty, mean, exp, log10, arange, array, ndarray, delete,
-                   absolute, dtype, angle, amin, amax, linspace, zeros, shape)
+                   absolute, dtype, angle, amin, amax, linspace, zeros, shape, append)
 
 
 from taref.core.api import Agent, Array, SProperty
@@ -181,6 +181,29 @@ class Qubit(Agent):
         flx_d_flx0=self._get_flux_over_flux0(voltage=voltage, offset=offset, flux_factor=flux_factor)
         qEj=self._get_Ej(Ejmax=Ejmax, flux_over_flux0=flx_d_flx0)
         return self._get_fq(Ej=qEj, Ec=Ec)#, fq2(qEj, Ec)
+
+    #freq_arr=Array().tag(desc="array of frequencies to evaluate over")
+    f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
+    voltage_from_flux_par=SProperty().tag(sub=True)
+    @voltage_from_flux_par.getter
+    def _get_voltage_from_flux_par(self, f, C, Ejmax, offset, flux_factor):
+        Ec=self._get_Ec(C=C)
+        Ej=self._get_Ej_get_fq(fq=f, Ec=Ec)
+        flux_d_flux0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
+        return f/1e9, self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
+
+    voltage_from_flux_par_many=SProperty().tag(sub=True)
+    @voltage_from_flux_par_many.getter
+    def _get_voltage_from_flux_par_many(self, f, C, Ejmax, offset, flux_factor):
+        Ec=self._get_Ec(C=C)
+        Ej=self._get_Ej_get_fq(fq=f, Ec=Ec)
+        fdf0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
+        flux_d_flux0=append(fdf0, -fdf0)
+        flux_d_flux0=append(flux_d_flux0, -fdf0+pi)
+        flux_d_flux0=append(flux_d_flux0, fdf0-pi)
+        freq=append(f, f)
+        freq=append(freq, freq)
+        return freq/1e9, self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
 
     def detuning(self, fq_off):
         return 2.0*pi*(self.fq - fq_off)

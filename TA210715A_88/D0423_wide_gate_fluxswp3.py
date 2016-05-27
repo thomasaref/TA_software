@@ -25,13 +25,13 @@ if __name__=="__main__":
     a.ifft_plot()#.show()
     #a.magdBfiltbgsub_colormesh()
     a.magabsfilt_colormesh()#.show()
-    pl=a.magabsfilt2_colormesh()#.show()
+    pl=a.magphasefilt_colormesh().show()
     class Fitter(LineFitter2):
             Ejmax=FloatRange(0.001, 100.0, a.qdt.Ejmax/h/1e9).tag(tracking=True)
             offset=FloatRange(-5.0, 5.0, a.offset).tag(tracking=True)
             flux_factor=FloatRange(0.1, 5.0, a.flux_factor).tag(tracking=True)
             f0=FloatRange(4.0, 6.0, a.qdt.f0/1e9).tag(tracking=True)
-            alpha=FloatRange(0.0, 2.0, 0.0*a.qdt.couple_mult).tag(tracking=True)
+            alpha=FloatRange(0.0, 2.0, 1.0).tag(tracking=True)
             Ct=FloatRange(0.1, 10.0, a.qdt.C*1e13).tag(tracking=True)
 
             def _default_plotter(self):
@@ -60,7 +60,7 @@ if __name__=="__main__":
 
             @tag_property(private=True)
             def data(self):
-                ls_f=array([sqrt(f*(f-2*a.qdt._get_Lamb_shift(f=f, f0=self.f0*1e9))) for f in a.frequency])#, couple_mult, K2, Np)
+                ls_f=array([sqrt(f*(f-self.alpha*2*a.qdt._get_Lamb_shift(f=f, f0=self.f0*1e9))) for f in a.frequency])#, couple_mult, K2, Np)
                 Ec=a.qdt._get_Ec(C=self.Ct*1e-13)
                 Ej=a.qdt._get_Ej_get_fq(fq=ls_f, Ec=Ec)
                 fdf0=a.qdt._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=self.Ejmax*h*1e9)

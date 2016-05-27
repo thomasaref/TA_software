@@ -13,9 +13,16 @@ from taref.physics.filtering import fft_filter5, hann_ifft, fft_filter2, fft_fil
 from taref.plotter.api import line, colormesh, scatter, Plotter
 from atom.api import Float, Typed, Unicode, Int, Callable, Enum, List
 from h5py import File
-from numpy import pi, append, arccos, float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin, sqrt
+from numpy import pi, append, angle, unwrap, arccos, float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin, sqrt
 from scipy.optimize import leastsq, curve_fit
 from taref.physics.qdt import QDT
+
+def plots(func):
+    def plot_func(self, pl=None, *args, **kwargs):
+        if pl is None:
+            pl=Plotter(fig_width=kwargs.pop("fig_width", 9.0), fig_height=kwargs.pop("fig_height", 6.0))
+        return func(self, pl=pl, *args, **kwargs)
+    return plot_func
 
 class LyzerBase(Agent):
     #qdt=QDT()
@@ -58,9 +65,6 @@ def read_data(self):
 
 class Lyzer(LyzerBase):
     base_name="lyzer"
-    #def _default_main_params(self):
-    #    return ["rt_atten", "fridge_atten", "fridge_gain", "rt_gain", "comment", "flux_factor", "offset", "fit_type",
-    #            "on_res_ind", "start_ind", "stop_ind", "filt_start_ind", "filt_end_ind"]
 
     frequency=Array().tag(unit="GHz", plot=True, label="Frequency", sub=True)
     yoko=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
@@ -75,14 +79,8 @@ class Lyzer(LyzerBase):
     filt_center=Int()
     filt_halfwidth=Int()
     indices=List()
-    p_guess=List()
     port_name=Unicode('S21')
     VNA_name=Unicode("RS VNA")
-    #filt_end_ind=Int(58)
-    #filt_start_ind=Int(5)
-
-    def _default_p_guess(self):
-        return [200e6,4.5e9, 0.002, 0.022, 0.1]
 
     @tag_property()
     def filt_start_ind(self):
@@ -91,37 +89,6 @@ class Lyzer(LyzerBase):
     @tag_property()
     def filt_end_ind(self):
         return self.filt_center+self.filt_halfwidth#-1
-
-    #@s_property()
-    #def filt_center_ind(self, filt_start_ind, filt_end_ind):
-    #    return (filt_start_ind+filt_end_ind)/2
-
-    #@filt_center_ind.setter
-    #def _get_filt_start_ind(self, filt_center_ind, filt_width):
-    #    return
-
-    #def _get_filt_end_ind(self, filt_center_ind, filt_width):
-    #    return
-
-    #@s_property()
-    #def filt_width(self, filt_start_ind, filt_end_ind):
-    #    return filt_end_ind-filt_start_ind
-
-    #@filt_center_ind.setter
-    #def _get_filt_start_ind(self, filt_center_ind, filt_width):
-    #    return (2*filt_center_ind-filt_width)/2
-
-    #@filt_width.setter
-    #def _get_filt_start_ind_get_(self, filt_width, filt_center_ind):
-    #    return (2*filt_center_ind-filt_width)/2
-
-    #@filt_center_ind.setter
-    #def _get_filt_end_ind(self, filt_center_ind, filt_width):
-    #    return (2*filt_center_ind+filt_width)/2
-
-    #@filt_width.setter
-    #def _get_filt_end_ind_get_(self, filt_width, filt_center_ind):
-    #    return (2*filt_center_ind+filt_width)/2
 
     fit_func=Callable(lorentzian).tag(private=True)
     read_data=Callable(read_data).tag(sub=True)
@@ -147,6 +114,7 @@ class Lyzer(LyzerBase):
         #flux_d_flux0=append(flux_d_flux0, arccos(Ej/Ejmax)-pi)
         return self.qdt._get_voltage(flux_over_flux0=flux_d_flux0, offset=self.offset, flux_factor=self.flux_factor)
 
+
     @tag_property(sub=True)
     def voltage_from_flux_par2(self):
         Ej=self.qdt._get_Ej_get_fq(fq=self.ls_f)
@@ -161,8 +129,7 @@ class Lyzer(LyzerBase):
     @tag_property(sub=True)
     def ls_flux_par(self):
         return self.qdt._get_ls_flux_parabola(voltage=self.yoko, offset=self.offset, flux_factor=self.flux_factor)
-    #def rpt_voltage_from_flux_par(self):
-    #    fk
+
     @tag_property(plot=True, sub=True)
     def Ej(self):
         return self.qdt._get_Ej(Ejmax=self.qdt.Ejmax, flux_over_flux0=self.flux_over_flux0)
@@ -207,30 +174,37 @@ class Lyzer(LyzerBase):
 
     @tag_property(sub=True)
     def MagAbsFit(self):
-        return sqrt(array([lorentzian(self.fq, fp) for fp in self.fit_params]))
+        if self.fit_type=="yoko":
+            return sqrt(array([self.fit_func(self.yoko, fp) for fp in self.fit_params]))
+        return sqrt(array([self.fit_func(self.fq, fp) for fp in self.fit_params]))
+
+    @tag_property(sub=True)
+    def MagdBFit(self):
+        return 10*log10(self.MagAbsFit)
 
     @tag_property(sub=True)
     def fit_params(self):
         return self.full_fano_fit(self.fq)
 
+    @plots
     def widths_plot(self, pl=None):
-        if pl is None:
-            pl=Plotter()
         scatter(self.frequency[self.indices]/1e9, absolute([fp[0] for fp in self.fit_params]), plotter=pl)
         line(self.frequency/1e9, self.qdt._get_coupling(self.frequency), plotter=pl, color="red")
         return pl
 
+    @plots
     def center_plot(self, pl=None):
-        if pl is None:
-            pl=Plotter()
         line(self.frequency[self.indices]/1e9, array([fp[1] for fp in self.fit_params]), plotter=pl)
         line(self.frequency/1e9, self.ls_f, plotter=pl, color="red", linewidth=1.0)
         return pl
 
-    def heights_plot(self):
+    @plots
+    def heights_plot(self, pl=None):
         pl, pf=line(self.frequency[self.indices]/1e9, array([fp[3]-fp[2] for fp in self.fit_params]))
+        return pl
 
-    def background_plot(self):
+    @plots
+    def background_plot(self, pl=None):
         pl, pf=line(self.frequency[self.indices]/1e9, array([fp[2]+fp[3] for fp in self.fit_params]))
         line(self.frequency[self.indices]/1e9, self.MagAbsFilt_sq[self.indices,0], plotter=pl, color="red")
         return pl
@@ -275,25 +249,49 @@ class Lyzer(LyzerBase):
         p, pf=line(self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)", plotter="filtcomp_{}".format(self.name))
         line(self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)", plotter=p)
 
-    def magabsfilt_colormesh(self, pl=None):
-        if pl is None:
-            pl=Plotter()
+    @plots
+    def ls_magabsfilt_colormesh(self, pl=None):
         colormesh(self.flux_over_flux0[10:-10], self.ls_f[10:-10]/1e9,
                         self.MagAbsFilt[10:-10, 10:-10], plotter=pl)#"magabsfilt_{}".format(self.name))
+        return pl
+
+    @plots
+    def magabsfilt_colormesh(self, pl=None, xlabel="$\Phi/\Phi_0$", ylabel="Frequency (GHz)"):
         colormesh(self.flux_over_flux0[10:-10], self.frequency[10:-10]/1e9,
                         self.MagAbsFilt[10:-10, 10:-10], #plot_name="magabsfiltf_{}".format(self.name),
-                        plotter=pl)
-        colormesh(self.flux_over_flux0[10:-10], self.ls_f[self.indices][10:-10]/1e9,
-                        self.MagAbsFit[10:-10, 10:-10], plotter=pl)
-        #colormesh(self.yoko[10:-10], self.ls_f[10:-10]/1e9,
-        #                self.MagAbs[10:-10, 10:-10], plotter=pl)
+                        plotter=pl, xlabel=xlabel, ylabel=ylabel)
+        return pl
 
-        #fq=array([sqrt(f*(f-2*self.qdt._get_Lamb_shift(f=f))) for f in self.fq])
-        #fq=self.fq+self.qdt._get_Lamb_shift(f=self.fq)/2
+    @plots
+    def ls_magabsfit_colormesh(self, pl=None, xlabel="$\Phi/\Phi_0$", ylabel="Frequency (GHz)"):
+        colormesh(self.flux_over_flux0[10:-10], self.ls_f[self.indices][10:-10]/1e9,
+                        self.MagAbsFit[10:-10, 10:-10], plotter=pl, xlabel=xlabel, ylabel=ylabel)
+    @plots
+    def magabsfit_colormesh(self, pl=None, xlabel="$\Phi/\Phi_0$", ylabel="Frequency (GHz)"):
+        colormesh(self.flux_over_flux0[10:-10], self.frequency[self.indices][10:-10]/1e9,
+                        self.MagAbsFit[10:-10, 10:-10], plotter=pl, xlabel=xlabel, ylabel=ylabel)
+
+    @plots
+    def flux_line(self, pl=None, xlabel="$\Phi/\Phi_0$", ylabel="Frequency (GHz)"):
         xmin, xmax, ymin, ymax=pl.x_min, pl.x_max, pl.y_min, pl.y_max
-        line(self.flux_over_flux0[10:-10], self.fq[10:-10]/1e9, plotter=pl)
+        line(self.flux_over_flux0[10:-10], self.fq[10:-10]/1e9, plotter=pl, xlabel=xlabel, ylabel=ylabel)
         pl.x_min, pl.x_max, pl.y_min, pl.y_max=xmin, xmax, ymin, ymax
         pl.xlabel="$\Phi/\Phi_0$"
+        pl.ylabel="Frequency (GHz)"
+        return pl
+
+    def magphasefilt_colormesh(self):
+        phase=angle(self.Magcom[10:-10, 10:-10])
+        #phasefilt=array([unwrap(phase[:,n], discont=5.5) for n in range(phase.shape[1])])
+        phase=(phase.transpose()-phase[:,0]).transpose()
+        phasefilt=unwrap(phase, discont=1.5, axis=1)
+        #phasefilt=phasefilt-phasefilt[0, :]
+        pl, pf=colormesh(self.flux_over_flux0[10:-10], self.frequency[10:-10]/1e9,
+                         phasefilt, plotter="magphasefilt_{}".format(self.name))
+        #print self.voltage_from_flux_par2[0].shape,self.voltage_from_flux_par2[1].shape
+        #line(self.voltage_from_flux_par2[0]/1e9, self.voltage_from_flux_par2[1], plotter=p)
+        #print max(self.voltage_from_flux_par), min(self.voltage_from_flux_par)
+        pl.xlabel="Yoko (V)"
         pl.ylabel="Frequency (GHz)"
         return pl
 

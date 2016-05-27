@@ -5,7 +5,7 @@ Created on Sun Apr 24 13:05:32 2016
 @author: thomasaref
 """
 
-from numpy import pi, linspace, sin, amax, argmin, argmax, cos
+from numpy import pi, linspace, sin, amax, argmin, argmax, cos, append
 from scipy.constants import h
 from taref.plotter.api import Plotter, line
 from taref.core.api import SProperty, s_property
@@ -67,6 +67,57 @@ class QDT(IDT, Qubit):
         flx_d_flx0=self._get_flux_over_flux0(voltage=voltage, offset=offset, flux_factor=flux_factor)
         qEj=self._get_Ej(Ejmax=Ejmax, flux_over_flux0=flx_d_flx0)
         return self._get_lamb_shifted_fq(Ej=qEj, Ec=Ec)#, fq2(qEj, Ec)
+
+    ls_f=SProperty().tag(sub=True)
+    @ls_f.getter
+    def _get_ls_f(self, f, couple_mult, f0, K2, Np):
+        try:
+            return array([sqrt(qf*(qf-2*self._get_Lamb_shift(f=qf, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np))) for qf in f])
+        except TypeError:
+            return sqrt(f*(f-2*self._get_Lamb_shift(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)))
+
+    ls_voltage_from_flux_par=SProperty().tag(sub=True)
+    @ls_voltage_from_flux_par.getter
+    def _get_ls_voltage_from_flux_par(self, freq_arr, C, Ejmax, offset, flux_factor, couple_mult, f0, K2, Np):
+        ls_f=self._get_ls_f(freq_arr=freq_arr, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+        Ec=self._get_Ec(C=C)
+        Ej=self._get_Ej_get_fq(fq=ls_f, Ec=Ec)
+        flux_d_flux0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
+        return ls_f/1e9, self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
+
+    ls_voltage_from_flux_par_many=SProperty().tag(sub=True)
+    @ls_voltage_from_flux_par_many.getter
+    def _get_ls_voltage_from_flux_par_many(self, f, C, Ejmax, offset, flux_factor, couple_mult, f0, K2, Np):
+        ls_f=self._get_ls_f(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+        Ec=self._get_Ec(C=C)
+        Ej=self._get_Ej_get_fq(fq=ls_f, Ec=Ec)
+        fdf0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
+        flux_d_flux0=append(fdf0, -fdf0)
+        flux_d_flux0=append(flux_d_flux0, -fdf0+pi)
+        flux_d_flux0=append(flux_d_flux0, fdf0-pi)
+        freq=append(f, f)
+        freq=append(freq, freq)
+        return freq/1e9, self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
+
+    S11=SProperty()
+    @S11.getter
+    def _get_S11(self, f, couple_mult, f0, K2, Np, C, L):
+        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+        w=2*pi*f
+        try:
+            return Ga/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*L))
+        except ValueError:
+            return array([Ga/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*qL)) for qL in L])
+
+    S13=SProperty()
+    @S13.getter
+    def _get_S13(self, f, couple_mult, f0, K2, Np, C, L, GL):
+        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+        w=2*pi*f
+        return 1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*L))
+
 
 def energy_level_plot(qdt, fig_width=9.0, fig_height=6.0):
     pl=Plotter(fig_width=fig_width, fig_height=fig_height)
