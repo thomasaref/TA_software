@@ -116,7 +116,10 @@ class QDT(IDT, Qubit):
         Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
         Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
         w=2*pi*f
-        return 1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*L))
+        try:
+            return 1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*L))
+        except ValueError:
+            return array([1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*qL)) for qL in L])
 
 
 def energy_level_plot(qdt, fig_width=9.0, fig_height=6.0):

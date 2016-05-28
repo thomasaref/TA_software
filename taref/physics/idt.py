@@ -178,7 +178,9 @@ class IDT(Agent):
         return frq, imag(hilbert(self._get_coupling(f=frq)))
 
     ZL=Float(50.0)
+    ZL_imag=Float(0.0)
     GL=Float(1/50.0)
+    dL=Float(0.0)
 
     S11=SProperty()
     @S11.getter
@@ -190,11 +192,11 @@ class IDT(Agent):
 
     S13=SProperty()
     @S13.getter
-    def _get_S13(self, f, couple_mult, f0, K2, Np, C, ZL, GL):
+    def _get_S13(self, f, couple_mult, f0, K2, Np, C, ZL, ZL_imag, GL, dL):
         Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
         Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
         w=2*pi*f
-        return 1j*sqrt(2*Ga*GL)/(Ga+1j*Ba+1j*w*C+1.0/ZL)
+        return 1j*sqrt(2*Ga*GL)/(Ga+1j*Ba+1j*w*C-1j/w*dL+1.0/ZL)
 
     Ga=SProperty().tag(desc="Ga adjusted for frequency f")
     @Ga.getter

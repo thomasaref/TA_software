@@ -211,8 +211,8 @@ class Line2DFormat(LineFormat):
         self.ydata=y
         self.clt.set_xdata(self.xdata)
         self.clt.set_ydata(self.ydata)
-        self.plotter.set_xlim(min(self.xdata), max(self.xdata))
-        self.plotter.set_ylim(min(self.ydata), max(self.ydata))
+        #self.plotter.set_xlim(min(self.xdata), max(self.xdata))
+        #self.plotter.set_ylim(min(self.ydata), max(self.ydata))
         self.update_plot(update_legend=False)
         #fig=self.clt.get_figure()
 

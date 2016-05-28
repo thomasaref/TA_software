@@ -13,7 +13,7 @@ from taref.physics.filtering import fft_filter5, hann_ifft, fft_filter2, fft_fil
 from taref.plotter.api import line, colormesh, scatter, Plotter
 from atom.api import Float, Typed, Unicode, Int, Callable, Enum, List
 from h5py import File
-from numpy import pi, append, angle, unwrap, arccos, float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin, sqrt
+from numpy import pi, append, angle, cos, sin, unwrap, arccos, float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin, sqrt
 from scipy.optimize import leastsq, curve_fit
 from taref.physics.qdt import QDT
 
@@ -29,6 +29,11 @@ class LyzerBase(Agent):
     base_name="lyzer_base"
     fridge_atten=Float(60)
     fridge_gain=Float(45)
+
+    @tag_property()
+    def net_loss(self):
+        return self.fridge_gain-self.fridge_atten+self.rt_gain-self.rt_atten
+
 
     rd_hdf=Typed(Read_HDF5)
     rt_atten=Float(40)
@@ -169,8 +174,13 @@ class Lyzer(LyzerBase):
 
     @tag_property(plot=True, sub=True)
     def MagcomFilt(self):
+        #phase=angle(self.Magcom)
+        #phasefilt=(phase.transpose()-phase[:,0]).transpose()
+        #mc=absolute(self.Magcom)*(cos(phasefilt)+1j*sin(phasefilt))
+
         #return array([fft_filter4(self.Magcom[:,n], self.filt_center) for n in range(len(self.yoko))]).transpose()
         return array([fft_filter3(self.Magcom[:,n], self.filt_start_ind, self.filt_end_ind) for n in range(len(self.yoko))]).transpose()
+
 
     @tag_property(sub=True)
     def MagAbsFit(self):
@@ -245,9 +255,11 @@ class Lyzer(LyzerBase):
 
         return p
 
+    #@plots
     def filt_compare(self, ind):
-        p, pf=line(self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)", plotter="filtcomp_{}".format(self.name))
-        line(self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)", plotter=p)
+        pl, pf=line(self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)", plotter="filtcomp_{}".format(self.name))
+        line(self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)", plotter=pl)
+        return pl
 
     @plots
     def ls_magabsfilt_colormesh(self, pl=None):
@@ -281,10 +293,10 @@ class Lyzer(LyzerBase):
         return pl
 
     def magphasefilt_colormesh(self):
-        phase=angle(self.Magcom[10:-10, 10:-10])
+        phasefilt=angle(self.MagcomFilt[10:-10, 10:-10])
         #phasefilt=array([unwrap(phase[:,n], discont=5.5) for n in range(phase.shape[1])])
-        phase=(phase.transpose()-phase[:,0]).transpose()
-        phasefilt=unwrap(phase, discont=1.5, axis=1)
+        phasefilt=(phasefilt.transpose()-phasefilt[:,0]).transpose()
+        phasefilt=unwrap(phasefilt, discont=3.0, axis=1)
         #phasefilt=phasefilt-phasefilt[0, :]
         pl, pf=colormesh(self.flux_over_flux0[10:-10], self.frequency[10:-10]/1e9,
                          phasefilt, plotter="magphasefilt_{}".format(self.name))

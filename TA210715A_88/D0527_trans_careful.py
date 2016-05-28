@@ -5,10 +5,10 @@ Created on Sun Apr 24 18:55:33 2016
 @author: thomasaref
 """
 
-from TA88_fundamental import TA88_Lyzer, TA88_Read#, qdt
+from TA88_fundamental import TA88_Lyzer, TA88_Read, idt#, qdt
 from taref.plotter.api import colormesh, line, Plotter, scatter
 from taref.core.api import set_tag, set_all_tags
-from numpy import array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape, linspace, interp, absolute, fft, log10, angle, unwrap
+from numpy import exp, array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape, linspace, interp, absolute, fft, log10, angle, unwrap
 from atom.api import FloatRange, Int, Float
 from taref.core.api import tag_property
 from taref.plotter.api import LineFitter
@@ -17,10 +17,10 @@ from scipy.optimize import fsolve
 from scipy.signal import freqz
 from taref.physics.fitting_functions import lorentzian, rpt_fit, lorentzian2
 from time import time
-a=TA88_Lyzer(filt_center=51, filt_halfwidth=20, on_res_ind=440, VNA_name="RS VNA",
-              rd_hdf=TA88_Read(main_file="Data_0523/S1A4_trans_mainlobe.hdf5"),
+a=TA88_Lyzer(filt_center=731, filt_halfwidth=200, on_res_ind=0, VNA_name="RS VNA",
+              rd_hdf=TA88_Read(main_file="Data_0527/S1A4_careful_trans.hdf5"),
             fit_func=lorentzian,  #[0.2,2.3, 3e-7, 7.5e-7],
-            offset=0.07, fit_type="yoko", #indices=range(50, 534),
+            offset=0.07, fit_type="yoko", rt_atten=30.0,#indices=range(50, 534),
             ) #33, 70
 #print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
 
@@ -29,18 +29,46 @@ a.read_data()
 
 if __name__=="__main__":
 
-
+    print a.net_loss, a.rt_atten
     pl=a.magabs_colormesh()#magabs_colormesh3(s3a4_wg)
     pl=a.hann_ifft_plot()
-    pl=a.ifft_plot()
-    #a.filt_compare(a.on_res_ind)
+    pl=a.ifft_plot()#.show()
+    pl=a.filt_compare(a.on_res_ind)
+    #line(a.frequency, 20*log10(absolute(idt._get_S13(f=a.frequency))), plotter=pl)[0].show()
+
+    from taref.plotter.fitter import LineFitter2
+
+    class Fitter(LineFitter2):
+        Np=Float(a.idt.Np)#.tag(tracking=True)
+        f0=Float(a.idt.f0/1e9)#.tag(tracking=True)
+        loss=Float( -11.0)#.tag(tracking=True)
+        L=FloatRange(400.0, 600.0, 500.0).tag(tracking=True)
+        dloss=Float(0.0)
+        C=Float(a.idt.C)
+        K2=Float(a.idt.K2)
+        dL=Float(a.idt.dL)
+
+        def _default_plotter(self):
+            line(*self.data, plot_name=self.plot_name, plotter=pl, color="green", linewidth=0.3, alpha=0.6)
+            return pl
+
+        def _default_plot_name(self):
+            return "myplot"
+
+        @tag_property(private=True)
+        def data(self):
+            return a.frequency, 20*log10(absolute(exp(-1j*2*pi*a.frequency/a.idt.vf*self.L*1e-6*(1-1j*self.dloss))*a.idt._get_S13(f=a.frequency,
+                                                  f0=self.f0*1e9, Np=self.Np, C=self.C, K2=self.K2, dL=self.dL)))+self.loss
+
+    d=Fitter()
+    d.plotter.show()
     #filt=filt_prep(601, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind)
     #line(filt*0.001, plotter=pl)
-    #colormesh(s3a4_wg.MagAbsFilt)#, plotter="magabsfilt_{}".format(self.name))
+    colormesh(a.MagAbsFilt)[0].show()#, plotter="magabsfilt_{}".format(self.name))
 
-    pl=a.magabsfilt_colormesh()
+    a.magabsfilt_colormesh().show()
     #a.magabsfit_colormesh(pl=pl)
-    pl=a.magphasefilt_colormesh().show()
+    #pl=a.magphasefilt_colormesh().show()
     #a.magabsfilt2_colormesh()
     a.widths_plot()
     pl=a.center_plot()

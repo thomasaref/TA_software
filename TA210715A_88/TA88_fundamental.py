@@ -67,13 +67,15 @@ ideal_idt=IDT(name="idealIDT",
 
 idt=IDT(material='LiNbYZ',
         ft="double",
-        Np=36,
+        Np=36.5,
         W=25.0e-6,
         eta=0.5,
         a=96.0e-9)
+idt.f0=4.452e9
 
 class TA88_Lyzer(Lyzer):
     qdt=qdt
+    idt=idt
 
 
 def coupling_plot():
@@ -111,8 +113,12 @@ def mag_theory(qdt, fig_width=9.0, fig_height=6.0):
     fq=qdt._get_flux_parabola(voltage=voltage)
     L=qdt._get_L(fq=fq)
     S11=qdt._get_S11(f=fw0, L=L)
-    colormesh(fw0/1e9, voltage, 10*log10(absolute(S11)), plotter=pl)
+    colormesh(fw0/1e9, voltage, absolute(S11), plotter=pl)
     line(*qdt._get_ls_voltage_from_flux_par_many(f=fw0), plotter=pl, linewidth=0.5, alpha=0.5, color="cyan")
+    fw02=(qdt._get_Ga(f=fw0)-qdt._get_Ba(f=fw0))/(4*pi*qdt.C)
+    #line(fw0, fw0+fw02, plotter=pl)
+    line(*qdt._get_ls_voltage_from_flux_par_many(f=fw0+fw02), plotter=pl, linewidth=0.5, alpha=0.5, color="cyan")
+
     return pl
 
 def phase_theory(qdt, fig_width=9.0, fig_height=6.0):
@@ -126,14 +132,39 @@ def phase_theory(qdt, fig_width=9.0, fig_height=6.0):
     line(*qdt._get_ls_voltage_from_flux_par_many(f=fw0), plotter=pl, linewidth=0.5, alpha=0.5, color="cyan")
     return pl
 
+def S13_mag_theory(qdt, fig_width=9.0, fig_height=6.0):
+    pl=Plotter(fig_width=fig_width, fig_height=fig_height)
+    fw0=linspace(2e9, 8e9, 2000)
+    voltage=linspace(-5, 5, 1000)
+    fq=qdt._get_flux_parabola(voltage=voltage)
+    L=qdt._get_L(fq=fq)
+    S13=qdt._get_S13(f=fw0, L=L)
+    colormesh(fw0/1e9, voltage, 10*log10(absolute(S13)), plotter=pl)
+    line(*qdt._get_ls_voltage_from_flux_par_many(f=fw0), plotter=pl, linewidth=0.5, alpha=0.5, color="cyan")
+    return pl
+
+def S13_phase_theory(qdt, fig_width=9.0, fig_height=6.0):
+    pl=Plotter(fig_width=fig_width, fig_height=fig_height)
+    fw0=linspace(2e9, 8e9, 2000)
+    voltage=linspace(-5, 5, 1000)
+    fq=qdt._get_flux_parabola(voltage=voltage)
+    L=qdt._get_L(fq=fq)
+    S13=qdt._get_S13(f=fw0, L=L)
+    colormesh(fw0/1e9, voltage, angle(S13), plotter=pl)
+    line(*qdt._get_ls_voltage_from_flux_par_many(f=fw0), plotter=pl, linewidth=0.5, alpha=0.5, color="cyan")
+    return pl
+
 if __name__=="__main__":
     from taref.physics.qdt import anharm_plot
     print qdt.max_coupling
     anharm_plot2(qdt)#.show()
 
     coupling_plot()#.show()
-    mag_theory(qdt)#.show()
-    phase_theory(qdt).show()
+    mag_theory(qdt).show()
+    phase_theory(qdt)#.show()
+    S13_mag_theory(qdt)#.show()
+    S13_phase_theory(qdt).show()
+
 #        dd.line_plot("asdf", fw0/1e9, calc_Coupling(fw0)/1e9, label=r"$G_a/2C$", color="blue")
 #        dd.line_plot("asdfd", fw0/1e9, calc_Lamb_shift(fw0)/1e9, label=r"$-B_a/2C$", color="red")
 #        dd.line_plot("listen", fw0/1e9, listen_coupling(fw0)/4/1e9, label=r"$G_a^{IDT}/2C^{IDT}/4$", color="green")
