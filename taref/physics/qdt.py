@@ -78,8 +78,8 @@ class QDT(IDT, Qubit):
 
     ls_voltage_from_flux_par=SProperty().tag(sub=True)
     @ls_voltage_from_flux_par.getter
-    def _get_ls_voltage_from_flux_par(self, freq_arr, C, Ejmax, offset, flux_factor, couple_mult, f0, K2, Np):
-        ls_f=self._get_ls_f(freq_arr=freq_arr, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+    def _get_ls_voltage_from_flux_par(self, f, C, Ejmax, offset, flux_factor, couple_mult, f0, K2, Np):
+        ls_f=self._get_ls_f(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
         Ec=self._get_Ec(C=C)
         Ej=self._get_Ej_get_fq(fq=ls_f, Ec=Ec)
         flux_d_flux0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
