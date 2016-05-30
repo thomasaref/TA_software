@@ -268,12 +268,67 @@ if __name__=="__main__":
     a=IDT()
     from taref.plotter.api import line, Plotter
     from scipy.signal import hilbert
-    from numpy import imag, real, sin, cos
+    from numpy import imag, real, sin, cos, exp, array, absolute
+
 
     frq=linspace(3e9, 7e9, 10000)
+
     X=a._get_X(f=frq)
     Np=a.Np
     f0=a.f0
+
+    def Asum(N, k=1.0):
+        return array([sum([exp(2.0j*pi*k*f/f0*n) for n in range(N)]) for f in frq])
+    def Asum2(M):
+        return array([sum([exp(2j*pi*M*f/f0)*exp(2j*pi*f/f0*m) for m in range(-M, M+1)]) for f in frq])
+
+    def Asum3(M, k=1.0):
+        return array([sum([exp(2j*pi*f/f0*m) for m in range(-M, M+1)]) for f in frq])
+
+    def Asum4(M):
+        return array([sum([2*cos(2*pi*f/f0*m) for m in range(0, M+1)]) for f in frq])-1
+
+    def Asum5(M, g=0.9, g2=1.0):
+        return array([g*2*cos(2*pi*f/f0*M) for f in frq])+array([g2*2*cos(2*pi*f/f0*(M-1)) for f in frq])+Asum4(M-2)
+
+    def Asum6(g=1.0):
+        return array([(g*exp(-2j*pi*f/f0*4)+exp(-2j*pi*f/f0*3)+exp(-2j*pi*f/f0*2)+exp(-2j*pi*f/f0*1)+1.0
+        +exp(2j*pi*f/f0*1)+exp(2j*pi*f/f0*2)+exp(2j*pi*f/f0*3)+exp(2j*pi*f/f0*4)) for f in frq])
+
+    A=Asum(9, k=1.0+0.03j)
+    A2=Asum2(4)
+    A3=Asum3(4)
+    A4=Asum4(4)
+    A5=Asum5(4, 1.2, 1.0)
+    A6=Asum6(1.0)
+
+    pl=Plotter()
+    #line(frq/1e9, real(A), plotter=pl)
+    #line(frq/1e9, imag(A), plotter=pl, color="red")
+
+    #line(frq/1e9, real(A2), plotter=pl, color="green", linewidth=0.5)
+    #line(frq/1e9, imag(A2), plotter=pl, color="black", linewidth=0.5)
+
+    line(frq/1e9, sin(pi*9*frq/f0)/sin(pi*frq/f0), plotter=pl)
+
+    line(frq/1e9, real(A3), plotter=pl, color="green", linewidth=0.5)
+    line(frq/1e9, imag(A3), plotter=pl, color="black", linewidth=0.5)
+
+    line(frq/1e9, A4, plotter=pl, color="red", linewidth=0.5)
+    #line(frq/1e9, A5, plotter=pl, color="purple", linewidth=0.5)
+    line(frq/1e9, real(A6), plotter=pl, color="darkgray", linewidth=0.5)
+    line(frq/1e9, imag(A6), plotter=pl, color="darkgray", linewidth=0.5)
+
+    #pl.show()
+    pl=Plotter()
+
+    line(frq/1e9, 1/81.0*absolute(A)**2, plotter=pl, color="black")
+    line(frq/1e9, 1/81.0*absolute(sin(pi*9*frq/f0)/sin(pi*frq/f0))**2, plotter=pl, color="green", linewidth=0.4)
+    line(frq/1e9, 1/81.0*absolute(A5)**2, plotter=pl, color="blue", linewidth=0.5)
+    line(frq/1e9, 1/81.0*absolute(A6)**2, plotter=pl, color="purple", linewidth=0.5)
+
+    pl.show()
+
     coup=(sqrt(2)*cos(pi*frq/(4*f0))*(1.0/Np)*sin(X)/sin(X/Np))**2
     #coup=(sin(X)/X)**2
 
