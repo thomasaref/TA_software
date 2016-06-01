@@ -149,8 +149,8 @@ class IDT(Agent):
         #return gamma0*(1.0/Np*sin(gX)/sin(gX/Np))**2
         return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*sin(pi*f/(2*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
 
-        #return gamma0*(sqrt(2)*cos(pi*f/(4*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
-        #return gamma0*(sin(gX)/gX)**2.0
+        #return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
+        return gamma0*(sin(gX)/gX)**2.0
 
     max_coupling=SProperty().tag(desc="""Coupling at IDT center frequency""", unit="GHz",
                      label="Coupling at center frequency", tex_str=r"$\gamma_{f0}$")
@@ -197,6 +197,14 @@ class IDT(Agent):
         Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
         w=2*pi*f
         return 1j*sqrt(2*Ga*GL)/(Ga+1j*Ba+1j*w*C-1j/w*dL+1.0/ZL)
+
+    S33=SProperty()
+    @S33.getter
+    def _get_S33(self, f, couple_mult, f0, K2, Np, C, ZL, ZL_imag, GL, dL):
+        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+        w=2*pi*f
+        return (Ga+1j*Ba+1j*w*C-1j/w*dL-1.0/ZL)/(Ga+1j*Ba+1j*w*C-1j/w*dL+1.0/ZL)
 
     Ga=SProperty().tag(desc="Ga adjusted for frequency f")
     @Ga.getter
@@ -277,9 +285,10 @@ if __name__=="__main__":
     Np=a.Np
     f0=a.f0
 
-    if 0:
-        def Asum(N, k=1.0):
-            return array([sum([exp(2.0j*pi*k*f/f0*n) for n in range(N)]) for f in frq])
+    if 1:
+        def Asum(N, k1=0.0, k2=0.0):
+            return array([sum([exp(2.0j*pi*f/f0*n-f/f0*k1-k2*(f/f0)**2) for n in range(N)]) for f in frq])
+
         def Asum2(M):
             return array([sum([exp(2j*pi*M*f/f0)*exp(2j*pi*f/f0*m) for m in range(-M, M+1)]) for f in frq])
 
@@ -294,14 +303,19 @@ if __name__=="__main__":
 
         def Asum6(g=1.0):
             return array([(g*exp(-2j*pi*f/f0*4)+exp(-2j*pi*f/f0*3)+exp(-2j*pi*f/f0*2)+exp(-2j*pi*f/f0*1)+1.0
-            +exp(2j*pi*f/f0*1)+exp(2j*pi*f/f0*2)+exp(2j*pi*f/f0*3)+exp(2j*pi*f/f0*4)) for f in frq])
+            +exp(2j*pi*f/f0*1)+exp(2j*pi*f/f0*2)+exp(2j*pi*f/f0*3)+g*exp(2j*pi*f/f0*4)) for f in frq])
 
-        A=Asum(9, k=1.0+0.03j)
+        def Asum7(g=1.0):
+            return array([(g+exp(2j*pi*f/f0*1)+exp(2j*pi*f/f0*2)+exp(2j*pi*f/f0*3)+exp(2j*pi*f/f0*4)
+            +exp(2j*pi*f/f0*5)+exp(2j*pi*f/f0*6)+exp(2j*pi*f/f0*7)+g*exp(2j*pi*f/f0*8)) for f in frq])
+
+        A=Asum(9, k1=0.05, k2=0.05)
         A2=Asum2(4)
         A3=Asum3(4)
         A4=Asum4(4)
         A5=Asum5(4, 1.2, 1.0)
-        A6=Asum6(1.0)
+        A6=Asum6(0.5)
+        A7=Asum7(0.5)
 
         pl=Plotter()
         #line(frq/1e9, real(A), plotter=pl)
@@ -324,9 +338,14 @@ if __name__=="__main__":
         pl=Plotter()
 
         line(frq/1e9, 1/81.0*absolute(A)**2, plotter=pl, color="black")
-        line(frq/1e9, 1/81.0*absolute(sin(pi*9*frq/f0)/sin(pi*frq/f0))**2, plotter=pl, color="green", linewidth=0.4)
-        line(frq/1e9, 1/81.0*absolute(A5)**2, plotter=pl, color="blue", linewidth=0.5)
-        line(frq/1e9, 1/81.0*absolute(A6)**2, plotter=pl, color="purple", linewidth=0.5)
+        #line(frq/1e9, 1/81.0*absolute(sin(pi*9*frq/f0)/sin(pi*frq/f0))**2, plotter=pl, color="green", linewidth=0.4)
+        #line(frq/1e9, 1/81.0*absolute(A5)**2, plotter=pl, color="blue", linewidth=0.5)
+        line(frq/1e9, 1/81.0*absolute(A6)**2, plotter=pl, color="red", linewidth=0.5)
+        line(frq/1e9, 1/81.0*absolute(A7)**2, plotter=pl, color="purple", linewidth=0.5)
+
+        #line(frq/1e9, 1/9.0*absolute(A6), plotter=pl, color="red", linewidth=0.5)
+
+        #line(frq/1e9, 1/9.0*absolute(A7), plotter=pl, color="purple", linewidth=0.5)
 
         pl.show()
 

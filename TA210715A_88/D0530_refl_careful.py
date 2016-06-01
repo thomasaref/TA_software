@@ -17,8 +17,8 @@ from scipy.optimize import fsolve
 from scipy.signal import freqz
 from taref.physics.fitting_functions import lorentzian, rpt_fit, lorentzian2
 from time import time
-a=TA88_Lyzer(filt_center=731, filt_halfwidth=200, on_res_ind=0, VNA_name="RS VNA",
-              rd_hdf=TA88_Read(main_file="Data_0527/S1A4_careful_trans.hdf5"),
+a=TA88_Lyzer(filt_center=209, filt_halfwidth=200, on_res_ind=0, VNA_name="RS VNA",
+              rd_hdf=TA88_Read(main_file="Data_0530/S4A4l_careful_refl.hdf5"),
             fit_func=lorentzian,  #[0.2,2.3, 3e-7, 7.5e-7],
             offset=0.07, fit_type="yoko", rt_atten=30.0,#indices=range(50, 534),
             ) #33, 70
@@ -27,7 +27,7 @@ a=TA88_Lyzer(filt_center=731, filt_halfwidth=200, on_res_ind=0, VNA_name="RS VNA
 
 a.read_data()
 
-b=TA88_Lyzer(filt_center=731, filt_halfwidth=200, on_res_ind=0, VNA_name="RS VNA",
+b=TA88_Lyzer(filt_center=209, filt_halfwidth=200, on_res_ind=0, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0531/S4A4_careful_unswitched.hdf5"),
             fit_func=lorentzian,  #[0.2,2.3, 3e-7, 7.5e-7],
             offset=0.07, fit_type="yoko", rt_atten=30.0,#indices=range(50, 534),
@@ -67,7 +67,7 @@ if __name__=="__main__":
 
         @tag_property(private=True)
         def data(self):
-            return a.frequency, 20*log10(absolute(exp(-1j*2*pi*a.frequency/a.idt.vf*self.L*1e-6*(1-1j*self.dloss*(a.frequency/self.f0)**2))*a.idt._get_S13(f=a.frequency,
+            return a.frequency, 10*log10(absolute(a.idt._get_S33(f=a.frequency,
                                                   f0=self.f0*1e9, Np=self.Np, C=self.C, K2=self.K2, dL=self.dL)))+self.loss
 
     d=Fitter()
