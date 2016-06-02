@@ -10,7 +10,7 @@ from taref.physics.fundamentals import sinc_sq, pi, eps0
 from taref.core.agent import Agent
 from atom.api import Float, Int, Enum, Value, Property
 from taref.core.api import private_property, get_tag, SProperty, log_func, t_property, s_property
-from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp
+from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, absolute, exp, piecewise
 from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
 from scipy.signal import hilbert
 
@@ -143,14 +143,59 @@ class IDT(Agent):
 
     coupling=SProperty().tag(desc="""Coupling adjusted by sinc sq""", unit="GHz", tex_str=r"$G_f$")
     @coupling.getter
-    def _get_coupling(self, f, couple_mult, f0, K2, Np):
+    def _get_coupling(self, f, couple_mult, f0, K2, Np, dloss1, dloss2, eta):
         gamma0=self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
         gX=self._get_X(Np=Np, f=f, f0=f0)
         #return gamma0*(1.0/Np*sin(gX)/sin(gX/Np))**2
-        return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*sin(pi*f/(2*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
+        #return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*sin(pi*f/(2*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
 
         #return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
+
         return gamma0*(sin(gX)/gX)**2.0
+        #return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*sin(pi*f/(2*f0)))**2*absolute(self._get_Asum(f=f, Np=Np, dloss1=dloss1, dloss2=dloss2))**2
+        #return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*self._get_element_factor(f=f, f0=f0, eta=eta))**2*absolute(self._get_Asum(f=f, f0=f0, Np=Np, dloss1=dloss1, dloss2=dloss2))**2
+
+    @private_property
+    def fixed_coupling(self):
+        return self.Ga0div2C*(sqrt(2.0)*cos(pi*self.fixed_freq/(4*self.f0))*self.fixed_element_factor)**2*absolute(self.fixed_Asum)**2
+
+    def _get_full_coupling(self, f):
+        return interp(f, self.fixed_freq, self.fixed_coupling)
+
+    dloss1=Float(0.0)
+    dloss2=Float(0.0)
+
+    propagation_loss=SProperty()
+    @propagation_loss.getter
+    def _get_propagation_loss(self, f, f0, dloss1, dloss2):
+        return exp(-f/f0*dloss1-dloss2*(f/f0)**2)
+
+    @private_property
+    def fixed_Asum(self):
+        f0,  Np, dloss1, dloss2=self.f0,  self.Np, self.dloss1, self.dloss2
+        return 1.0/Np*array([sum([exp(2.0j*pi*frq/f0*n-frq/f0*dloss1-dloss2*(frq/f0)**2) for n in range(int(Np))]) for frq in self.fixed_freq])
+
+    def _get_Asum(self, f):
+        return interp(f, self.fixed_freq, self.fixed_Asum)
+
+    @private_property
+    def fixed_element_factor(self):
+        pieta, f0=pi*self.eta, self.f0
+        f=self.fixed_freq
+        return sin(pi*f/(2*f0))*piecewise(f,
+                  [(0<=f) & (f<2*f0), (2*f0<=f) & (f<4*f0), (4*f0<f) & (f<6*f0)        , (6*f0<f) & (f<8*f0)                   ],
+                  [1.0              , cos(pieta)          , (3.0*cos(pieta)**2-1.0)/2.0, (5.0*cos(pieta)**3-3.0*cos(pieta))/2.0])
+        #return array([sin(pi*frq/(2*f0)) if frq<2*f0 else sin(pi*frq/(2*f0))*cos(pi*eta) for frq in self.fixed_freq])
+
+    def _get_element_factor(self, f):
+        return interp(f, self.fixed_frq, self.fixed_element_factor)
+
+    @private_property
+    def fixed_Lamb_shift(self):
+        return imag(hilbert(self.fixed_coupling))
+
+    def _get_full_Lamb_shift(self, f):
+        return interp(f, self.fixed_freq, self.fixed_Lamb_shift)
 
     max_coupling=SProperty().tag(desc="""Coupling at IDT center frequency""", unit="GHz",
                      label="Coupling at center frequency", tex_str=r"$\gamma_{f0}$")
@@ -160,22 +205,19 @@ class IDT(Agent):
 
     Lamb_shift=SProperty().tag(desc="""Lamb shift""", unit="GHz", tex_str=r"$G_f$")
     @Lamb_shift.getter
-    def _get_Lamb_shift(self, f, couple_mult, f0, K2, Np):
+    def _get_Lamb_shift(self, f, couple_mult, f0, K2, Np, dloss1, dloss2, eta):
         """returns Lamb shift"""
-        frq=linspace(-5e9, 15e9, 20000)
-        yp=imag(hilbert(self._get_coupling(f=frq, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)))
+        #yp=imag(hilbert(self._get_coupling(f=self.fixed_frq, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, dloss1=dloss1, dloss2=dloss2, eta=eta)))
         #self.get_member("Lamb_shift_hilbert").reset(self)
-        return interp(f, frq, yp)#*self.Lamb_shift_hilbert)
-        #gamma0=self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
-        #gX=self._get_X(Np=Np, f=f, f0=f0)
+        #return interp(f, self.fixed_frq, yp)#*self.Lamb_shift_hilbert)
+        gamma0=self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+        gX=self._get_X(Np=Np, f=f, f0=f0)
         #return gamma0*(1.0/Np)**2*2*(Np*sin(2*gX/Np)-sin(2*gX))/(2*(1-cos(2*gX/Np)))
-        #return -gamma0*(sin(2.0*gX)-2.0*gX)/(2.0*gX**2.0)
+        return -gamma0*(sin(2.0*gX)-2.0*gX)/(2.0*gX**2.0)
 
-    #Lamb_shift_hilbert=SProperty()
     @private_property
-    def Lamb_shift_hilbert(self):
-        frq=linspace(-5e9, 15e9, 20000)
-        return frq, imag(hilbert(self._get_coupling(f=frq)))
+    def fixed_freq(self):
+        return linspace(0, 8*self.f0, 20000)
 
     ZL=Float(50.0)
     ZL_imag=Float(0.0)
@@ -192,9 +234,9 @@ class IDT(Agent):
 
     S13=SProperty()
     @S13.getter
-    def _get_S13(self, f, couple_mult, f0, K2, Np, C, ZL, ZL_imag, GL, dL):
-        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
-        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+    def _get_S13(self, f, couple_mult, f0, K2, Np, C, ZL, ZL_imag, GL, dL, eta):
+        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C, eta=eta)
+        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C, eta=eta)
         w=2*pi*f
         return 1j*sqrt(2*Ga*GL)/(Ga+1j*Ba+1j*w*C-1j/w*dL+1.0/ZL)
 
@@ -208,13 +250,13 @@ class IDT(Agent):
 
     Ga=SProperty().tag(desc="Ga adjusted for frequency f")
     @Ga.getter
-    def _get_Ga(self, f, couple_mult, f0, K2, Np, C):
-        return self._get_coupling(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)*2*C*2*pi
+    def _get_Ga(self, f, couple_mult, f0, K2, Np, C, eta):
+        return self._get_coupling(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, eta=eta)*2*C*2*pi
 
     Ba=SProperty()
     @Ba.getter
-    def _get_Ba(self, f, couple_mult, f0, K2, Np, C):
-        return -self._get_Lamb_shift(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)*2*C*2*pi
+    def _get_Ba(self, f, couple_mult, f0, K2, Np, C, eta):
+        return -self._get_Lamb_shift(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, eta=eta)*2*C*2*pi
 
     lbda=SProperty()
     @lbda.getter
@@ -273,7 +315,7 @@ class IDT(Agent):
         return IDT_View(idt=self)
 
 if __name__=="__main__":
-    a=IDT()
+    a=IDT(dloss1=0.0, dloss2=0.0, eta=0.5)
     from taref.plotter.api import line, Plotter
     from scipy.signal import hilbert
     from numpy import imag, real, sin, cos, exp, array, absolute
@@ -285,7 +327,7 @@ if __name__=="__main__":
     Np=a.Np
     f0=a.f0
 
-    if 1:
+    if 0:
         def Asum(N, k1=0.0, k2=0.0):
             return array([sum([exp(2.0j*pi*f/f0*n-f/f0*k1-k2*(f/f0)**2) for n in range(N)]) for f in frq])
 
@@ -349,7 +391,7 @@ if __name__=="__main__":
 
         pl.show()
 
-    frq=linspace(0, 20e9, 10000)
+    frq=linspace(0, 40e9, 10000)
 
     X=a._get_X(f=frq)
     Np=a.Np
@@ -358,18 +400,21 @@ if __name__=="__main__":
     #coup=(sqrt(2)*cos(pi*frq/(4*f0))*(1.0/Np)*sin(X)/sin(X/Np))**2
     coup=(sin(X)/X)**2
 
-    coup=(1.0/Np*sin(X)/sin(X/Np))**2
-
+    #coup=(1.0/Np*sin(X)/sin(X/Np))**2
+    line(a.fixed_freq, a.fixed_element_factor)
     pl=Plotter()
-    #line(frq, a._get_coupling(frq)/a.max_coupling, plotter=pl)
-    #line(frq, a._get_Lamb_shift(frq)/a.max_coupling, plotter=pl, color="red")
-    line(frq, coup, color="purple", plotter=pl)
-    hb=hilbert(coup) #a._get_coupling(frq))
-    line(frq, real(hb), plotter=pl, color="green", linewidth=0.3)
-    line(frq, imag(hb), plotter=pl, color="black", linewidth=0.3)
+    line(frq, a._get_coupling(frq)/a.max_coupling, plotter=pl, linewidth=1.0)
+    line(frq, a._get_Lamb_shift(frq)/a.max_coupling, plotter=pl, color="red", linewidth=1.0)
+    line(frq, coup, color="purple", plotter=pl, linewidth=0.3)
+    line(frq, a._get_full_coupling(frq)/a.max_coupling, plotter=pl, color="green", linewidth=0.3)
+    line(frq, a._get_full_Lamb_shift(frq)/a.max_coupling, plotter=pl, color="black", linewidth=0.3)
+
+    #hb=hilbert(coup) #a._get_coupling(frq))
+    #line(frq, real(hb), plotter=pl, color="green", linewidth=0.3)
+    #line(frq, imag(hb), plotter=pl, color="black", linewidth=0.3)
     #Baa= (1+cos(X/(4*Np)))*(1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
     Baa=-(sin(2.0*X)-2.0*X)/(2.0*X**2)
-    Baa= (1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
+    #Baa= (1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
     line(frq, Baa, plotter=pl, color="cyan", linewidth=0.3)
 
     pl.show()

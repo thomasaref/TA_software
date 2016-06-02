@@ -112,17 +112,20 @@ def mag_theory(qdt, fig_width=9.0, fig_height=6.0):
     voltage=linspace(-5, 5, 3000)
     fq=qdt._get_flux_parabola(voltage=voltage)
     L=qdt._get_L(fq=fq)
+    print "yo"
     S11=qdt._get_S11(f=fw0, L=L)
+    print "done s11"
     colormesh(fw0/1e9, voltage, absolute(S11), plotter=pl)
-    line(*qdt._get_ls_voltage_from_flux_par_many(f=fw0), plotter=pl, linewidth=0.5, alpha=0.5, color="cyan")
-
+    #line(*qdt._get_ls_voltage_from_flux_par_many(f=fw0), plotter=pl, linewidth=0.5, alpha=0.5, color="cyan")
+    print "done plot"
+    return pl
     ls_f=sqrt(fw0*(fw0-2*qdt._get_Lamb_shift(f=fw0)-2*qdt._get_coupling(f=fw0)))
     Ec=qdt._get_Ec()
     Ej=qdt._get_Ej_get_fq(fq=ls_f, Ec=Ec)
     flux_d_flux0=qdt._get_flux_over_flux0_get_Ej(Ej=Ej)
     V1=qdt._get_voltage(flux_over_flux0=flux_d_flux0)
     line(fw0/1e9, qdt._get_voltage(flux_over_flux0=flux_d_flux0), plotter=pl, linewidth=0.3, color="darkgray")
-
+    print "yo2"
     ls_f=sqrt(fw0*(fw0-2*qdt._get_Lamb_shift(f=fw0)+2*qdt._get_coupling(f=fw0)))
     Ec=qdt._get_Ec()
     Ej=qdt._get_Ej_get_fq(fq=ls_f, Ec=Ec)
@@ -132,7 +135,7 @@ def mag_theory(qdt, fig_width=9.0, fig_height=6.0):
 
     p, pf=line(fw0/1e9, absolute(V2-V1)/max(absolute(V2-V1)), linewidth=0.3, color="blue")
     line(fw0/1e9, qdt._get_coupling(f=fw0)/qdt.max_coupling, linewidth=0.3, color="red", plotter=p)
-
+    print "yo3"
     #fw02=(qdt._get_Ga(f=fw0)-qdt._get_Ba(f=fw0))/(4*pi*qdt.C)
     #line(fw0, fw0+fw02, plotter=pl)
     #line(*qdt._get_ls_voltage_from_flux_par_many(f=fw0+fw02), plotter=pl, linewidth=0.5, alpha=0.5, color="cyan")
@@ -175,9 +178,9 @@ def S13_phase_theory(qdt, fig_width=9.0, fig_height=6.0):
 if __name__=="__main__":
     from taref.physics.qdt import anharm_plot
     print qdt.max_coupling
-    anharm_plot2(qdt)#.show()
+    #anharm_plot2(qdt)#.show()
 
-    coupling_plot()#.show()
+    #coupling_plot()#.show()
     mag_theory(qdt).show()
     phase_theory(qdt)#.show()
     S13_mag_theory(qdt)#.show()

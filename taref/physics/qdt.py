@@ -105,10 +105,11 @@ class QDT(IDT, Qubit):
         Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
         Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
         w=2*pi*f
-        try:
-            return Ga/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*L))
-        except ValueError:
-            return array([Ga/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*qL)) for qL in L])
+        print "in s11"
+        #try:
+        #    return Ga/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*L))
+        #except ValueError:
+        return array([Ga/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*qL)) for qL in L])
 
     S13=SProperty()
     @S13.getter

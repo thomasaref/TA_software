@@ -52,10 +52,12 @@ if __name__=="__main__":
         f0=Float(a.idt.f0/1e9)#.tag(tracking=True)
         loss=Float( -11.0)#.tag(tracking=True)
         L=FloatRange(400.0, 600.0, 500.0).tag(tracking=True)
-        dloss=Float(0.0)
+        dloss1=Float(0.0)
+        dloss2=Float(0.0)
         C=Float(a.idt.C)
         K2=Float(a.idt.K2)
         dL=Float(a.idt.dL)
+        eta=Float(a.idt.eta)
 
 
         def _default_plotter(self):
@@ -67,8 +69,8 @@ if __name__=="__main__":
 
         @tag_property(private=True)
         def data(self):
-            return a.frequency, 20*log10(absolute(exp(-1j*2*pi*a.frequency/a.idt.vf*self.L*1e-6*(1-1j*self.dloss*(a.frequency/self.f0)**2))*a.idt._get_S13(f=a.frequency,
-                                                  f0=self.f0*1e9, Np=self.Np, C=self.C, K2=self.K2, dL=self.dL)))+self.loss
+            return a.frequency, 20*log10(absolute(exp(-1j*2*pi*a.frequency/a.idt.vf*self.L*1e-6)*a.qdt._get_propagation_loss(f0=self.f0*1e9, dloss1=self.dloss1, dloss2=self.dloss2)*a.idt._get_S13(f=a.frequency,
+                                                  f0=self.f0*1e9, Np=self.Np, C=self.C, K2=self.K2, dL=self.dL, eta=self.eta)))+self.loss
 
     d=Fitter()
     d.plotter.show()
