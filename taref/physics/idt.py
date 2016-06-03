@@ -9,11 +9,63 @@ from taref.core.log import log_debug
 from taref.physics.fundamentals import sinc_sq, pi, eps0
 from taref.core.agent import Agent
 from atom.api import Float, Int, Enum, Value, Property
-from taref.core.api import private_property, get_tag, SProperty, log_func, t_property, s_property
+from taref.core.api import private_property, get_tag, SProperty, log_func, t_property, s_property, sqze
 from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, absolute, exp, piecewise
 from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
 from scipy.signal import hilbert
+from scipy.special import legendre
+from timeit import repeat
 
+def lgf(v, x, Nmax=20):
+    """Series expression for Legendre function"""
+    am=1.0
+    cs=am
+    for m in range(1, Nmax):
+        am=(m-1.0-v)*(m+v)*(1.0-x)*am/(2.0*m**2)
+        cs+=am
+    return cs
+
+f=linspace(1e9, 9e9, 1000)
+f0=3e9
+
+m=(f/(2*f0)).astype(int)
+print m
+s=f/(2*f0)-m
+print s
+pieta=0.5*pi
+
+rho=[2*sin(pi*s[n])/lgf(-s[n], -cos(pieta))*lgf(mm, cos(pieta)) for n, mm in enumerate(m)]
+plot(f/(2*f0), 2*sin(pi*s))
+show()
+print 2.0/lgf(-0.5, -cos(0.5*pi)), 2.0/lgf(-0.25, -cos(0.5*pi))/sqrt(2)
+x=linspace(0, 1, 10000)
+from time import time
+
+print repeat("legendre(2)(x)", "from __main__ import lgf, x, legendre", number=1000)
+
+print repeat("lgf(2,x)", "from __main__ import lgf, x, legendre", number=1000)
+
+tstart=time()
+lp3=legendre(2)(x)
+lp4=legendre(3)(x)
+#print time()-tstart
+
+tstart=time()
+lp1=lgf(2,x)
+lp2=lgf(3,x)
+#print time()-tstart
+
+#plot(lp1)
+plot(lp2)
+
+#plot((3.0*x**2-1.0)/2.0)
+plot((5.0*x**3-3.0*x)/2.0)
+
+
+#plot(lp3)
+plot(lp4)
+show()
+#print lpn(0, x), lpn(1, x), lpn(2, x), lpn(3,x)
 class IDT(Agent):
     """Theoretical description of IDT"""
     base_name="IDT"
@@ -157,7 +209,8 @@ class IDT(Agent):
 
     @private_property
     def fixed_coupling(self):
-        return self.Ga0div2C*(sqrt(2.0)*cos(pi*self.fixed_freq/(4*self.f0))*self.fixed_element_factor)**2*absolute(self.fixed_Asum)**2
+        #return self.Ga0div2C*(sqrt(2.0)*cos(pi*self.fixed_freq/(4*self.f0))*self.fixed_element_factor)**2*absolute(self.fixed_Asum)**2
+        return self.Ga0div2C*(self.fixed_element_factor)**2*absolute(self.fixed_Asum)**2
 
     def _get_full_coupling(self, f):
         return interp(f, self.fixed_freq, self.fixed_coupling)
@@ -171,9 +224,26 @@ class IDT(Agent):
         return exp(-f/f0*dloss1-dloss2*(f/f0)**2)
 
     @private_property
+    def fixed_polarity(self):
+        if self.ft=="single":
+            return arange(int(self.Np))+0.5
+        return array(sqze(zip(arange(4)+0.25, arange(4)+0.5)))
+
+        #[0,1,0,1,0,1,0]
+        #[0, 1/2, 1, 3/2, 2]
+        #1/2, 3/2, 5/2
+        #0, 1, 2
+        #2*pi/
+
+        #[0, 0, 1, 1, 0, 0, 1, 1, 0, 0]
+        #[0, 1/4, 1/2, 3/4, 1, 5/4, 3/2, 7/4, 2]
+        #[0, 1/4, 1/2, 0, 0, 5/4, 3/2, 0, 0]
+        #[0, 1/4, 1/2, 0, 0, 5/4, 3/2, 0, 0]
+
+    @private_property
     def fixed_Asum(self):
         f0,  Np, dloss1, dloss2=self.f0,  self.Np, self.dloss1, self.dloss2
-        return 1.0/Np*array([sum([exp(2.0j*pi*frq/f0*n-frq/f0*dloss1-dloss2*(frq/f0)**2) for n in range(int(Np))]) for frq in self.fixed_freq])
+        return 1.0/Np*array([sum([exp(2.0j*pi*frq/f0*n-frq/f0*dloss1-dloss2*(frq/f0)**2) for n in self.fixed_polarity]) for frq in self.fixed_freq])
 
     def _get_Asum(self, f):
         return interp(f, self.fixed_freq, self.fixed_Asum)
@@ -181,14 +251,20 @@ class IDT(Agent):
     @private_property
     def fixed_element_factor(self):
         pieta, f0=pi*self.eta, self.f0
-        f=self.fixed_freq
-        return sin(pi*f/(2*f0))*piecewise(f,
-                  [(0<=f) & (f<2*f0), (2*f0<=f) & (f<4*f0), (4*f0<f) & (f<6*f0)        , (6*f0<f) & (f<8*f0)                   ],
-                  [1.0              , cos(pieta)          , (3.0*cos(pieta)**2-1.0)/2.0, (5.0*cos(pieta)**3-3.0*cos(pieta))/2.0])
+        f_mult={"single" : 1.0, "double" : 0.5}[self.ft]
+        f=self.fixed_freq*f_mult
+        fdiv2f0=f/(2*f0)
+
+        return 2*sin(pi*fdiv2f0)*piecewise(fdiv2f0,
+            [(0.0<=fdiv2f0) & (fdiv2f0<1.0), (1.0<=fdiv2f0) & (fdiv2f0<2.0)        ,
+             (2.0<=fdiv2f0) & (fdiv2f0<3.0), (3.0<=fdiv2f0) & (fdiv2f0<=4.0)],
+            [1.0/lgf(fdiv2f0, pieta)   , cos(pieta)/lgf(fdiv2f0-1.0, pieta),
+             (3.0*cos(pieta)**2-1.0)/2.0/lgf(fdiv2f0-2.0, pieta), (5.0*cos(pieta)**3-3.0*cos(pieta))/2.0/lgf(fdiv2f0-3.0, pieta)])
         #return array([sin(pi*frq/(2*f0)) if frq<2*f0 else sin(pi*frq/(2*f0))*cos(pi*eta) for frq in self.fixed_freq])
 
+
     def _get_element_factor(self, f):
-        return interp(f, self.fixed_frq, self.fixed_element_factor)
+        return interp(f, self.fixed_freq, self.fixed_element_factor)
 
     @private_property
     def fixed_Lamb_shift(self):
@@ -217,7 +293,7 @@ class IDT(Agent):
 
     @private_property
     def fixed_freq(self):
-        return linspace(0, 8*self.f0, 20000)
+        return linspace(0.0*self.f0, 2*8.0*self.f0, 20)
 
     ZL=Float(50.0)
     ZL_imag=Float(0.0)
@@ -316,6 +392,8 @@ class IDT(Agent):
 
 if __name__=="__main__":
     a=IDT(dloss1=0.0, dloss2=0.0, eta=0.5)
+    print a.fixed_element_factor
+    print a._get_element_factor(a.f0)
     from taref.plotter.api import line, Plotter
     from scipy.signal import hilbert
     from numpy import imag, real, sin, cos, exp, array, absolute
