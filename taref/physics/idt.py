@@ -25,46 +25,51 @@ def lgf(v, x, Nmax=20):
         cs+=am
     return cs
 
-f=linspace(1e9, 9e9, 1000)
+f=linspace(0e9, 41e9, 1000)
 f0=3e9
 
-m=(f/(2*f0)).astype(int)
-print m
-s=f/(2*f0)-m
-print s
-pieta=0.5*pi
-
-rho=[2*sin(pi*s[n])/lgf(-s[n], -cos(pieta))*lgf(mm, cos(pieta)) for n, mm in enumerate(m)]
-plot(f/(2*f0), 2*sin(pi*s))
-show()
-print 2.0/lgf(-0.5, -cos(0.5*pi)), 2.0/lgf(-0.25, -cos(0.5*pi))/sqrt(2)
-x=linspace(0, 1, 10000)
-from time import time
-
-print repeat("legendre(2)(x)", "from __main__ import lgf, x, legendre", number=1000)
-
-print repeat("lgf(2,x)", "from __main__ import lgf, x, legendre", number=1000)
-
-tstart=time()
-lp3=legendre(2)(x)
-lp4=legendre(3)(x)
-#print time()-tstart
-
-tstart=time()
-lp1=lgf(2,x)
-lp2=lgf(3,x)
-#print time()-tstart
-
-#plot(lp1)
-plot(lp2)
-
-#plot((3.0*x**2-1.0)/2.0)
-plot((5.0*x**3-3.0*x)/2.0)
-
-
-#plot(lp3)
-plot(lp4)
-show()
+def rho(f, f0, eta=0.5, ft="double"):
+    f_mult={"single":1, "double" : 2}[ft]
+    if isinstance(f, float):
+        m=int(f/(2*f_mult*f0))
+        s=f/(2*f_mult*f0)-m
+    else:
+        m=(f/(2*f_mult*f0)).astype(int)
+        s=f/(2*f_mult*f0)-m
+    pieta=pi*eta
+    return 2*sin(pi*s)/lgf(-s, -cos(pieta))*lgf(m, cos(pieta))
+if 0:
+    print rho(f0,f0), rho(f0, f0, ft="single")
+    plot(f/(2*f0), rho(f, f0))
+    show()
+    print 2.0/lgf(-0.5, -cos(0.5*pi)), 2.0/lgf(-0.25, -cos(0.5*pi))/sqrt(2)
+    x=linspace(0, 1, 10000)
+    from time import time
+    
+    print repeat("legendre(2)(x)", "from __main__ import lgf, x, legendre", number=1000)
+    
+    print repeat("lgf(2,x)", "from __main__ import lgf, x, legendre", number=1000)
+    
+    tstart=time()
+    lp3=legendre(2)(x)
+    lp4=legendre(3)(x)
+    #print time()-tstart
+    
+    tstart=time()
+    lp1=lgf(2,x)
+    lp2=lgf(3,x)
+    #print time()-tstart
+    
+    #plot(lp1)
+    plot(lp2)
+    
+    #plot((3.0*x**2-1.0)/2.0)
+    plot((5.0*x**3-3.0*x)/2.0)
+    
+    
+    #plot(lp3)
+    plot(lp4)
+    show()
 #print lpn(0, x), lpn(1, x), lpn(2, x), lpn(3,x)
 class IDT(Agent):
     """Theoretical description of IDT"""
@@ -172,7 +177,7 @@ class IDT(Agent):
 
     @K2.setter
     def _get_Dvv(self, K2):
-        """other couplign strength. free speed minus metal speed all over free speed"""
+        """other coupling strength. free speed minus metal speed all over free speed"""
         return K2/2.0
 
     Ga0=SProperty().tag(desc="Conductance at center frequency")
@@ -193,24 +198,47 @@ class IDT(Agent):
         """standard frequency dependence"""
         return Np*pi*(f-f0)/f0
 
+    couple_type=Enum("sinc^2", "giant atom", "df giant atom", "full expr", "full sum")
+
     coupling=SProperty().tag(desc="""Coupling adjusted by sinc sq""", unit="GHz", tex_str=r"$G_f$")
     @coupling.getter
-    def _get_coupling(self, f, couple_mult, f0, K2, Np, dloss1, dloss2, eta):
-        gamma0=self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+    def _get_coupling(self, f, couple_mult, f0, K2, Np, eta, ft_mult, N_legendre, Ct_mult):
+        if self.couple_type=="full sum":
+            return self._get_full_coupling(f)
         gX=self._get_X(Np=Np, f=f, f0=f0)
-        #return gamma0*(1.0/Np*sin(gX)/sin(gX/Np))**2
-        #return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*sin(pi*f/(2*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
-
-        #return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
-
+        if self.couple_type=="full expr":
+            ele_f=self._get_alpha(f, f0, eta, ft_mult, N_legendre)
+            return f0*K2*Np/(4*Ct_mult)*(ele_f*2*cos(pi*f/(4*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
+        gamma0=self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+        if self.couple_type=="giant atom":
+            return gamma0*(1.0/Np*sin(gX)/sin(gX/Np))**2
+        elif self.couple_type=="df giant atom":
+            return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*1.0/Np*sin(gX)/sin(gX/Np))**2
         return gamma0*(sin(gX)/gX)**2.0
-        #return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*sin(pi*f/(2*f0)))**2*absolute(self._get_Asum(f=f, Np=Np, dloss1=dloss1, dloss2=dloss2))**2
-        #return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*self._get_element_factor(f=f, f0=f0, eta=eta))**2*absolute(self._get_Asum(f=f, f0=f0, Np=Np, dloss1=dloss1, dloss2=dloss2))**2
+
+    N_legendre=Int(20).tag(desc="accuracy to evaluate Legendre expansion to")
+    
+    alpha=SProperty()
+    @alpha.getter
+    def _get_alpha(self, f, f0, eta, ft_mult, N_legendre):
+        if isinstance(f, float):
+            m=int(f/(2*ft_mult*f0))
+            s=f/(2*ft_mult*f0)-m
+        else:
+            m=(f/(2*ft_mult*f0)).astype(int)
+            s=f/(2*ft_mult*f0)-m
+        pieta=pi*eta
+        return 2*sin(pi*s)/lgf(-s, -cos(pieta), Nmax=N_legendre)*lgf(m, cos(pieta), Nmax=N_legendre)
 
     @private_property
     def fixed_coupling(self):
         #return self.Ga0div2C*(sqrt(2.0)*cos(pi*self.fixed_freq/(4*self.f0))*self.fixed_element_factor)**2*absolute(self.fixed_Asum)**2
-        return self.Ga0div2C*(self.fixed_element_factor)**2*absolute(self.fixed_Asum)**2
+        #return self.Ga0div2C*(1.247)**2*absolute(self.fixed_Asum)**2
+        gamma0=self.f0*self.K2*self.Np/(4*self.Ct_mult)
+        return gamma0*(self.fixed_element_factor)**2*absolute(self.fixed_Asum)**2
+        #gamma0=self.Ga0div2C
+        #gX=self._get_X(f=self.fixed_freq)
+        #return gamma0*(1.247)**2*2*(sin(gX)/gX)**2.0
 
     def _get_full_coupling(self, f):
         return interp(f, self.fixed_freq, self.fixed_coupling)
@@ -218,16 +246,16 @@ class IDT(Agent):
     dloss1=Float(0.0)
     dloss2=Float(0.0)
 
-    propagation_loss=SProperty()
-    @propagation_loss.getter
-    def _get_propagation_loss(self, f, f0, dloss1, dloss2):
-        return exp(-f/f0*dloss1-dloss2*(f/f0)**2)
+    #propagation_loss=SProperty()
+    #@propagation_loss.getter
+    #def _get_propagation_loss(self, f, f0, dloss1, dloss2):
+    #    return exp(-f/f0*dloss1-dloss2*(f/f0)**2)
 
     @private_property
     def fixed_polarity(self):
         if self.ft=="single":
             return arange(int(self.Np))+0.5
-        return array(sqze(zip(arange(4)+0.25, arange(4)+0.5)))
+        return array(sqze(zip(arange(self.Np)+0.5, arange(self.Np)+0.75)))
 
         #[0,1,0,1,0,1,0]
         #[0, 1/2, 1, 3/2, 2]
@@ -243,25 +271,14 @@ class IDT(Agent):
     @private_property
     def fixed_Asum(self):
         f0,  Np, dloss1, dloss2=self.f0,  self.Np, self.dloss1, self.dloss2
-        return 1.0/Np*array([sum([exp(2.0j*pi*frq/f0*n-frq/f0*dloss1-dloss2*(frq/f0)**2) for n in self.fixed_polarity]) for frq in self.fixed_freq])
+        return 1.0/Np*array([sum([exp(2.0j*pi*frq/f0*n-frq/f0*dloss1*n-n*dloss2*(frq/f0)**2) for n in self.fixed_polarity]) for frq in self.fixed_freq])
 
     def _get_Asum(self, f):
         return interp(f, self.fixed_freq, self.fixed_Asum)
 
     @private_property
     def fixed_element_factor(self):
-        pieta, f0=pi*self.eta, self.f0
-        f_mult={"single" : 1.0, "double" : 0.5}[self.ft]
-        f=self.fixed_freq*f_mult
-        fdiv2f0=f/(2*f0)
-
-        return 2*sin(pi*fdiv2f0)*piecewise(fdiv2f0,
-            [(0.0<=fdiv2f0) & (fdiv2f0<1.0), (1.0<=fdiv2f0) & (fdiv2f0<2.0)        ,
-             (2.0<=fdiv2f0) & (fdiv2f0<3.0), (3.0<=fdiv2f0) & (fdiv2f0<=4.0)],
-            [1.0/lgf(fdiv2f0, pieta)   , cos(pieta)/lgf(fdiv2f0-1.0, pieta),
-             (3.0*cos(pieta)**2-1.0)/2.0/lgf(fdiv2f0-2.0, pieta), (5.0*cos(pieta)**3-3.0*cos(pieta))/2.0/lgf(fdiv2f0-3.0, pieta)])
-        #return array([sin(pi*frq/(2*f0)) if frq<2*f0 else sin(pi*frq/(2*f0))*cos(pi*eta) for frq in self.fixed_freq])
-
+        return self._get_alpha(f=self.fixed_freq)
 
     def _get_element_factor(self, f):
         return interp(f, self.fixed_freq, self.fixed_element_factor)
@@ -276,25 +293,35 @@ class IDT(Agent):
     max_coupling=SProperty().tag(desc="""Coupling at IDT center frequency""", unit="GHz",
                      label="Coupling at center frequency", tex_str=r"$\gamma_{f0}$")
     @max_coupling.getter
-    def _get_max_coupling(self, couple_mult, f0, K2, Np):
-        return self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+    def _get_max_coupling(self, couple_mult, f0, K2, Np, eta, ft_mult, N_legendre, Ct_mult):
+        return self._get_coupling(f=f0, couple_mult=couple_mult, f0=f0,
+                K2=K2, Np=Np, eta=eta, ft_mult=ft_mult, N_legendre=N_legendre, Ct_mult=Ct_mult)
+        #return self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
 
+    Lamb_shift_type=Enum("formula", "hilbert")
+    
     Lamb_shift=SProperty().tag(desc="""Lamb shift""", unit="GHz", tex_str=r"$G_f$")
     @Lamb_shift.getter
-    def _get_Lamb_shift(self, f, couple_mult, f0, K2, Np, dloss1, dloss2, eta):
+    def _get_Lamb_shift(self, f, couple_mult, f0, K2, Np, eta, ft_mult, N_legendre, Ct_mult):
         """returns Lamb shift"""
-        #yp=imag(hilbert(self._get_coupling(f=self.fixed_frq, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, dloss1=dloss1, dloss2=dloss2, eta=eta)))
-        #self.get_member("Lamb_shift_hilbert").reset(self)
-        #return interp(f, self.fixed_frq, yp)#*self.Lamb_shift_hilbert)
-        gamma0=self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
-        gX=self._get_X(Np=Np, f=f, f0=f0)
-        #return gamma0*(1.0/Np)**2*2*(Np*sin(2*gX/Np)-sin(2*gX))/(2*(1-cos(2*gX/Np)))
-        return -gamma0*(sin(2.0*gX)-2.0*gX)/(2.0*gX**2.0)
+        if self.Lamb_shift_type=="formula":
+            gamma0=self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+            gX=self._get_X(Np=Np, f=f, f0=f0)
+            if self.couple_type=="sinc^2":
+                return -gamma0*(sin(2.0*gX)-2.0*gX)/(2.0*gX**2.0)
+            if self.couple_type=="giant atom":
+                return gamma0*(1.0/Np)**2*2*(Np*sin(2*gX/Np)-sin(2*gX))/(2*(1-cos(2*gX/Np)))
+        if self.couple_type=="full sum":
+            return self._get_full_Lamb_shift(f)
+        yp=imag(hilbert(self._get_coupling(f=self.fixed_freq, couple_mult=couple_mult, f0=f0,
+                K2=K2, Np=Np, eta=eta, ft_mult=ft_mult, N_legendre=N_legendre, Ct_mult=Ct_mult)))
+        return interp(f, self.fixed_frq, yp)
 
     @private_property
     def fixed_freq(self):
-        return linspace(0.0*self.f0, 2*8.0*self.f0, 20)
+        return linspace(0.0, 2*8.0*self.f0, self.N_fixed)
 
+    N_fixed=Int(20000)
     ZL=Float(50.0)
     ZL_imag=Float(0.0)
     GL=Float(1/50.0)
@@ -391,7 +418,10 @@ class IDT(Agent):
         return IDT_View(idt=self)
 
 if __name__=="__main__":
-    a=IDT(dloss1=0.0, dloss2=0.0, eta=0.5)
+    a=IDT(dloss1=0.0, dloss2=0.0, eta=0.6, ft="double")
+    a.f=a.f0
+    print a.fixed_polarity
+    print a.alpha
     print a.fixed_element_factor
     print a._get_element_factor(a.f0)
     from taref.plotter.api import line, Plotter
@@ -484,8 +514,8 @@ if __name__=="__main__":
     line(frq, a._get_coupling(frq)/a.max_coupling, plotter=pl, linewidth=1.0)
     line(frq, a._get_Lamb_shift(frq)/a.max_coupling, plotter=pl, color="red", linewidth=1.0)
     line(frq, coup, color="purple", plotter=pl, linewidth=0.3)
-    line(frq, a._get_full_coupling(frq)/a.max_coupling, plotter=pl, color="green", linewidth=0.3)
-    line(frq, a._get_full_Lamb_shift(frq)/a.max_coupling, plotter=pl, color="black", linewidth=0.3)
+    line(frq, a._get_full_coupling(frq)/a.max_coupling/1.247**2/2, plotter=pl, color="green", linewidth=0.3)
+    line(frq, a._get_full_Lamb_shift(frq)/a.max_coupling/1.247**2/2, plotter=pl, color="black", linewidth=0.3)
 
     #hb=hilbert(coup) #a._get_coupling(frq))
     #line(frq, real(hb), plotter=pl, color="green", linewidth=0.3)
