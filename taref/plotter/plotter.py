@@ -50,7 +50,8 @@ class Plotter(Fig):
     def plot_do(cls, plot_func, *args, **kwargs):
         """utility function that extracts plotter and plot_name from kwargs and then does plot specified by func_name"""
         plotter=kwargs.pop("plotter", None)
-        #plot_name=kwargs.pop("plot_name", "")
+        if plotter is None:
+            plotter=kwargs.pop("pl", None)
         if plotter is None:
             plotter=Plotter()
         elif isinstance(plotter, basestring):
@@ -65,7 +66,7 @@ class Plotter(Fig):
     def cls_run_funcs(self):
         """class or static methods to include in run_func_dict on initialization. Can be overwritten in child classes"""
         return [self.savefig]
-#
+
 #def plots(func):
 #    """decorator that assists with plotting function definition"""
 #    def plotty_func(obj, *args, **kwargs):
@@ -103,7 +104,12 @@ def colormesh(*args, **kwargs):
 def multiline(*args, **kwargs):
     return Plotter.plot_do("multiline", *args, **kwargs)
 
-
+#def plots(func):
+#    def plot_func(self, pl=None, *args, **kwargs):
+#        if pl is None:
+#            pl=Plotter(fig_width=kwargs.pop("fig_width", 9.0), fig_height=kwargs.pop("fig_height", 6.0))
+#        return func(self, pl=pl, *args, **kwargs)
+#    return plot_func
 
 if __name__=="__main__":
     b=line([[4,5,6], [7,8,9]])

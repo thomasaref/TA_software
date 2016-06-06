@@ -9,7 +9,7 @@ Utilities associated with Callables and functions
 from functools import wraps
 from types import MethodType
 from taref.core.log import log_debug
-from atom.api import Callable
+from atom.api import Callable, Property
 
 def log_func(func, log=False, log_message=None, threaded=False):
     """function decorator that enables logging and threading. Doesn't return value from thread."""
@@ -21,6 +21,9 @@ def log_func(func, log=False, log_message=None, threaded=False):
             log_debug(new_func.log_message.format(getattr(self, "name", ""), new_func.func_name), n=2)
         for param in new_func.run_params[len(args):]:
             if param not in kwargs:
+                member=self.get_member(param)
+                if isinstance(member, Property):
+                    member.reset(self)
                 kwargs[param]=getattr(self, param)
         if new_func.threaded: #doesn't return value from thread
             names=[thread.name for thread in self.thread_list if new_func.func_name in thread.name]

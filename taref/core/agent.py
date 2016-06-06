@@ -249,7 +249,6 @@ class Agent(Operative):
         if name in self.all_params:
             set_log(self, name, value)
             reset_properties(self)
-            reset_properties(self)
 
     def extra_setup(self, param, typer):
         """Adds observer for ContainerLists to catch changes not covered by setattr."""

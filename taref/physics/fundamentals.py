@@ -17,6 +17,26 @@ from atom.api import Float
 from scipy.signal import hann, boxcar, firwin, freqz, lfilter, fftconvolve, filtfilt
 from numpy import hanning, convolve
 
+def lgf(v, x, Nmax=20):
+    """Series expression for Legendre function"""
+    am=1.0
+    cs=am
+    for m in range(1, Nmax):
+        am=(m-1.0-v)*(m+v)*(1.0-x)*am/(2.0*m**2)
+        cs+=am
+    return cs
+
+def rho(f, f0, eta=0.5, ft="double"):
+    f_mult={"single":1, "double" : 2}[ft]
+    if isinstance(f, float):
+        m=int(f/(2*f_mult*f0))
+        s=f/(2*f_mult*f0)-m
+    else:
+        m=(f/(2*f_mult*f0)).astype(int)
+        s=f/(2*f_mult*f0)-m
+    pieta=pi*eta
+    return 2*sin(pi*s)/lgf(-s, -cos(pieta))*lgf(m, cos(pieta))
+
 def zero_arr(x):
     return zeros(shape(x))
 
@@ -81,6 +101,49 @@ def sinc(X):
 def sinc_sq(X):
     """sinc squared which doesn't autoinclude pi"""
     return (sinc(X))**2
+
+if 0:
+    f=linspace(0e9, 41e9, 1000)
+    f0=3e9
+
+
+if 0:
+    from scipy.special import legendre
+    from timeit import repeat
+
+    print rho(f0,f0), rho(f0, f0, ft="single")
+    plot(f/(2*f0), rho(f, f0))
+    show()
+    print 2.0/lgf(-0.5, -cos(0.5*pi)), 2.0/lgf(-0.25, -cos(0.5*pi))/sqrt(2)
+    x=linspace(0, 1, 10000)
+    from time import time
+
+    print repeat("legendre(2)(x)", "from __main__ import lgf, x, legendre", number=1000)
+
+    print repeat("lgf(2,x)", "from __main__ import lgf, x, legendre", number=1000)
+
+    tstart=time()
+    lp3=legendre(2)(x)
+    lp4=legendre(3)(x)
+    #print time()-tstart
+
+    tstart=time()
+    lp1=lgf(2,x)
+    lp2=lgf(3,x)
+    #print time()-tstart
+
+    #plot(lp1)
+    plot(lp2)
+
+    #plot((3.0*x**2-1.0)/2.0)
+    plot((5.0*x**3-3.0*x)/2.0)
+
+
+    #plot(lp3)
+    plot(lp4)
+    show()
+
+#print lpn(0, x), lpn(1, x), lpn(2, x), lpn(3,x)
 
 #
 #_material_dict=dict(
