@@ -6,11 +6,11 @@ Created on Tue Jan  5 01:07:15 2016
 """
 
 from taref.core.log import log_debug
-from taref.physics.fundamentals import sinc_sq, pi, eps0, lgf
+from taref.physics.fundamentals import sinc_sq, pi, eps0, lgf, lgf_arr
 from taref.core.agent import Agent
 from atom.api import Float, Int, Enum, Value, Property, Typed
 from taref.core.api import private_property, get_tag, SProperty, log_func, t_property, s_property, sqze, Array, tag_callable
-from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, absolute, exp, ones, log10
+from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, absolute, exp, ones, log10, fft, float64, int64
 #from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
 from scipy.signal import hilbert
 from taref.plotter.api import line, Plotter
@@ -160,19 +160,23 @@ class IDT(Agent):
             return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*1.0/Np*sin(gX)/sin(gX/Np))**2
         return gamma0*(sin(gX)/gX)**2.0
 
-    N_legendre=Int(20).tag(desc="accuracy to evaluate Legendre expansion to")
+    N_legendre=Int(200).tag(desc="accuracy to evaluate Legendre expansion to")
 
     alpha=SProperty()
     @alpha.getter
     def _get_alpha(self, f, f0, eta, ft_mult, N_legendre):
+        pieta=pi*eta
         if isinstance(f, float):
             m=int(f/(2*ft_mult*f0))
             s=f/(2*ft_mult*f0)-m
+            return 2*sin(pi*s)/lgf(-s, -cos(pieta), Nmax=N_legendre)*lgf(m, cos(pieta), Nmax=N_legendre)
         else:
             m=(f/(2*ft_mult*f0)).astype(int)
             s=f/(2*ft_mult*f0)-m
-        pieta=pi*eta
-        return 2*sin(pi*s)/lgf(-s, -cos(pieta), Nmax=N_legendre)*lgf(m, cos(pieta), Nmax=N_legendre)
+            mmax=int(m.max()+1)
+            print mmax
+            print s
+        return 2*sin(pi*s)/lgf_arr(-s, -cos(pieta))*lgf_arr(m, cos(pieta), mmax)
 
     def fixed_reset(self):
         """resets fixed properties in proper order"""
@@ -309,14 +313,14 @@ class IDT(Agent):
 
     @private_property
     def fixed_freq(self):
-        return linspace(self.fixed_freq_min, self.fixed_freq_max, self.N_fixed)
+        return linspace(self.fixed_freq_min, self.fixed_freq_max, self.N_fixed)#.astype(float64)
 
     N_fixed=Int(20000)
     fixed_freq_max=Float()
     fixed_freq_min=Float(0.0)
 
     def _default_fixed_freq_max(self):
-        return 8.0*self.f0
+        return 100*8.0*self.f0
 
     ZL=Float(50.0)
     ZL_imag=Float(0.0)
@@ -447,7 +451,9 @@ def idt_process(kwargs):
 def element_factor_plot(pl="element_factor", **kwargs):
     idt=idt_process(kwargs)
     idt.ft="single"
+    print "start plot"
     pl, pf=line(idt.fixed_freq/idt.f0, idt.fixed_alpha, plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
+    print "finish plot"
     idt.ft="double"
     idt.fixed_reset()
     pl= line(idt.fixed_freq/idt.f0, idt.fixed_alpha, plotter=pl, plot_name="double", color="red", label="double finger", linestyle="dashed")[0]
@@ -455,6 +461,36 @@ def element_factor_plot(pl="element_factor", **kwargs):
     pl.ylabel="element factor"
     pl.legend()
     return pl
+
+def surface_charge_plot(pl="surface charge", **kwargs):
+    idt=idt_process(kwargs)
+    idt.ft="single"
+    pl, pf=line( fft.fftshift(fft.ifft(idt.fixed_alpha)), plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
+    #idt.ft="double"
+    #idt.fixed_reset()
+    #pl= line(idt.fixed_freq/idt.f0, idt.fixed_alpha, plotter=pl, plot_name="double", color="red", label="double finger", linestyle="dashed")[0]
+    pl.xlabel="frequency/center frequency"
+    pl.ylabel="element factor"
+    #pl.legend()
+    return pl
+
+def surface_charge_plot2(pl="surface charge2", **kwargs):
+    idt=idt_process(kwargs)
+    idt.ft="single"
+    charge=fft.fftshift(fft.ifft(idt.fixed_alpha))
+
+    pl, pf=line( charge[:-400]+charge[400:], plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
+    #idt.ft="double"
+    #idt.fixed_reset()
+    #pl= line(idt.fixed_freq/idt.f0, idt.fixed_alpha, plotter=pl, plot_name="double", color="red", label="double finger", linestyle="dashed")[0]
+    pl.xlabel="frequency/center frequency"
+    pl.ylabel="element factor"
+    #pl.legend()
+    return pl
+
+element_factor_plot()#.show()
+surface_charge_plot()#.show()
+surface_charge_plot2().show()
 
 def metallization_plot(pl="metalization", **kwargs):
     idt=idt_process(kwargs)
