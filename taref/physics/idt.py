@@ -10,7 +10,7 @@ from taref.physics.fundamentals import sinc_sq, pi, eps0, lgf, lgf_arr
 from taref.core.agent import Agent
 from atom.api import Float, Int, Enum, Value, Property, Typed
 from taref.core.api import private_property, get_tag, SProperty, log_func, t_property, s_property, sqze, Array, tag_callable
-from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, absolute, exp, ones, log10, fft, float64, int64
+from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, absolute, exp, ones, log10, fft, float64, int64, cumsum
 #from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
 from scipy.signal import hilbert
 from taref.plotter.api import line, Plotter
@@ -315,9 +315,9 @@ class IDT(Agent):
     def fixed_freq(self):
         return linspace(self.fixed_freq_min, self.fixed_freq_max, self.N_fixed)#.astype(float64)
 
-    N_fixed=Int(20000)
+    N_fixed=Int(2000000)
     fixed_freq_max=Float()
-    fixed_freq_min=Float(0.0)
+    fixed_freq_min=Float(0.01)
 
     def _default_fixed_freq_max(self):
         return 100*8.0*self.f0
@@ -452,20 +452,43 @@ def element_factor_plot(pl="element_factor", **kwargs):
     idt=idt_process(kwargs)
     idt.ft="single"
     print "start plot"
-    pl, pf=line(idt.fixed_freq/idt.f0, idt.fixed_alpha, plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
+    pl, pf=line(idt.fixed_freq/idt.f0, idt.fixed_alpha/idt.fixed_freq*idt.f0, plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
     print "finish plot"
-    idt.ft="double"
-    idt.fixed_reset()
-    pl= line(idt.fixed_freq/idt.f0, idt.fixed_alpha, plotter=pl, plot_name="double", color="red", label="double finger", linestyle="dashed")[0]
+    #idt.ft="double"
+    #idt.fixed_reset()
+    #pl= line(idt.fixed_freq/idt.f0, idt.fixed_alpha, plotter=pl, plot_name="double", color="red", label="double finger", linestyle="dashed")[0]
     pl.xlabel="frequency/center frequency"
     pl.ylabel="element factor"
     pl.legend()
     return pl
 
+from scipy.integrate import trapz, simps, cumtrapz, quad
+
 def surface_charge_plot(pl="surface charge", **kwargs):
     idt=idt_process(kwargs)
     idt.ft="single"
-    pl, pf=line( fft.fftshift(fft.ifft(idt.fixed_alpha)), plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
+    charge=real(fft.fftshift(fft.ifft(idt.fixed_alpha))).astype(float64)
+
+    #x=linspace()
+    x=linspace(-idt.N_fixed/2+.001, idt.N_fixed/2+0.0, idt.N_fixed)/800.0
+    print charge.shape, x.shape
+    pl, pf=line(x, charge, plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
+    charge=real(fft.fftshift(fft.ifft(idt.fixed_alpha/idt.fixed_freq*idt.f0))).astype(float64)
+    pl, pf=line(x, charge, plotter=pl, plot_name="singled", color="red", label="single finger2", **kwargs)
+
+    #def charge_f(xin):
+    #    return interp(xin, x, charge/absolute(x-xin))
+
+    #x=arange(len(idt.fixed_alpha))
+    xprime=linspace(-0.02000001, 0.02, 200) #[0.01, 1.01] #range(10)
+    print "trapz"
+    #print array([quad(charge_f, x.min(), x.max())])
+    #for xp in xprime:
+    #line(trapz(charge/absolute(x-xprime), x))
+    #dx=x[1]-x[0]
+    #line(xprime, array([sum(charge*dx/absolute(x-xp)) for xp in xprime]))
+
+    line(xprime, array([trapz(charge/absolute(x-xp), x) for xp in xprime]))
     #idt.ft="double"
     #idt.fixed_reset()
     #pl= line(idt.fixed_freq/idt.f0, idt.fixed_alpha, plotter=pl, plot_name="double", color="red", label="double finger", linestyle="dashed")[0]
@@ -480,6 +503,8 @@ def surface_charge_plot2(pl="surface charge2", **kwargs):
     charge=fft.fftshift(fft.ifft(idt.fixed_alpha))
 
     pl, pf=line( charge[:-400]+charge[400:], plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
+
+
     #idt.ft="double"
     #idt.fixed_reset()
     #pl= line(idt.fixed_freq/idt.f0, idt.fixed_alpha, plotter=pl, plot_name="double", color="red", label="double finger", linestyle="dashed")[0]
@@ -489,7 +514,7 @@ def surface_charge_plot2(pl="surface charge2", **kwargs):
     return pl
 
 element_factor_plot()#.show()
-surface_charge_plot()#.show()
+surface_charge_plot().show()
 surface_charge_plot2().show()
 
 def metallization_plot(pl="metalization", **kwargs):
