@@ -11,69 +11,8 @@ from scipy.constants import e, h, hbar, k as kB, epsilon_0 as eps0, pi
 c_eta = 0.8
 
 from numpy import (sin, fft, cos, sqrt, exp, empty, mean, exp, log10, arange, array, ndarray, delete,
-                   absolute, dtype, angle, amin, amax, linspace, zeros, shape, interp)
+                   absolute, dtype, angle, amin, amax, linspace, zeros, shape, interp, real, imag, float64)
 from numpy.linalg import eig
-from atom.api import Float
-from scipy.signal import hann, boxcar, firwin, freqz, lfilter, fftconvolve, filtfilt
-from numpy import hanning, convolve, append
-
-def lgf(v, x, Nmax=2000, threshold=1.0e-5):
-    """Series expression for Legendre function"""
-
-    am=1.0
-    cs=am
-    for m in range(1, Nmax):
-        am=(m-1.0-v)*(m+v)*(1.0-x)*am/(2.0*m**2)
-        cs+=am
-        if absolute(am)<threshold:
-            break
-    return cs
-
-def lgf_fixed(x, Nmax=0):
-    v_arr=linspace(-1.0, 1.0, 2001)
-    lgf_fix=array([lgf(v, x) for v in v_arr])
-    for n in range(Nmax):
-        v=linspace(n+1.0, n+2.0, 1001)
-        lgf1=interp(v-1.0, v_arr, lgf_fix)
-        lgf2=interp(v-2.0, v_arr, lgf_fix)
-
-        lgf_fix=append(lgf_fix, (2.0*v-1.0)*x*lgf1/v-(v-1.0)*lgf2/v)
-        v_arr=append(v_arr, v)
-    #v_arr=append((-v_arr[1000:]-1)[::-1], v_arr)
-    #lgf_fix=append(lgf_fix[1000:][::-1], lgf_fix)
-    return v_arr, lgf_fix #append(v_arr, v), append(lgf_fix, lgf_fix2)
-if 0:
-    import matplotlib.pyplot as plt
-    plt.plot(*lgf_fixed(0.0, Nmax=50))
-    plt.show()
-
-def lgf_fixed2(x):
-    v_arr, lg_fix=lgf
-    #for n in range(0, 10, 2):
-
-
-def lgf_rec(v, x, Nmax=20):
-    if v>2:
-        print v
-        return (2.0*v-1.0)*x*lgff(v-1.0, x, Nmax)/v-(v-1.0)*lgff(v-2.0, x, Nmax)/v
-    return interp(v, lgff.v, lgff.lgf_fix)
-
-def lgf_arr(v_arr, x, Nmax=0):
-    v, lgf_fix=lgf_fixed(x, Nmax)
-    print "lgf fix"
-    return interp(v_arr, v, lgf_fix)
-    #return array([lgff(v, x) for v in v_arr])
-
-def rho(f, f0, eta=0.5, ft="double"):
-    f_mult={"single":1, "double" : 2}[ft]
-    if isinstance(f, float):
-        m=int(f/(2*f_mult*f0))
-        s=f/(2*f_mult*f0)-m
-    else:
-        m=(f/(2*f_mult*f0)).astype(int)
-        s=f/(2*f_mult*f0)-m
-    pieta=pi*eta
-    return 2*sin(pi*s)/lgf(-s, -cos(pieta))*lgf(m, cos(pieta))
 
 def zero_arr(x):
     return zeros(shape(x))

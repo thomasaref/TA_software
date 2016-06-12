@@ -6,14 +6,16 @@ Created on Tue Jan  5 01:07:15 2016
 """
 
 from taref.core.log import log_debug
-from taref.physics.fundamentals import sinc_sq, pi, eps0, lgf, lgf_arr
+from taref.physics.fundamentals import sinc_sq, pi, eps0
+from taref.physics.legendre import lgf, lgf_arr#, lgf_fixed
 from taref.core.agent import Agent
 from atom.api import Float, Int, Enum, Value, Property, Typed
 from taref.core.api import private_property, get_tag, SProperty, log_func, t_property, s_property, sqze, Array, tag_callable
 from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, absolute, exp, ones, log10, fft, float64, int64, cumsum
 #from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
 from scipy.signal import hilbert
-from taref.plotter.api import line, Plotter
+from taref.plotter.api import line, Plotter, scatter
+
 
 
 class IDT(Agent):
@@ -22,34 +24,34 @@ class IDT(Agent):
     #main_params=["K2", "Dvv"] #"ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct",
     #            "material", "Dvv", "K2", "vf", "epsinf"]
 
-    material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz')
-
-    def _default_material(self):
-        return 'LiNbYZ'
-
-    def _observe_material(self, change):
-        if change["type"]=="update":
-            self.Dvv=None
-            self.vf=None
-            self.epsinf=None
-
-    @t_property(desc="coupling strength", unit="%", tex_str=r"$\Delta v/v$", expression=r"$(v_f-v_m))/v_f$")
-    def Dvv(self, material):
-        return {"STquartz" : 0.06e-2, 'GaAs' : 0.035e-2, 'LiNbYZ' : 2.4e-2,
-                 'LiNb128' : 2.7e-2, 'LiNbYZX'  : 0.8e-2}[material]
-
-    @t_property(desc="speed of SAW on free surface", unit="m/s", tex_str=r"$v_f$", format_str=r"{0:.4g} m/s")
-    def vf(self, material):
-        return {"STquartz" : 3159.0, 'GaAs' : 2900.0, 'LiNbYZ' : 3488.0,
-                 'LiNb128' : 3979.0, 'LiNbYZX' : 3770.0}[material]
-
-    @t_property(desc="Capacitance of single finger pair per unit length", tex_str=r"$\epsilon_\infty$")
-    def epsinf(self, material):
-        return {"STquartz" : 5.6*eps0, 'GaAs' : 1.2e-10, 'LiNbYZ' : 46.0*eps0,
-                 'LiNb128' : 56.0*eps0, 'LiNbYZX' : 46.0*eps0}[material]
-
-    ft=Enum("double", "single").tag(desc="finger type of IDT", label="Finger type", show_value=False)
-
+#    material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz')
+#
+#    def _default_material(self):
+#        return 'LiNbYZ'
+#
+#    def _observe_material(self, change):
+#        if change["type"]=="update":
+#            self.Dvv=None
+#            self.vf=None
+#            self.epsinf=None
+#
+#    @t_property(desc="coupling strength", unit="%", tex_str=r"$\Delta v/v$", expression=r"$(v_f-v_m))/v_f$")
+#    def Dvv(self, material):
+#        return {"STquartz" : 0.06e-2, 'GaAs' : 0.035e-2, 'LiNbYZ' : 2.4e-2,
+#                 'LiNb128' : 2.7e-2, 'LiNbYZX'  : 0.8e-2}[material]
+#
+#    @t_property(desc="speed of SAW on free surface", unit="m/s", tex_str=r"$v_f$", format_str=r"{0:.4g} m/s")
+#    def vf(self, material):
+#        return {"STquartz" : 3159.0, 'GaAs' : 2900.0, 'LiNbYZ' : 3488.0,
+#                 'LiNb128' : 3979.0, 'LiNbYZX' : 3770.0}[material]
+#
+#    @t_property(desc="Capacitance of single finger pair per unit length", tex_str=r"$\epsilon_\infty$")
+#    def epsinf(self, material):
+#        return {"STquartz" : 5.6*eps0, 'GaAs' : 1.2e-10, 'LiNbYZ' : 46.0*eps0,
+#                 'LiNb128' : 56.0*eps0, 'LiNbYZX' : 46.0*eps0}[material]
+#
+#    #ft=Enum("double", "single").tag(desc="finger type of IDT", label="Finger type", show_value=False)
+#
     def _observe_ft(self, change):
         if change["type"]=="update":
             self.ft_mult=None
@@ -57,12 +59,12 @@ class IDT(Agent):
             self.Ct_mult=None
             self.mu_mult=None
 
-    def _default_ft(self):
-        return "double"
+    #def _default_ft(self):
+    #    return "double"
 
-    @t_property(desc="multiplier based on finger type")
-    def ft_mult(self, ft):
-        return {"double" : 2.0, "single" : 1.0}[ft]
+    #@t_property(desc="multiplier based on finger type")
+    #def ft_mult(self, ft):
+    #    return {"double" : 2.0, "single" : 1.0}[ft]
 
     @t_property(dictify={"single" : 1.694**2, "double" : (1.247*sqrt(2))**2}) #{"single":2.87, "double":3.11}
     def Ga0_mult(self, ft):
@@ -84,7 +86,7 @@ class IDT(Agent):
     def _get_couple_mult(self, Ga0_mult, Ct_mult):
         return Ga0_mult/(4*Ct_mult)
 
-    f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
+    #f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
 
     Np=Float(9).tag(desc="\# of finger pairs", low=0.5, tex_str=r"$N_p$", label="\# of finger pairs")
 
@@ -92,10 +94,10 @@ class IDT(Agent):
                     label="\# of extra fingers", low=0)
 
     W=Float(25.0e-6).tag(desc="height of finger.", unit="um")
+#
+#    eta=Float(0.5).tag(desc="metalization ratio")
 
-    eta=Float(0.5).tag(desc="metalization ratio")
-
-    f0=Float(5.0000001e9).tag(unit="GHz", desc="Center frequency of IDT", reference="", tex_str=r"$f_0$", label="Center frequency")
+#    f0=Float(5.0000001e9).tag(unit="GHz", desc="Center frequency of IDT", reference="", tex_str=r"$f_0$", label="Center frequency")
 
     C=SProperty().tag(unit="fF", desc="Total capacitance of IDT", reference="Morgan page 16/145")
     @C.getter
@@ -108,10 +110,10 @@ class IDT(Agent):
         """reversing capacitance to extract eps infinity"""
         return C/(Ct_mult*W*Np)
 
-    @log_func
-    def _get_eta(self, a, g):
-         """metalization ratio"""
-         return a/(a+g)
+#    @log_func
+#    def _get_eta(self, a, g):
+#         """metalization ratio"""
+#         return a/(a+g)
 
     K2=SProperty().tag(desc="coupling strength", unit="%", tex_str=r"K$^2$", expression=r"K$^2=2\Delta v/v$")
     @K2.getter
@@ -160,23 +162,21 @@ class IDT(Agent):
             return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*1.0/Np*sin(gX)/sin(gX/Np))**2
         return gamma0*(sin(gX)/gX)**2.0
 
-    N_legendre=Int(200).tag(desc="accuracy to evaluate Legendre expansion to")
-
-    alpha=SProperty()
-    @alpha.getter
-    def _get_alpha(self, f, f0, eta, ft_mult, N_legendre):
-        pieta=pi*eta
-        if isinstance(f, float):
-            m=int(f/(2*ft_mult*f0))
-            s=f/(2*ft_mult*f0)-m
-            return 2*sin(pi*s)/lgf(-s, -cos(pieta), Nmax=N_legendre)*lgf(m, cos(pieta), Nmax=N_legendre)
-        else:
-            m=(f/(2*ft_mult*f0)).astype(int)
-            s=f/(2*ft_mult*f0)-m
-            mmax=int(m.max()+1)
-            print mmax
-            print s
-        return 2*sin(pi*s)/lgf_arr(-s, -cos(pieta))*lgf_arr(m, cos(pieta), mmax)
+#    N_legendre=Int(200).tag(desc="accuracy to evaluate Legendre expansion to")
+#
+#    alpha=SProperty()
+#    @alpha.getter
+#    def _get_alpha(self, f, f0, eta, ft_mult, N_legendre):
+#        pieta=pi*eta
+#        if isinstance(f, float):
+#            m=int(f/(2*ft_mult*f0))
+#            s=f/(2*ft_mult*f0)-m
+#            return 2*sin(pi*s)/lgf(-s, -cos(pieta), Nmax=N_legendre)*lgf(m, cos(pieta), Nmax=N_legendre)
+#        else:
+#            m=(f/(2*ft_mult*f0)).astype(int)
+#            s=f/(2*ft_mult*f0)-m
+#            mmax=int(m.max()+1)
+#        return 2*sin(pi*s)/lgf_arr(-s, -cos(pieta))*lgf_arr(m, cos(pieta), mmax)
 
     def fixed_reset(self):
         """resets fixed properties in proper order"""
@@ -374,54 +374,54 @@ class IDT(Agent):
     def fixed_Ba(self):
         return self._get_Ba(f=self.fixed_freq)
 
-    lbda=SProperty()
-    @lbda.getter
-    def _get_lbda(self, f, vf):
-        """wavelength relationship to speed and frequency"""
-        return vf/f
-
-    @lbda.setter
-    def _get_f(self, lbda, vf):
-        """frequency relationship to speed and wavelength"""
-        return vf/lbda
-
-    lbda0=SProperty().tag(unit="um", desc="Center wavelength", reference="")
-    @lbda0.getter
-    def _get_lbda0(self, f0, vf):
-        return self._get_lbda(f=f0, vf=vf)
-
-    @lbda0.setter
-    def _get_f0(self, lbda0, vf):
-        return self._get_f(lbda=lbda0, vf=vf)
-
-    g=SProperty().tag(desc="gap between fingers (um). about 0.096 for double fingers at 4.5 GHz", unit="um")
-    @g.getter
-    def _get_g(self, a, eta):
-        """gap given metalization and finger width
-        eta=a/(a+g)
-        => a=(a+g)*eta
-        => (1-eta)*a=g*eta
-        => g=a*(1/eta-1)"""
-        return a*(1.0/eta-1.0)
-
-    @g.setter
-    def _get_a_get_(self, g,  eta):
-        """finger width given gap and metalization ratio
-        eta=a/(a+g)
-        => a=(a+g)*eta
-        => (1-eta)*a=g*eta
-        => a=g*eta/(1-eta)"""
-        return g*eta/(1.0-eta)
-
-    a=SProperty().tag(desc="width of fingers", unit="um")
-    @a.getter
-    def _get_a(self, eta, lbda0, ft_mult):
-        """finger width from lbda0"""
-        return eta*lbda0/(2.0*ft_mult)
-
-    @a.setter
-    def _get_lbda0_get_(self, a, eta, ft_mult):
-        return a/eta*2.0*ft_mult
+#    lbda=SProperty()
+#    @lbda.getter
+#    def _get_lbda(self, f, vf):
+#        """wavelength relationship to speed and frequency"""
+#        return vf/f
+#
+#    @lbda.setter
+#    def _get_f(self, lbda, vf):
+#        """frequency relationship to speed and wavelength"""
+#        return vf/lbda
+#
+#    lbda0=SProperty().tag(unit="um", desc="Center wavelength", reference="")
+#    @lbda0.getter
+#    def _get_lbda0(self, f0, vf):
+#        return self._get_lbda(f=f0, vf=vf)
+#
+#    @lbda0.setter
+#    def _get_f0(self, lbda0, vf):
+#        return self._get_f(lbda=lbda0, vf=vf)
+#
+#    g=SProperty().tag(desc="gap between fingers (um). about 0.096 for double fingers at 4.5 GHz", unit="um")
+#    @g.getter
+#    def _get_g(self, a, eta):
+#        """gap given metalization and finger width
+#        eta=a/(a+g)
+#        => a=(a+g)*eta
+#        => (1-eta)*a=g*eta
+#        => g=a*(1/eta-1)"""
+#        return a*(1.0/eta-1.0)
+#
+#    @g.setter
+#    def _get_a_get_(self, g,  eta):
+#        """finger width given gap and metalization ratio
+#        eta=a/(a+g)
+#        => a=(a+g)*eta
+#        => (1-eta)*a=g*eta
+#        => a=g*eta/(1-eta)"""
+#        return g*eta/(1.0-eta)
+#
+#    a=SProperty().tag(desc="width of fingers", unit="um")
+#    @a.getter
+#    def _get_a(self, eta, lbda0, ft_mult):
+#        """finger width from lbda0"""
+#        return eta*lbda0/(2.0*ft_mult)
+#
+#    @a.setter
+#    def _get_lbda0_get_(self, a, eta, ft_mult):
+#        return a/eta*2.0*ft_mult
 
     @private_property
     def view_window2(self):
@@ -448,6 +448,8 @@ def idt_process(kwargs):
         return IDT()
     return idt
 
+
+
 def element_factor_plot(pl="element_factor", **kwargs):
     idt=idt_process(kwargs)
     idt.ft="single"
@@ -459,10 +461,11 @@ def element_factor_plot(pl="element_factor", **kwargs):
     #pl= line(idt.fixed_freq/idt.f0, idt.fixed_alpha, plotter=pl, plot_name="double", color="red", label="double finger", linestyle="dashed")[0]
     pl.xlabel="frequency/center frequency"
     pl.ylabel="element factor"
+    #pl.set
     pl.legend()
     return pl
 
-from scipy.integrate import trapz, simps, cumtrapz, quad
+
 
 def surface_charge_plot(pl="surface charge", **kwargs):
     idt=idt_process(kwargs)

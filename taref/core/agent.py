@@ -47,6 +47,13 @@ class Operative(Backbone):
 
     base_name="operative"
 
+    @classmethod
+    def process_kwargs(cls, kwargs):
+        agent=kwargs.pop(cls.base_name, None)
+        if agent is None:
+            return cls()
+        return agent
+
     timeout=Float(1).tag(sub=True, desc="Timeout in seconds")
 
     @private_property
