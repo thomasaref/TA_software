@@ -259,7 +259,7 @@ def element_factor_plot(pl="element_factor", **kwargs):
 
 def surface_charge_plot(pl="surface charge", **kwargs):
     rho=Rho.process_kwargs(kwargs)
-    rho.ft="double"
+    rho.ft="single" #"double"
     #charge=real(fft.fftshift(fft.ifft(rho.fixed_alpha)))#.astype(float64)
     print rho.a, rho.g
     #print rho.surface_charge.dtype
@@ -268,25 +268,36 @@ def surface_charge_plot(pl="surface charge", **kwargs):
     #x=linspace(-rho.N_fixed/2+.001, rho.N_fixed/2+0.0, rho.N_fixed)/800.0
     print rho.surface_charge.shape, rho.surface_x.shape
     pieta=pi*rho.eta
-    a=0.25 #rho.a
+    #a=0.25 #rho.a
     lbda0=1.0 #rho.lbda0
-    x=linspace(-20,20, 2000)
+    x=linspace(-1.75*10*lbda0, 1.75*10*lbda0, 20001)
     s=linspace(0.0,1.0, 20001)
 
     def rh(x):
         m=int(2*x/(lbda0))
-        if absolute(x-m*lbda0/2.0)<a/2:
+        if absolute(2*x/lbda0-m)<1.0/4.0:
             theta=4*pi*x/lbda0
-            return 2/lbda0*2*sqrt(2.0)*((-1)**m)/sqrt(cos(theta)-cos(pieta))*simps(sin(pi*s)*cos((s-1/2)*theta)/rho.lgf1.Pv(-s),s)
+            return 2/lbda0*2*sqrt(2.0)*((1.0)**m)/sqrt(cos(theta)-cos(pieta))*trapz(sin(pi*s)*cos((s-1/2)*theta)/rho.lgf1.Pv(-s),s)
+        if absolute(2*x/lbda0-m-1)<1.0/4.0:
+            theta=4*pi*x/lbda0
+            return 2/lbda0*2*sqrt(2.0)*((1.0)**m)/sqrt(cos(theta)-cos(pieta))*trapz(sin(pi*s)*cos((s-1/2)*theta)/rho.lgf1.Pv(-s),s)
+        if absolute(2*x/lbda0-m+1)<1.0/4.0:
+            theta=4*pi*x/lbda0
+            return 2/lbda0*2*sqrt(2.0)*((1.0)**m)/sqrt(cos(theta)-cos(pieta))*trapz(sin(pi*s)*cos((s-1/2)*theta)/rho.lgf1.Pv(-s),s)
+
         return 0.0
 
-    line(array([rh(xx) for xx in x]))
+    rgh=array([rh(xx) for xx in x])/1.694
+    line(2*x, rgh, linewidth=0.5)
+
+    line(real(fft.fft(rgh)))
+    line(imag(fft.fft(rgh)))
 
     line(rho.fixed_freq, rho.fixed_alpha/rho.epsinf)
     print "line done"
     pl, pf=line(rho.surface_x, rho.surface_charge/rho.epsinf, plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
     #charge=real(fft.fftshift(fft.ifft(rho.fixed_alpha/rho.fixed_freq*rho.f0)))#.astype(float64)
-    #pl, pf=line(rho.surface_x, rho.surface_voltage/rho.epsinf, plotter=pl, plot_name="singled", color="red", label="single finger2", **kwargs)
+    pl, pf=line(rho.surface_x, rho.surface_voltage/rho.epsinf, plotter=pl, plot_name="singled", color="red", label="single finger2", **kwargs)
 
     xprime=linspace(-2.000001, 2.0, 200) #[0.01, 1.01] #range(10)
     print "trapz"
