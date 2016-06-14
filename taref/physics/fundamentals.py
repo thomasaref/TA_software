@@ -11,7 +11,7 @@ from scipy.constants import e, h, hbar, k as kB, epsilon_0 as eps0, pi
 c_eta = 0.8
 
 from numpy import (sin, fft, cos, sqrt, exp, empty, mean, exp, log10, arange, array, ndarray, delete,
-                   absolute, dtype, angle, amin, amax, linspace, zeros, shape, interp, real, imag, float64)
+                   absolute, dtype, angle, amin, amax, linspace, zeros, shape, interp, real, imag, float64, int64)
 from numpy.linalg import eig
 
 def zero_arr(x):

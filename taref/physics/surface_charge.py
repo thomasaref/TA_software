@@ -5,7 +5,7 @@ Created on Sat Jun 11 15:43:08 2016
 @author: thomasaref
 """
 
-from taref.physics.fundamentals import pi, eps0, sin, cos, linspace, real, fft, array, absolute, float64, imag, sqrt
+from taref.physics.fundamentals import pi, eps0, sin, cos, linspace, real, fft, array, absolute, float64, imag, sqrt, int64
 from taref.physics.legendre import lgf, lgf_arr, Legendre
 from atom.api import Float, Typed, Enum, Int, Bool
 from taref.core.api import t_property, Agent, private_property, SProperty, log_func
@@ -158,8 +158,8 @@ class Rho(Agent):
     def _default_fixed_freq_max(self):
         return 200.0*self.f0
 
-    #def _default_fixed_freq_min(self):
-    #    return -1000.0*self.f0
+    def _default_fixed_freq_min(self):
+        return 0.01*self.f0
 
     lgf1=Typed(Legendre)#.tag(sub=True)
     lgf2=Typed(Legendre)#.tag(sub=True)
@@ -202,7 +202,7 @@ class Rho(Agent):
         fs=self._get_fs(f=f, f0=f0, ft_mult=ft_mult)
         if isinstance(f, float):
             return int(fs)
-        return fs.astype(int)
+        return fs.astype(int64)
 
     s=SProperty()
     @s.getter
@@ -221,7 +221,7 @@ class Rho(Agent):
     def _get_alpha(self, f, f0, ft_mult, eta, epsinf):
         m=self._get_m(f=f, f0=f0, ft_mult=ft_mult)
         s=self._get_s(f=f, f0=f0, ft_mult=ft_mult)
-        return epsinf*2*sin(pi*s)/self.lgf1.Pv(-s)*self.lgf2.Pv(m)
+        return 2*sin(pi*s)/self.lgf1.Pv(-s)*self.lgf2.Pv(m)
 
     @private_property
     def surface_x(self):
@@ -239,8 +239,21 @@ class Rho(Agent):
     @private_property
     def surface_voltage(self):
         lbda=self._get_lbda(f=self.fixed_freq)
-        kCs=self._get_k(lbda)*self.epsinf
-        return real(fft.fftshift(fft.ifft(self.fixed_alpha/kCs)))#.astype(float64)
+        kCs=self._get_k(lbda)#*self.epsinf
+        return fft.fftshift(real(fft.ifft(self.fixed_alpha/kCs))).astype(float64)
+
+def test_plot(**kwargs):
+    rho=Rho.process_kwargs(kwargs)
+    rho.ft="single"
+    kdiv2pi=(rho.fixed_freq[1]-rho.fixed_freq[0])/rho.vf
+    k=2*pi*rho.fixed_freq/rho.vf
+    lbda0=1.0 #rho.lbda0
+    xx=linspace(-1.75*lbda0, 1.75*lbda0, 201)
+    rhox=array([sum(2*kdiv2pi*rho.fixed_alpha*cos(k*x)) for x in xx])
+    pl=line(xx, rhox, linewidth=0.5)[0]
+    return pl
+#test_plot().show()
+
 
 def element_factor_plot(pl="element_factor", **kwargs):
     rho=Rho.process_kwargs(kwargs)
@@ -288,16 +301,16 @@ def surface_charge_plot(pl="surface charge", **kwargs):
         return 0.0
 
     rgh=array([rh(xx) for xx in x])/1.694
-    line(2*x, rgh, linewidth=0.5)
+    line(1*x, rgh, linewidth=0.5, pl=pl)
 
-    line(real(fft.fft(rgh)))
-    line(imag(fft.fft(rgh)))
+    #line(real(fft.fft(rgh)))
+    #line(imag(fft.fft(rgh)))
 
-    line(rho.fixed_freq, rho.fixed_alpha/rho.epsinf)
+    line(rho.fixed_freq, rho.fixed_alpha)
     print "line done"
-    pl, pf=line(rho.surface_x, rho.surface_charge/rho.epsinf, plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
+    pl, pf=line(rho.surface_x, rho.surface_charge*rgh[10000]/rho.surface_charge[rho.N_fixed/2], plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
     #charge=real(fft.fftshift(fft.ifft(rho.fixed_alpha/rho.fixed_freq*rho.f0)))#.astype(float64)
-    pl, pf=line(rho.surface_x, rho.surface_voltage/rho.epsinf, plotter=pl, plot_name="singled", color="red", label="single finger2", **kwargs)
+    pl, pf=line(rho.surface_x, rho.surface_voltage*1e6, plotter=pl, plot_name="singled", color="red", label="single finger2", **kwargs)
 
     xprime=linspace(-2.000001, 2.0, 200) #[0.01, 1.01] #range(10)
     print "trapz"
