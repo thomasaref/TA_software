@@ -5,7 +5,7 @@ Created on Tue Jun 14 15:15:35 2016
 @author: thomasaref
 """
 
-from numpy import pi, exp, sqrt, matrix, linspace, sin, cos, arccos, absolute, array, dot, diag, complex64, complex128
+from numpy import pi, exp, sqrt, matrix, linspace, sin, cos, arccos, absolute, array, dot, diag, complex64, complex128, eye
 from numpy.linalg import eig, inv
 from taref.physics.fundamentals import eps0
 
@@ -32,11 +32,23 @@ def RAMtest():
 
     A = 1.0/ts*matrix([[exp(-1.0j*k*p),       rs      ],
                       [-rs,             exp(1.0j*k*p)  ]])#.astype(complex128)
-    ei,vec=eig(A)
-    AN = dot(dot(vec,diag(ei)**(N)), inv(vec))
-    print AN
+    #ei,vec=eig(A)
+    #AN = dot(dot(vec,diag(ei)**(N)), inv(vec))
+    #print AN
     AN=A**(N)
     print AN
+    rho_fs=1.694
+    D = -1j*rho_fs*sqrt(k*vf*W*Gs/2.0)
+    B = matrix([(1.0-rs/ts+1.0/ts)*exp(-1j*k*p/2.0), (1.0+rs/ts+1.0/ts)*exp(1j*k*p/2.0)])
+
+    P32=D*B*inv(eye(2)-A**2)*(eye(2)-AN)*matrix([[0],
+                                                   [1.0/AN[1,1]]])[0] #geometric series
+
+    P23=-P32/2.0
+
+    cnbn=A*(cnm1, bnm1)
+    In=D*B*(cnm1, bnm1)
+
     #w=2.0*pi*f
     #k=w/vf#-1.0j*loss
     p11=p22=rs*exp(-1.0j*k*p) #Morgan 8.1
