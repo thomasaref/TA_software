@@ -128,7 +128,7 @@ class Rho(Agent):
         return a*(1.0/eta-1.0)
 
     @g.setter
-    def _get_a_get_(self, g,  eta):
+    def _get_a_get_g(self, g,  eta):
         """finger width given gap and metalization ratio
         eta=a/(a+g)
         => a=(a+g)*eta
@@ -181,7 +181,6 @@ class Rho(Agent):
         self.lgf1.Pv(0.0, -cos(pi*self.eta), 0)
         self.lgf2.Pv(self.fixed_freq_max/(2*self.ft_mult*self.f0), cos(pi*self.eta))
         self.get_member("fixed_freq").reset(self)
-        self.get_member("fixed_X").reset(self)
         self.get_member("fixed_alpha").reset(self)
 
     @private_property

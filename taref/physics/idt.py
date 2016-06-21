@@ -10,61 +10,26 @@ from taref.physics.fundamentals import sinc_sq, pi, eps0
 from taref.physics.legendre import lgf, lgf_arr#, lgf_fixed
 from taref.core.agent import Agent
 from atom.api import Float, Int, Enum, Value, Property, Typed
-from taref.core.api import private_property, get_tag, SProperty, log_func, t_property, s_property, sqze, Array, tag_callable
+from taref.core.api import private_property, get_tag, SProperty, log_func, t_property, s_property, sqze, Complex, Array, tag_callable
 from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, absolute, exp, ones, log10, fft, float64, int64, cumsum
 #from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
 from scipy.signal import hilbert
 from taref.plotter.api import line, Plotter, scatter
+from taref.physics.surface_charge import Rho
 
 
-
-class IDT(Agent):
+class IDT(Rho):
     """Theoretical description of IDT"""
     base_name="IDT"
     #main_params=["K2", "Dvv"] #"ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct",
     #            "material", "Dvv", "K2", "vf", "epsinf"]
 
-#    material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz')
-#
-#    def _default_material(self):
-#        return 'LiNbYZ'
-#
-#    def _observe_material(self, change):
-#        if change["type"]=="update":
-#            self.Dvv=None
-#            self.vf=None
-#            self.epsinf=None
-#
-#    @t_property(desc="coupling strength", unit="%", tex_str=r"$\Delta v/v$", expression=r"$(v_f-v_m))/v_f$")
-#    def Dvv(self, material):
-#        return {"STquartz" : 0.06e-2, 'GaAs' : 0.035e-2, 'LiNbYZ' : 2.4e-2,
-#                 'LiNb128' : 2.7e-2, 'LiNbYZX'  : 0.8e-2}[material]
-#
-#    @t_property(desc="speed of SAW on free surface", unit="m/s", tex_str=r"$v_f$", format_str=r"{0:.4g} m/s")
-#    def vf(self, material):
-#        return {"STquartz" : 3159.0, 'GaAs' : 2900.0, 'LiNbYZ' : 3488.0,
-#                 'LiNb128' : 3979.0, 'LiNbYZX' : 3770.0}[material]
-#
-#    @t_property(desc="Capacitance of single finger pair per unit length", tex_str=r"$\epsilon_\infty$")
-#    def epsinf(self, material):
-#        return {"STquartz" : 5.6*eps0, 'GaAs' : 1.2e-10, 'LiNbYZ' : 46.0*eps0,
-#                 'LiNb128' : 56.0*eps0, 'LiNbYZX' : 46.0*eps0}[material]
-#
-#    #ft=Enum("double", "single").tag(desc="finger type of IDT", label="Finger type", show_value=False)
-#
     def _observe_ft(self, change):
         if change["type"]=="update":
             self.ft_mult=None
             self.Ga0_mult=None
             self.Ct_mult=None
             self.mu_mult=None
-
-    #def _default_ft(self):
-    #    return "double"
-
-    #@t_property(desc="multiplier based on finger type")
-    #def ft_mult(self, ft):
-    #    return {"double" : 2.0, "single" : 1.0}[ft]
 
     @t_property(dictify={"single" : 1.694**2, "double" : (1.247*sqrt(2))**2}) #{"single":2.87, "double":3.11}
     def Ga0_mult(self, ft):
@@ -74,19 +39,14 @@ class IDT(Agent):
     def Ct_mult(self, ft):
         return get_tag(self, "Ct_mult", "dictify")[ft]
 
-
     @t_property()
     def mu_mult(self, ft):
         return {"single" : 1.694, "double" : 1.247}[ft]
 
-    #coupling_mult_dict={"single" : 0.71775, "double" : 0.54995}
-
-    couple_mult=SProperty()
+    couple_mult=SProperty().tag(desc="single: 0.71775. double: 0.54995")
     @couple_mult.getter
     def _get_couple_mult(self, Ga0_mult, Ct_mult):
         return Ga0_mult/(4*Ct_mult)
-
-    #f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
 
     Np=Float(9).tag(desc="\# of finger pairs", low=0.5, tex_str=r"$N_p$", label="\# of finger pairs")
 
@@ -94,10 +54,6 @@ class IDT(Agent):
                     label="\# of extra fingers", low=0)
 
     W=Float(25.0e-6).tag(desc="height of finger.", unit="um")
-#
-#    eta=Float(0.5).tag(desc="metalization ratio")
-
-#    f0=Float(5.0000001e9).tag(unit="GHz", desc="Center frequency of IDT", reference="", tex_str=r"$f_0$", label="Center frequency")
 
     C=SProperty().tag(unit="fF", desc="Total capacitance of IDT", reference="Morgan page 16/145")
     @C.getter
@@ -109,11 +65,6 @@ class IDT(Agent):
     def _get_epsinf(self, C, Ct_mult, W, Np):
         """reversing capacitance to extract eps infinity"""
         return C/(Ct_mult*W*Np)
-
-#    @log_func
-#    def _get_eta(self, a, g):
-#         """metalization ratio"""
-#         return a/(a+g)
 
     K2=SProperty().tag(desc="coupling strength", unit="%", tex_str=r"K$^2$", expression=r"K$^2=2\Delta v/v$")
     @K2.getter
@@ -162,27 +113,10 @@ class IDT(Agent):
             return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*1.0/Np*sin(gX)/sin(gX/Np))**2
         return gamma0*(sin(gX)/gX)**2.0
 
-#    N_legendre=Int(200).tag(desc="accuracy to evaluate Legendre expansion to")
-#
-#    alpha=SProperty()
-#    @alpha.getter
-#    def _get_alpha(self, f, f0, eta, ft_mult, N_legendre):
-#        pieta=pi*eta
-#        if isinstance(f, float):
-#            m=int(f/(2*ft_mult*f0))
-#            s=f/(2*ft_mult*f0)-m
-#            return 2*sin(pi*s)/lgf(-s, -cos(pieta), Nmax=N_legendre)*lgf(m, cos(pieta), Nmax=N_legendre)
-#        else:
-#            m=(f/(2*ft_mult*f0)).astype(int)
-#            s=f/(2*ft_mult*f0)-m
-#            mmax=int(m.max()+1)
-#        return 2*sin(pi*s)/lgf_arr(-s, -cos(pieta))*lgf_arr(m, cos(pieta), mmax)
-
     def fixed_reset(self):
         """resets fixed properties in proper order"""
-        self.get_member("fixed_freq").reset(self)
+        super(IDT, self).fixed_reset()
         self.get_member("fixed_X").reset(self)
-        self.get_member("fixed_alpha").reset(self)
         self.get_member("fixed_Asum").reset(self)
         self.get_member("fixed_coupling").reset(self)
         self.get_member("fixed_Lamb_shift").reset(self)
@@ -193,6 +127,10 @@ class IDT(Agent):
     @private_property
     def fixed_X(self):
         return self._get_X(f=self.fixed_freq)
+
+    @private_property
+    def fixed_w(self):
+        return 2.0*pi*self.fixed_freq
 
     def get_fix(self, name, f):
         return interp(f, self.fixed_freq, getattr(self, "fixed_"+name))
@@ -212,9 +150,6 @@ class IDT(Agent):
             return self.Ga0div2C*(sqrt(2.0)*cos(pi*f/(4*f0))*1.0/Np*sin(X)/sin(X/Np))**2
         return self.Ga0div2C*(sin(X)/X)**2.0
 
-    #def get_fix_coupling(self, f):
-    #    return interp(f, self.fixed_freq, self.fixed_coupling)
-
     dloss1=Float(0.0)
     dloss2=Float(0.0)
 
@@ -229,24 +164,6 @@ class IDT(Agent):
             return arange(int(Np))+0.5
         return array(sqze(zip(arange(Np)+0.5, arange(Np)+0.75)))
 
-    #@private_property
-    #def fixed_polarity(self):
-    #    return self.polarity
-
-        #[0,1,0,1,0,1,0]
-        #[0, 1/2, 1, 3/2, 2]
-        #1/2, 3/2, 5/2
-        #0, 1, 2
-        #2*pi/
-
-        #[0, 0, 1, 1, 0, 0, 1, 1, 0, 0]
-        #[0, 1/4, 1/2, 3/4, 1, 5/4, 3/2, 7/4, 2]
-        #[0, 1/4, 1/2, 0, 0, 5/4, 3/2, 0, 0]
-        #[0, 1/4, 1/2, 0, 0, 5/4, 3/2, 0, 0]
-
-    #g_arr=Array()
-    #g_arr=SProperty().tag(sub=True)
-    #@g_arr.getter
     @t_property(sub=True)
     def g_arr(self, polarity):
         return ones(len(polarity))
@@ -261,16 +178,6 @@ class IDT(Agent):
     def fixed_Asum(self):
         return self._get_Asum(f=self.fixed_freq)
 
-    #def get_fix_Asum(self, f):
-    #    return interp(f, self.fixed_freq, self.fixed_Asum)
-
-    @private_property
-    def fixed_alpha(self):
-        return self._get_alpha(f=self.fixed_freq)
-
-    #def get_fix_alpha(self, f):
-    #    return interp(f, self.fixed_freq, self.fixed_alpha)
-
     @private_property
     def fixed_Lamb_shift(self):
         if self.Lamb_shift_type=="formula":
@@ -281,16 +188,12 @@ class IDT(Agent):
                 return self.Ga0div2C*(1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
         return imag(hilbert(self.fixed_coupling))
 
-    #def get_fix_Lamb_shift(self, f):
-    #    return interp(f, self.fixed_freq, self.fixed_Lamb_shift)
-
     max_coupling=SProperty().tag(desc="""Coupling at IDT center frequency""", unit="GHz",
                      label="Coupling at center frequency", tex_str=r"$\gamma_{f0}$")
     @max_coupling.getter
     def _get_max_coupling(self, couple_mult, f0, K2, Np, eta, ft_mult, N_legendre, Ct_mult):
         return self._get_coupling(f=f0+0.0001, couple_mult=couple_mult, f0=f0,
                 K2=K2, Np=Np, eta=eta, ft_mult=ft_mult, N_legendre=N_legendre, Ct_mult=Ct_mult)
-        #return self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
 
     Lamb_shift_type=Enum("hilbert", "formula")
 
@@ -311,22 +214,87 @@ class IDT(Agent):
                 K2=K2, Np=Np, eta=eta, ft_mult=ft_mult, N_legendre=N_legendre, Ct_mult=Ct_mult)))
         return interp(f, self.fixed_freq, yp)
 
-    @private_property
-    def fixed_freq(self):
-        return linspace(self.fixed_freq_min, self.fixed_freq_max, self.N_fixed)#.astype(float64)
-
-    N_fixed=Int(2000000)
-    fixed_freq_max=Float()
-    fixed_freq_min=Float(0.01)
-
-    def _default_fixed_freq_max(self):
-        return 100*8.0*self.f0
-
     ZL=Float(50.0)
     ZL_imag=Float(0.0)
     GL=Float(1/50.0)
     dL=Float(0.0)
+    YL=Float(1.0/50.0)
 
+    S_type=Enum("simple", "RAM")
+
+    @private_property
+    def fixed_S(self):
+        P=self.fixed_P
+        return self.PtoS(*P, YL=self.YL)
+
+
+    def PtoS(self, P11, P12, P13,
+             P21, P22, P23,
+             P31, P32, P33, YL=1/50.0):
+         YLplusP33=YL+P33
+         sqrtYL=sqrt(YL)
+         S11=P11-P13*P31/YLplusP33
+         S12=P12-P13*P32/YLplusP33
+         S13=2.0*sqrtYL*P13/YLplusP33
+         S21=P21-P23*P31/YLplusP33
+         S22=P22-P23*P32/YLplusP33
+         S23=-P31*sqrtYL*P23/YLplusP33
+         S31=-P31*sqrtYL/YLplusP33
+         S32=-P32*sqrtYL/YL+P33
+         S33=(YL-P33)/YLplusP33
+         return (S11, S12, S13,
+                 S21, S22, S23,
+                 S31, S32, S33)
+
+
+    rs=Complex()
+
+    ts=SProperty()
+    @ts.getter
+    def _get_ts(self, rs):
+        return sqrt(1-absolute(rs)**2)
+
+    Gs=SProperty().tag(desc="Inglebrinsten's approximation of Gamma_s (Morgan)")
+    @Gs.getter
+    def _get_Gs(self, Dvv, epsinf):
+        return Dvv/epsinf
+
+    RAM_P=SProperty().tag(sub=True)
+    @RAM_P.getter
+    def _get_RAM_P(self, f, f0, W, rs, Np, vf, Dvv, epsinf, alpha):
+        """returns A^N, the matrix representing mechanical reflections and transmission"""
+        rho=alpha*epsinf
+        N=2*Np+2*(Np+1)
+        w=2*pi*f
+        w0=2.0*pi*f0
+        lbda0=vf/f0
+        p=lbda0/4.0 #2*80.0e-9
+        k=2*pi*f/vf
+        ts = sqrt(1-absolute(rs)**2)
+        A = 1.0/ts*matrix([[exp(-1.0j*k*p),       rs      ],
+                           [-rs,             exp(1.0j*k*p)]])#.astype(complex128)
+        AN=A**N
+        AN11, AN12, AN21, AN22= AN[0,0], AN[1,0], AN[0,1], AN[1,1]
+
+        P11=-AN21/AN22
+        P21=AN11-AN12*AN21/AN22
+        P12=1.0/AN22
+        P22=AN12/AN22
+        D = -1.0j*rho*sqrt(w*W*Gs/2.0)
+        B = matrix([(1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0), (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)])
+
+        P32=D*B*(A**2+A**3)*inv(eye(2)-A**4)*(eye(2)-A**(2*N_p+2))*matrix([[0],
+                                                                          [1.0/AN[1,1]]])[0] #geometric series
+        P13=P23=-P31/2.0=-P32/2.0
+        Ga=2.0*absolute(P13)**2
+        Ba=hilbert(Ga)
+        P33=Ga+1.0j*Ba+1.0j*w*C
+        return (P11, P12, P13,
+                P21, P22, P23,
+                P31, P32, P33)
+
+    @private_property
+    def
     S11=SProperty()
     @S11.getter
     def _get_S11(self, f, couple_mult, f0, K2, Np, C, ZL):
@@ -373,55 +341,6 @@ class IDT(Agent):
     @private_property
     def fixed_Ba(self):
         return self._get_Ba(f=self.fixed_freq)
-
-#    lbda=SProperty()
-#    @lbda.getter
-#    def _get_lbda(self, f, vf):
-#        """wavelength relationship to speed and frequency"""
-#        return vf/f
-#
-#    @lbda.setter
-#    def _get_f(self, lbda, vf):
-#        """frequency relationship to speed and wavelength"""
-#        return vf/lbda
-#
-#    lbda0=SProperty().tag(unit="um", desc="Center wavelength", reference="")
-#    @lbda0.getter
-#    def _get_lbda0(self, f0, vf):
-#        return self._get_lbda(f=f0, vf=vf)
-#
-#    @lbda0.setter
-#    def _get_f0(self, lbda0, vf):
-#        return self._get_f(lbda=lbda0, vf=vf)
-#
-#    g=SProperty().tag(desc="gap between fingers (um). about 0.096 for double fingers at 4.5 GHz", unit="um")
-#    @g.getter
-#    def _get_g(self, a, eta):
-#        """gap given metalization and finger width
-#        eta=a/(a+g)
-#        => a=(a+g)*eta
-#        => (1-eta)*a=g*eta
-#        => g=a*(1/eta-1)"""
-#        return a*(1.0/eta-1.0)
-#
-#    @g.setter
-#    def _get_a_get_(self, g,  eta):
-#        """finger width given gap and metalization ratio
-#        eta=a/(a+g)
-#        => a=(a+g)*eta
-#        => (1-eta)*a=g*eta
-#        => a=g*eta/(1-eta)"""
-#        return g*eta/(1.0-eta)
-#
-#    a=SProperty().tag(desc="width of fingers", unit="um")
-#    @a.getter
-#    def _get_a(self, eta, lbda0, ft_mult):
-#        """finger width from lbda0"""
-#        return eta*lbda0/(2.0*ft_mult)
-#
-#    @a.setter
-#    def _get_lbda0_get_(self, a, eta, ft_mult):
-#        return a/eta*2.0*ft_mult
 
     @private_property
     def view_window2(self):

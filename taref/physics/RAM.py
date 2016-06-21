@@ -9,19 +9,74 @@ from numpy import pi, exp, sqrt, matrix, linspace, sin, cos, arccos, absolute, a
 from numpy.linalg import eig, inv
 from taref.physics.fundamentals import eps0
 
-Dvv=2.4e-2 #0.07/100.0/2.0
-epsinf=46*eps0 #120.0e-12
-vf=3488.0 #2864.0
-Gs=Dvv/epsinf
+#Dvv=2.4e-2 #0.07/100.0/2.0
+#epsinf=46*eps0 #120.0e-12
+#vf=3488.0 #2864.0
 #y0=3.1e-3
 #y0a=2*pi*epsinf*vf/(2*Dvv)
-f0=5.0e9 #4.8586e9#4.8556e9
-w0=2.0*pi*f0
-lbda0=vf/f0
-p=lbda0/2.0
-W=25.0e-6
-Np=9
-Y0=1/50.0
+#f0=5.0e9 #4.8586e9#4.8556e9
+#w0=2.0*pi*f0
+#lbda0=vf/f0
+#p=lbda0/2.0
+#W=25.0e-6
+#Np=9
+#Y0=1/50.0
+
+
+def P(f=5.01e9, f0=5.0e9, W=25.0e-6, rs=0.0j, Np=9, vf=3488.0, Dvv=2.4e-2, epsinf=46.0*eps0, rho_fs=1.247):
+    """returns A^N, the matrix representing mechanical reflections and transmission"""
+    Gs=Dvv/epsinf
+    rho=rho_fs*epsinf
+    N=2*Np+2*(Np+1)
+    w=2*pi*f
+    w0=2.0*pi*f0
+    lbda0=vf/f0
+    p=lbda0/4.0 #2*80.0e-9
+    k=2*pi*f/vf
+    ts = sqrt(1-absolute(rs)**2)
+    A = 1.0/ts*matrix([[exp(-1.0j*k*p),       rs      ],
+                       [-rs,             exp(1.0j*k*p)]])#.astype(complex128)
+    AN=A**N
+    AN11, AN12, AN21, AN22= AN[0,0], AN[1,0], AN[0,1], AN[1,1]
+
+    P11=-AN21/AN22
+    P21=AN11-AN12*AN21/AN22
+    P12=1.0/AN22
+    P22=AN12/AN22
+    D = -1.0j*rho*sqrt(w*W*Gs/2.0)
+    B = matrix([(1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0), (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)])
+
+    P32=D*B*(A**2+A**3)*inv(eye(2)-A**4)*(eye(2)-A**(2*N_p+2))*matrix([[0],
+                                                                      [1.0/AN[1,1]]])[0] #geometric series
+    P13=P23=-P31/2.0=-P32/2.0
+    Ga=2.0*absolute(P13)**2
+    Ba=hilbert(Ga)
+    P33=Ga+1.0j*Ba+1.0j*w*C
+    return (P11, P12, P13,
+            P21, P22, P23,
+            P31, P32, P33)
+
+def PtoS(P11, P12, P13,
+         P21, P22, P23,
+         P31, P32, P33, YL=1/50.0):
+     YLplusP33=YL+P33
+     sqrtYL=sqrt(YL)
+     S11=P11-P13*P31/YLplusP33
+     S12=P12-P13*P32/YLplusP33
+     S13=2.0*sqrtYL*P13/YLplusP33
+     S21=P21-P23*P31/YLplusP33
+     S22=P22-P23*P32/YLplusP33
+     S23=-P31*sqrtYL*P23/YLplusP33
+     S31=-P31*sqrtYL/YLplusP33
+     S32=-P32*sqrtYL/YL+P33
+     S33=(YL-P33)/YLplusP33
+     return (S11, S12, S13,
+             S21, S22, S31,
+             S31, S32, S33)
+
+    #P32=D*B*inv(eye(2)-A**2)*(eye(2)-AN)*matrix([[0],
+    #                                               [1.0/AN[1,1]]])[0] #geometric series
+
 
 def RAMtest():
     N=9

@@ -39,7 +39,11 @@ def write_text(file_path, text_list, mode="w"):
         f.write("\n".join(text_list))
 
 def Array(shape=1):
-    return Coerced(ndarray, args=(shape,), coercer=array)#.tag(typer=list)
+    #return Coerced(ndarray, args=(shape,), coercer=array)#.tag(typer=list)
+    return Typed(ndarray, args=(shape,))
+
+def Complex(default=0.0+0.0j):
+    return Coerced(complex, (default,))
 
 def ODict(default=None):
     if default is None:

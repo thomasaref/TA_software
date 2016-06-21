@@ -26,6 +26,6 @@ from .agent import Operative, Spy, Agent
 
 from .shower import shower
 
-from .universal import sqze, cap_case, read_text, write_text, Array, do_nothing, pass_factory, msg
+from .universal import sqze, cap_case, read_text, write_text, Array, Complex, do_nothing, pass_factory, msg
 
 from .log import log_debug, log_info, log_warning
