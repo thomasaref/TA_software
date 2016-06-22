@@ -24,29 +24,32 @@ class IDT(Rho):
     #main_params=["K2", "Dvv"] #"ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct",
     #            "material", "Dvv", "K2", "vf", "epsinf"]
 
-    def _observe_ft(self, change):
-        if change["type"]=="update":
-            self.ft_mult=None
-            self.Ga0_mult=None
-            self.Ct_mult=None
-            self.mu_mult=None
-
-    @t_property(dictify={"single" : 1.694**2, "double" : (1.247*sqrt(2))**2}) #{"single":2.87, "double":3.11}
-    def Ga0_mult(self, ft):
-        return get_tag(self, "Ga0_mult", "dictify")[ft]
-
-    @t_property(dictify={ "single" : 1.0, "double" : sqrt(2)})
-    def Ct_mult(self, ft):
-        return get_tag(self, "Ct_mult", "dictify")[ft]
-
-    @t_property()
-    def mu_mult(self, ft):
-        return {"single" : 1.694, "double" : 1.247}[ft]
+    Ga0_mult=SProperty().tag(desc="single: 2.87=1.694^2, double: 3.11=(1.247*sqrt(2))^2")
+    @Ga0_mult.getter
+    def _get_Ga0_mult(self, f, f0, ft_mult, eta, epsinf, ft):
+        alpha=self._get_alpha(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf)
+        if ft=="single":
+            return alpha**2
+        return (alpha*2.0*cos(pi*f/(4.0*f0)))**2
 
     couple_mult=SProperty().tag(desc="single: 0.71775. double: 0.54995")
     @couple_mult.getter
-    def _get_couple_mult(self, Ga0_mult, Ct_mult):
-        return Ga0_mult/(4*Ct_mult)
+    def _get_couple_mult(self, f, f0, ft_mult, eta, epsinf, Ct_mult):
+        Ga0_mult=self._get_Ga0_mult(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf)
+        return Ga0_mult/(4.0*Ct_mult)
+
+    couple_factor=SProperty()
+    @couple_factor.getter
+    def _get_couple_factor(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
+        """coupling for one positive finger as function of frequency"""
+        couple_mult=self._get_couple_mult(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult)
+        return couple_mult*f0*K2*Np
+
+    couple_factor0=SProperty()
+    @couple_factor0.getter
+    def _get_couple_factor0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
+        """coupling at center frequency, in Hz (2 pi removed)"""
+        return self._get_couple_factor(f=f0, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
 
     Np=Float(9).tag(desc="\# of finger pairs", low=0.5, tex_str=r"$N_p$", label="\# of finger pairs")
 
@@ -79,34 +82,29 @@ class IDT(Rho):
 
     Ga0=SProperty().tag(desc="Conductance at center frequency")
     @Ga0.getter
-    def _get_Ga0(self, Ga0_mult, f0, epsinf, W, Dvv, Np):
+    def _get_Ga0(self, f0, ft_mult, eta, epsinf, ft, W, Dvv, Np):
         """Ga0 from morgan"""
-        return Ga0_mult*2*pi*f0*epsinf*W*Dvv*(Np**2)
-
-    Ga0div2C=SProperty()
-    @Ga0div2C.getter
-    def _get_Ga0div2C(self, couple_mult, f0, K2, Np):
-        """coupling at center frequency, in Hz (2 pi removed)"""
-        return couple_mult*f0*K2*Np
+        Ga0_mult=self._get_Ga0_mult(f=f0, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, ft=ft)
+        return Ga0_mult*2.0*pi*f0*epsinf*W*Dvv*(Np**2)
 
     X=SProperty()
     @X.getter
     def _get_X(self, Np, f, f0):
-        """standard frequency dependence"""
+        """standard normalized frequency dependence"""
         return Np*pi*(f-f0)/f0
 
     couple_type=Enum("sinc^2", "giant atom", "df giant atom", "full expr", "full sum")
 
     coupling=SProperty().tag(desc="""Coupling adjusted by sinc sq""", unit="GHz", tex_str=r"$G_f$")
     @coupling.getter
-    def _get_coupling(self, f, couple_mult, f0, K2, Np, eta, ft_mult, N_legendre, Ct_mult):
-        if self.couple_type=="full sum":
+    def _get_coupling(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
+        if self.couple_type=="full sum" or self.S_type=="RAM":
             return self.get_fix("coupling", f)
         gX=self._get_X(Np=Np, f=f, f0=f0)
+        gamma=self._get_couple_factor(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         if self.couple_type=="full expr":
-            ele_f=self._get_alpha(f, f0, eta, ft_mult, N_legendre)
-            return f0*K2*Np/(4*Ct_mult)*(ele_f*2*cos(pi*f/(4*f0))*(1.0/Np)*sin(gX)/sin(gX/Np))**2
-        gamma0=self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+            return gamma*((1.0/Np)*sin(gX)/sin(gX/Np))**2
+        gamma0=self._get_couple_factor(f=f0, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         if self.couple_type=="giant atom":
             return gamma0*(1.0/Np*sin(gX)/sin(gX/Np))**2
         elif self.couple_type=="df giant atom":
@@ -116,13 +114,14 @@ class IDT(Rho):
     def fixed_reset(self):
         """resets fixed properties in proper order"""
         super(IDT, self).fixed_reset()
+        self.get_member("fixed_RAM_P").reset(self)
         self.get_member("fixed_X").reset(self)
         self.get_member("fixed_Asum").reset(self)
         self.get_member("fixed_coupling").reset(self)
         self.get_member("fixed_Lamb_shift").reset(self)
         self.get_member("fixed_Ga").reset(self)
         self.get_member("fixed_Ba").reset(self)
-        self.get_member("fixed_S11").reset(self)
+        self.get_member("fixed_S").reset(self)
 
     @private_property
     def fixed_X(self):
@@ -137,18 +136,21 @@ class IDT(Rho):
 
     @private_property
     def fixed_coupling(self):
+        if self.S_type=="RAM":
+            return self.fixed_RAM_P[1]/(2.0*self.C)/(2.0*pi)
         gamma0=self.f0*self.K2*self.Np/(4*self.Ct_mult)
         if self.couple_type=="full sum":
             return gamma0*(self.fixed_alpha)**2*absolute(self.fixed_Asum)**2
-        f, X, Np, f0=self.fixed_freq, self.fixed_X, self.Np, self.f0
+        f, X, Np=self.fixed_freq, self.fixed_X, self.Np
+        gamma=self._get_couple_factor(f=f)
         if self.couple_type=="full expr":
-            ele_f=self.fixed_alpha
-            return gamma0*(ele_f*2*cos(pi*f/(4*f0))*(1.0/Np)*sin(X)/sin(X/Np))**2
+            return gamma*((1.0/Np)*sin(X)/sin(X/Np))**2
+        gamma0=self._get_couple_factor(f=f0)
         if self.couple_type=="giant atom":
-            return self.Ga0div2C*(1.0/Np*sin(X)/sin(X/Np))**2
+            return gamma0*(1.0/Np*sin(X)/sin(X/Np))**2
         elif self.couple_type=="df giant atom":
-            return self.Ga0div2C*(sqrt(2.0)*cos(pi*f/(4*f0))*1.0/Np*sin(X)/sin(X/Np))**2
-        return self.Ga0div2C*(sin(X)/X)**2.0
+            return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*1.0/Np*sin(X)/sin(X/Np))**2
+        return gamma0*(sin(X)/X)**2.0
 
     dloss1=Float(0.0)
     dloss2=Float(0.0)
@@ -180,54 +182,86 @@ class IDT(Rho):
 
     @private_property
     def fixed_Lamb_shift(self):
+        if self.S_type=="RAM":
+            return -self.fixed_RAM_P[2]/(2.0*self.C)/(2.0*pi)
         if self.Lamb_shift_type=="formula":
             X, Np=self.fixed_X, self.Np
+            gamma0=self._get_couple_factor(f=f0)
             if self.couple_type=="sinc^2":
-                return -self.Ga0div2C*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+                return -gamma0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
             if self.couple_type=="giant atom":
-                return self.Ga0div2C*(1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
+                return gamma0*(1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
         return imag(hilbert(self.fixed_coupling))
 
     max_coupling=SProperty().tag(desc="""Coupling at IDT center frequency""", unit="GHz",
                      label="Coupling at center frequency", tex_str=r"$\gamma_{f0}$")
     @max_coupling.getter
-    def _get_max_coupling(self, couple_mult, f0, K2, Np, eta, ft_mult, N_legendre, Ct_mult):
-        return self._get_coupling(f=f0+0.0001, couple_mult=couple_mult, f0=f0,
-                K2=K2, Np=Np, eta=eta, ft_mult=ft_mult, N_legendre=N_legendre, Ct_mult=Ct_mult)
+    def _get_max_coupling(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
+        return self._get_coupling(f=f0+0.001, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
 
     Lamb_shift_type=Enum("hilbert", "formula")
 
     Lamb_shift=SProperty().tag(desc="""Lamb shift""", unit="GHz", tex_str=r"$G_f$")
     @Lamb_shift.getter
-    def _get_Lamb_shift(self, f, couple_mult, f0, K2, Np, eta, ft_mult, N_legendre, Ct_mult):
+    def _get_Lamb_shift(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
         """returns Lamb shift"""
+        if self.couple_type=="full sum" or self.S_type=="RAM":
+            return self.get_fix("Lamb_shift", f)
         if self.Lamb_shift_type=="formula":
-            gamma0=self._get_Ga0div2C(couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+            gamma0=self._get_couple_factor(f=f0, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
             gX=self._get_X(Np=Np, f=f, f0=f0)
             if self.couple_type=="sinc^2":
                 return -gamma0*(sin(2.0*gX)-2.0*gX)/(2.0*gX**2.0)
             if self.couple_type=="giant atom":
                 return gamma0*(1.0/Np)**2*2*(Np*sin(2*gX/Np)-sin(2*gX))/(2*(1-cos(2*gX/Np)))
-        if self.couple_type=="full sum":
-            return self.get_fix("Lamb_shift", f)
         yp=imag(hilbert(self._get_coupling(f=self.fixed_freq, couple_mult=couple_mult, f0=f0,
                 K2=K2, Np=Np, eta=eta, ft_mult=ft_mult, N_legendre=N_legendre, Ct_mult=Ct_mult)))
         return interp(f, self.fixed_freq, yp)
 
-    ZL=Float(50.0)
-    ZL_imag=Float(0.0)
-    GL=Float(1/50.0)
+    #ZL=Float(50.0)
+    #ZL_imag=Float(0.0)
+    #GL=Float(1/50.0)
     dL=Float(0.0)
-    YL=Float(1.0/50.0)
+    YL=Complex(1.0/50.0)
 
-    S_type=Enum("simple", "RAM")
+    S_type=Enum("simple", "simpleP", "RAM")
 
     @private_property
     def fixed_S(self):
-        P=self.fixed_P
+        if self.S_type=="simple":
+            return self._get_simple_S(f=self.fixed_freq)
+        P=self.fixed_P[0]
         return self.PtoS(*P, YL=self.YL)
 
+    simple_S=SProperty().tag(sub=True)
+    @simple_S.getter
+    def _get_simple_S(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C, YL):
+        Ga=self._get_Ga(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        Ba=self._get_Ba(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        w=2*pi*f
+        P33plusYL=Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL+YL
+        S11=S22=Ga/P33plusYL
+        S13=S23=S32=S31=1.0j*sqrt(2.0*Ga*GL)/P33plusYL
+        S33=(YL-Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL)/P33plusYL
+        return (S11, S12, S13,
+                S21, S22, S23,
+                S31, S32, S33)
 
+    simple_P=SProperty().tag(sub=True)
+    @simple_P.getter
+    def _get_simple_P(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C, YL):
+        Ga=self._get_Ga(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        Ba=self._get_Ba(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        w=2*pi*f
+        P33plusYL=Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL+YL
+        P11=P22=0.0
+        P12=P21=exp(-1.0j*k*L)
+        S11=S22=Ga/P33plusYL
+        S13=S23=S32=S31=1.0j*sqrt(2.0*Ga*GL)/P33plusYL
+        S33=(YL-Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL)/P33plusYL
+        return (S11, S12, S13,
+                S21, S22, S23,
+                S31, S32, S33)
     def PtoS(self, P11, P12, P13,
              P21, P22, P23,
              P31, P32, P33, YL=1/50.0):
@@ -246,7 +280,6 @@ class IDT(Rho):
                  S21, S22, S23,
                  S31, S32, S33)
 
-
     rs=Complex()
 
     ts=SProperty()
@@ -259,9 +292,8 @@ class IDT(Rho):
     def _get_Gs(self, Dvv, epsinf):
         return Dvv/epsinf
 
-    RAM_P=SProperty().tag(sub=True)
-    @RAM_P.getter
-    def _get_RAM_P(self, f, f0, W, rs, Np, vf, Dvv, epsinf, alpha):
+    @log_func
+    def _get_RAM_P(self, f, f0, W, rs, Np, vf, Dvv, epsinf, alpha, Gs):
         """returns A^N, the matrix representing mechanical reflections and transmission"""
         rho=alpha*epsinf
         N=2*Np+2*(Np+1)
@@ -283,61 +315,38 @@ class IDT(Rho):
         D = -1.0j*rho*sqrt(w*W*Gs/2.0)
         B = matrix([(1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0), (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)])
 
-        P32=D*B*(A**2+A**3)*inv(eye(2)-A**4)*(eye(2)-A**(2*N_p+2))*matrix([[0],
-                                                                          [1.0/AN[1,1]]])[0] #geometric series
+        P32=D*(B*(A**2+A**3)*inv(eye(2)-A**4)*(eye(2)-A**(2*N_p+2))*matrix([[0],
+                                                                          [1.0/AN[1,1]]]))[0] #geometric series
         P13=P23=-P31/2.0=-P32/2.0
         Ga=2.0*absolute(P13)**2
-        Ba=hilbert(Ga)
+        Ba=imag(hilbert(Ga))
         P33=Ga+1.0j*Ba+1.0j*w*C
         return (P11, P12, P13,
                 P21, P22, P23,
-                P31, P32, P33)
+                P31, P32, P33), Ga, Ba
 
     @private_property
-    def
-    S11=SProperty()
-    @S11.getter
-    def _get_S11(self, f, couple_mult, f0, K2, Np, C, ZL):
-        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
-        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
-        w=2*pi*f
-        return Ga/(Ga+1j*Ba+1j*w*C+1.0/ZL)
-
-    @private_property
-    def fixed_S11(self):
-        f, Ga, Ba=self.fixed_freq, self.fixed_Ga, self.fixed_Ba
-        w=2*pi*f
-        C, ZL=self.C, self.ZL
-        return Ga/(Ga+1j*Ba+1j*w*C+1.0/ZL)
-
-    S13=SProperty()
-    @S13.getter
-    def _get_S13(self, f, couple_mult, f0, K2, Np, C, ZL, ZL_imag, GL, dL, eta):
-        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C, eta=eta)
-        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C, eta=eta)
-        w=2*pi*f
-        return 1j*sqrt(2*Ga*GL)/(Ga+1j*Ba+1j*w*C-1j/w*dL+1.0/ZL)
-
-    S33=SProperty()
-    @S33.getter
-    def _get_S33(self, f, couple_mult, f0, K2, Np, C, ZL, ZL_imag, GL, dL):
-        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
-        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
-        w=2*pi*f
-        return (Ga+1j*Ba+1j*w*C-1j/w*dL-1.0/ZL)/(Ga+1j*Ba+1j*w*C-1j/w*dL+1.0/ZL)
+    def fixed_P(self):
+        if self.S_type=="simpleP":
+            return self._get_simple_P()
+        if self.S_type=="RAM":
+            return self._get_RAM_P(f=self.fixed_freq, alpha=self.fixed_alpha)
 
     Ga=SProperty().tag(desc="Ga adjusted for frequency f")
     @Ga.getter
-    def _get_Ga(self, f, couple_mult, f0, K2, Np, C, eta):
-        return self._get_coupling(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, eta=eta)*2*C*2*pi
+    def _get_Ga(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
+        gamma=self._get_couple_factor(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        return gamma*2*C*2*pi
     @private_property
     def fixed_Ga(self):
         return self._get_Ga(f=self.fixed_freq)
 
     Ba=SProperty()
     @Ba.getter
-    def _get_Ba(self, f, couple_mult, f0, K2, Np, C, eta):
-        return -self._get_Lamb_shift(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, eta=eta)*2*C*2*pi
+    def _get_Ba(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
+        ls=self._get_Lamb_shift(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        return -ls*2*C*2*pi
+
     @private_property
     def fixed_Ba(self):
         return self._get_Ba(f=self.fixed_freq)
@@ -348,6 +357,8 @@ class IDT(Rho):
         with imports():
             from taref.saw.idt_e import IDT_View
         return IDT_View(idt=self)
+
+
 
 #from functools import wraps
 #

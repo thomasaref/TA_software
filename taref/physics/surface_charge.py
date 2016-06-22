@@ -8,7 +8,7 @@ Created on Sat Jun 11 15:43:08 2016
 from taref.physics.fundamentals import pi, eps0, sin, cos, linspace, real, fft, array, absolute, float64, imag, sqrt, int64
 from taref.physics.legendre import lgf, lgf_arr, Legendre
 from atom.api import Float, Typed, Enum, Int, Bool
-from taref.core.api import t_property, Agent, private_property, SProperty, log_func
+from taref.core.api import t_property, Agent, private_property, SProperty, log_func, get_tag
 from taref.plotter.api import line
 from scipy.signal import hann
 from scipy.fftpack import  rfft, irfft, ifft
@@ -60,6 +60,7 @@ class Rho(Agent):
     def _observe_ft(self, change):
         if change["type"]=="update":
             self.ft_mult=None
+            self.Ct_mult=None
 
     def _default_ft(self):
         return "double"
@@ -68,7 +69,15 @@ class Rho(Agent):
     def ft_mult(self, ft):
         return {"double" : 2.0, "single" : 1.0}[ft]
 
-    f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
+    @t_property(dictify={ "single" : 1.0, "double" : sqrt(2)})
+    def Ct_mult(self, ft):
+        return get_tag(self, "Ct_mult", "dictify")[ft]
+
+    f=Float().tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
+
+    def _default_f(self):
+        """default f is 1Hz off from f0"""
+        return self.f0#-1.0
 
     f0=Float(5.0000001e9).tag(unit="GHz", desc="Center frequency of IDT", reference="", tex_str=r"$f_0$", label="Center frequency")
 
@@ -150,7 +159,6 @@ class Rho(Agent):
     def fixed_freq(self):
         return linspace(self.fixed_freq_min, self.fixed_freq_max, self.N_fixed).astype(float64)
 
-
     N_fixed=Int(100000)
     fixed_freq_max=Float()
     fixed_freq_min=Float(0.01)
@@ -215,7 +223,7 @@ class Rho(Agent):
     def _get_fs(self, f, f0, ft_mult):
         return f/(2.0*ft_mult*f0)
 
-    alpha=SProperty()
+    alpha=SProperty().tag(desc="single : 1.694, double : 1.247")
     @alpha.getter
     def _get_alpha(self, f, f0, ft_mult, eta, epsinf):
         m=self._get_m(f=f, f0=f0, ft_mult=ft_mult)
@@ -231,9 +239,6 @@ class Rho(Agent):
     @private_property
     def surface_charge(self):
         return fft.fftshift(real(ifft(self.fixed_alpha)))
-        #Magcom*hann(len(Magcom)
-        #return fft.fftshift(fft.fftfreq(self.N_fixed, 1.0)), fft.fftshift(real(fft.ifft(self.fixed_alpha)))
-        #return real(fft.fftshift(fft.ifft(self.fixed_alpha)))#.astype(float64)
 
     @private_property
     def surface_voltage(self):
@@ -336,5 +341,11 @@ def surface_charge_plot2(pl="surface charge2", **kwargs):
     #pl.legend()
     return pl
 if __name__=="__main__":
+    rho=Rho()
+    rho.ft="single"
+    print rho.alpha
+    rho.ft="double"
+    print rho.alpha
+
     #element_factor_plot()#.show()
     surface_charge_plot().show()
