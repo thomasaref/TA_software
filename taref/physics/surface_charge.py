@@ -8,11 +8,17 @@ Created on Sat Jun 11 15:43:08 2016
 from taref.physics.fundamentals import pi, eps0, sin, cos, linspace, real, fft, array, absolute, float64, imag, sqrt, int64
 from taref.physics.legendre import lgf, lgf_arr, Legendre
 from atom.api import Float, Typed, Enum, Int, Bool
-from taref.core.api import t_property, Agent, private_property, SProperty, log_func, get_tag
-from taref.plotter.api import line
+from taref.core.api import t_property, Agent, private_property, SProperty, log_func, get_tag, log_callable
+from taref.plotter.api import line, Plotter
 from scipy.signal import hann
 from scipy.fftpack import  rfft, irfft, ifft
 from scipy.integrate import trapz, simps
+from collections import OrderedDict
+
+from enaml import imports
+with imports():
+    from taref.physics.surface_charge_e import SurfaceChargeView
+
 
 def alpha(f, f0, eta=0.5, ft_mult=1, Nmax=2000):
     """Fourier transform of charge for 1 positive finger IDT.
@@ -27,9 +33,10 @@ def alpha(f, f0, eta=0.5, ft_mult=1, Nmax=2000):
     return 2*sin(pi*s)/lgf_arr(-s, -cos(pieta), 0)*lgf_arr(m, cos(pieta))
 
 class Rho(Agent):
+    #current_plot=Typed(Plotter)
     base_name="rho"
 
-    material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz')
+    material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz').tag(show_value=False)
 
     def _default_material(self):
         return 'LiNbYZ'
@@ -44,6 +51,17 @@ class Rho(Agent):
     def Dvv(self, material):
         return {"STquartz" : 0.06e-2, 'GaAs' : 0.035e-2, 'LiNbYZ' : 2.4e-2,
                  'LiNb128' : 2.7e-2, 'LiNbYZX'  : 0.8e-2}[material]
+
+    K2=SProperty().tag(desc="coupling strength", unit="%", tex_str=r"K$^2$", expression=r"K$^2=2\Delta v/v$")
+    @K2.getter
+    def _get_K2(self, Dvv):
+        r"""Coupling strength. K$^2=2\Delta v/v$"""
+        return Dvv*2.0
+
+    @K2.setter
+    def _get_Dvv(self, K2):
+        """other coupling strength. free speed minus metal speed all over free speed"""
+        return K2/2.0
 
     @t_property(desc="speed of SAW on free surface", unit="m/s", tex_str=r"$v_f$", format_str=r"{0:.4g} m/s")
     def vf(self, material):
@@ -73,7 +91,7 @@ class Rho(Agent):
     def Ct_mult(self, ft):
         return get_tag(self, "Ct_mult", "dictify")[ft]
 
-    f=Float().tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
+    f=Float().tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured", unit="GHz")
 
     def _default_f(self):
         """default f is 1Hz off from f0"""
@@ -183,8 +201,9 @@ class Rho(Agent):
             if self.fixed_update:
                 self.fixed_reset()
 
-    fixed_update=Bool(False)
+    fixed_update=Bool(False).tag(desc="if True, changing eta will trigger an update of fixed values (slow computation)")
 
+    @log_callable()
     def fixed_reset(self):
         self.lgf1.Pv(0.0, -cos(pi*self.eta), 0)
         self.lgf2.Pv(self.fixed_freq_max/(2*self.ft_mult*self.f0), cos(pi*self.eta))
@@ -230,6 +249,11 @@ class Rho(Agent):
         s=self._get_s(f=f, f0=f0, ft_mult=ft_mult)
         return 2*sin(pi*s)/self.lgf1.Pv(-s)*self.lgf2.Pv(m)
 
+    alpha0=SProperty()
+    @alpha0.getter
+    def _get_alpha0(self, f0, ft_mult, eta, epsinf):
+        return self._get_alpha(f=f0, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf)
+
     @private_property
     def surface_x(self):
         fs=self._get_fs(f=self.fixed_freq)
@@ -246,6 +270,16 @@ class Rho(Agent):
         kCs=self._get_k(lbda)#*self.epsinf
         return fft.fftshift(real(fft.ifft(self.fixed_alpha/kCs))).astype(float64)
 
+    @private_property
+    def view_window(self):
+        return SurfaceChargeView(agent=self)
+
+    @private_property
+    def plot_func_dict(self):
+        return OrderedDict([("legendre test", dict(code=self.lgf1.lgf_test_plot)),
+                            ("element_factor_plot", dict(code=element_factor_plot, rho=self)),
+                            ("surface_charge_plot", dict(code=surface_charge_plot))])
+
 def test_plot(**kwargs):
     rho=Rho.process_kwargs(kwargs)
     rho.ft="single"
@@ -258,9 +292,9 @@ def test_plot(**kwargs):
     return pl
 #test_plot().show()
 
-
 def element_factor_plot(pl="element_factor", **kwargs):
     rho=Rho.process_kwargs(kwargs)
+    temp_ft=rho.ft
     rho.ft="single"
     f=linspace(0.0, 500e9, 10000)
     print "start plot"
@@ -272,11 +306,12 @@ def element_factor_plot(pl="element_factor", **kwargs):
     pl.ylabel="element factor"
     pl.set_ylim(-1.0, 2.0)
     pl.legend()
+    rho.ft=temp_ft
     return pl
 
 def surface_charge_plot(pl="surface charge", **kwargs):
     rho=Rho.process_kwargs(kwargs)
-    rho.ft="single" #"double"
+    #rho.ft="single" #"double"
     #charge=real(fft.fftshift(fft.ifft(rho.fixed_alpha)))#.astype(float64)
     print rho.a, rho.g
     #print rho.surface_charge.dtype
@@ -342,6 +377,10 @@ def surface_charge_plot2(pl="surface charge2", **kwargs):
     return pl
 if __name__=="__main__":
     rho=Rho()
+    print dir(rho)
+    print rho.members().keys()
+    rho.show()
+
     rho.ft="single"
     print rho.alpha
     rho.ft="double"

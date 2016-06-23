@@ -60,9 +60,9 @@ enamldef ReadOnlyVar(Var):
 
 def rdonly(vmodel, vname):
     member=vmodel.get_member(vname)
-    if type(member) is ReadOnly:
+    if isinstance(member, ReadOnly):
         return True
-    elif type(member) is Property:
+    elif isinstance(member, Property):
         if member.fset is None:
             return True
     return get_tag(vmodel, vname, "read_only", False)
@@ -104,7 +104,7 @@ enamldef MultilineVar(Var):
 enamldef BoolExt(CheckButton):
     read_only = rdonly(parent.vmodel, parent.vname)
     value := parent.vvalue
-    mapping = get_tag(parent.vmodel, parent.vname, {})
+    mapping = get_tag(parent.vmodel, parent.vname, "mapping", {})
     #True_text=get_map(parent.vmodel, parent.vname, True)
     #False_text=get_map(parent.vmodel, parent.vname, False)
 

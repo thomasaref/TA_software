@@ -5,11 +5,11 @@ Created on Sat Jun 11 14:01:26 2016
 @author: thomasaref
 """
 
-from atom.api import Float, Int, Atom, Bool, cached_property, Value
+from atom.api import Float, Int, Atom, Bool, Value
 from numpy import append, interp, absolute, linspace, array
 from taref.plotter.api import line, scatter
 from scipy.special import legendre
-
+from taref.core.api import private_property
 
 def lgf(v, x, Nmax=2000, threshold=1.0e-5):
     """Series expression for Legendre function. Assumes |x|<1 and has problems converging for large v"""
@@ -25,11 +25,9 @@ def lgf(v, x, Nmax=2000, threshold=1.0e-5):
 def lgf_fixed(x, Nmult=0, eval_neg=False, Nspacing=2001, Nmax=2000, threshold=1.0e-5):
     """uses recurrence relation and interpolation to expand range of Legendre function evaluation by multiples of Nmult.
     Evaulates negative Nmult symmetrically if eval_neg is True"""
-    print Nspacing, eval_neg, Nmult
     v_arr=linspace(-1.0, 1.0, Nspacing)
     lgf_fix=array([lgf(v, x, Nmax, threshold) for v in v_arr])
     for n in range(Nmult):
-        #print n
         v=linspace(n+1.0, n+2.0, 1001)
         lgf1=interp(v-1.0, v_arr, lgf_fix)
         lgf2=interp(v-2.0, v_arr, lgf_fix)
@@ -80,7 +78,7 @@ class Legendre(Atom):
             kwargs["Nmult"]=kwargs.pop("Nmult", self.calc_Nmult(v))
         super(Legendre, self).__init__(**kwargs)
 
-    @cached_property
+    @private_property
     def fixed_leg(self):
         if self.x is None:
             raise Exception("x not set!")
@@ -89,7 +87,31 @@ class Legendre(Atom):
     def fixed_reset(self):
         self.get_member("fixed_leg").reset(self)
 
+    def lgf_test_plot(self, pl="legendre", **kwargs):
+        """test plot of legendre functions to legendre polynomials using Legendre class"""
+        nu_max=30
+        v_arr=linspace(-1.0, nu_max, 1000)
+        print "start plot"
+        pl=line(v_arr, self.Pv(v_arr, 0.0), pl=pl, color="blue", linewidth=0.5, label=r"$P_{\nu}(0)$")[0]
+        line(v_arr, self.Pv(v_arr, 0.25), pl=pl, color="red", linewidth=0.5, label=r"$P_{\nu}(0.25)$")
+        line(v_arr, self.Pv(v_arr, 0.5), pl=pl, color="green", linewidth=0.5, label=r"$P_{\nu}(0.5)$")
+        line(v_arr, self.Pv(v_arr, 0.75), pl=pl, color="purple", linewidth=0.5, label=r"$P_{\nu}(0.75)$")
+        print "stop plot"
+        if 1:
+            for nu in range(nu_max):
+                scatter(array([nu]), array([legendre(nu)(0.0)]), pl=pl, color="blue")
+                scatter(array([nu]), array([legendre(nu)(0.25)]), pl=pl, color="red")
+                scatter(array([nu]), array([legendre(nu)(0.5)]), pl=pl, color="green")
+                scatter(array([nu]), array([legendre(nu)(0.75)]), pl=pl, color="purple")
+
+            pl.xlabel=r"$\nu$"
+            pl.ylabel=r"$P_{\nu}(x)$"
+            pl.legend()
+            pl.set_ylim(-0.75, 1.5)
+        return pl
+
 def lgf_plot(pl="legendre", **kwargs):
+    """test plot of legendre functions compared to legendre polynomials"""
     nu_max=30
     v_arr=linspace(-1.0, nu_max, 1000)
     print "start plot"
@@ -112,6 +134,7 @@ def lgf_plot(pl="legendre", **kwargs):
     return pl
 
 def lgf_plot2(pl="legendre", **kwargs):
+    """test plot of legendre functions to legendre polynomials using Legendre class"""
     lg=Legendre()
     nu_max=30
     v_arr=linspace(-1.0, nu_max, 1000)
@@ -136,5 +159,7 @@ def lgf_plot2(pl="legendre", **kwargs):
     return pl
 
 if __name__=="__main__":
+    from taref.core.api import shower
+    shower(Legendre())
     #lgf_plot()#.show()
     lgf_plot2().show()

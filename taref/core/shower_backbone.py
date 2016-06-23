@@ -6,7 +6,9 @@ Created on Mon Jan 25 22:39:58 2016
 """
 
 def get_view_window(obj, default_view, default_name="NO_NAME"):
-    view=getattr(obj, "view_window", default_view)
+    view=getattr(obj, "view_window", None)
+    if view is None:
+        view=default_view(agent=obj)
     view.name=getattr(obj, "name", default_name)
     if view.title=="":
         view.title=view.name

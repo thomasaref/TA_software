@@ -43,6 +43,7 @@ class ShowWindow(MainWindow):
 
     @cached_property
     def all_win_dict(self):
+        self.get_member("all_wins").reset(self)
         return dict([(w.name, w) for w in self.all_wins if w != self and w.name not in ("ipython", "log", "run_code")])
 
     @cached_property

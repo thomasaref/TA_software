@@ -9,7 +9,7 @@ from atom.api import Unicode, ContainerList, Float, Bool, Int, Typed, Instance, 
 from taref.core.backbone import Backbone
 from taref.core.atom_extension import set_log, check_initialized, set_tag, defaulter
 from taref.core.property import private_property, reset_properties
-from taref.core.threadsafe import safe_setattr
+from taref.core.threadsafe import safe_setattr, safe_call
 from taref.core.universal import name_generator
 from collections import OrderedDict
 from taref.core.shower import shower
@@ -125,6 +125,9 @@ class Operative(Backbone):
                     raise value
                 if hasattr(self, self.thread.name):
                     setattr(self, self.thread.name, value)
+                elif hasattr(value, "show"):
+                    safe_call(value.show)
+                    safe_call(self.chief_window.get_member("agent_win_dict").reset, self.chief_window)
             finally:
                 if self.thread_list!=[]:
                     self.start_thread()
@@ -132,6 +135,7 @@ class Operative(Backbone):
                     self.busy=False
                     self.thread=None
                     self.abort=False
+            return value
 
     def start_thread(self):
         """starts first thread in thread_list and sets busy to true"""
@@ -199,11 +203,12 @@ class Operative(Backbone):
 
     run_func_dict=OrderedDict()
 
-    def add_func(self, *funcs):
+    @classmethod
+    def add_func(cls, *funcs):
         """Adds functions to run_func_dict. functions should be a classmethod, a staticmethod
         or a separate function that takes no arguments"""
         for func in funcs:
-            self.run_func_dict[func.func_name]=func
+            cls.run_func_dict[func.func_name]=func
 
     @private_property
     def cls_run_funcs(self):

@@ -46,8 +46,10 @@ def set_all_tags(obj, **kwargs):
 def get_tag(obj, name, key, none_value=None):
     """Shortcut to retrieve metadata from an Atom member which also returns a none_value if the metadata does not exist.
        This is an easy way to get a tag on a particular member and provide a default if it isn't there."""
-    #log_debug(name)
-    metadata=obj.get_member(name).metadata
+    member=obj.get_member(name)
+    if member is None:
+        raise Exception("{0} not in {1}!".format(name, obj.name))
+    metadata=member.metadata
     if metadata is None:
         return none_value
     return metadata.get(key, none_value)

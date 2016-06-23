@@ -69,17 +69,6 @@ class IDT(Rho):
         """reversing capacitance to extract eps infinity"""
         return C/(Ct_mult*W*Np)
 
-    K2=SProperty().tag(desc="coupling strength", unit="%", tex_str=r"K$^2$", expression=r"K$^2=2\Delta v/v$")
-    @K2.getter
-    def _get_K2(self, Dvv):
-        r"""Coupling strength. K$^2=2\Delta v/v$"""
-        return Dvv*2.0
-
-    @K2.setter
-    def _get_Dvv(self, K2):
-        """other coupling strength. free speed minus metal speed all over free speed"""
-        return K2/2.0
-
     Ga0=SProperty().tag(desc="Conductance at center frequency")
     @Ga0.getter
     def _get_Ga0(self, f0, ft_mult, eta, epsinf, ft, W, Dvv, Np):

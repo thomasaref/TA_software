@@ -5,10 +5,31 @@ Created on Mon Aug 24 12:38:54 2015
 @author: thomasaref
 """
 #from taref.core.log import f_top#, log_debug
-from taref.core.shower_backbone import get_view_window
+#from taref.core.shower_backbone import get_view_window
 from taref.core.backbone import Backbone
 from enaml import imports
 from enaml.qt.qt_application import QtApplication
+with imports():
+    from taref.core.agent_e import AutoAgentView
+#
+#def get_view_window(obj, default_name="NO_NAME"):
+#    view=getattr(obj, "view_window", None)
+#    if view is None:
+#        view=AutoAgentView(agent=obj)
+#    view.name=getattr(obj, "name", default_name)
+#    if view.title=="":
+#        view.title=view.name
+#    return view
+
+#def get_chief_window(obj, default_name="Show_Control"):
+#    view=getattr(obj, "chief_window", None)
+#    if view is None:
+#        view=Backbone.chief_window
+#    if view.name=="":
+#        view.name=default_name
+#    if view.title=="":
+#        view.title=view.name
+#    return view
 
 def shower(*agents, **kwargs):
     """A powerful showing function for any Atom object(s) specified in agents.
@@ -31,10 +52,14 @@ def shower(*agents, **kwargs):
         app = QtApplication()
         start_it=True
 
-    with imports():
-        from taref.core.agent_e import AutoAgentView
     for n, agent in enumerate(agents):
-        view=get_view_window(agent, AutoAgentView(agent=agent), "window_{0}".format(n))
+        #view=get_view_window(agent, default_name="window_{0}".format(n))
+        view=getattr(agent, "view_window", None)
+        if view is None:
+            view=AutoAgentView(agent=agent)
+        view.name=getattr(agent, "name", "window_{0}".format(n))
+        if view.title=="":
+            view.title=view.name
         view.show()
 
     if start_it:
