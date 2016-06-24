@@ -1,0 +1,130 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jan  5 01:08:32 2016
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import ScrollArea, MainWindow, VGroup, Form, Label, ObjectCombo, Notebook, Page, GroupBox, DockArea, DockItem, Container, PushButton
+from enaml.core.api import Looper, Conditional
+from enaml.layout.api import HSplitLayout, VSplitLayout, TabLayout, DockLayout, InsertItem, hbox, vbox, spacer, RetractItem, DockBarLayout
+
+from taref.core.fundcore_e import UnitIntField, aHGroup, aWindow, UnitFloatField, AgentWindow
+from taref.core.var_e import EnumVar, UnitFloatVar, UnitIntVar, UnitComplexVar
+from taref.core.instrview_e import DynVar, AgentLooper, InstrHolder, AgentVGroup, AgentForm
+from taref.physics.surface_charge_e import MaterialDockItem, FingerDockItem, AlphaDockItem, PlotDockItem, NumericDockItem
+
+
+enamldef PinnableDockItem(DockItem):
+    attr pinned : bool = False#self.proxy.widget.isPinned()
+    pinned :: self.proxy.widget.setPinned(pinned)
+    visible :: self.proxy.widget.setPinned(pinned)
+
+
+enamldef IDTDockItem(DockItem):
+    name = 'idt'
+    title = 'IDT Properties'
+    #pinned = True
+    VGroup:
+        attr vmodel = agent
+        AgentLooper:
+            iterable=( "Np", "W", "C", "X", "ef")
+
+enamldef ExtraIDTDockItem(DockItem):
+    name = 'extra_idt'
+    title = 'extra IDT Properties'
+    AgentVGroup:
+        vmodel = agent
+        iterable=("YL", "dloss1", "dloss2", "dL", "Gs")
+
+enamldef DerivedIDTDockItem(DockItem):
+    name = 'derived_idt'
+    title = 'Derived IDT Properties'
+    AgentVGroup:
+        vmodel = agent
+        iterable=("Ga0_mult", "couple_mult", "couple_factor", "couple_factor0", "Ga0", "X",
+                  "coupling", "Lamb_shift", "Ga", "Ba")
+
+enamldef TypeControlsDockItem(DockItem):
+    name = 'type_controls'
+    title = 'Type Controls'
+    VGroup:
+        #attr vmodel = agent
+        AgentVGroup:
+            vmodel = agent
+            iterable=("couple_type", "Lamb_shift_type", "S_type")
+        Conditional:
+            condition << agent.S_type =="RAM"
+            UnitComplexVar:
+                vmodel = agent
+                vname="rs"
+            UnitFloatVar:
+                vmodel = agent
+                vname="ts"
+
+#enamldef FingerDockItem(DockItem):
+#    name="finger"
+#    title = "Finger properties"
+#    Form:
+#            attr vmodel = agent
+#            AgentLooper:
+#                iterable=("ft", "eta", "ft_mult", "Ct_mult",
+#                          "f", "f0", "lbda", "lbda0", "k", "k0", "a", "g")
+#        Form:
+#            attr vmodel = agent
+#            UnitFloatVar:
+#                vname="f"
+#            UnitFloatVar:
+#                vname="f0"
+#            UnitFloatVar:
+#                vname="lbda"
+#            UnitFloatVar:
+#                vname="lbda0"
+#            UnitFloatVar:
+#                vname="k"
+#            UnitFloatVar:
+#                vname="k0"
+#            UnitFloatVar:
+#                vname="a"
+#            UnitFloatVar:
+#                vname="g"
+#
+
+
+#enamldef DerivedDockItem(DockItem):
+#    name="derived"
+#    title = "Derived properties"
+#    VGroup:
+#        attr vmodel = agent
+#        AgentLooper:
+#            iterable=("alpha0", "alpha", "fs", "m", "s")
+
+
+enamldef IDTDockArea(DockArea):
+    layout = VSplitLayout(HSplitLayout('plots', 'material', 'finger', "alpha"),
+                          HSplitLayout("type_controls", "idt", "extra_idt", "derived_idt"), "numeric")
+
+    MaterialDockItem:
+        pass
+    FingerDockItem:
+        pass
+    NumericDockItem:
+        pass
+    AlphaDockItem:
+        pass
+    PlotDockItem:
+        pass
+    IDTDockItem:
+        pass
+    DerivedIDTDockItem:
+        pass
+    ExtraIDTDockItem:
+        pass
+    TypeControlsDockItem:
+        pass
+
+enamldef IDTView(AgentWindow):
+    VGroup:
+        IDTDockArea:
+            pass
+

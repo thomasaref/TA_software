@@ -10,19 +10,25 @@ from taref.physics.fundamentals import sinc_sq, pi, eps0
 from taref.physics.legendre import lgf, lgf_arr#, lgf_fixed
 from taref.core.agent import Agent
 from atom.api import Float, Int, Enum, Value, Property, Typed
-from taref.core.api import private_property, get_tag, SProperty, log_func, t_property, s_property, sqze, Complex, Array, tag_callable
-from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, absolute, exp, ones, log10, fft, float64, int64, cumsum
+from taref.core.api import private_property, log_callable, get_tag, SProperty, log_func, t_property, s_property, sqze, Complex, Array, tag_callable
+from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, matrix, eye, absolute, exp, ones, log10, fft, float64, int64, cumsum
 #from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
+from numpy.linalg import inv
 from scipy.signal import hilbert
 from taref.plotter.api import line, Plotter, scatter
 from taref.physics.surface_charge import Rho
+from enaml import imports
+with imports():
+    from taref.physics.idt_e import IDTView
 
 
 class IDT(Rho):
     """Theoretical description of IDT"""
     base_name="IDT"
-    #main_params=["K2", "Dvv"] #"ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct",
-    #            "material", "Dvv", "K2", "vf", "epsinf"]
+
+    def _default_f(self):
+        """default f is 0.01Hz off from f0"""
+        return self.f0-0.01
 
     Ga0_mult=SProperty().tag(desc="single: 2.87=1.694^2, double: 3.11=(1.247*sqrt(2))^2")
     @Ga0_mult.getter
@@ -38,14 +44,14 @@ class IDT(Rho):
         Ga0_mult=self._get_Ga0_mult(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf)
         return Ga0_mult/(4.0*Ct_mult)
 
-    couple_factor=SProperty()
+    couple_factor=SProperty().tag(unit="GHz")
     @couple_factor.getter
     def _get_couple_factor(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
         """coupling for one positive finger as function of frequency"""
         couple_mult=self._get_couple_mult(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult)
         return couple_mult*f0*K2*Np
 
-    couple_factor0=SProperty()
+    couple_factor0=SProperty().tag(unit="GHz")
     @couple_factor0.getter
     def _get_couple_factor0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
         """coupling at center frequency, in Hz (2 pi removed)"""
@@ -100,6 +106,7 @@ class IDT(Rho):
             return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*1.0/Np*sin(gX)/sin(gX/Np))**2
         return gamma0*(sin(gX)/gX)**2.0
 
+    @log_callable()
     def fixed_reset(self):
         """resets fixed properties in proper order"""
         super(IDT, self).fixed_reset()
@@ -172,7 +179,7 @@ class IDT(Rho):
     @private_property
     def fixed_Lamb_shift(self):
         if self.S_type=="RAM":
-            return -self.fixed_RAM_P[2]/(2.0*self.C)/(2.0*pi)
+            return -self.fixed_P[2]/(2.0*self.C)/(2.0*pi)
         if self.Lamb_shift_type=="formula":
             X, Np=self.fixed_X, self.Np
             gamma0=self._get_couple_factor(f=f0)
@@ -203,8 +210,8 @@ class IDT(Rho):
                 return -gamma0*(sin(2.0*gX)-2.0*gX)/(2.0*gX**2.0)
             if self.couple_type=="giant atom":
                 return gamma0*(1.0/Np)**2*2*(Np*sin(2*gX/Np)-sin(2*gX))/(2*(1-cos(2*gX/Np)))
-        yp=imag(hilbert(self._get_coupling(f=self.fixed_freq, couple_mult=couple_mult, f0=f0,
-                K2=K2, Np=Np, eta=eta, ft_mult=ft_mult, N_legendre=N_legendre, Ct_mult=Ct_mult)))
+        cpl=self._get_coupling(f=self.fixed_freq, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        yp=imag(hilbert(cpl))
         return interp(f, self.fixed_freq, yp)
 
     #ZL=Float(50.0)
@@ -224,13 +231,17 @@ class IDT(Rho):
 
     simple_S=SProperty().tag(sub=True)
     @simple_S.getter
-    def _get_simple_S(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C, YL):
+    def _get_simple_S(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C, YL, dL, vf, L_IDT):
         Ga=self._get_Ga(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         Ba=self._get_Ba(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         w=2*pi*f
+        GL=real(YL)
+        k=2*pi*f/vf
+        jkL=1.0j*k*L_IDT
         P33plusYL=Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL+YL
-        S11=S22=Ga/P33plusYL
-        S13=S23=S32=S31=1.0j*sqrt(2.0*Ga*GL)/P33plusYL
+        S11=S22=-Ga/P33plusYL*exp(-jkL)
+        S12=S21=exp(-jkL)+S11
+        S13=S23=S32=S31=1.0j*sqrt(2.0*Ga*GL)/P33plusYL*exp(-jkL/2.0)
         S33=(YL-Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL)/P33plusYL
         return (S11, S12, S13,
                 S21, S22, S23,
@@ -238,19 +249,21 @@ class IDT(Rho):
 
     simple_P=SProperty().tag(sub=True)
     @simple_P.getter
-    def _get_simple_P(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C, YL):
+    def _get_simple_P(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C, dL, vf, L_IDT):
         Ga=self._get_Ga(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         Ba=self._get_Ba(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         w=2*pi*f
-        P33plusYL=Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL+YL
+        k=2*pi*f/vf
+        jkL=1.0j*k*L_IDT
         P11=P22=0.0
-        P12=P21=exp(-1.0j*k*L)
-        S11=S22=Ga/P33plusYL
-        S13=S23=S32=S31=1.0j*sqrt(2.0*Ga*GL)/P33plusYL
-        S33=(YL-Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL)/P33plusYL
-        return (S11, S12, S13,
-                S21, S22, S23,
-                S31, S32, S33)
+        P12=P21=exp(-jkL)
+        P13=P23= -1.0j*sqrt(Ga/2.0)
+        P31=P32=-2.0*P13
+        P33=Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL
+        return (P11, P12, P13,
+                P21, P22, P23,
+                P31, P32, P33)
+
     def PtoS(self, P11, P12, P13,
              P21, P22, P23,
              P31, P32, P33, YL=1/50.0):
@@ -274,42 +287,61 @@ class IDT(Rho):
     ts=SProperty()
     @ts.getter
     def _get_ts(self, rs):
-        return sqrt(1-absolute(rs)**2)
+        return sqrt(1.0-absolute(rs)**2)
 
     Gs=SProperty().tag(desc="Inglebrinsten's approximation of Gamma_s (Morgan)")
     @Gs.getter
     def _get_Gs(self, Dvv, epsinf):
         return Dvv/epsinf
 
+    Y0=SProperty().tag(desc="Datta's characteristic SAW impedance")
+    @Y0.getter
+    def _get_Y0(self, f, Dvv, epsinf, W):
+        return pi*f*W*epsinf/Dvv
+
+    L_IDT=SProperty().tag(desc="length of IDT", unit="um")
+    @L_IDT.getter
+    def _get_L_IDT(self, N_IDT, p):
+        return N_IDT*p
+
+    N_IDT=SProperty().tag(desc="total number of IDT fingers")
+    @N_IDT.getter
+    def _get_N_IDT(self, ft_mult, Np):
+        return ft_mult*Np+ft_mult*(Np+1)
+
     @log_func
-    def _get_RAM_P(self, f, f0, W, rs, Np, vf, Dvv, epsinf, alpha, Gs):
+    def _get_RAM_P(self, f, W, rs, Np, vf, Dvv, epsinf, alpha, C, p, N_IDT, ft):
         """returns A^N, the matrix representing mechanical reflections and transmission"""
-        rho=alpha*epsinf
-        N=2*Np+2*(Np+1)
-        w=2*pi*f
-        w0=2.0*pi*f0
-        lbda0=vf/f0
-        p=lbda0/4.0 #2*80.0e-9
+        #rho=alpha*Dvv #epsinf
+        Y0=self._get_Y0(f=f, Dvv=Dvv, epsinf=epsinf, W=W)
+        #N=2*Np+2*(Np+1)
+#        lbda0=vf/f0
+#        p=lbda0/4.0 #2*80.0e-9
         k=2*pi*f/vf
         ts = sqrt(1-absolute(rs)**2)
         A = 1.0/ts*matrix([[exp(-1.0j*k*p),       rs      ],
                            [-rs,             exp(1.0j*k*p)]])#.astype(complex128)
-        AN=A**N
+        AN=A**int(N_IDT)
         AN11, AN12, AN21, AN22= AN[0,0], AN[1,0], AN[0,1], AN[1,1]
 
         P11=-AN21/AN22
         P21=AN11-AN12*AN21/AN22
         P12=1.0/AN22
         P22=AN12/AN22
-        D = -1.0j*rho*sqrt(w*W*Gs/2.0)
+        D = -1.0j*alpha*Dvv*sqrt(Y0)
         B = matrix([(1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0), (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)])
 
-        P32=D*(B*(A**2+A**3)*inv(eye(2)-A**4)*(eye(2)-A**(2*N_p+2))*matrix([[0],
+        if ft=="single":
+            P32=D*(B*A*inv(eye(2)-A**2)*(eye(2)-A**(Np+1))*matrix([[0],
+                                                                   [1.0/AN[1,1]]]))[0] #geometric series
+        else:
+            P32=D*(B*(A**2+A**3)*inv(eye(2)-A**4)*(eye(2)-A**(2*Np+2))*matrix([[0],
                                                                           [1.0/AN[1,1]]]))[0] #geometric series
-        P13=P23=-P31/2.0=-P32/2.0
+        P31=P32
+        P13=P23=-P31/2.0
         Ga=2.0*absolute(P13)**2
         Ba=imag(hilbert(Ga))
-        P33=Ga+1.0j*Ba+1.0j*w*C
+        P33=Ga+1.0j*Ba+2.0j*pi*f*C
         return (P11, P12, P13,
                 P21, P22, P23,
                 P31, P32, P33), Ga, Ba
@@ -323,16 +355,17 @@ class IDT(Rho):
 
     Ga=SProperty().tag(desc="Ga adjusted for frequency f")
     @Ga.getter
-    def _get_Ga(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
+    def _get_Ga(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C):
         gamma=self._get_couple_factor(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         return gamma*2*C*2*pi
+
     @private_property
     def fixed_Ga(self):
         return self._get_Ga(f=self.fixed_freq)
 
     Ba=SProperty()
     @Ba.getter
-    def _get_Ba(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
+    def _get_Ba(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C):
         ls=self._get_Lamb_shift(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         return -ls*2*C*2*pi
 
@@ -341,11 +374,8 @@ class IDT(Rho):
         return self._get_Ba(f=self.fixed_freq)
 
     @private_property
-    def view_window2(self):
-        from enaml import imports
-        with imports():
-            from taref.saw.idt_e import IDT_View
-        return IDT_View(idt=self)
+    def view_window(self):
+        return IDTView(agent=self)
 
 
 
@@ -435,9 +465,9 @@ def surface_charge_plot2(pl="surface charge2", **kwargs):
     #pl.legend()
     return pl
 
-element_factor_plot()#.show()
-surface_charge_plot().show()
-surface_charge_plot2().show()
+#element_factor_plot()#.show()
+#surface_charge_plot().show()
+#surface_charge_plot2().show()
 
 def metallization_plot(pl="metalization", **kwargs):
     idt=idt_process(kwargs)
@@ -473,7 +503,7 @@ def metallization_couple(pl="metalization", **kwargs):
     line(frq/idt.f0, idt.get_fix("coupling", frq), plotter=pl, plot_name="0.4", color="green", linewidth=0.3, label="0.4", **kwargs)
     idt.eta=0.5
     return pl
-metallization_couple()#.show()
+#metallization_couple()#.show()
 def metallization_Lamb(pl="metalization", **kwargs):
     idt=idt_process(kwargs)
     frq=linspace(0e9, 10e9, 10000)
@@ -491,7 +521,7 @@ def metallization_Lamb(pl="metalization", **kwargs):
     line(frq/idt.f0, idt.get_fix("Lamb_shift", frq), plotter=pl, plot_name="0.4", color="green", linewidth=0.3, label="0.4", **kwargs)
     idt.eta=0.5
     return pl
-metallization_Lamb().show()
+#metallization_Lamb().show()
 
 def center_coupling_vs_eta(pl="f0_vs_eta", **kwargs):
     idt=idt_process(kwargs)
@@ -506,7 +536,7 @@ def center_coupling_vs_eta(pl="f0_vs_eta", **kwargs):
     line(eta, alpha, plotter=pl, color="green")
     return pl #line(eta, idt._get_alpha(f=3*idt.f0, eta=eta))[0]
 
-center_coupling_vs_eta().show()
+#center_coupling_vs_eta().show()
 
 def couple_comparison(pl="couple_compare", **kwargs):
     idt=idt_process(kwargs)
@@ -609,17 +639,17 @@ def formula_comparison(pl=None, **kwargs):
     line(frq, a._get_full_coupling(frq)/a.max_coupling, plotter=pl, color="green", linewidth=0.3)
     line(frq, a._get_full_Lamb_shift(frq)/a.max_coupling, plotter=pl, color="black", linewidth=0.3)
     return pl
+if 0:
+    idt=IDT()
+    element_factor_plot(idt=idt)#.show()
 
-idt=IDT()
-element_factor_plot(idt=idt)#.show()
+    Lamb_shift_comparison(idt=idt)
 
-Lamb_shift_comparison(idt=idt)
+    couple_comparison(idt=idt)#.show()
 
-couple_comparison(idt=idt)#.show()
+    fix_couple_comparison(idt=idt)#.show()
 
-fix_couple_comparison(idt=idt)#.show()
-
-Lamb_shift_check(idt=idt).show()
+    Lamb_shift_check(idt=idt).show()
 
 #formula_comparison()#.show()
 
@@ -636,6 +666,7 @@ if __name__=="__main__":
           #flux_factor=0.515, #0.2945, #0.52,
           #voltage=1.21,
           #offset=-0.07)
+    a.show()
     a.f=a.f0
     print a.fixed_polarity
     print a.alpha

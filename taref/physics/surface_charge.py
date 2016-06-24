@@ -33,7 +33,6 @@ def alpha(f, f0, eta=0.5, ft_mult=1, Nmax=2000):
     return 2*sin(pi*s)/lgf_arr(-s, -cos(pieta), 0)*lgf_arr(m, cos(pieta))
 
 class Rho(Agent):
-    #current_plot=Typed(Plotter)
     base_name="rho"
 
     material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz').tag(show_value=False)
@@ -172,6 +171,16 @@ class Rho(Agent):
     @a.setter
     def _get_lbda0_get_a(self, a, eta, ft_mult):
         return a/eta*2.0*ft_mult
+
+    p=SProperty().tag(desc="periodicity", unit="um")
+    @p.getter
+    def _get_p(self, a, g):
+        """periodicity from a and g"""
+        return a+g
+
+    @p.setter
+    def _get_lbda0_get_p(self, p, ft_mult):
+        return 2*ft_mult*p
 
     @private_property
     def fixed_freq(self):

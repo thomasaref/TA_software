@@ -13,7 +13,7 @@ from enaml.widgets.api import (Window, Container, HGroup, Label, CheckBox, Slide
 from enaml.layout.api import spacer
 from taref.core.atom_extension import get_tag, get_type, get_map, get_main_params
 from taref.core.callable import get_run_params
-from taref.core.fundcore_e import UnitIntField, UnitSpinBox, UnitFloatField, aHGroup, aVGroup, CheckButton
+from taref.core.fundcore_e import UnitIntField, UnitSpinBox, UnitFloatField, UnitComplexField, aHGroup, aVGroup, CheckButton
 from taref.core.universal import msg
 from atom.api import Property, ReadOnly
 from taref.physics.units import unitless
@@ -155,8 +155,6 @@ enamldef UnitSpinBoxExt(UnitSpinBox):
     show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", unit != unitless)
     minimum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'low', -2147483648))
     maximum=int(get_tag(parent.parent.vmodel, parent.parent.vname, 'high', 2147483647))
-    #display_unit=get_tag(parent.vmodel, parent.vname, "display_func", None)
-
 
 enamldef UnitSpinBoxVar(Var):
     alias ext
@@ -172,13 +170,25 @@ enamldef UnitFloatExt(UnitFloatField):
     minimum=None_passer(get_tag(parent.vmodel, parent.vname, 'low'), float)
     maximum=None_passer(get_tag(parent.vmodel, parent.vname, 'high'), float)
     read_only=rdonly(parent.parent.vmodel, parent.parent.vname)
-    #display_unit=get_tag(parent.vmodel, parent.vname, "display_unit", None)
 
 enamldef UnitFloatVar(Var):
     alias ext
     UnitFloatExt: ext:
         pass
 
+enamldef UnitComplexExt(UnitComplexField):
+    """extends Var for complex types"""
+    uvalue:=parent.vvalue
+    unit=get_tag(parent.vmodel, parent.vname, "unit", unitless)
+    show_uvalue=get_tag(parent.vmodel, parent.vname, "show_value", unit != unitless)
+    minimum=None_passer(get_tag(parent.vmodel, parent.vname, 'low'), float)
+    maximum=None_passer(get_tag(parent.vmodel, parent.vname, 'high'), float)
+    read_only=rdonly(parent.parent.vmodel, parent.parent.vname)
+
+enamldef UnitComplexVar(Var):
+    alias ext
+    UnitComplexExt: ext:
+        pass
 ################### RANGES #################################
 def get_minimum(obj, param):
     low=get_tag(obj, param, "low")
@@ -259,6 +269,14 @@ enamldef ListScrollVar(Var):
     ListScrollExt: pass
 
 ######################## ENUM ################################
+def check_map(obj, name):
+    """checks if Enum has a mapping"""
+    mapping=get_tag(obj, name, "mapping")
+    if mapping is None:
+        mapping_name=name+"_mapping"
+        return hasattr(obj, mapping_name)
+    return True
+
 enamldef EnumExt(aHGroup):
     """extends Var for Enum"""
     alias object_combo
@@ -267,7 +285,7 @@ enamldef EnumExt(aHGroup):
         items = list(parent.parent.vmodel.get_member(parent.parent.vname).items)
         selected := parent.parent.vvalue
     Label: label:
-        visible=get_tag(parent.parent.vmodel, parent.parent.vname, "show_value", True)
+        visible=get_tag(parent.parent.vmodel, parent.parent.vname, "show_value", True) and check_map(parent.parent.vmodel, parent.parent.vname)
         text <<  unicode(get_map(parent.parent.vmodel, parent.parent.vname, parent.parent.vvalue))
 
 enamldef EnumVar(Var):

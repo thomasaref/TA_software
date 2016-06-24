@@ -11,7 +11,7 @@ Runtime also seem slightly better as standalone functions than as an extended cl
 
 from atom.api import Coerced, Enum, Float, Int, Unicode, List, Dict, Str, ContainerList
 from numpy import shape, ndarray
-from taref.core.log import log_info, log_debug
+from taref.core.log import log_info#, log_debug
 
 _MAPPING_SUFFIX_="_mapping"
 

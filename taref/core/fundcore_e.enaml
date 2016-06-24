@@ -9,9 +9,10 @@ A core collection of enamldefs including units for ints and floats and non-padde
 from enaml.widgets.api import  ( HGroup, Container, GroupBox,  Field, Label, SpinBox,
                                 MultilineField, VGroup, ScrollArea, Window, MainWindow, PushButton)
 from enaml.core.api import Conditional
-from enaml.validator import IntValidator, FloatValidator
+from enaml.validator import IntValidator, FloatValidator, Validator
 from enaml.layout.api import spacer
 from taref.physics.units import unit_func, unitless
+from atom.api import Typed, Bool
 
 enamldef aWindow(Window):
     """a Window that is not destroyed on close"""
@@ -72,38 +73,124 @@ enamldef BottomMultilineField(MultilineField):
         vsb=self.proxy.widget.verticalScrollBar()
         vsb.setSliderPosition(vsb.maximum())
 
+enamldef ValidatedField(Field):
+    text :: parent.uvalue=utype(text)
+    activated::
+        if not validator.validate(text):
+            if parent.minimum is None:
+                if parent.maximum is None:
+                    parent.uvalue=utype(0)
+                else:
+                    parent.uvalue=utype(parent.maximum)
+            else:
+                parent.uvalue=utype(parent.minimum)
+
+enamldef FloatValidatedField(ValidatedField):
+    attr utype = float
+    text << "{0:g}".format(parent.uvalue)
+    validator<<FloatValidator(minimum=parent.minimum, maximum=parent.maximum, allow_exponent=parent.allow_exponent)
+
+enamldef IntValidatedField(ValidatedField):
+    attr utype = int
+    text << unicode(utype(parent.uvalue))
+    validator<< IntValidator(base=parent.base, minimum=parent.minimum, maximum=parent.maximum)
+
+class ComplexValidator(Validator):
+    """ A Validator which handles complex input.
+    This validator ensures that the text represents a complex
+    number within a specified range.
+    """
+    #: The minimum value allowed, inclusive, or None if
+    #: there is no lower bound. Minimum comparison is done using abs
+    minimum = Typed(complex)
+
+    #: The maximum value allowed, inclusive, or None if
+    #: there is no upper bound. Maximum comparison is done using abs
+    maximum = Typed(complex)
+
+    #: Whether or not to allow exponents like '1e6' in the input.
+    allow_exponent = Bool(True)
+
+    def validate(self, text):
+        """ Validates the given text matches the complex range.
+        Parameters
+        ----------
+        text : unicode
+            The unicode text edited by the client widget.
+        Returns
+        -------
+        result : bool
+            True if the text is valid, False otherwise.
+        """
+        try:
+            value = complex(text)
+        except ValueError:
+            return False
+        minimum = self.minimum
+        if minimum is not None and abs(value) < abs(minimum):
+            return False
+        maximum = self.maximum
+        if maximum is not None and abs(value) > abs(maximum):
+            return False
+        if not self.allow_exponent and 'e' in text.lower():
+            return False
+        return True
+
+enamldef ComplexValidatedField(ValidatedField):
+    attr utype = complex
+    text << "{0:g}".format(parent.uvalue)
+    validator<<ComplexValidator(minimum=parent.minimum, maximum=parent.maximum, allow_exponent=parent.allow_exponent)
+
+
+enamldef UnitConditional(Conditional):
+    """a Conditional used to show units"""
+    Conditional:
+        condition = show_uvalue
+        Label:
+            text << "{0} ({1:g} {2})".format(unit.output_unit, uvalue/unit, unit.unit)
+
 enamldef UnitHGroup(aHGroup):
     """shared structure between UnitIntField and UnitFloatField"""
     attr minimum = None
     attr maximum = None
     attr unit  = unitless
     attr show_uvalue : bool = unit!=unitless
-
-    alias unit_field
-    alias read_only : unit_field.read_only
-    Field: unit_field:
-        pass
-    Conditional:
-        condition = show_uvalue
-        Label:
-            text << "{0} ({1:g} {2})".format(unit.output_unit, uvalue/unit, unit.unit)
+    #alias unit_field
+    #alias read_only : unit_field.read_only
+    #Field: unit_field:
+    #    pass
+    #UnitConditional:
+    #    pass
+    #Conditional:
+    #    condition = show_uvalue
+    #    Label:
+    #        text << "{0} ({1:g} {2})".format(unit.output_unit, uvalue/unit, unit.unit)
 
 enamldef UnitIntField(UnitHGroup):
     """ A field that only accept integer inputs and normalizes them by a unit factor"""
     attr uvalue = 0
     attr base=10
-    unit_field.validator<< IntValidator(base=base, minimum=minimum, maximum=maximum)
-    unit_field.text << unicode(int(uvalue))
-    unit_field.text :: parent.uvalue=int(text)
-    unit_field.activated::
-        if not validator.validate(text):
-            if parent.minimum is None:
-                if parent.maximum is None:
-                    parent.uvalue=0
-                else:
-                    parent.uvalue=int(parent.maximum)
-            else:
-                parent.uvalue=int(parent.minimum)
+    alias unit_field
+    alias read_only : unit_field.read_only
+    IntValidatedField: unit_field:
+        pass
+    UnitConditional:
+        pass
+
+    #unit_field.validator<< IntValidator(base=base, minimum=minimum, maximum=maximum)
+    #unit_field.text << unicode(int(uvalue))
+    #unit_field.text :: parent.uvalue=int(text)
+    #unit_field.activated::
+    #    if not validator.validate(text):
+    #        if parent.minimum is None:
+    #            if parent.maximum is None:
+    #                parent.uvalue=0
+    #            else:
+    #                parent.uvalue=int(parent.maximum)
+    #        else:
+    #            parent.uvalue=int(parent.minimum)
+    #UnitConditional:
+    #    pass
 
 enamldef UnitSpinBox(aHGroup):
     """A SpinBox for integers with units"""
@@ -115,28 +202,106 @@ enamldef UnitSpinBox(aHGroup):
     SpinBox: sb:
         value << int(uvalue)
         value :: parent.uvalue=int(value)
-    Conditional:
-        condition = show_uvalue
-        Label:
-            text << "{0} ({1:g} {2})".format(unit.output_unit, uvalue/unit, unit.unit)
+    UnitConditional:
+        pass
+    #Conditional:
+    #    condition = show_uvalue
+    #    Label:
+    #        text << "{0} ({1:g} {2})".format(unit.output_unit, uvalue/unit, unit.unit)
 
 
 enamldef UnitFloatField(UnitHGroup):
     """a field for floats with units"""
     attr allow_exponent : bool = True
     attr uvalue : float = 0.0
-    unit_field.validator<<FloatValidator(minimum=minimum, maximum=maximum, allow_exponent=allow_exponent)
-    unit_field.text << "{0:g}".format(uvalue)
-    unit_field.text :: parent.uvalue=float(text)
-    unit_field.activated::
-        if not validator.validate(text):
-            if parent.minimum is None:
-                if parent.maximum is None:
-                    parent.uvalue=0.0
-                else:
-                    parent.uvalue=parent.maximum
-            else:
-                parent.uvalue=parent.minimum
+    alias unit_field
+    alias read_only : unit_field.read_only
+    FloatValidatedField: unit_field:
+        pass
+    UnitConditional:
+        pass
+
+    #unit_field.validator<<FloatValidator(minimum=minimum, maximum=maximum, allow_exponent=allow_exponent)
+    #unit_field.text << "{0:g}".format(uvalue)
+    #unit_field.text :: parent.uvalue=float(text)
+    #unit_field.activated::
+    #    if not validator.validate(text):
+    #        if parent.minimum is None:
+    #            if parent.maximum is None:
+    #                parent.uvalue=0.0
+    #            else:
+    #                parent.uvalue=parent.maximum
+    #        else:
+    #            parent.uvalue=parent.minimum
+
+enamldef UnitComplexField(UnitHGroup):
+    """a field for floats with units"""
+    attr allow_exponent : bool = True
+    attr uvalue : complex = 0.0+0.0j
+    alias unit_field
+    alias read_only : unit_field.read_only
+    ComplexValidatedField: unit_field:
+        pass
+    UnitConditional:
+        pass
+#
+#
+#enamldef UnitComplexField(aHGroup):
+#    """A FloatField for complex numbers with units"""
+#    attr uvalue : complex = 0.0+0.0j
+#    attr unit  = unitless
+#    attr show_uvalue : bool = unit!=unitless
+#    attr minimum = None
+#    attr maximum = None
+#    attr allow_exponent : bool = True
+#
+#    unit_field.validator<<FloatValidator(minimum=minimum, maximum=maximum, allow_exponent=allow_exponent)
+#    unit_field.text << "{0:g}".format(uvalue)
+#    unit_field.text :: parent.uvalue=float(text)
+#    unit_field.activated::
+#        if not validator.validate(text):
+#            if parent.minimum is None:
+#                if parent.maximum is None:
+#                    parent.uvalue=0.0
+#                else:
+#                    parent.uvalue=parent.maximum
+#            else:
+#                parent.uvalue=parent.minimum
+#
+#    alias real_field
+#    alias imag_field
+#    attr read_only
+#    FloatValidatedField: real_field:
+#        pass
+#    Label:
+#        text = " + j"
+#    FloatValidatedField: imag_field:
+#        pass
+#    UnitConditional:
+#        pass
+#    #Conditional:
+#    #    condition = show_uvalue
+#    #    Label:
+#    #        text << "{0} ({1:g} {2})".format(unit.output_unit, uvalue/unit, unit.unit)
+#
+
+#enamldef UnitFloatField(UnitHGroup):
+#    """a field for floats with units"""
+#    attr uvalue : float = 0.0
+#    unit_field.validator<<FloatValidator(minimum=minimum, maximum=maximum, allow_exponent=allow_exponent)
+#    unit_field.text << "{0:g}".format(uvalue)
+#    unit_field.text :: parent.uvalue=float(text)
+#    unit_field.activated::
+#        if not validator.validate(text):
+#            if parent.minimum is None:
+#                if parent.maximum is None:
+#                    parent.uvalue=0.0
+#                else:
+#                    parent.uvalue=parent.maximum
+#            else:
+#                parent.uvalue=parent.minimum
+
+
 
 ################ test window ###################
 from taref.physics.units import GHz, dBm, mW

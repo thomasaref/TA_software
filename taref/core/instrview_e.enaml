@@ -7,10 +7,10 @@ Created on Wed Jan 27 21:41:24 2016
 import enaml.qt #work around for Qdate error. import order
 #from taref.core.usertemps_e import UserInstrView
 from enaml.core.api import Conditional, DynamicTemplate, Looper
-from enaml.widgets.api import VGroup, PushButton, Container, GroupBox, Label
+from enaml.widgets.api import VGroup, PushButton, Container, GroupBox, Label, Form, ScrollArea
 from taref.core.var_e import Var, EnumExt
 from taref.core.typedview_e import TypedView
-from taref.core.fundcore_e import aHGroup
+from taref.core.fundcore_e import aHGroup, aVGroup
 from atom.api import Callable, Typed, Instance
 from taref.core.atom_extension import get_type, get_tag, set_tag, get_main_params
 from taref.core.callable import get_run_params
@@ -50,6 +50,29 @@ enamldef InstrHolder(VGroup):
         args=(getattr(vmodel, "view", AgentLooper),)
         #data=dict(iterable=get_main_params(vmodel))
 
+enamldef AgentVGroup(VGroup):
+    alias iterable:al.iterable
+    alias vmodel:al.vmodel
+    #VGroup:
+    #    alias vmodel:al.vmodel
+    AgentLooper: al:
+        pass
+
+enamldef AgentHGroup(ScrollArea):
+    alias iterable:al.iterable
+    alias vmodel:al.vmodel
+    aHGroup:
+        alias vmodel:al.vmodel
+        AgentLooper: al:
+            pass
+
+enamldef AgentForm(Form):
+    alias iterable:al.iterable
+    alias vmodel:al.vmodel
+    #Form:
+    #    alias vmodel:al.vmodel
+    AgentLooper: al:
+            pass
 
 ########################## CALLABLE ###############################
 enamldef CallableExt(aHGroup):

@@ -13,7 +13,7 @@ from taref.core.callable import get_run_params
 from atom.api import Bool, Int, Typed, List, Coerced, Enum, Callable, Float, Str, Unicode, Range, FloatRange, Instance, Property
 from taref.core.universal import msg
 from numpy import ndarray
-from taref.core.var_e import (Var, VarVGroup, FieldExt, MultilineExt, BoolExt, CheckBoxExt, UnitIntFieldExt, UnitSpinBoxExt, UnitRangeExt, UnitFloatExt, UnitFloatRangeExt, EnumExt)
+from taref.core.var_e import (Var, VarVGroup, FieldExt, MultilineExt, BoolExt, CheckBoxExt, UnitIntFieldExt, UnitSpinBoxExt, UnitRangeExt, UnitFloatExt, UnitComplexExt, UnitFloatRangeExt, EnumExt)
 from taref.core.fundcore_e import aHGroup, aVGroup
 from taref.physics.units import unitless
 
@@ -91,6 +91,11 @@ template TypedView(AttrType : Float, spec):
 template TypedView(AttrType : float, spec):
     """SpinBox template for Int types"""
     TypedView(Float, spec): pass
+
+##################### complex ########################################
+template TypedView(AttrType : complex, spec):
+    """Default template for complex types"""
+    UnitComplexExt: pass
 
 #################### COERCED ######################################
 enamldef CoercedExt(DynamicTemplate):
