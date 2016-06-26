@@ -106,11 +106,11 @@ class IDT(Rho):
             return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*1.0/Np*sin(gX)/sin(gX/Np))**2
         return gamma0*(sin(gX)/gX)**2.0
 
-    @log_callable()
+    #@log_callable()
     def fixed_reset(self):
         """resets fixed properties in proper order"""
         super(IDT, self).fixed_reset()
-        self.get_member("fixed_RAM_P").reset(self)
+        self.get_member("fixed_P").reset(self)
         self.get_member("fixed_X").reset(self)
         self.get_member("fixed_Asum").reset(self)
         self.get_member("fixed_coupling").reset(self)
@@ -133,7 +133,7 @@ class IDT(Rho):
     @private_property
     def fixed_coupling(self):
         if self.S_type=="RAM":
-            return self.fixed_RAM_P[1]/(2.0*self.C)/(2.0*pi)
+            return self.fixed_P[1]/(2.0*self.C)/(2.0*pi)
         gamma0=self.f0*self.K2*self.Np/(4*self.Ct_mult)
         if self.couple_type=="full sum":
             return gamma0*(self.fixed_alpha)**2*absolute(self.fixed_Asum)**2
@@ -262,7 +262,7 @@ class IDT(Rho):
         P33=Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL
         return (P11, P12, P13,
                 P21, P22, P23,
-                P31, P32, P33)
+                P31, P32, P33), Ga, Ba
 
     def PtoS(self, P11, P12, P13,
              P21, P22, P23,
@@ -361,6 +361,7 @@ class IDT(Rho):
 
     @private_property
     def fixed_Ga(self):
+        return self.fixed_P[1]
         return self._get_Ga(f=self.fixed_freq)
 
     Ba=SProperty()
@@ -371,6 +372,7 @@ class IDT(Rho):
 
     @private_property
     def fixed_Ba(self):
+        return self.fixed_P[2]
         return self._get_Ba(f=self.fixed_freq)
 
     @private_property
@@ -666,6 +668,7 @@ if __name__=="__main__":
           #flux_factor=0.515, #0.2945, #0.52,
           #voltage=1.21,
           #offset=-0.07)
+    a.fixed_reset()
     a.show()
     a.f=a.f0
     print a.fixed_polarity

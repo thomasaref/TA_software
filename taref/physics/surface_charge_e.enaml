@@ -9,26 +9,32 @@ from enaml.widgets.api import MainWindow, VGroup, Form, Label, ObjectCombo, Note
 from enaml.core.api import Looper
 from taref.core.fundcore_e import UnitIntField, aHGroup, aWindow, UnitFloatField, AgentWindow
 from taref.core.var_e import EnumVar, UnitFloatVar, UnitIntVar
-from taref.core.instrview_e import DynVar, AgentLooper
+from taref.core.instrview_e import DynVar, AgentLooper, AgentVGroup
 
 from enaml.layout.api import HSplitLayout, VSplitLayout, TabLayout, InsertItem, hbox, vbox, spacer
 
 enamldef MaterialDockItem(DockItem):
     name = 'material'
     title = 'Material Properties'
-    VGroup:
-        attr vmodel = agent
-        AgentLooper:
-            iterable=("material", "vf", "Dvv", "K2", "epsinf")
+    AgentVGroup:
+        vmodel = agent
+        iterable=("material", "vf", "Dvv", "K2", "epsinf")
 
 enamldef FingerDockItem(DockItem):
     name="finger"
     title = "Finger properties"
-    Form:
-            attr vmodel = agent
-            AgentLooper:
-                iterable=("ft", "eta", "ft_mult", "Ct_mult",
-                          "f", "f0", "lbda", "lbda0", "k", "k0", "a", "g")
+    AgentVGroup:
+        vmodel = agent
+        iterable=("ft", "eta", "ft_mult", "Ct_mult", "a", "g")#,
+#                  "f", "f0", "lbda", "lbda0", "k", "k0")
+
+enamldef FrequencyDockItem(DockItem):
+    name="frequency"
+    title = "Frequency"
+    AgentVGroup:
+        vmodel = agent
+        iterable=("f", "f0", "lbda", "lbda0", "k", "k0")
+
 #        Form:
 #            attr vmodel = agent
 #            UnitFloatVar:
@@ -50,21 +56,12 @@ enamldef FingerDockItem(DockItem):
 #
 
 
-#enamldef DerivedDockItem(DockItem):
-#    name="derived"
-#    title = "Derived properties"
-#    VGroup:
-#        attr vmodel = agent
-#        AgentLooper:
-#            iterable=("alpha0", "alpha", "fs", "m", "s")
-
 enamldef AlphaDockItem(DockItem):
     name="alpha"
     title = "FT Surface charge"
-    VGroup:
-        attr vmodel = agent
-        AgentLooper:
-            iterable=("alpha0", "alpha", "fs", "m", "s")
+    AgentVGroup:
+        vmodel = agent
+        iterable=("alpha0", "alpha", "fs", "m", "s")
 
 enamldef PlotDockItem(DockItem):
     name="plots"
@@ -77,32 +74,32 @@ enamldef PlotDockItem(DockItem):
                 clicked ::
                     agent.add_thread(loop_item, **agent.plot_func_dict[loop_item])
                 enabled << agent.busy != True #getattr(agent.thread, "name", None) != loop_item #busy != True
-                    #agent.current_plot.show()
-
-
+    
 enamldef NumericDockItem(DockItem):
     name="numeric"
     title = "Numeric controls"
     aHGroup:
-        VGroup:
-            attr vmodel = agent
-            AgentLooper:
-                iterable=("N_fixed", "fixed_freq_min", "fixed_freq_max", "fixed_update", "fixed_reset")
-        VGroup:
-            attr vmodel = agent
-            AgentLooper:
-                iterable=("lgf1",)
-        VGroup:
-            attr vmodel = agent
-            AgentLooper:
-                iterable=("lgf2",)
+        AgentVGroup:
+            vmodel = agent
+            iterable=("N_fixed", "fixed_freq_min", "fixed_freq_max", "fixed_update")
+            PushButton:
+                clicked :: agent.fixed_reset()
+                text = "fixed reset"
+        AgentVGroup:
+            vmodel = agent
+            iterable=("lgf1",)
+        AgentVGroup:
+            vmodel = agent
+            iterable=("lgf2",)
 
 enamldef SurfaceChargeDockArea(DockArea):
-    layout = VSplitLayout(HSplitLayout('plots', 'material', 'finger', "alpha"), "numeric")
+    layout = VSplitLayout(HSplitLayout('plots', 'material', 'finger', "frequency", "alpha"), "numeric")
 
     MaterialDockItem:
         pass
     FingerDockItem:
+        pass
+    FrequencyDockItem:
         pass
     NumericDockItem:
         pass

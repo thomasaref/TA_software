@@ -212,7 +212,7 @@ class Rho(Agent):
 
     fixed_update=Bool(False).tag(desc="if True, changing eta will trigger an update of fixed values (slow computation)")
 
-    @log_callable()
+    #@log_callable()
     def fixed_reset(self):
         self.lgf1.Pv(0.0, -cos(pi*self.eta), 0)
         self.lgf2.Pv(self.fixed_freq_max/(2*self.ft_mult*self.f0), cos(pi*self.eta))
