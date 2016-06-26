@@ -10,7 +10,7 @@ from enaml.core.api import Looper
 from taref.core.fundcore_e import UnitIntField, aHGroup, aWindow, UnitFloatField, AgentWindow
 from taref.core.var_e import EnumVar, UnitFloatVar, UnitIntVar
 from taref.core.instrview_e import DynVar, AgentLooper, AgentVGroup
-
+from taref.core.agent_e import BasicView
 from enaml.layout.api import HSplitLayout, VSplitLayout, TabLayout, InsertItem, hbox, vbox, spacer
 
 enamldef MaterialDockItem(DockItem):
@@ -35,33 +35,12 @@ enamldef FrequencyDockItem(DockItem):
         vmodel = agent
         iterable=("f", "f0", "lbda", "lbda0", "k", "k0")
 
-#        Form:
-#            attr vmodel = agent
-#            UnitFloatVar:
-#                vname="f"
-#            UnitFloatVar:
-#                vname="f0"
-#            UnitFloatVar:
-#                vname="lbda"
-#            UnitFloatVar:
-#                vname="lbda0"
-#            UnitFloatVar:
-#                vname="k"
-#            UnitFloatVar:
-#                vname="k0"
-#            UnitFloatVar:
-#                vname="a"
-#            UnitFloatVar:
-#                vname="g"
-#
-
-
 enamldef AlphaDockItem(DockItem):
     name="alpha"
     title = "FT Surface charge"
     AgentVGroup:
         vmodel = agent
-        iterable=("alpha0", "alpha", "fs", "m", "s")
+        iterable=("alpha0", "alpha", "fs", "m", "s", "p")
 
 enamldef PlotDockItem(DockItem):
     name="plots"
@@ -72,9 +51,9 @@ enamldef PlotDockItem(DockItem):
             PushButton:
                 text = loop_item
                 clicked ::
-                    agent.add_thread(loop_item, **agent.plot_func_dict[loop_item])
+                    agent.add_thread(loop_item+"_thread", **agent.plot_func_dict[loop_item])
                 enabled << agent.busy != True #getattr(agent.thread, "name", None) != loop_item #busy != True
-    
+
 enamldef NumericDockItem(DockItem):
     name="numeric"
     title = "Numeric controls"
@@ -112,4 +91,28 @@ enamldef SurfaceChargeView(AgentWindow):
     VGroup:
         SurfaceChargeDockArea: nb:
             pass
+
+
+#enamldef PlotView(CoreView):
+#    """the most basic view controller of a collection of Atoms without a chief"""
+#    title="Show Control"
+#    Conditional:
+#        condition = getattr(chief_cls, "run_func_dict", {}) != {}
+#        VGroup:
+#            Looper:
+#                iterable=chief_cls.run_func_dict.keys()
+#                PushButton:
+#                    text = loop_item
+#                    clicked :: chief_cls.run_func_dict[loop_item]().show()
+            #PushButton:
+            #    text = "Test"
+            #    clicked ::
+            #        log_debug(sv.windows)
+            #        print set([win.name for win in sv.all_wins]
+            #        ).union(chief_cls.agent_dict.keys())
+            #        #print sv.agent_wins
+            #        print sv.all_wins
+            #        #print sv.other_wins
+            #       #chief.run_all()
+            #    tool_tip = "test button"
 

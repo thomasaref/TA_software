@@ -209,6 +209,8 @@ class Operative(Backbone):
         or a separate function that takes no arguments"""
         for func in funcs:
             cls.run_func_dict[func.func_name]=func
+        if len(funcs)>0:
+            return funcs[0]
 
     @private_property
     def cls_run_funcs(self):

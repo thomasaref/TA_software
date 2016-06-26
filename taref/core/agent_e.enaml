@@ -20,16 +20,13 @@ from taref.core.log import log_debug
 from taref.core.fundcore_e import AgentWindow, aHGroup
 from taref.core.atom_extension import get_all_tags, get_type
 
-#from taref.core.interactive import InteractiveWindow
-
-
 enamldef AutoAgentView(AgentWindow):
     """default view for an agent based on dynamic templating"""
     Container:
         ScrollArea:
             attr vmodel=parent.parent.agent
             InstrHolder:
-                pass #vmodel:=agent
+                pass
 
 class ShowWindow(MainWindow):
     """adds a list of other windows to a MainWindow and a property that determines if all are visible"""
@@ -60,11 +57,9 @@ class ShowWindow(MainWindow):
     def show_and_send_to_front(self, name, win):
         if win is None:
             agent=self.chief_cls.agent_dict.get(name, None)
-            #agent.get_member("view_window").reset(agent)
             win=get_view_window(agent, AutoAgentView(agent=agent))
         win.show()
         win.send_to_front()
-        #self.get_member("other_win_dict").reset(self)
 
 enamldef CoreWindow(ShowWindow): sv:
     """extends showWindow to close all windows when the core is closed and define chief_cls"""
@@ -75,7 +70,7 @@ enamldef CoreWindow(ShowWindow): sv:
         sv.get_member("all_wins").reset(sv)
         for w in sv.all_wins:
             w.close()
-            #w.destroy()
+            w.destroy()
 
 enamldef WindowToolBar(ToolBar):
     """a toolbar that lists all windows and links an action to showing them"""
@@ -219,6 +214,7 @@ enamldef CoreView(CoreWindow): cv:
         top_action.text="Other Windows"
         win_dict<<cv.other_win_dict
 
+
 enamldef BasicView(CoreView):
     """the most basic view controller of a collection of Atoms without a chief"""
     title="Show Control"
@@ -229,7 +225,11 @@ enamldef BasicView(CoreView):
                 iterable=chief_cls.run_func_dict.keys()
                 PushButton:
                     text = loop_item
-                    clicked :: chief_cls.run_func_dict[loop_item]()
+                    clicked ::
+                        #chief_cls.run_func_dict[loop_item]()
+                        chief_cls.add_thread(loop_item+"_thread", chief_cls.run_func_dict[loop_item])
+                    enabled << chief_cls.busy != True #getattr(agent.thread, "name", None) != loop_item #busy != True
+
             PushButton:
                 text = "Test"
                 clicked ::

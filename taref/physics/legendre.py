@@ -87,7 +87,7 @@ class Legendre(Atom):
     def fixed_reset(self):
         self.get_member("fixed_leg").reset(self)
 
-    def lgf_test_plot(self, pl="legendre", **kwargs):
+    def lgf_test_plot(self, pl="lgf test", **kwargs):
         """test plot of legendre functions to legendre polynomials using Legendre class"""
         nu_max=30
         v_arr=linspace(-1.0, nu_max, 1000)

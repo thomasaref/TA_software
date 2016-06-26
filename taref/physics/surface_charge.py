@@ -35,7 +35,7 @@ def alpha(f, f0, eta=0.5, ft_mult=1, Nmax=2000):
 class Rho(Agent):
     base_name="rho"
 
-    material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz').tag(show_value=False)
+    material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz')
 
     def _default_material(self):
         return 'LiNbYZ'
@@ -72,7 +72,7 @@ class Rho(Agent):
         return {"STquartz" : 5.6*eps0, 'GaAs' : 1.2e-10, 'LiNbYZ' : 46.0*eps0,
                  'LiNb128' : 56.0*eps0, 'LiNbYZX' : 46.0*eps0}[material]
 
-    ft=Enum("double", "single").tag(desc="finger type of IDT", label="Finger type", show_value=False)
+    ft=Enum("double", "single").tag(desc="finger type of IDT", label="Finger type")
 
     def _observe_ft(self, change):
         if change["type"]=="update":
@@ -186,12 +186,12 @@ class Rho(Agent):
     def fixed_freq(self):
         return linspace(self.fixed_freq_min, self.fixed_freq_max, self.N_fixed).astype(float64)
 
-    N_fixed=Int(100000)
+    N_fixed=Int(10000)
     fixed_freq_max=Float()
     fixed_freq_min=Float(0.01)
 
     def _default_fixed_freq_max(self):
-        return 200.0*self.f0
+        return 20.0*self.f0
 
     def _default_fixed_freq_min(self):
         return 0.01*self.f0
@@ -218,6 +218,9 @@ class Rho(Agent):
         self.lgf2.Pv(self.fixed_freq_max/(2*self.ft_mult*self.f0), cos(pi*self.eta))
         self.get_member("fixed_freq").reset(self)
         self.get_member("fixed_alpha").reset(self)
+        self.get_member("surface_x").reset(self)
+        self.get_member("surface_charge").reset(self)
+        self.get_member("surface_voltage").reset(self)
 
     @private_property
     def fixed_alpha(self):
@@ -271,7 +274,7 @@ class Rho(Agent):
 
     @private_property
     def surface_charge(self):
-        return fft.fftshift(real(ifft(self.fixed_alpha)))
+        return fft.fftshift(real(ifft(self.fixed_alpha*self.epsinf)))
 
     @private_property
     def surface_voltage(self):
@@ -286,8 +289,40 @@ class Rho(Agent):
     @private_property
     def plot_func_dict(self):
         return OrderedDict([("legendre test", dict(code=self.lgf1.lgf_test_plot)),
-                            ("element_factor_plot", dict(code=element_factor_plot, rho=self)),
-                            ("surface_charge_plot", dict(code=surface_charge_plot))])
+                            ("plot_alpha", dict(code=self.plot_alpha)),
+                            ("plot surface charge", dict(code=self.plot_surface_charge)),
+                            ("plot surface voltage", dict(code=self.plot_surface_voltage)),
+                            ])
+
+    def plot_alpha(self, pl=None, **kwargs):
+        if pl is None:
+            pl="alpha_"+self.name
+        f, alpha=self.fixed_freq, self.fixed_alpha
+        pl, pf=line(f/self.f0, alpha, plotter=pl, plot_name=self.name, color="blue", label=self.name, **kwargs)
+        pl.xlabel="frequency/center frequency"
+        pl.ylabel="element factor"
+        pl.set_ylim(-1.0, 2.0)
+        return pl
+
+    def plot_surface_charge(self, pl=None, **kwargs):
+        if pl is None:
+            pl="surface_charge_"+self.name
+        x, charge=self.surface_x, self.surface_charge
+        pl, pf=line(x, charge, plotter=pl, plot_name=self.name, color="blue", label=self.name, **kwargs)
+        pl.xlabel="x/center wavelength"
+        pl.ylabel="surface charge"
+        #pl.set_ylim(-1.0, 2.0)
+        return pl
+
+    def plot_surface_voltage(self, pl=None, **kwargs):
+        if pl is None:
+            pl="surface_voltage_"+self.name
+        x, voltage=self.surface_x, self.surface_voltage
+        pl, pf=line(x, voltage, plotter=pl, plot_name=self.name, color="blue", label=self.name, **kwargs)
+        pl.xlabel="x/center wavelength"
+        pl.ylabel="surface voltage"
+        #pl.set_ylim(-1.0, 2.0)
+        return pl
 
 def test_plot(**kwargs):
     rho=Rho.process_kwargs(kwargs)
@@ -301,9 +336,9 @@ def test_plot(**kwargs):
     return pl
 #test_plot().show()
 
+@Rho.add_func
 def element_factor_plot(pl="element_factor", **kwargs):
     rho=Rho.process_kwargs(kwargs)
-    temp_ft=rho.ft
     rho.ft="single"
     f=linspace(0.0, 500e9, 10000)
     print "start plot"
@@ -315,9 +350,26 @@ def element_factor_plot(pl="element_factor", **kwargs):
     pl.ylabel="element factor"
     pl.set_ylim(-1.0, 2.0)
     pl.legend()
-    rho.ft=temp_ft
     return pl
 
+@Rho.add_func
+def metallization_plot(pl="metalization", **kwargs):
+    rho=Rho.process_kwargs(kwargs)
+    rho.eta=0.5
+    rho.ft="single"
+    pl=line(rho.fixed_freq/rho.f0, rho.fixed_alpha, plotter=pl, plot_name="0.5", color="blue", label="0.5", **kwargs)[0]
+    rho.eta=0.75
+    rho.fixed_reset()
+    line(rho.fixed_freq/rho.f0, rho.fixed_alpha, plotter=pl, plot_name="0.6", color="red", label="0.6", **kwargs)
+    rho.eta=0.25
+    rho.fixed_reset()
+    line(rho.fixed_freq/rho.f0, rho.fixed_alpha, plotter=pl, plot_name="0.4", color="green", label="0.4", **kwargs)
+    pl.set_xlim(0.0, 20.0)
+    pl.set_ylim(-2.0, 2.0)
+    pl.legend()
+    return pl
+
+@Rho.add_func
 def surface_charge_plot(pl="surface charge", **kwargs):
     rho=Rho.process_kwargs(kwargs)
     #rho.ft="single" #"double"
