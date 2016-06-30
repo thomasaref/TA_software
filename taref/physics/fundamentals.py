@@ -14,6 +14,11 @@ from numpy import (sin, fft, cos, sqrt, exp, empty, mean, exp, log10, arange, ar
                    absolute, dtype, angle, amin, amax, linspace, zeros, shape, interp, real, imag, float64, int64)
 from numpy.linalg import eig
 
+def bgsub2D(arr, start_ind=0, stop_ind=1, axis=0):
+    if axis==0:
+        return arr-mean(arr[start_ind:stop_ind,:], axis=0, keepdims=True)
+    return arr-mean(arr[:, start_ind:stop_ind], axis=1, keepdims=True)
+
 def zero_arr(x):
     return zeros(shape(x))
 

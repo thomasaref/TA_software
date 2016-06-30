@@ -9,20 +9,27 @@ from taref.core.api import Agent, Array, tag_property, log_debug, s_property
 from taref.filer.read_file import Read_HDF5
 from taref.physics.qdt import QDT
 from taref.physics.fitting_functions import fano, lorentzian, refl_lorentzian, full_fano_fit, full_fit, lorentzian2
-from taref.physics.filtering import fft_filter5, hann_ifft, fft_filter2, fft_filter3, filt_prep
+from taref.physics.filtering import fft_filter5, hann_ifft, fft_filter2, fft_filter3, filt_prep, window_ifft
 from taref.plotter.api import line, colormesh, scatter, Plotter
 from atom.api import Float, Typed, Unicode, Int, Callable, Enum, List
 from h5py import File
 from numpy import pi, append, angle, cos, sin, unwrap, arccos, float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin, sqrt
 from scipy.optimize import leastsq, curve_fit
 from taref.physics.qdt import QDT
+from taref.physics.fundamentals import bgsub2D
+from functools import wraps
 
-def plots(func):
-    def plot_func(self, pl=None, *args, **kwargs):
-        if pl is None:
-            pl=Plotter(fig_width=kwargs.pop("fig_width", 9.0), fig_height=kwargs.pop("fig_height", 6.0))
-        return func(self, pl=pl, *args, **kwargs)
-    return plot_func
+class plots(object):
+    def __init__(self, pl=None):
+        self.pl=pl
+
+    def __call__(self, func):
+        @wraps(func)
+        def plot_func(self, pl=None, *args, **kwargs):
+            if pl is None:
+                pl=Plotter(fig_width=kwargs.pop("fig_width", 9.0), fig_height=kwargs.pop("fig_height", 6.0))
+            return func(self, pl=pl, *args, **kwargs)
+        return plot_func
 
 class LyzerBase(Agent):
     #qdt=QDT()
@@ -60,22 +67,26 @@ def read_data(self):
         fstep=f["Traces"]['RS VNA - S21_t0dt'][0][1]
         sm=shape(Magvec)[0]
         sy=shape(data)
-        print sy
+        #print sy
         s=(sm, sy[0], 1)#sy[2])
         Magcom=Magvec[:,0, :]+1j*Magvec[:,1, :]
         Magcom=reshape(Magcom, s, order="F")
         self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
-        self.Magcom=squeeze(Magcom)
+        self.MagcomData=squeeze(Magcom)
         self.stop_ind=len(self.yoko)-1
 
 class Lyzer(LyzerBase):
     base_name="lyzer"
 
+    filter_type=Enum("None", "Boxcar", "Hann", "FIR", "Fit")
+    bgsub_type=Enum("None", "Complex", "MagAbs", "MagdB")
+    fit_type=Enum("fq", "yoko")
+
     frequency=Array().tag(unit="GHz", plot=True, label="Frequency", sub=True)
     yoko=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
     #pwr=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
     #frq2=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
-    Magcom=Array().tag(sub=True)
+    MagcomData=Array().tag(sub=True, desc="raw data in compex form")
     probe_pwr=Float().tag(label="Probe power", read_only=True, display_unit="dBm/mW")
 
     on_res_ind=Int()
@@ -95,10 +106,13 @@ class Lyzer(LyzerBase):
     def filt_end_ind(self):
         return self.filt_center+self.filt_halfwidth#-1
 
+    bgsub_start_ind=Int(0)
+    bgsub_stop_ind=Int(1)
+    bgsub_axis=Int(1)
+
     fit_func=Callable(lorentzian).tag(private=True)
     read_data=Callable(read_data).tag(sub=True)
 
-    fit_type=Enum("fq", "yoko")
 
     @tag_property(plot=True, sub=True)
     def fq(self):
@@ -113,10 +127,6 @@ class Lyzer(LyzerBase):
     def voltage_from_flux_par(self):
         Ej=self.qdt._get_Ej_get_fq(fq=self.ls_f)
         flux_d_flux0=self.qdt._get_flux_over_flux0_get_Ej(Ej=Ej)
-        #flux_d_flux0=arccos(Ej/Ejmax)#-pi/2
-        #flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax))
-        #flux_d_flux0=append(flux_d_flux0, -arccos(Ej/Ejmax)+pi)
-        #flux_d_flux0=append(flux_d_flux0, arccos(Ej/Ejmax)-pi)
         return self.qdt._get_voltage(flux_over_flux0=flux_d_flux0, offset=self.offset, flux_factor=self.flux_factor)
 
 
@@ -149,7 +159,7 @@ class Lyzer(LyzerBase):
         #return [range(81, 120+1), range(137, 260+1), range(269, 320+1), range(411, 449+1)]#, [490]]#, [186]]
 
     def fft_filter(self, n):
-        myifft=fft.ifft(self.Magcom[:,n])
+        myifft=fft.ifft(self.MagcomData[:,n])
         myifft[self.filt_end_ind:-self.filt_end_ind]=0.0
         if self.filt_start_ind!=0:
             myifft[:self.filt_start_ind]=0.0
@@ -158,28 +168,66 @@ class Lyzer(LyzerBase):
 
     @tag_property(plot=True, sub=True)
     def MagdB(self):
+        if self.bgsub_type=="MagdB":
+            return self.bgsub(10.0*log10(absolute(self.Magcom)))
         return 10.0*log10(self.MagAbs)
+
+    def bgsub(self, arr):
+        return bgsub2D(arr, self.bgsub_start_ind, self.bgsub_stop_ind, self.bgsub_axis)
 
     @tag_property(plot=True, sub=True)
     def MagAbs(self):
-        return absolute(self.Magcom)
+        if self.bgsub_type=="MagdB":
+            return 10.0**(self.MagdB/10.0)
+        magabs=absolute(self.Magcom)
+        if self.bgsub_type=="MagAbs":
+            return self.bgsub(magabs) #return  (magabs-magabs[:,0]).transpose()
+        return magabs
 
     @tag_property(plot=True, sub=True)
-    def MagAbsFilt(self):
-        return absolute(self.MagcomFilt)#.transpose()-absolute(self.MagcomFilt[:,0])).transpose()
+    def MagAbs_sq(self):
+        return (self.MagAbs)**2
 
     @tag_property(plot=True, sub=True)
-    def MagdBFilt(self):
-        return 10.0*log10(self.MagAbsFilt)
+    def Phase(self):
+        return angle(self.Magcom)
+
+    @tag_property(sub=True)
+    def Magcom(self):
+        self.get_member("MagAbs").reset(self)
+        self.get_member("MagAbs_sq").reset(self)
+        self.get_member("MagdB").reset(self)
+        self.get_member("Phase").reset(self)
+        if self.filter_type=="None":
+            Magcom=self.MagcomData
+        elif self.filter_type=="Fit":
+            Magcom=self.MagcomFit
+        else:
+            Magcom=self.MagcomFilt
+        if self.bgsub_type=="Complex":
+            return self.bgsub(Magcom) #(Magcom-Magcom[:,0]).transpose()
+        return Magcom
+
+    #@tag_property(plot=True, sub=True)
+    #def MagAbsFilt(self):
+    #    return absolute(self.MagcomFilt)#.transpose()-absolute(self.MagcomFilt[:,0])).transpose()
+
+    #@tag_property(plot=True, sub=True)
+    #def MagdBFilt(self):
+    #    return 10.0*log10(self.MagAbsFilt)
 
     @tag_property(plot=True, sub=True)
     def MagcomFilt(self):
+        if self.filter_type=="Boxcar":
+            pass
+        elif self.filter_type=="FIR":
+            pass
         #phase=angle(self.Magcom)
         #phasefilt=(phase.transpose()-phase[:,0]).transpose()
         #mc=absolute(self.Magcom)*(cos(phasefilt)+1j*sin(phasefilt))
 
         #return array([fft_filter4(self.Magcom[:,n], self.filt_center) for n in range(len(self.yoko))]).transpose()
-        return array([fft_filter3(self.Magcom[:,n], self.filt_start_ind, self.filt_end_ind) for n in range(len(self.yoko))]).transpose()
+        return array([fft_filter3(self.MagcomData[:,n], self.filt_start_ind, self.filt_end_ind) for n in range(len(self.yoko))]).transpose()
 
 
     @tag_property(sub=True)
@@ -188,40 +236,42 @@ class Lyzer(LyzerBase):
             return sqrt(array([self.fit_func(self.yoko, fp) for fp in self.fit_params]))
         return sqrt(array([self.fit_func(self.fq, fp) for fp in self.fit_params]))
 
-    @tag_property(sub=True)
-    def MagdBFit(self):
-        return 10*log10(self.MagAbsFit)
+    #@tag_property(sub=True)
+    #def MagdBFit(self):
+    #    return 10*log10(self.MagAbsFit)
 
     @tag_property(sub=True)
     def fit_params(self):
         return self.full_fano_fit(self.fq)
 
-    @plots
+    #@plots
     def widths_plot(self, pl=None):
         scatter(self.frequency[self.indices]/1e9, absolute([fp[0] for fp in self.fit_params]), plotter=pl)
         line(self.frequency/1e9, self.qdt._get_coupling(self.frequency), plotter=pl, color="red")
         return pl
 
-    @plots
+    #@plots
     def center_plot(self, pl=None):
         line(self.frequency[self.indices]/1e9, array([fp[1] for fp in self.fit_params]), plotter=pl)
         line(self.frequency/1e9, self.ls_f, plotter=pl, color="red", linewidth=1.0)
         return pl
 
-    @plots
+    #@plots
     def heights_plot(self, pl=None):
         pl, pf=line(self.frequency[self.indices]/1e9, array([fp[3]-fp[2] for fp in self.fit_params]))
         return pl
 
-    @plots
+    #@plots
     def background_plot(self, pl=None):
         pl, pf=line(self.frequency[self.indices]/1e9, array([fp[2]+fp[3] for fp in self.fit_params]))
         line(self.frequency[self.indices]/1e9, self.MagAbsFilt_sq[self.indices,0], plotter=pl, color="red")
         return pl
 
 
-    def magabs_colormesh(self):
-        pl, pf=colormesh(self.yoko, self.frequency/1e9, self.MagAbs, plotter="magabs_{}".format(self.name))
+    def magabs_colormesh(self, **kwargs):
+        pl=kwargs.pop("pl", "magabs{0}{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
+        self.get_member("Magcom").reset(self)
+        pl, pf=colormesh(self.yoko, self.frequency/1e9, self.MagAbs, pl=pl, **kwargs)
         pl.set_ylim(min(self.frequency/1e9), max(self.frequency/1e9))
         pl.set_xlim(min(self.yoko), max(self.yoko))
         pl.xlabel="Yoko (V)"
@@ -229,18 +279,18 @@ class Lyzer(LyzerBase):
         return pl
 
     def ifft_plot(self):
-        p, pf=line(absolute(fft.ifft(self.Magcom[:,self.on_res_ind])), plotter="ifft_{}".format(self.name),
+        p, pf=line(absolute(fft.ifft(self.MagcomData[:,self.on_res_ind])), plotter="ifft_{}".format(self.name),
                plot_name="onres_{}".format(self.on_res_ind),label="i {}".format(self.on_res_ind), color="red")
-        line(absolute(fft.ifft(self.Magcom[:,self.start_ind])), plotter=p, linewidth=1.0,
+        line(absolute(fft.ifft(self.MagcomData[:,self.start_ind])), plotter=p, linewidth=1.0,
              plot_name="strt {}".format(self.start_ind), label="i {}".format(self.start_ind))
-        line(absolute(fft.ifft(self.Magcom[:,self.stop_ind])), plotter=p, linewidth=1.0,
+        line(absolute(fft.ifft(self.MagcomData[:,self.stop_ind])), plotter=p, linewidth=1.0,
              plot_name="stop {}".format(self.stop_ind), label="i {}".format(self.stop_ind))
         return p
 
     def hann_ifft_plot(self):
-        on_res=log10(absolute(hann_ifft(self.Magcom[:,self.on_res_ind])))
-        strt=log10(absolute(hann_ifft(self.Magcom[:,self.start_ind])))
-        stop=log10(absolute(hann_ifft(self.Magcom[:,self.stop_ind])))
+        on_res=absolute(hann_ifft(self.MagcomData[:,self.on_res_ind]))
+        strt=absolute(hann_ifft(self.MagcomData[:,self.start_ind]))
+        stop=absolute(hann_ifft(self.MagcomData[:,self.stop_ind]))
 
         p, pf=line(on_res, plotter="hann_ifft_{}".format(self.name), color="red",
                plot_name="onres_{}".format(self.on_res_ind),label="i {}".format(self.on_res_ind))
@@ -255,35 +305,40 @@ class Lyzer(LyzerBase):
 
         return p
 
+    def MagdB_cs(self, pl, ind):
+        pl, pf=line(self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)", plotter="filtcomp_{}".format(self.name))
+        line(self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)", plotter=pl)
+        return pl
+
     #@plots
     def filt_compare(self, ind):
         pl, pf=line(self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)", plotter="filtcomp_{}".format(self.name))
         line(self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)", plotter=pl)
         return pl
 
-    @plots
+    #@plots
     def ls_magabsfilt_colormesh(self, pl=None):
         colormesh(self.flux_over_flux0[10:-10], self.ls_f[10:-10]/1e9,
                         self.MagAbsFilt[10:-10, 10:-10], plotter=pl)#"magabsfilt_{}".format(self.name))
         return pl
 
-    @plots
+    #@plots
     def magabsfilt_colormesh(self, pl=None, xlabel="$\Phi/\Phi_0$", ylabel="Frequency (GHz)"):
         colormesh(self.flux_over_flux0[10:-10], self.frequency[10:-10]/1e9,
                         self.MagAbsFilt[10:-10, 10:-10], #plot_name="magabsfiltf_{}".format(self.name),
                         plotter=pl, xlabel=xlabel, ylabel=ylabel)
         return pl
 
-    @plots
+    #@plots
     def ls_magabsfit_colormesh(self, pl=None, xlabel="$\Phi/\Phi_0$", ylabel="Frequency (GHz)"):
         colormesh(self.flux_over_flux0[10:-10], self.ls_f[self.indices][10:-10]/1e9,
                         self.MagAbsFit[10:-10, 10:-10], plotter=pl, xlabel=xlabel, ylabel=ylabel)
-    @plots
+    #@plots
     def magabsfit_colormesh(self, pl=None, xlabel="$\Phi/\Phi_0$", ylabel="Frequency (GHz)"):
         colormesh(self.flux_over_flux0[10:-10], self.frequency[self.indices][10:-10]/1e9,
                         self.MagAbsFit[10:-10, 10:-10], plotter=pl, xlabel=xlabel, ylabel=ylabel)
 
-    @plots
+    #@plots
     def flux_line(self, pl=None, xlabel="$\Phi/\Phi_0$", ylabel="Frequency (GHz)"):
         xmin, xmax, ymin, ymax=pl.x_min, pl.x_max, pl.y_min, pl.y_max
         line(self.flux_over_flux0[10:-10], self.fq[10:-10]/1e9, plotter=pl, xlabel=xlabel, ylabel=ylabel)
