@@ -7,7 +7,8 @@ Created on Sat Apr 23 14:10:39 2016
 
 #tag related
 from .atom_extension import set_tag, set_all_tags, get_tag, get_all_tags, get_type
-from .atom_extension import get_reserved_names, get_all_params, get_all_main_params, get_main_params, set_attr,set_log, check_initialized
+from .atom_extension import get_reserved_names, get_all_params, get_all_main_params, get_main_params
+from .atom_extension import set_attr, set_log, check_initialized, process_kwargs
 
 #thread safe calls
 from .threadsafe import safe_call, safe_setattr, safe_set_attr, safe_log_debug, safe_set_tag

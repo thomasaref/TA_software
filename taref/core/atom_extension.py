@@ -15,6 +15,20 @@ from taref.core.log import log_info#, log_debug
 
 _MAPPING_SUFFIX_="_mapping"
 
+def process_kwargs(self, kwargs):
+    """Goes through all_params and sets the attribute if it is included in kwargs, also popping it out of kwargs.
+    if the param is tagged with "former", the kwarg is added back using the value of the param. Returns the processed kwargs"""
+    for arg in get_all_params(self): #get_all_tags(self, "former"):
+        if arg in kwargs:
+            setattr(self, arg, kwargs[arg])
+        val=kwargs.pop(arg, None)
+        key=get_tag(self, arg, "former", False)
+        if key is not False:
+            if val is None:
+                val=getattr(self, arg)
+            kwargs[key]=val
+    return kwargs
+
 def defaulter(self, member, kwargs):
     """returns the start value of a member, popping it out of kwargs"""
     if member in kwargs:

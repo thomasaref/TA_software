@@ -12,9 +12,12 @@ from numpy import array, absolute, real, imag, nan_to_num, squeeze, append, sqrt
 from atom.api import FloatRange
 from taref.core.api import tag_property
 from taref.plotter.api import LineFitter
+#from taref.physics.fitting import refl_lorent
 from taref.physics.fundamentals import h
 from scipy.optimize import fsolve
 from h5py import File
+
+from taref.physics.filtering import Filter
 
 def read_data(self):
     with File(self.rd_hdf.file_path, 'r') as f:
@@ -40,12 +43,12 @@ def read_data(self):
         print shape(self.MagcomData)
         self.stop_ind=len(self.yoko)-1
 
-a=TA88_Lyzer( on_res_ind=240, #read_data=read_data, # VNA_name="RS VNA",
+a=TA88_Lyzer( on_res_ind=240, filt=Filter(center=0, halfwidth=50, reflect=False),#read_data=read_data, # VNA_name="RS VNA",
         rd_hdf=TA88_Read(main_file="Data_0629/S4A4_just_gate_FFT_high_frq_n20dBm.hdf5"))
-a.filt.center=0
-a.filt.halfwidth=50
+#a.filt.center=0
+#a.filt.halfwidth=50
 #a.filt.reflect=True
-from taref.physics.filtering import Filter, window_ifft, fir_filt_prep, fir_filter, fir_freqz, filt_prep, fft_filter, ifft_x
+#, window_ifft, fir_filt_prep, fir_filter, fir_freqz, fft_filt_prep, fft_filter, ifft_x
 
 
 from scipy.signal import decimate, resample
@@ -53,15 +56,27 @@ from numpy import exp, log10
 from time import time
 
 a.read_data()
-b=Filter(length=len(a.frequency), center=0, halfwidth=50, reflect=False, shift=True)
+a.filter_type="FFT"
+a.bgsub_type="dB"
+a.flux_axis_type="yoko"
+a.ifft_plot_time()
+pl=a.magabs_colormesh()
+a.filter_type="Fit"
+
+a.magabs_colormesh(pl=pl)
+a.widths_plot()
+a.center_plot().show()
+
+a.magabs_colormesh(bgsub_type="Complex").show()
+b=Filter(N=len(a.frequency), center=0, halfwidth=50, reflect=False)
 print b.start_ind, b.stop_ind
 tstart=time()
 data=array([b.fft_filter(a.Magcom[:,n])[10:-10] for n in range(len(a.yoko))])
 print tstart-time()
 colormesh(10*log10(absolute(data))-10*log10(absolute(data[0, :])))[0]
 
-tstart=time()
-data=array([fft_filter(a.Magcom[:, n], -49, 50, reflect=False)[10:-10] for n in range(len(a.yoko))])
+#tstart=time()
+##data=array([fft_filter(a.Magcom[:, n], -49, 50, reflect=False)[10:-10] for n in range(len(a.yoko))])
 print tstart-time()
 
 #data=array([fft_filter(data[n, :], 0, 20)[10:-10] for n in range(500)])
