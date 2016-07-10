@@ -7,9 +7,10 @@ Created on Sat Apr 23 11:43:28 2016
 Collection of functions put into a format for easy use of scipy.optimize's leastsq fit
 """
 from scipy.optimize import leastsq, curve_fit
-from numpy import array, amin, amax, argmin, argmax, mean
+from numpy import array, amin, amax, argmin, argmax, mean, ndarray
 from time import time
-
+from atom.api import Atom, Enum, Float, Int, Callable, Typed#, cached_property
+from taref.core.api import private_property
 
 def leastsq_fit(resid_func, p_guess_func, y, x, *args, **kwargs):
     p_guess=p_guess_func(x,y, *args, **kwargs)
@@ -29,6 +30,7 @@ def full_leastsq_fit(fit_func, p_guess_func, y, x, indices=None, *args, **kwargs
     fit_params=array(zip(*fit_params))
     print "ended leastsq fitting {}".format(time()-tstart)
     return fit_params
+
 
 def lorentzian_p_guess(x, sig, gamma=1.0):
     xmax=amax(sig)
@@ -72,6 +74,58 @@ def full_fit(fit_func, p_guess_func, y, x, indices=None, *args, **kwargs):
     print "ended fitting {}".format(time()-tstart)
     return fit_params
 
+class LeastSqFitter(Atom):
+    """Atom wrapper for least square fitting"""
+    fit_func=Callable().tag(private=True)
+    p_guess_func=Callable().tag(private=True)
+    fit_params=Typed(ndarray)
+
+    @private_property
+    def resid_func(self):
+        def residuals(p, x, y):
+            return y-self.fit_func(x,p)
+        return residuals
+
+    def leastsq_fit(self, x, y, *args, **kwargs):
+        pguess=self.p_guess_func(x, y, *args, **kwargs)
+        pbest=leastsq(self.resid_func, pguess, args=(x, y), full_output=1)[0]
+        return pbest
+
+    def full_fit(self, x, y, indices=None, *args, **kwargs):
+        print "started leastsq fitting"
+        tstart=time()
+        if indices is None:
+            indices=range(len(y))
+        fit_params=[self.leastsq_fit(x, y[n], *args, **kwargs)  for n in indices]
+        self.fit_params=array(zip(*fit_params)).transpose()
+        print "ended leastsq fitting {}".format(time()-tstart)
+        return self.fit_params
+
+    def reconstruct_fit(self, x, fit_params=None):
+        if fit_params is None:
+            fit_params=self.fit_params
+        return array([self.fit_func(x, fp) for fp in fit_params])
+
+class LorentzianFitter(LeastSqFitter):
+    """Atom wrapper for Lorentzian least square fitting"""
+    fit_type=Enum("lorentzian", "refl_lorentzian")
+    gamma=Float(1.0).tag(desc="width of peak for initial guess")
+    end_indices=Int(10).tag(desc="indices to average for background guess")
+
+    fit_func_dict={"lorentzian" : lorentzian,
+                   "refl_lorentzian" : refl_lorentzian}
+
+    p_guess_dict={"lorentzian" : lorentzian_p_guess,
+                "refl_lorentzian" : refl_lorentzian_p_guess}
+
+    @private_property
+    def fit_func(self):
+        return self.fit_func_dict[self.fit_type]
+
+    @private_property
+    def p_guess_func(self):
+        return self.p_guess_dict[self.fit_type]
+
 if __name__=="__main__":
     from numpy.random import randn
     from numpy import linspace
@@ -87,12 +141,20 @@ if __name__=="__main__":
     def denormalize(xnorm, xmin, xmax):
         return xnorm*(xmax-xmin)+xmin
 
+    a=LorentzianFitter()
     p0=array([3.2, 25.0, 1e-2, 0.3])
     spread=linspace(1.0, 2.0, 100)
 
     x=linspace(0.0, 100.0, 1000)
-    sig=array([lorentzian(x, p0*sp_e)+10.0e-3*randn(len(x)) for sp_e in spread])#.transpose()
+    sig=array([lorentzian(x, p0*sp_e)+1.0e-3*randn(len(x)) for sp_e in spread])#.transpose()
     pl, pf=colormesh(sig)
+
+    #fd=a.leastsq_fit(sig[0,:], x)
+    #print fd
+    #pl, pf=line(x, sig[0,:])
+    #print
+    #line(x, a.reconstruct_fit(x, array([fd]).transpose()), pl=pl, color="red")
+    #pl.show()
     #plt.plot(x, sig.transpose())
     #signorm, xmin, xmax=normalize(sig)
     #signorm=sig
@@ -104,13 +166,17 @@ if __name__=="__main__":
     #plt.plot(x, fit)
     #colormesh(fit, pl=pl)
 
+    a.full_fit(x, sig)
+    colormesh(a.reconstruct_fit(x), pl=pl)
     fp=full_leastsq_fit(lorentzian, lorentzian_p_guess, sig, x).transpose()
-    print fp
+    #print fp
     fit=array([lorentzian(x, fp_e) for fp_e in fp])
-    print fit.shape
+    #print fit.shape
     #denormalize(lorentzian(x, fp), xmin, xmax)
-    colormesh(fit, pl=pl)#[0].show()
-    pl, pf=line(fp[:, 0], color="red")
+    #colormesh(fit, pl=pl)#[0].show()
+    #pl, pf=line(fp[:, 0], color="red")
+    pl, pf=line(a.fit_params[:, 0], color="red")
+
     #line(fp1[:,0], color="green", pl=pl)
     line(spread*3.2, pl=pl)
     pl.show()

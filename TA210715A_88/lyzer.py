@@ -9,7 +9,7 @@ from taref.core.api import Agent, Array, tag_property, log_debug, s_property, pr
 from taref.filer.read_file import Read_HDF5
 from taref.physics.qdt import QDT
 
-from taref.physics.fitting import lorentzian, lorentzian_p_guess, refl_lorentzian, refl_lorentzian_p_guess, full_leastsq_fit
+from taref.physics.fitting import LorentzianFitter, lorentzian, lorentzian_p_guess, refl_lorentzian, refl_lorentzian_p_guess, full_leastsq_fit
 from taref.physics.filtering import Filter #window_ifft, fft_filter, filt_prep, fir_filt_prep, ifft_x, fir_freqz, Filter
 from taref.plotter.api import line, colormesh, scatter, Plotter
 from atom.api import Float, Typed, Unicode, Int, Callable, Enum, List
@@ -127,14 +127,15 @@ class Lyzer(LyzerBase):
     VNA_name=Unicode("RS VNA")
 
     filt=Typed(Filter, ())
+    fitter=Typed(LorentzianFitter, ())
 
     bgsub_start_ind=Int(0)
     bgsub_stop_ind=Int(1)
     bgsub_axis=Int(1)
 
-    fit_func=Callable(lorentzian).tag(private=True)
-    p_guess_func=Callable(lorentzian_p_guess).tag(private=True)
-    p0=Float(0.1)
+    #fit_func=Callable(lorentzian).tag(private=True)
+    #p_guess_func=Callable(lorentzian_p_guess).tag(private=True)
+    #p0=Float(0.1)
     read_data=Callable(read_data).tag(sub=True)
 
 
@@ -241,17 +242,18 @@ class Lyzer(LyzerBase):
 
     @tag_property(sub=True)
     def MagAbsFit(self):
-        return sqrt(array([self.fit_func(self.flux_axis, fp) for fp in self.fit_params]))
-        #return sqrt(array([self.fit_func(self.fq, fp) for fp in self.fit_params]))
+        if self.fitter.fit_params is None:
+            self.fitter.full_fit(x=self.flux_axis, y=absolute(self.MagcomFilt)**2, indices=self.indices)
+        return sqrt(self.fitter.reconstruct_fit(self.flux_axis))#array([self.fit_func(self.flux_axis, fp) for fp in self.fit_params]))
 
-    @tag_property(sub=True)
-    def fit_params(self):
-        return self.full_leastsq_fit(self.flux_axis).transpose()
+    #@tag_property(sub=True)
+    #def fit_params(self):
+    #    return self.full_leastsq_fit(self.flux_axis).transpose()
         #return self.full_leastsq_fit(self.fq)
 
     #@plots
     def widths_plot(self, pl=None):
-        pl,pf=scatter(self.freq_axis[self.indices], absolute([fp[0] for fp in self.fit_params]), plotter=pl)
+        pl,pf=scatter(self.freq_axis[self.indices], absolute([fp[0] for fp in self.fitter.fit_params]), plotter=pl)
         if self.flux_axis_type=="fq":
             line(self.freq_axis, self.qdt._get_coupling(self.frequency)/1e9, plotter=pl, color="red")
         else:
@@ -260,25 +262,23 @@ class Lyzer(LyzerBase):
 
     #@plots
     def center_plot(self, pl=None):
-        pl, pf=scatter(self.frequency[self.indices]/1e9, array([fp[1] for fp in self.fit_params]), plotter=pl)
+        pl, pf=scatter(self.frequency[self.indices]/1e9, array([fp[1] for fp in self.fitter.fit_params]), plotter=pl)
         if self.flux_axis_type=="fq":
             line(self.frequency/1e9, self.ls_f/1e9, plotter=pl, color="red", linewidth=1.0)
         else:
             line(self.frequency/1e9, self.voltage_from_flux_par, plotter=pl, color="red", linewidth=1.0)
-
         return pl
 
     #@plots
     def heights_plot(self, pl=None):
-        pl, pf=line(self.frequency[self.indices]/1e9, array([fp[3]-fp[2] for fp in self.fit_params]))
+        pl, pf=line(self.frequency[self.indices]/1e9, array([fp[3]-fp[2] for fp in self.fitter.fit_params]))
         return pl
 
     #@plots
     def background_plot(self, pl=None):
-        pl, pf=line(self.frequency[self.indices]/1e9, array([fp[2]+fp[3] for fp in self.fit_params]))
+        pl, pf=line(self.frequency[self.indices]/1e9, array([fp[2]+fp[3] for fp in self.fitter.fit_params]))
         line(self.frequency[self.indices]/1e9, self.MagAbsFilt_sq[self.indices,0], plotter=pl, color="red")
         return pl
-
 
     def magabs_colormesh(self, **kwargs):
         process_kwargs(self, kwargs)
