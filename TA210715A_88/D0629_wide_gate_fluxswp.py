@@ -15,14 +15,25 @@ from taref.plotter.api import LineFitter
 from taref.physics.fundamentals import h
 from scipy.optimize import fsolve
 
-a=TA88_Lyzer(filt_center=15, filt_halfwidth=15, on_res_ind=201,# VNA_name="RS VNA",
-        rd_hdf=TA88_Read(main_file="Data_0629/S4A4_just_gate_FFT_high_frq_test.hdf5"))
+a=TA88_Lyzer(on_res_ind=201,# VNA_name="RS VNA", filt_center=15, filt_halfwidth=15,
+        rd_hdf=TA88_Read(main_file="Data_0628/S4A4_just_gate_overnight_flux_swp.hdf5")) #Data_0629/S4A4_just_gate_FFT_high_frq_test.hdf5"))
 a.read_data()
-a.bgsub_type="MagdB"
+a.bgsub_type="dB"
 a.magabs_colormesh()
 a.bgsub_type="Complex"
+pl, pf=line(a.MagAbs[:, 517])
+line(a.MagAbs[:, 519], color="red", pl=pl)
+line(a.MagAbs[:, 521], color="green", pl=pl)
+
+pl, pf=line(a.freq_axis, a.qdt._get_VfFWHM(f=a.frequency)[0],  color="blue")
+line(a.freq_axis, a.qdt._get_VfFWHM(f=a.frequency)[1],  color="green", pl=pl)
+
+line(a.freq_axis, a.qdt._get_VfFWHM(f=a.frequency)[2],  color="red", pl=pl)
+
+line(a.freq_axis, a.qdt._get_Vfq0(f=a.frequency),  color="purple", pl=pl)
+
 a.magabs_colormesh()
-a.bgsub_type="MagAbs"
+a.bgsub_type="Abs"
 a.magabs_colormesh().show()
 
 a.hann_ifft_plot()

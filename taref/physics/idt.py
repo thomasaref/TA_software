@@ -406,7 +406,7 @@ class IDT(Rho):
     Ga=SProperty().tag(desc="Ga adjusted for frequency f")
     @Ga.getter
     def _get_Ga(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C):
-        gamma=self._get_couple_factor(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        gamma=self._get_coupling(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         return gamma*2*C*2*pi
 
     @private_property

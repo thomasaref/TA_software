@@ -43,7 +43,7 @@ def read_data(self):
         print shape(self.MagcomData)
         self.stop_ind=len(self.yoko)-1
 
-a=TA88_Lyzer( on_res_ind=240, filt=Filter(center=0, halfwidth=50, reflect=False),#read_data=read_data, # VNA_name="RS VNA",
+a=TA88_Lyzer( on_res_ind=240, filt=Filter(center=2, halfwidth=10, reflect=False),#read_data=read_data, # VNA_name="RS VNA",
         rd_hdf=TA88_Read(main_file="Data_0629/S4A4_just_gate_FFT_high_frq_n20dBm.hdf5"))
 #a.filt.center=0
 #a.filt.halfwidth=50
@@ -56,14 +56,22 @@ from numpy import exp, log10
 from time import time
 
 a.read_data()
-a.filter_type="FFT"
 a.bgsub_type="dB"
+#a.bgsub_type="Abs"
+a.magabs_colormesh()#.show()
+pl1, pf=line(a.freq_axis, a.MagAbs[:, 234])
+
+a.filter_type="FFT"
 a.flux_axis_type="yoko"
 a.ifft_plot_time()
 pl=a.magabs_colormesh()
+line(a.freq_axis, a.MagAbs[:, 234], pl=pl1, color="red")
+
 a.filter_type="Fit"
 
 a.magabs_colormesh(pl=pl)
+line(a.freq_axis, a.MagAbs[:, 234], pl=pl1, color="green")
+
 a.widths_plot()
 a.center_plot().show()
 

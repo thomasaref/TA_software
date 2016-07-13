@@ -45,7 +45,7 @@ a=TA88_Lyzer( on_res_ind=201, read_data=read_data, # VNA_name="RS VNA",
 a.filt.center=4469
 a.filt.halfwidth=300
 a.filt.reflect=True
-from taref.physics.filtering import window_ifft, fir_filt_prep, fir_filter, fir_freqz, filt_prep, fft_filter, ifft_x
+from taref.physics.filtering import window_ifft, fir_filt_prep, fir_filter, fir_freqz, fft_filt_prep, fft_filter, ifft_x_fs
 from scipy.signal import decimate, resample
 from numpy import exp
 
@@ -78,8 +78,8 @@ pl, pf=line(absolute(data))
 #pl.show()
 
 filt=fir_filt_prep(20003, 4380, 4550, numtaps=1000)
-ff2=filt2=filt_prep(20003, 4380, 4550, shift=False)
-ff=fir_freqz(filt, 20003, shift=False)
+ff2=filt2=fft_filt_prep(20003, 4380, 4550)
+ff=fir_freqz(filt, 20003)
 
 #pl, pf=line(ifft_x(t, shift=False), absolute(wi))
 

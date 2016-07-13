@@ -257,7 +257,7 @@ class Lyzer(LyzerBase):
         if self.flux_axis_type=="fq":
             line(self.freq_axis, self.qdt._get_coupling(self.frequency)/1e9, plotter=pl, color="red")
         else:
-            line(self.freq_axis, self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
+            line(self.freq_axis, self.qdt._get_VfFWHM(f=self.frequency)[2]/2.0, pl=pl, color="red") #self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
         return pl
 
     #@plots
@@ -266,7 +266,7 @@ class Lyzer(LyzerBase):
         if self.flux_axis_type=="fq":
             line(self.frequency/1e9, self.ls_f/1e9, plotter=pl, color="red", linewidth=1.0)
         else:
-            line(self.frequency/1e9, self.voltage_from_flux_par, plotter=pl, color="red", linewidth=1.0)
+            line(self.frequency/1e9, self.qdt._get_Vfq0(f=self.frequency), plotter=pl, color="red", linewidth=1.0)
         return pl
 
     #@plots

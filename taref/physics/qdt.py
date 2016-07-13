@@ -19,6 +19,39 @@ from taref.physics.fundamentals import sqrt, pi, e, h, array, eig, delete, sin, 
 class QDT(IDT, Qubit):
     base_name="QDT"
 
+    fq0=SProperty().tag(desc="center frequency of oscillator")
+    @fq0.getter
+    def _get_fq0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
+        ls=self._get_Lamb_shift(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        return sqrt(f*(f-2.0*ls))
+
+    @fq0.setter
+    def _get_Ej_get_fq0(self, fq0, Ec):
+        return (h*fq0)^2/(8.0*Ec)
+
+    fFWHM=SProperty().tag(desc="center frequency of oscillator plus half width")
+    @fFWHM.getter
+    def _get_fFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
+        ls=self._get_Lamb_shift(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        gamma=self._get_coupling(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        fplus=sqrt(f*(f-2.0*ls+2.0*gamma))
+        fminus=sqrt(f*(f-2.0*ls-2.0*gamma))
+        return fplus, fminus, fplus-fminus
+
+    Vfq0=SProperty().tag(desc="center frequency of oscillator as voltage")
+    @Vfq0.getter
+    def _get_Vfq0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C, Ejmax, offset, flux_factor):
+        fq0=self._get_fq0(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        return self._get_voltage_from_flux_par(fq=fq0, C=C, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
+
+    VfFWHM=SProperty().tag(desc="FWHM of oscillator")
+    @VfFWHM.getter
+    def _get_VfFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C, Ejmax, offset, flux_factor):
+        fplus, fminus, fwhm=self._get_fFWHM(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        Vminus=self._get_voltage_from_flux_par(fq=fplus, C=C, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
+        Vplus=self._get_voltage_from_flux_par(fq=fminus, C=C, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
+        return Vplus, Vminus, Vplus-Vminus
+
     #lamb_shifted_transmon_energy=SProperty()
     #@lamb_shifted_transmon_energy.getter
     def _get_lamb_shifted_transmon_energy(self, Ej, Ec, m, couple_mult, f0, K2, Np):
