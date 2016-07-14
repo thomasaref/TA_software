@@ -25,9 +25,7 @@ class Cross(EBL_Polygons):
     def _default_color(self):
         return "red"
 
-    @private_property
-    def base_name(self):
-        return "CROSS"
+    base_name="CROSS"
 
 class Symmetric_Cross(Cross):
     """links width and height together so they are always the same"""

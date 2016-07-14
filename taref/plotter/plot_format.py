@@ -8,7 +8,7 @@ from taref.core.log import log_debug
 from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names, simple_set, process_kwargs
 from taref.core.universal import Array, name_generator
 from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict, observe, ReadOnly
-from numpy import linspace, arange, asanyarray, append, amax, amin, ndarray, nanmax, nanmin
+from numpy import linspace, arange, asanyarray, amax, amin, ndarray, nanmax, nanmin
 from taref.core.shower import shower
 from taref.core.atom_extension import get_all_tags, get_tag, set_tag, check_initialized, defaulter
 
@@ -35,8 +35,7 @@ from matplotlib.colorbar import Colorbar
 #    if name in indict:
 #        name+=suffix.format(len(indict.keys()))
 #    return name
-def Array2():
-    return Typed(ndarray)
+
 
 class PlotFormat(PlotUpdate):
     """base class corresponding to one graph or collection on axes"""
@@ -82,8 +81,8 @@ class PlotFormat(PlotUpdate):
             self.plotter.y_max=float(max((self.plotter.y_max, nanmax(self.ydata))))
 
 
-    xdata=Array2()
-    ydata=Array2()
+    xdata=Array()
+    ydata=Array()
 
     plot_type=Enum("line", "scatter", "multiline", "colormap", "vline", "hline", "polygon", "cross_cursor")
 
@@ -349,7 +348,7 @@ def scatter_plot(plotter, *args, **kwargs):
 
 class ColormeshFormat(PlotFormat):
     clt=Typed(QuadMesh)
-    zdata=Array2()
+    zdata=Array()
 
     cmap=Enum(*colormap_names).tag(former="cmap")
 
@@ -546,6 +545,30 @@ def multiline_plot(plotter, *args, **kwargs):
     pl0t=MultiLineFormat(plot_name=plot_name, plotter=plotter)
     pl0t.multiline_plot(*args, **kwargs)
     return pl0t
+
+def polygon_plot(plotter, *args, **kwargs):
+    plot_name=kwargs.pop("plot_name", "")
+    pl0t=PolygonFormat(plot_name=plot_name, plotter=plotter)
+    pl0t.polygon_plot(*args, **kwargs)
+
+class PolygonFormat(LineFormat):
+    clt=Typed(PolyCollection)
+    antialiased=Bool(True)
+
+    def polygon_plot(self, *args, **kwargs):
+        kwargs=process_kwargs(self, kwargs)
+        #self.xdata=[arg[0] for arg in args[0][0]]
+        #self.zdata=[[vert[1] for vert in line] for line in args[0]]
+        self.clt=PolyCollection(args[0], alpha=self.alpha, antialiased=self.antialiased)
+        self.clt.set_color(self.color) #from matplotlib.colors import colorConverter colorConverter.to_rgba(
+        self.plotter.axes.add_collection(self.clt)
+
+    def alter_xy(self, *args, **kwargs):
+        self.color=kwargs.pop("color", self.color)
+        zdata=args[0]
+        self.clt.set_verts(zdata)
+        self.clt.set_color(self.color)
+        #self.update_plot(update_legend=False)
 
 if __name__=="__main__":
     from taref.plotter.plotter_backbone import PlotMaster

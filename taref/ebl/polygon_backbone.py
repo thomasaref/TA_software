@@ -220,8 +220,6 @@ def sPoly(obj, x_off=0.0, y_off=0.0, theta=0.0, orient="TL", vs=None):
     """attachs a EBL_Polygons obj verts to a list of verts after transforming them"""
     if vs is None:
         vs=[]
-    #obj.verts=[]
-    #obj.make_polylist()
     return sTransform(obj.polylist[:], x_off, y_off, theta, orient, vs)
 
 from taref.core.universal import read_text

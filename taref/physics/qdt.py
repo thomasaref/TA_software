@@ -40,16 +40,16 @@ class QDT(IDT, Qubit):
 
     Vfq0=SProperty().tag(desc="center frequency of oscillator as voltage")
     @Vfq0.getter
-    def _get_Vfq0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C, Ejmax, offset, flux_factor):
+    def _get_Vfq0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, Ejmax, offset, flux_factor):
         fq0=self._get_fq0(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
-        return self._get_voltage_from_flux_par(fq=fq0, C=C, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
+        return self._get_voltage_from_flux_par(fq=fq0, Ct=Ct, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
 
     VfFWHM=SProperty().tag(desc="FWHM of oscillator")
     @VfFWHM.getter
-    def _get_VfFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C, Ejmax, offset, flux_factor):
+    def _get_VfFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, Ejmax, offset, flux_factor):
         fplus, fminus, fwhm=self._get_fFWHM(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
-        Vminus=self._get_voltage_from_flux_par(fq=fplus, C=C, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
-        Vplus=self._get_voltage_from_flux_par(fq=fminus, C=C, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
+        Vminus=self._get_voltage_from_flux_par(fq=fplus, Ct=Ct, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
+        Vplus=self._get_voltage_from_flux_par(fq=fminus, Ct=Ct, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
         return Vplus, Vminus, Vplus-Vminus
 
     #lamb_shifted_transmon_energy=SProperty()
@@ -111,18 +111,18 @@ class QDT(IDT, Qubit):
 
     ls_voltage_from_flux_par=SProperty().tag(sub=True)
     @ls_voltage_from_flux_par.getter
-    def _get_ls_voltage_from_flux_par(self, f, C, Ejmax, offset, flux_factor, couple_mult, f0, K2, Np):
+    def _get_ls_voltage_from_flux_par(self, f, Ct, Ejmax, offset, flux_factor, couple_mult, f0, K2, Np):
         ls_f=self._get_ls_f(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
-        Ec=self._get_Ec(C=C)
+        Ec=self._get_Ec(Ct=Ct)
         Ej=self._get_Ej_get_fq(fq=ls_f, Ec=Ec)
         flux_d_flux0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
         return ls_f/1e9, self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
 
     ls_voltage_from_flux_par_many=SProperty().tag(sub=True)
     @ls_voltage_from_flux_par_many.getter
-    def _get_ls_voltage_from_flux_par_many(self, f, C, Ejmax, offset, flux_factor, couple_mult, f0, K2, Np):
+    def _get_ls_voltage_from_flux_par_many(self, f, Ct, Ejmax, offset, flux_factor, couple_mult, f0, K2, Np):
         ls_f=self._get_ls_f(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
-        Ec=self._get_Ec(C=C)
+        Ec=self._get_Ec(Ct=Ct)
         Ej=self._get_Ej_get_fq(fq=ls_f, Ec=Ec)
         fdf0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
         flux_d_flux0=append(fdf0, -fdf0)
@@ -134,26 +134,26 @@ class QDT(IDT, Qubit):
 
     S11=SProperty()
     @S11.getter
-    def _get_S11(self, f, couple_mult, f0, K2, Np, C, L):
-        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
-        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+    def _get_S11(self, f, couple_mult, f0, K2, Np, Ct, L):
+        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, Ct=Ct)
+        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, Ct=Ct)
         w=2*pi*f
         print "in s11"
         #try:
         #    return Ga/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*L))
         #except ValueError:
-        return array([Ga/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*qL)) for qL in L])
+        return array([Ga/(Ga+1j*Ba+1j*w*Ct+1.0/(1j*w*qL)) for qL in L])
 
     S13=SProperty()
     @S13.getter
-    def _get_S13(self, f, couple_mult, f0, K2, Np, C, L, GL):
-        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
-        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, C=C)
+    def _get_S13(self, f, couple_mult, f0, K2, Np, Ct, L, GL):
+        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, Ct=Ct)
+        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, Ct=Ct)
         w=2*pi*f
         try:
-            return 1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*L))
+            return 1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*Ct+1.0/(1j*w*L))
         except ValueError:
-            return array([1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*qL)) for qL in L])
+            return array([1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*Ct+1.0/(1j*w*qL)) for qL in L])
 
 
 def energy_level_plot(qdt, fig_width=9.0, fig_height=6.0):
@@ -251,7 +251,7 @@ def anton_anharm_plot(fig_width=9, fig_height=6):
     EjdivEc=linspace(0.1, 300, 3000)
     Ej=EjdivEc*antonqdt.Ec
 
-    print antonqdt.C, antonqdt.C, antonqdt.Ec, antonqdt._get_Ec(antonqdt.C)
+    print antonqdt.Ct, antonqdt.Ct, antonqdt.Ec, antonqdt._get_Ec(antonqdt.Ct)
 
     print antonqdt.max_coupling, antonqdt.epsinf, antonqdt.f0*h/antonqdt.Ec
     E0, E1, E2=antonqdt._get_transmon_energy_levels(Ej=Ej, n_energy=3)
@@ -338,7 +338,7 @@ if __name__=="__main__":
         flux_factor=0.2945,
         voltage=1.21,
         offset=0.0)
-    print qdt.C, qdt.Cq, qdt.Ec, qdt._get_Ec(qdt.C)
+    print qdt.Ct, qdt.Cq, qdt.Ec, qdt._get_Ec(qdt.Ct)
     yoko=linspace(-5,5,3000)
     #print a.calc_coupling(fqq=4.5e9), a.call_func("coupling", Ga=1.0)
     from taref.plotter.api import line, Plotter

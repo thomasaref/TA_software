@@ -27,7 +27,7 @@ enamldef IDTDockItem(DockItem):
     VGroup:
         attr vmodel = agent
         AgentLooper:
-            iterable=( "Np", "W", "C", "X", "ef")
+            iterable=( "Np", "W", "Ct", "X", "ef")
 
 enamldef ExtraIDTDockItem(DockItem):
     name = 'extra_idt'

@@ -23,9 +23,7 @@ class Rectangle(EBL_Polygons):
     def _default_color(self):
         return "red"
 
-    @private_property
-    def base_name(self):
-        return "RECTANGLE"
+    base_name="RECTANGLE"
 
 class Square(Rectangle):
     """links width and height together so they are always the same"""
@@ -37,9 +35,7 @@ class Square(Rectangle):
     def set_width(self, value):
         self.height=value
 
-    @private_property
-    def base_name(self):
-        return "SQUARE"
+    base_name="SQUARE"
 
 class Dashed_Line_Horiz(EBL_Polygons):
     num_dashes=Int(10)
@@ -58,11 +54,9 @@ class Dashed_Line_Horiz(EBL_Polygons):
     def _default_color(self):
         return "blue"
 
-    @private_property
-    def base_name(self):
-        return "DASHED_LINE_HORIZ"
+    base_name="DASHED_LINE_HORIZ"
 
 if __name__=="__main__":
     a=Dashed_Line_Horiz()
-    print a.chief.jdf.output_jdf
+    #print a.chief.jdf.output_jdf
     a.show()

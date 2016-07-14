@@ -39,8 +39,10 @@ def write_text(file_path, text_list, mode="w"):
         f.write("\n".join(text_list))
 
 def Array(shape=1):
-    #return Coerced(ndarray, args=(shape,), coercer=array)#.tag(typer=list)
     return Typed(ndarray, args=(shape,))
+
+def CArray(shape=1):
+    return Coerced(ndarray, args=(shape,), coercer=array)#.tag(typer=list)
 
 def Complex(default=0.0+0.0j):
     return Coerced(complex, (default,))

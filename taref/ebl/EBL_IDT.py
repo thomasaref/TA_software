@@ -5,11 +5,11 @@ Created on Thu Jun 25 11:43:01 2015
 @author: thomasaref
 """
 
-from taref.saw.idt import IDT
+from taref.physics.idt import IDT
 from atom.api import Float, Bool, Enum, Int
 from taref.ebl.polygons import EBL_Polygons
 from numpy import  mod
-from taref.core.backbone import private_property
+from taref.core.api import private_property
 
 class EBL_IDT(EBL_Polygons, IDT):
     """handles everything related to drawing a IDT. Units are microns (um)"""
@@ -120,25 +120,32 @@ class EBL_IDT(EBL_Polygons, IDT):
                 self.C(xt, yt, wt, ht)
 
     def _IDTfingers(self):
-        """writes IDT fingers for single finger IDT with extensions for connections if it is qubit type IDT"""
-        for n in range(-(self.Np-1), self.Np, 2):
-            self._fingrect(self.mult*n*(self.a+self.g), self.o/2.0, self.a, self.W+self.o, self.m)
-            self._fingrect(self.mult*(n-1)*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, -self.m)
+        """writes IDT fingers for single finger IDT with extensions for connections if it is qubit type IDT,
+        doesn't complete loops for double finger"""
+        intNp=int(self.Np)
+        for n in range(-(intNp-1), intNp, 2):
+            self._fingrect(self.ft_mult*n*(self.a+self.g), self.o/2.0, self.a, self.W+self.o, self.m)
+            self._fingrect(self.ft_mult*(n-1)*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, -self.m)
             if n in [-1,0] and self.qdt_type=="QDT":
-                self._fingrect(self.mult*n*(self.a+self.g), -self.W/2.0-(self.o+self.trconnect_y+self.trconnect_w)/2.0, self.a, -(self.o+self.trconnect_y+self.trconnect_w))
-                self._fingrect(self.mult*n*(self.a+self.g), -self.W/2.0-self.o-self.trc_hbox+self.trconnect_y/2.0, self.a, self.trconnect_y)
-        self._fingrect(self.mult*self.Np*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, -self.m)
+                xt=self.ft_mult*n*(self.a+self.g)
+                if self.ft=="double":
+                    xt+=-(self.a+self.g)/2.0
+                yt=-self.W/2.0-(self.o+self.trconnect_y+self.trconnect_w)/2.0
+                self.C(xt, yt, self.a, -(self.o+self.trconnect_y+self.trconnect_w))
+                yt=-self.W/2.0-self.o-self.trc_hbox+self.trconnect_y/2.0
+                self.C(xt, yt, self.a, self.trconnect_y)
+        self._fingrect(self.ft_mult*self.Np*(self.a+self.g), -self.o/2.0, self.a, self.W+self.o, -self.m)
 
     def _IDTextrafingers(self):
         """write extra fingers for a single IDT"""
         for n in range(0, self.ef):
-            self._fingrect(-self.mult*n*(self.a+self.g)-self.mult*(self.Np+1)*(self.a+self.g), -self.o/2.0, self.a, self.W, -self.m)
-            self._fingrect(self.mult*n*(self.a+self.g)+self.mult*(self.Np+1)*(self.a+self.g), -self.o/2.0, self.a, self.W, -self.m)
+            self._fingrect(-self.ft_mult*n*(self.a+self.g)-self.ft_mult*(self.Np+1)*(self.a+self.g), -self.o/2.0, self.a, self.W, -self.m)
+            self._fingrect(self.ft_mult*n*(self.a+self.g)+self.ft_mult*(self.Np+1)*(self.a+self.g), -self.o/2.0, self.a, self.W, -self.m)
 
     def _IDTtopbottombox(self):
         """writes connecting box at top and also bottom for regular IDT"""
         if self.wbox==0.0:
-            wr=self.mult*2*self.Np*(self.a+self.g) +self.mult*self.a+self.mult*2*self.ef*(self.a+self.g)+(self.mult-1)*self.g
+            wr=self.ft_mult*2*self.Np*(self.a+self.g) +self.ft_mult*self.a+self.ft_mult*2*self.ef*(self.a+self.g)+(self.ft_mult-1)*self.g
         else:
             wr=self.wbox
         self.C(self.xo, self.o+self.W/2.0+self.hbox/2.0, wr, self.hbox)
@@ -169,11 +176,11 @@ class EBL_IDT(EBL_Polygons, IDT):
     def _left_transmon_connect(self):
         """write left part of transmon connect"""
         if mod(self.Np, 2)==0: #needs fixing for evens
-            wr=-(self.mult*self.ef*(self.a+self.g)+self.mult*(self.Np-1)*(self.a+self.g)-self.g)
-            xr=-self.mult*self.a/2.0-2.0*self.g-self.a
+            wr=-(self.ft_mult*self.ef*(self.a+self.g)+self.ft_mult*(self.Np-1)*(self.a+self.g)-self.g)
+            xr=-self.ft_mult*self.a/2.0-2.0*self.g-self.a
         else:
-            wr=-(self.mult*self.ef*(self.a+self.g)+self.mult*self.Np*(self.a+self.g)-self.g)
-            xr=-self.mult*self.a/2.0-self.g-(self.mult-1)*self.g/2.0
+            wr=-(self.ft_mult*self.ef*(self.a+self.g)+self.ft_mult*self.Np*(self.a+self.g)-self.g)
+            xr=-self.ft_mult*self.a/2.0-self.g-(self.ft_mult-1)*self.g/2.0
         self.R(xr, -self.o-self.W/2.0, wr, -self.trconnect_w)
         self.R(xr, -self.o-self.W/2.0, -(self.trc_wbox/2.0-self.a/2.0-self.g), -self.trconnect_w)
         self.R(-self.trc_wbox/2.0, -self.o-self.W/2.0, -self.trconnect_w, -self.trc_hbox-self.trconnect_w)
@@ -184,8 +191,8 @@ class EBL_IDT(EBL_Polygons, IDT):
             wr=self.ef*(self.a+self.g)+(self.Np+1)*(self.a+self.g)-self.g
             xr=-self.a/2.0
         else:
-            wr=self.mult*self.ef*(self.a+self.g)+self.mult*self.Np*(self.a+self.g)-self.g
-            xr=self.mult*self.a/2.0+self.g+(self.mult-1)*self.g/2.0
+            wr=self.ft_mult*self.ef*(self.a+self.g)+self.ft_mult*self.Np*(self.a+self.g)-self.g
+            xr=self.ft_mult*self.a/2.0+self.g+(self.ft_mult-1)*self.g/2.0
         self.R(xr, -self.o-self.W/2.0, wr, -self.trconnect_w)
         self.R(xr, -self.o-self.W/2.0, self.trc_wbox/2.0-self.a/2.0-self.g, -self.trconnect_w)
         self.R(self.trc_wbox/2.0, -self.o-self.W/2.0, self.trconnect_w, -self.trc_hbox-self.trconnect_w)
@@ -206,12 +213,12 @@ class EBL_IDT(EBL_Polygons, IDT):
 if __name__=="__main__":
     a=EBL_IDT(name="EBL_Item_test")
 
-    #a.ft="single"
+    a.ft="single"
     a.qdt_type="QDT"
-    a.add_gate=False
-    a.add_gnd=False
-    a.add_teeth=False
-    a.idt_type="stepped"
+    #a.add_gate=False
+    #a.add_gnd=False
+    #a.add_teeth=False
+    #a.idt_type="stepped"
     a.Np=3
     #a.makeIDT()
     #print a.polys.get_verts()

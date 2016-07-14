@@ -9,12 +9,14 @@ from taref.ebl.wafer_coords import FullWafer
 from atom.api import Typed, Unicode, Atom, List, Coerced, observe, cached_property, Event
 from taref.core.log import log_debug
 from taref.core.shower import shower
-from taref.core.atom_extension import set_attr, get_tag, private_property
+from taref.core.api import set_attr, get_tag, private_property
 from taref.core.universal import sqze
-from taref.core.agent import SubAgent
+from taref.core.agent import Operative
 from re import compile as compiler
-
-from taref.core.plotter import Plotter
+from taref.plotter.plotter import Plotter
+from enaml import imports
+with imports():
+    from taref.ebl.jdf_e import JDF_View
 
 P_FINDER=compiler("P\((\d+)\)")
 def find_P_nums(key):
@@ -127,7 +129,6 @@ class JDF_Assign(Atom):
                     else:
                         ycor_list=[int(ycor)]
                     kwargs["pos_assign"].extend([(x,y) for y in ycor_list for x in xcor_list])
-                    #kwargs["pos_assign"].append((int(xcor), int(ycor)))
                 elif "," in item:
                     kwargs["shot_assign"]=unicode(item.split(",")[1].strip())
         super(JDF_Assign, self).__init__(**kwargs)
@@ -224,7 +225,7 @@ class JDF_Pattern(Atom):
         kwargs["y"]=kwargs.get("y", tempstr.split("(")[2].split(")")[0].split(",")[1])
         super(JDF_Pattern, self).__init__(**kwargs)
 
-class JDF_Top(SubAgent):
+class JDF_Top(Operative):
     """Top class that controls distribution of patterns into JDF"""
 
     base_name="jdf"
@@ -304,9 +305,6 @@ class JDF_Top(SubAgent):
 
     @private_property
     def view_window(self):
-        from enaml import imports
-        with imports():
-            from taref.ebl.jdf_e import JDF_View
         return JDF_View(jdf=self)
 
     def append_valcom(self, inlist, name, fmt_str="{0}{1}", sep=";"):

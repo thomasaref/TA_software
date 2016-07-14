@@ -7,18 +7,19 @@ Created on Thu Jun 25 09:52:31 2015
 from taref.core.log import log_debug
 
 from atom.api import Enum, List, Unicode, Typed, Bool, observe
-from taref.core.agent import SubAgent
-from taref.core.atom_extension import private_property, reset_properties, reset_property
-from taref.core.save_file import Save_DXF
+from taref.core.agent import Operative
+from taref.core.api import private_property, reset_properties, reset_property
+from taref.filer.save_file import Save_DXF
 from taref.ebl.beamer_gen import BeamerGen
 from taref.ebl.polygon_backbone import (minx, maxx, miny, maxy, sP, sPoly,
                                         sR, sC, sT, sCT, sCross, sDig, sWaferDig)
 from taref.ebl.jdf import JDF_Top
-from taref.core.plotter import Plotter
+from taref.plotter.plotter import Plotter
 from taref.ebl.DXF_functions import save_dxf
+from taref.core.shower import shower
 
 
-class EBL_Polygons(SubAgent):
+class EBL_Polygons(Operative):
     base_name="EBL_Polygons"
     initial_position=(0,300)
 
@@ -36,18 +37,22 @@ class EBL_Polygons(SubAgent):
     plot=Plotter(name="EBL Plot", xlabel="x (um)", ylabel="y (um)", title="EBL Plot")
 
     def show(self):
-        from taref.core.shower import shower
+        if self.jdf.input_jdf=="":
+            self.jdf.gen_jdf([agent for agent in self.agent_dict.values() if isinstance(agent, EBL_Polygons)])
+        self.plot_JDF()
+
         shower(self, self.plot)
 
     @property
     def cls_run_funcs(self):
         return [self.plot_JDF, self.save_JDF_DXF]
 
-    @classmethod
-    def activated(cls):
-        if cls.jdf.input_jdf=="":
-            cls.jdf.gen_jdf([agent for agent in cls.agent_dict.values() if isinstance(agent, EBL_Polygons)])
-        cls.plot_JDF()
+#    @classmethod
+#    def activated(cls):
+#        print "hello"
+#        if cls.jdf.input_jdf=="":
+#            cls.jdf.gen_jdf([agent for agent in cls.agent_dict.values() if isinstance(agent, EBL_Polygons)])
+#        cls.plot_JDF()
 
     @classmethod
     def plot_JDF(cls):
@@ -67,7 +72,11 @@ class EBL_Polygons(SubAgent):
             for chip in xy_off.get(p.name, []):
                 sPoly(a, x_off=chip[0]*1.0e-6, y_off=chip[1]*1.0e-6, vs=verts)
             log_debug(a)
-            cls.plot.set_data(a.name, verts, a.color)
+            pf=cls.plot.plot_dict.get(a.name+"_plot", None)
+            if pf is None:
+                cls.plot.polygon(verts, color=a.color, plot_name=a.name+"_plot")
+            else:
+                pf.alter_xy(verts, color=a.color)
             log_debug(a)
             xmin=min([minx(verts), xmin])
             xmax=max([maxx(verts), xmax])

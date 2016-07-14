@@ -54,6 +54,7 @@ class Fig(PlotMaster, Operative):
     y_max=Float()
 
     def _default_x_min(self):
+        print self.plot_dict
         first_plot=self.plot_dict.values()[0]
         return float(min(first_plot.xdata))
 

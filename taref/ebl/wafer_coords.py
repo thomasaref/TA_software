@@ -9,7 +9,7 @@ from enaml import imports
 #from taref.core.log import log_debug
 from taref.core.universal import sqze
 from random import shuffle
-from taref.core.agent import SubAgent
+from taref.core.agent import Operative
 
 QUARTER_WAFER_SIGNS={"A" : (-1, 1), "B" : (1, 1), "C" : (-1, -1), "D" : (1, -1)}
 
@@ -196,7 +196,7 @@ class WaferCoords(SubWaferCoord):
         num_bad_coords=numCoords(self.bad_coords, num_patterns)
         return [self.distr_one_coord(i, num_patterns, num_good_coords, num_bad_coords) for i in range(num_patterns)]
 
-class FullWafer(SubAgent, SubWaferCoord):
+class FullWafer(Operative, SubWaferCoord):
     wafer_type=Enum("Full", "A", "B", "C", "D")
     quarter_wafers=List()
 

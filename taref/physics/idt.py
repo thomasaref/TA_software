@@ -64,16 +64,16 @@ class IDT(Rho):
 
     W=Float(25.0e-6).tag(desc="height of finger.", unit="um")
 
-    C=SProperty().tag(unit="fF", desc="Total capacitance of IDT", reference="Morgan page 16/145")
-    @C.getter
+    Ct=SProperty().tag(unit="fF", desc="Total capacitance of IDT", reference="Morgan page 16/145")
+    @Ct.getter
     def _get_C(self, epsinf, Ct_mult, W, Np):
         """Morgan page 16, 145"""
         return Ct_mult*W*epsinf*Np
 
-    @C.setter
-    def _get_epsinf(self, C, Ct_mult, W, Np):
+    @Ct.setter
+    def _get_epsinf(self, Ct, Ct_mult, W, Np):
         """reversing capacitance to extract eps infinity"""
-        return C/(Ct_mult*W*Np)
+        return Ct/(Ct_mult*W*Np)
 
     Ga0=SProperty().tag(desc="Conductance at center frequency")
     @Ga0.getter
@@ -133,7 +133,7 @@ class IDT(Rho):
     @private_property
     def fixed_coupling(self):
         if self.S_type=="RAM":
-            return self.fixed_P[1]/(2.0*self.C)/(2.0*pi)
+            return self.fixed_P[1]/(2.0*self.Ct)/(2.0*pi)
         gamma0=self.f0*self.K2*self.Np/(4*self.Ct_mult)
         if self.couple_type=="full sum":
             return gamma0*(self.fixed_alpha)**2*absolute(self.fixed_Asum)**2
@@ -179,7 +179,7 @@ class IDT(Rho):
     @private_property
     def fixed_Lamb_shift(self):
         if self.S_type=="RAM":
-            return -self.fixed_P[2]/(2.0*self.C)/(2.0*pi)
+            return -self.fixed_P[2]/(2.0*self.Ct)/(2.0*pi)
         if self.Lamb_shift_type=="formula":
             X, Np=self.fixed_X, self.Np
             gamma0=self._get_couple_factor(f=f0)
@@ -231,25 +231,25 @@ class IDT(Rho):
 
     simple_S=SProperty().tag(sub=True)
     @simple_S.getter
-    def _get_simple_S(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C, YL, dL, vf, L_IDT):
+    def _get_simple_S(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, YL, dL, vf, L_IDT):
         Ga=self._get_Ga(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         Ba=self._get_Ba(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         w=2*pi*f
         GL=real(YL)
         k=2*pi*f/vf
         jkL=1.0j*k*L_IDT
-        P33plusYL=Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL+YL
+        P33plusYL=Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL+YL
         S11=S22=-Ga/P33plusYL*exp(-jkL)
         S12=S21=exp(-jkL)+S11
         S13=S23=S32=S31=1.0j*sqrt(2.0*Ga*GL)/P33plusYL*exp(-jkL/2.0)
-        S33=(YL-Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL)/P33plusYL
+        S33=(YL-Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL)/P33plusYL
         return (S11, S12, S13,
                 S21, S22, S23,
                 S31, S32, S33)
 
     simple_P=SProperty().tag(sub=True)
     @simple_P.getter
-    def _get_simple_P(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C, dL, vf, L_IDT):
+    def _get_simple_P(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, dL, vf, L_IDT):
         Ga=self._get_Ga(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         Ba=self._get_Ba(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         w=2*pi*f
@@ -259,7 +259,7 @@ class IDT(Rho):
         P12=P21=exp(-jkL)
         P13=P23= -1.0j*sqrt(Ga/2.0)
         P31=P32=-2.0*P13
-        P33=Ga+1.0j*Ba+1.0j*w*C-1.0j/w*dL
+        P33=Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL
         return (P11, P12, P13,
                 P21, P22, P23,
                 P31, P32, P33), Ga, Ba
@@ -339,7 +339,7 @@ class IDT(Rho):
 
 
     @log_func
-    def _get_RAM_P(self, W, rs, Np, vf, Dvv, epsinf, C, p, N_IDT, ft, f0, dloss1, dloss2):
+    def _get_RAM_P(self, W, rs, Np, vf, Dvv, epsinf, Ct, p, N_IDT, ft, f0, dloss1, dloss2):
         frq, alpha=self.fixed_freq, self.fixed_alpha
         print "start P"
         P=[self._get_RAM_P_one_f(f=f, Dvv=Dvv, epsinf=epsinf, W=W, vf=vf, rs=rs, p=p,
@@ -352,7 +352,7 @@ class IDT(Rho):
         print "P_done 2"
         Ga=squeeze(2.0*absolute(P13)**2)
         Ba=-imag(hilbert(Ga))
-        P33=Ga+1.0j*Ba+2.0j*pi*f*C
+        P33=Ga+1.0j*Ba+2.0j*pi*f*Ct
         return (P11, P12, P13,
                 P21, P22, P23,
                 P31, P32, P33), Ga, Ba
@@ -405,9 +405,9 @@ class IDT(Rho):
 
     Ga=SProperty().tag(desc="Ga adjusted for frequency f")
     @Ga.getter
-    def _get_Ga(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C):
+    def _get_Ga(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct):
         gamma=self._get_coupling(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
-        return gamma*2*C*2*pi
+        return gamma*2*Ct*2*pi
 
     @private_property
     def fixed_Ga(self):
@@ -416,9 +416,9 @@ class IDT(Rho):
 
     Ba=SProperty()
     @Ba.getter
-    def _get_Ba(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, C):
+    def _get_Ba(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct):
         ls=self._get_Lamb_shift(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
-        return -ls*2*C*2*pi
+        return -ls*2*Ct*2*pi
 
     @private_property
     def fixed_Ba(self):

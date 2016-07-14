@@ -58,7 +58,7 @@ class Qubit(Agent):
     def _get_loop_area(self, loop_width, loop_height):
         return loop_width*loop_height
 
-    C=Float(1.0e-13).tag(desc="shunt capacitance", unit="fF", tex_str=r"$C_q$")
+    Ct=Float(1.0e-13).tag(desc="shunt capacitance", unit="fF", tex_str=r"$C_q$")
 
     Rn=Float(10.0e3).tag(desc="Normal resistance of SQUID", unit="kOhm", label="DC Junction resistance", tex_str=r"$R_n$")
 
@@ -87,12 +87,12 @@ class Qubit(Agent):
 
     Ec=SProperty().tag(desc="Charging Energy", unit="hGHz")#, unit_factor=1.0e9*h)
     @Ec.getter
-    def _get_Ec(self, C):
+    def _get_Ec(self, Ct):
         """Charging energy"""
-        return e**2/(2.0*C)
+        return e**2/(2.0*Ct)
 
     @Ec.setter
-    def _get_C(self, Ec):
+    def _get_Ct(self, Ec):
         """inverse charging energy"""
         return e**2/(2.0*Ec)
 
@@ -147,8 +147,8 @@ class Qubit(Agent):
 
     L=SProperty()
     @L.getter
-    def _get_L(self, fq, C):
-        return 1.0/(C*(2*pi*fq)**2)
+    def _get_L(self, fq, Ct):
+        return 1.0/(Ct*(2*pi*fq)**2)
 
     anharm=SProperty().tag(desc="absolute anharmonicity", unit="hGHz")
     @anharm.getter
@@ -186,16 +186,16 @@ class Qubit(Agent):
     f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
     voltage_from_flux_par=SProperty().tag(sub=True)
     @voltage_from_flux_par.getter
-    def _get_voltage_from_flux_par(self, fq, C, Ejmax, offset, flux_factor):
-        Ec=self._get_Ec(C=C)
+    def _get_voltage_from_flux_par(self, fq, Ct, Ejmax, offset, flux_factor):
+        Ec=self._get_Ec(Ct=Ct)
         Ej=self._get_Ej_get_fq(fq=fq, Ec=Ec)
         flux_d_flux0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
         return self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
 
     voltage_from_flux_par_many=SProperty().tag(sub=True)
     @voltage_from_flux_par_many.getter
-    def _get_voltage_from_flux_par_many(self, f, C, Ejmax, offset, flux_factor):
-        Ec=self._get_Ec(C=C)
+    def _get_voltage_from_flux_par_many(self, f, Ct, Ejmax, offset, flux_factor):
+        Ec=self._get_Ec(Ct=Ct)
         Ej=self._get_Ej_get_fq(fq=f, Ec=Ec)
         fdf0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
         flux_d_flux0=append(fdf0, -fdf0)

@@ -8,7 +8,7 @@ Created on Fri Apr 22 14:50:17 2016
 from taref.plotter.fig_format import Fig
 from taref.plotter.plotter_backbone import process_kwargs
 from taref.core.property import private_property
-from taref.plotter.plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh_plot, multiline_plot
+from taref.plotter.plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh_plot, multiline_plot, polygon_plot
 from atom.api import Unicode
 
 class Plotter(Fig):
@@ -37,6 +37,10 @@ class Plotter(Fig):
     def multiline(self, *args,**kwargs):
         kwargs=process_kwargs(self, kwargs)
         return multiline_plot(self, *args,**kwargs)
+
+    def polygon(self, *args, **kwargs):
+        kwargs=process_kwargs(self, kwargs)
+        return polygon_plot(self, *args, **kwargs)
 
     def savefig(self, dir_path="/Users/thomasaref/Documents/TA_software/", fig_name="test_colormap_plot.png"):
         """saves the figure. if a canvas does not exist, the window will be shown and hidden to create it.
@@ -104,6 +108,8 @@ def colormesh(*args, **kwargs):
 def multiline(*args, **kwargs):
     return Plotter.plot_do("multiline", *args, **kwargs)
 
+def polygon(*args, **kwargs):
+    return Plotter.plot_do("polygon", *args, **kwargs)
 #def plots(func):
 #    def plot_func(self, pl=None, *args, **kwargs):
 #        if pl is None:

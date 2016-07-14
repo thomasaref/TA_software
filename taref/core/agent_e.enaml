@@ -202,6 +202,7 @@ enamldef TopToolBar(ToolBar):
 enamldef CoreView(CoreWindow): cv:
     """the most basic view controller of a collection of Atoms without a chief"""
     activated ::
+        print chief_cls
         if hasattr(chief_cls, "activated"):
             chief_cls.activated()
     TopToolBar: tb:
