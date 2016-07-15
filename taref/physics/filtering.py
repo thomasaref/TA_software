@@ -5,7 +5,7 @@ Created on Sun May  8 11:19:59 2016
 @author: thomasaref
 """
 
-from scipy.signal import hann, boxcar, freqz, firwin, lfilter, filtfilt, flattop, blackmanharris, tukey
+from scipy.signal import hann, boxcar, freqz, firwin, lfilter, filtfilt, flattop, blackmanharris, tukey, convolve, fftconvolve
 from numpy import hanning, append, zeros, log10, absolute, unwrap, arctan2, imag, real, fft, angle, linspace, nan_to_num
 from atom.api import Atom, Float, Int, Enum, Bool, cached_property, observe
 from taref.core.api import private_property
@@ -33,7 +33,7 @@ def window_ifft(Magcom, window):
     """windows the data before applying an ifft"""
     return fft.ifft(Magcom*window)
 
-def fft_filt_prep(length, start_ind, stop_ind, filt_func="boxcar", reflect=True):
+def fft_filt_prep(length, start_ind, stop_ind, filt_func="tukey", reflect=True):
     """prepares a fft_filter consisting of a window around given start and stop indices. (fftshifted)"""
     filt_func=window_dict.get(filt_func, filt_func)
     filt=zeros(length)
@@ -63,6 +63,7 @@ def fir_filt_prep(length, start_ind, stop_ind, numtaps=1000, window="blackmanhar
 
 def fir_filter(Magcom, filt, padtype="odd"):
     """applies a FIR filter to data in Magcom"""
+    return fftconvolve(Magcom, filt, mode="same")
     return filtfilt(filt, [1.0], Magcom, method="gust")
 
 def fir_freqz(filt, length):

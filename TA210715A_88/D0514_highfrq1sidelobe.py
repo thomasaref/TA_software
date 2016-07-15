@@ -15,12 +15,17 @@ from taref.plotter.api import LineFitter
 from taref.physics.fundamentals import h#, filt_prep
 from scipy.optimize import fsolve
 from scipy.signal import freqz
-from taref.physics.fitting_functions import lorentzian, rpt_fit, lorentzian2
+#from taref.physics.fitting_functions import lorentzian, rpt_fit, lorentzian2
+#from taref.physics.fitting import Fitter
 from time import time
-a=TA88_Lyzer(filt_center=26, filt_halfwidth=15, on_res_ind=413, VNA_name="RS VNA",
+a=TA88_Lyzer(on_res_ind=413, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0514/S1A4_high_frq_trans_1_sidelobe.hdf5"),
-            fit_func=lorentzian, p_guess=[5e6,4.9e9, 5e-5, 4e-5], #[0.2,2.3, 3e-7, 7.5e-7],
+            #fit_func=lorentzian, p_guess=[5e6,4.9e9, 5e-5, 4e-5], #[0.2,2.3, 3e-7, 7.5e-7],
             offset=0.0, indices=range(50, 534)) #33, 70
+a.filt.center=26
+a.filt.halfwidth=10
+a.fitter.fit_type="lorentzian"
+a.fitter.gamma=0.02
 #print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
 
 
@@ -37,12 +42,24 @@ if __name__=="__main__":
     #line(filt*0.001, plotter=pl)
     #colormesh(s3a4_wg.MagAbsFilt)#, plotter="magabsfilt_{}".format(self.name))
 
-    pl=a.magabsfilt_colormesh()
-    a.magabsfilt2_colormesh()
+    pl=a.magabs_colormesh()
+    #a.phase_colormesh().show()
+    a.filter_type="FFT"
+    a.filt.filter_type="FFT"
+    pl=a.magabs_colormesh(index_restricted=True)
+    a.phase_colormesh()#.show()
+
+    a.filter_type="Fit"
+    #a.filt.filter_type="FIR"
+    #a.get_member("MagcomFilt").reset(a)
+    a.magabs_colormesh(pl=pl, index_restricted=True)
+    a.ifft_plot()#.show()
+
+    #a.magabsfilt2_colormesh()
     a.widths_plot()
-    a.center_plot()
+    a.center_plot().show()
     a.heights_plot()
-    a.background_plot()
+    a.background_plot().show()
 
     #colormesh(plotter=pl)
     #a.magdBfilt_colormesh()

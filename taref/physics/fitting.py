@@ -79,6 +79,7 @@ class LeastSqFitter(Atom):
     fit_func=Callable().tag(private=True)
     p_guess_func=Callable().tag(private=True)
     fit_params=Typed(ndarray)
+    p_guess=Typed(ndarray)
 
     @private_property
     def resid_func(self):
@@ -100,6 +101,13 @@ class LeastSqFitter(Atom):
         self.fit_params=array(zip(*fit_params)).transpose()
         print "ended leastsq fitting {}".format(time()-tstart)
         return self.fit_params
+
+    def make_p_guess(self, x, y, indices=None, *args, **kwargs):
+        if indices is None:
+            indices=range(len(y))
+        pguess=[self.p_guess_func(x, y[n], *args, **kwargs) for n in indices]
+        self.p_guess=array(zip(*pguess)).transpose()
+        return self.p_guess
 
     def reconstruct_fit(self, x, fit_params=None):
         if fit_params is None:

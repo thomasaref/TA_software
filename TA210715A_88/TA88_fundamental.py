@@ -54,7 +54,7 @@ qdt=QDT(material='LiNbYZ',
         offset=-0.07)
 qdt.Ejmax=h*44.0e9 #h*44.0e9
 qdt.f0=5.38e9 #5.35e9
-qdt.C=1.25e-13
+qdt.Ct=1.25e-13
 qdt.K2=qdt.K2*0.9
 
 ideal_idt=IDT(name="idealIDT",
