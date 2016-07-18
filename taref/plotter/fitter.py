@@ -63,7 +63,7 @@ class LineFitter(Operative):
         pl=Plotter(name=self.name)
         for param in get_all_tags(self, "plot"):
             print param
-            pl, pf=line(*getattr(self, param), plot_name=get_tag(self, param, "plot"), plotter=pl)
+            pl, pf=line(*getattr(self, param), plot_name=get_tag(self, param, "plot"), plotter=pl, pf_too=True)
             self.data_dict[param]=pf.plot_name
         return pl
 

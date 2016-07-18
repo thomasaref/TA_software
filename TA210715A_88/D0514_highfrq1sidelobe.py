@@ -9,8 +9,8 @@ from TA88_fundamental import TA88_Lyzer, TA88_Read#, qdt
 from taref.plotter.api import colormesh, line, Plotter, scatter
 from taref.core.api import set_tag, set_all_tags
 from numpy import array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape, linspace, interp, absolute, fft, log10, angle, unwrap
-from atom.api import FloatRange, Int
-from taref.core.api import tag_property
+from atom.api import FloatRange, Int, Float
+from taref.core.api import tag_property, private_property
 from taref.plotter.api import LineFitter
 from taref.physics.fundamentals import h#, filt_prep
 from scipy.optimize import fsolve
@@ -25,14 +25,39 @@ a=TA88_Lyzer(on_res_ind=413, VNA_name="RS VNA",
 a.filt.center=26
 a.filt.halfwidth=10
 a.fitter.fit_type="lorentzian"
-a.fitter.gamma=0.02
+a.fitter.gamma=0.01
+a.flux_axis_type="flux"
+
 #print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
 
 
 a.read_data()
 
 if __name__=="__main__":
+    from scipy.misc import derivative
+    from numpy import diff, exp
+    if 0:
+        class ElectricalDelay(LineFitter):
+            ed=Float(1260e-9)
 
+            @tag_property(plot="blah", sub=True)
+            def phase_ed(self):
+                return a.frequency/1e9, angle(a.Magcom[:,1]*exp(1j*a.frequency*self.ed))#+a.frequency[0]*self.ed
+
+        a.filter_type="FFT"
+
+        b=ElectricalDelay()
+        b.plotter
+        pl=colormesh(angle(a.Magcom[a.indices, :].transpose()*exp(1j*a.frequency[a.indices]*b.ed)))
+        a.MagAbsFit
+        print a.fitter.fit_params
+        colormesh(-0.5+1.5/6.0*angle([1.0-1.0/(1.0+1.0j*(a.yoko-absolute(fp[1]))/absolute(fp[0])) for n, fp in enumerate(a.fitter.fit_params)]).transpose(), pl=pl)#a.fitter.fit_params[0]))
+        #b.show()
+
+        #print diff(a.Phase[0, :])
+        from numpy import unwrap
+        scatter(unwrap(a.Phase[:,0], discont=3)).show()
+        line(diff(a.Phase[:,0])).show()
 
     #pl=a.magabs_colormesh()#magabs_colormesh3(s3a4_wg)
     #pl=a.hann_ifft_plot()
@@ -43,22 +68,26 @@ if __name__=="__main__":
     #colormesh(s3a4_wg.MagAbsFilt)#, plotter="magabsfilt_{}".format(self.name))
 
     pl=a.magabs_colormesh()
-    #a.phase_colormesh().show()
+    a.phase_colormesh()#.show()
     a.filter_type="FFT"
-    a.filt.filter_type="FFT"
+    #a.filt.filter_type="FFT"
     pl=a.magabs_colormesh(index_restricted=True)
     a.phase_colormesh()#.show()
 
     a.filter_type="Fit"
+    #a.filter_type="FIR"
     #a.filt.filter_type="FIR"
-    #a.get_member("MagcomFilt").reset(a)
+    a.get_member("MagcomFilt").reset(a)
     a.magabs_colormesh(pl=pl, index_restricted=True)
     a.ifft_plot()#.show()
 
     #a.magabsfilt2_colormesh()
     a.widths_plot()
-    a.center_plot().show()
+    a.center_plot()#.show()
     a.heights_plot()
+    print a.fitter.fit_params[200]
+    print a.fitter.p_guess[200]
+
     a.background_plot().show()
 
     #colormesh(plotter=pl)

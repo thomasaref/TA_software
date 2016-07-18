@@ -33,10 +33,10 @@ def full_leastsq_fit(fit_func, p_guess_func, y, x, indices=None, *args, **kwargs
 
 
 def lorentzian_p_guess(x, sig, gamma=1.0):
-    xmax=amax(sig)
-    #xmin=amin(sig)
-    xmean=(mean(sig[:10])+mean(sig[-10:]))/2.0
-    return [gamma, x[argmin(sig)], xmax-xmean, xmean]
+    #xmax=amax(sig)
+    xmin=amin(sig) #xmean-xmin=fp2
+    xmean=(mean(sig[:10])+mean(sig[-10:]))/2.0 #xmean=fp2+fp3
+    return [gamma, x[argmin(sig)], xmean-xmin, xmin]
 
 def lorentzian(x,p):
     return p[2]*(((x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]

@@ -9,10 +9,11 @@ from taref.plotter.fig_format import Fig
 from taref.plotter.plotter_backbone import process_kwargs
 from taref.core.property import private_property
 from taref.plotter.plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh_plot, multiline_plot, polygon_plot
-from atom.api import Unicode
+from atom.api import Unicode, Bool
 
 class Plotter(Fig):
     fig_name=Unicode()
+    #return_plot_format=Bool(False)
 
     def line(self, *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
@@ -54,6 +55,7 @@ class Plotter(Fig):
     def plot_do(cls, plot_func, *args, **kwargs):
         """utility function that extracts plotter and plot_name from kwargs and then does plot specified by func_name"""
         plotter=kwargs.pop("plotter", None)
+        pf_too=kwargs.pop("pf_too", False)
         if plotter is None:
             plotter=kwargs.pop("pl", None)
         if plotter is None:
@@ -64,7 +66,9 @@ class Plotter(Fig):
             else:
                 plotter=Plotter(name=plotter)
         pf=getattr(plotter, plot_func)(*args, **kwargs)
-        return plotter, pf
+        if pf_too:
+            return plotter, pf
+        return plotter
 
     @private_property
     def cls_run_funcs(self):
