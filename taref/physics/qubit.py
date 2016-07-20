@@ -184,12 +184,20 @@ class Qubit(Agent):
 
     #freq_arr=Array().tag(desc="array of frequencies to evaluate over")
     f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
+
+    flux_from_fq=SProperty().tag(sub=True)
+    @flux_from_fq.getter
+    def _get_flux_from_fq(self, fq, Ct, Ejmax):
+        Ec=self._get_Ec(Ct=Ct)
+        Ej=self._get_Ej_get_fq(fq=fq, Ec=Ec)
+        return self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
+
     voltage_from_flux_par=SProperty().tag(sub=True)
     @voltage_from_flux_par.getter
     def _get_voltage_from_flux_par(self, fq, Ct, Ejmax, offset, flux_factor):
-        Ec=self._get_Ec(Ct=Ct)
-        Ej=self._get_Ej_get_fq(fq=fq, Ec=Ec)
-        flux_d_flux0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
+        #Ec=self._get_Ec(Ct=Ct)
+        #Ej=self._get_Ej_get_fq(fq=fq, Ec=Ec)
+        flux_d_flux0=self._get_flux_from_fq(fq, Ct, Ejmax) #self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
         return self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
 
     voltage_from_flux_par_many=SProperty().tag(sub=True)

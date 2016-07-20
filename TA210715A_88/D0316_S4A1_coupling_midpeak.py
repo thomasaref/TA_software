@@ -13,7 +13,7 @@ a=TA88_Lyzer(name="S4A1_midpeak", #filt_center=31, filt_halfwidth=22,
                    on_res_ind=260,
               VNA_name='RS VNA', port_name='S21',
               rd_hdf=TA88_Read(main_file="Data_0316/S4A1_TA88_coupling_search_midpeak.hdf5"),
-              indices=range(65, 984+1),
+              fit_indices=[range(65, 984+1)],
               #fit_func=lorentzian,
               flux_factor=qdt.flux_factor*1000.0/560.0,
               #offset=0.0-0.025
@@ -23,13 +23,14 @@ a.filt.halfwidth=22
 a.fitter.fit_type="lorentzian"
 a.fitter.gamma=0.01
 a.flux_axis_type="flux"
+a.end_skip=10
 a.read_data()
 
 if __name__=="__main__":
     pl=a.magabs_colormesh()
     a.filter_type="FFT"
     a.ifft_plot()
-    pl=a.magabs_colormesh(index_restricted=True)
+    pl=a.magabs_colormesh()
     a.filter_type="Fit"
     a.magabs_colormesh(pl=pl)
     #line(a.frequency, a.ls_f)[0].show()

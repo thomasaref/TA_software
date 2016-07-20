@@ -21,12 +21,14 @@ from time import time
 a=TA88_Lyzer(on_res_ind=413, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0514/S1A4_high_frq_trans_1_sidelobe.hdf5"),
             #fit_func=lorentzian, p_guess=[5e6,4.9e9, 5e-5, 4e-5], #[0.2,2.3, 3e-7, 7.5e-7],
-            offset=0.0, indices=range(50, 534)) #33, 70
+            #offset=0.0,
+            fit_indices=[range(50, 534)]) #33, 70
 a.filt.center=26
 a.filt.halfwidth=10
 a.fitter.fit_type="lorentzian"
 a.fitter.gamma=0.01
 a.flux_axis_type="flux"
+a.end_skip=10
 
 #print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
 
@@ -36,22 +38,22 @@ a.read_data()
 if __name__=="__main__":
     from scipy.misc import derivative
     from numpy import diff, exp
-    if 0:
+    if 1:
         class ElectricalDelay(LineFitter):
             ed=Float(1260e-9)
 
             @tag_property(plot="blah", sub=True)
             def phase_ed(self):
-                return a.frequency/1e9, angle(a.Magcom[:,1]*exp(1j*a.frequency*self.ed))#+a.frequency[0]*self.ed
+                return a.frequency[a.indices]/1e9, angle(a.Magcom[:,1]*exp(1j*a.frequency[a.indices]*self.ed))#+a.frequency[0]*self.ed
 
         a.filter_type="FFT"
 
         b=ElectricalDelay()
         b.plotter
-        pl=colormesh(angle(a.Magcom[a.indices, :].transpose()*exp(1j*a.frequency[a.indices]*b.ed)))
+        pl=colormesh(angle(a.Magcom[a.flat_indices].transpose()*exp(1j*a.frequency[a.flat_indices]*b.ed)))
         a.MagAbsFit
         print a.fitter.fit_params
-        colormesh(-0.5+1.5/6.0*angle([1.0-1.0/(1.0+1.0j*(a.yoko-absolute(fp[1]))/absolute(fp[0])) for n, fp in enumerate(a.fitter.fit_params)]).transpose(), pl=pl)#a.fitter.fit_params[0]))
+        #colormesh(-0.5+1.5/6.0*angle([1.0-1.0/(1.0+1.0j*(a.yoko-absolute(fp[1]))/absolute(fp[0])) for n, fp in enumerate(a.fitter.fit_params)]).transpose(), pl=pl)#a.fitter.fit_params[0]))
         #b.show()
 
         #print diff(a.Phase[0, :])
@@ -71,14 +73,14 @@ if __name__=="__main__":
     a.phase_colormesh()#.show()
     a.filter_type="FFT"
     #a.filt.filter_type="FFT"
-    pl=a.magabs_colormesh(index_restricted=True)
+    pl=a.magabs_colormesh()
     a.phase_colormesh()#.show()
 
     a.filter_type="Fit"
     #a.filter_type="FIR"
     #a.filt.filter_type="FIR"
-    a.get_member("MagcomFilt").reset(a)
-    a.magabs_colormesh(pl=pl, index_restricted=True)
+    #a.get_member("MagcomFilt").reset(a)
+    a.magabs_colormesh(pl=pl)
     a.ifft_plot()#.show()
 
     #a.magabsfilt2_colormesh()
@@ -86,7 +88,7 @@ if __name__=="__main__":
     a.center_plot()#.show()
     a.heights_plot()
     print a.fitter.fit_params[200]
-    print a.fitter.p_guess[200]
+    #print a.fitter.p_guess[200]
 
     a.background_plot().show()
 

@@ -16,10 +16,33 @@ from taref.physics.fundamentals import h
 from scipy.optimize import fsolve
 
 a=TA88_Lyzer(on_res_ind=201,# VNA_name="RS VNA", filt_center=15, filt_halfwidth=15,
-        rd_hdf=TA88_Read(main_file="Data_0628/S4A4_just_gate_overnight_flux_swp.hdf5")) #Data_0629/S4A4_just_gate_FFT_high_frq_test.hdf5"))
+        rd_hdf=TA88_Read(main_file="Data_0628/S4A4_just_gate_overnight_flux_swp.hdf5"),
+        flux_indices=[range(400, 610)]) #Data_0629/S4A4_just_gate_FFT_high_frq_test.hdf5"))
+a.filt.center=0
+a.filt.halfwidth=100
+a.fitter.fit_type="lorentzian"
+a.fitter.gamma=0.01
+a.flux_axis_type="flux"
+a.end_skip=10
 a.read_data()
+a.ifft_plot()
+
 a.bgsub_type="dB"
-a.magabs_colormesh()
+#a.bgsub_type="Complex"
+if __name__=="__main__":
+    pl=a.magabs_colormesh()#.show()
+    a.filter_type="FFT"
+    a.magabs_colormesh(pl=pl).show()
+    from taref.physics.filtering import Filter
+    from numpy import absolute
+    b=Filter(center=0, halfwidth=40, reflect=False, N=len(a.yoko))
+    #Magcom=a.Magcom.transpose()
+    Magfilt=array([b.fft_filter(a.Magcom[m,:]) for m in range(len(a.frequency[a.indices]))])#.transpose()
+    pl=line(b.fftshift(absolute(b.window_ifft(a.Magcom[261, :]))), color="red")
+    line(b.fftshift(absolute(b.window_ifft(a.Magcom[240, :]))), pl=pl)
+    pl=colormesh(a.MagAbs)
+    colormesh(absolute(Magfilt)[:, 10:-10]).show()
+    colormesh((absolute(Magfilt).transpose()-absolute(Magfilt[:,20])).transpose()[:, 10:-10]).show()
 a.bgsub_type="Complex"
 pl, pf=line(a.MagAbs[:, 517])
 line(a.MagAbs[:, 519], color="red", pl=pl)

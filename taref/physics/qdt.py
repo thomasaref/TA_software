@@ -38,6 +38,20 @@ class QDT(IDT, Qubit):
         fminus=sqrt(f*(f-2.0*ls-2.0*gamma))
         return fplus, fminus, fplus-fminus
 
+    fluxfq0=SProperty().tag(desc="center frequency of oscillator as voltage")
+    @fluxfq0.getter
+    def _get_fluxfq0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, Ejmax):
+        fq0=self._get_fq0(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        return self._get_flux_from_fq(fq=fq0, Ct=Ct, Ejmax=Ejmax)
+
+    fluxfFWHM=SProperty().tag(desc="FWHM of oscillator")
+    @fluxfFWHM.getter
+    def _get_fluxfFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, Ejmax):
+        fplus, fminus, fwhm=self._get_fFWHM(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        Vminus=self._get_flux_from_fq(fq=fplus, Ct=Ct, Ejmax=Ejmax)
+        Vplus=self._get_flux_from_fq(fq=fminus, Ct=Ct, Ejmax=Ejmax)
+        return Vplus, Vminus, Vplus-Vminus
+
     Vfq0=SProperty().tag(desc="center frequency of oscillator as voltage")
     @Vfq0.getter
     def _get_Vfq0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, Ejmax, offset, flux_factor):

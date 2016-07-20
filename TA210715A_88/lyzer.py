@@ -84,13 +84,17 @@ class Lyzer(LyzerBase):
     #fit_type=Enum("flux", "yoko", "fq")
     flux_axis_type=Enum("yoko", "flux", "fq")
     freq_axis_type=Enum("f", "ls_f")
-    index_restricted=Bool(False)
+    #index_restricted=Bool(False)
+    calc_p_guess=Bool(False)
+    #end_skip=Int(1)
 
     def _observe_filter_type(self, change):
         if self.filter_type=="FIR":
             self.filt.filter_type="FIR"
         elif self.filter_type=="FFT":
             self.filt.filter_type="FFT"
+        #self.get_member("freq_axis").reset(self)
+        #self.get_member("Magcom").reset(self)
 
     @tag_property(sub=True)
     def flux_axis(self):
@@ -103,14 +107,14 @@ class Lyzer(LyzerBase):
 
     @tag_property(sub=True)
     def freq_axis(self):
-        if self.freq_axis_type=="f":
-            #if self.filter_type=="Fit":
-            #    return self.frequency[self.indices]/1e9
-            return self.frequency/1e9
-        elif self.flux_axis_type=="ls_f":
-            #if self.filter_type=="Fit":
-            #    return self.ls_f[self.indices]/1e9
+        if self.flux_axis_type=="ls_f":
             return self.ls_f/1e9
+        return self.frequency/1e9
+        #if self.filter_type=="Fit":
+        #    return freq[self.flattened_indices]
+        #elif self.filter_type in ("FFT", "Fir"):
+        #    return freq[self.filt_indices]
+        #return freq
 
     @t_property()
     def flux_axis_label(self):
@@ -132,7 +136,38 @@ class Lyzer(LyzerBase):
     start_ind=Int()
     stop_ind=Int()
 
-    indices=List()
+    flux_indices=List()
+
+    def _default_flux_indices(self):
+        return [range(len(self.yoko))]
+
+    @tag_property(sub=True)
+    def flat_flux_indices(self):
+        return [n for ind in self.flux_indices for n in ind]
+
+    fit_indices=List()
+
+    def _default_fit_indices(self):
+        return [range(len(self.frequency))]
+
+    @tag_property(sub=True)
+    def flat_indices(self):
+        return [n for ind in self.fit_indices for n in ind]
+
+    end_skip=Int(0)
+
+    #@tag_property(sub=True)
+    #def filt_indices(self):
+    #    return range(self.end_skip, len(self.frequency)-self.end_skip)
+
+    @tag_property(sub=True)
+    def indices(self):
+        if self.filter_type=="Fit":
+            return self.flat_indices #[n for ind in self.fit_indices for n in ind]
+        elif self.filter_type in ("FFT", "Fir"):
+            return range(self.end_skip, len(self.frequency)-self.end_skip)
+        return range(len(self.frequency))
+
     port_name=Unicode('S21')
     VNA_name=Unicode("RS VNA")
 
@@ -143,9 +178,6 @@ class Lyzer(LyzerBase):
     bgsub_stop_ind=Int(1)
     bgsub_axis=Int(1)
 
-    #fit_func=Callable(lorentzian).tag(private=True)
-    #p_guess_func=Callable(lorentzian_p_guess).tag(private=True)
-    #p0=Float(0.1)
     read_data=Callable(read_data).tag(sub=True)
 
 
@@ -193,11 +225,6 @@ class Lyzer(LyzerBase):
     def flux_over_flux0(self):
         return self.qdt._get_flux_over_flux0(voltage=self.yoko, offset=self.offset, flux_factor=self.flux_factor)
 
-
-    def _default_indices(self):
-        return range(len(self.frequency))
-        #return [range(81, 120+1), range(137, 260+1), range(269, 320+1), range(411, 449+1)]#, [490]]#, [186]]
-
     @tag_property(plot=True, sub=True)
     def MagdB(self):
         if self.bgsub_type=="dB":
@@ -229,16 +256,16 @@ class Lyzer(LyzerBase):
 
     @tag_property(sub=True)
     def Magcom(self):
-        self.get_member("MagAbs").reset(self)
-        self.get_member("MagAbs_sq").reset(self)
-        self.get_member("MagdB").reset(self)
-        self.get_member("Phase").reset(self)
+        #self.get_member("MagAbs").reset(self)
+        #self.get_member("MagAbs_sq").reset(self)
+        #self.get_member("MagdB").reset(self)
+        #self.get_member("Phase").reset(self)
         if self.filter_type=="None":
             Magcom=self.MagcomData
         elif self.filter_type=="Fit":
             Magcom=self.MagAbsFit
         else:
-            Magcom=self.MagcomFilt
+            Magcom=self.MagcomFilt[self.indices, :]
         if self.bgsub_type=="Complex":
             return self.bgsub(Magcom) #(Magcom-Magcom[:,0]).transpose()
         return Magcom
@@ -247,31 +274,31 @@ class Lyzer(LyzerBase):
     def ifft_time(self):
         return self.filt.ifft_x(self.frequency)
 
-    @tag_property(plot=True, sub=True)
+    @tag_property(plot=True, private=True)
     def MagcomFilt(self):
-        if self.filt.filter_type=="FFT":
-            return array([self.filt.fft_filter(self.MagcomData[:,n]) for n in range(len(self.yoko))]).transpose()
-        return array([self.filt.fir_filter(self.MagcomData[:,n]) for n in range(len(self.yoko))]).transpose()
+        if self.filt.filter_type=="FIR":
+            return array([self.filt.fir_filter(self.MagcomData[:,n]) for n in self.flat_flux_indices]).transpose()
+        return array([self.filt.fft_filter(self.MagcomData[:,n]) for n in self.flat_flux_indices]).transpose()
 
     @tag_property(plot=True, sub=True)
     def MagAbsFilt_sq(self):
         return absolute(self.MagcomFilt)**2
 
-    @tag_property(sub=True)
+    @tag_property(private=True)
     def fit_params(self):
         if self.fitter.fit_params is None:
-            self.fitter.full_fit(x=self.flux_axis, y=self.MagAbsFilt_sq, indices=self.indices, gamma=self.fitter.gamma)
-            if 1:
-                self.fitter.make_p_guess(self.flux_axis, y=self.MagAbsFilt_sq, indices=self.indices, gamma=self.fitter.gamma)
+            self.fitter.full_fit(x=self.flux_axis[self.flat_flux_indices], y=self.MagAbsFilt_sq, indices=self.flat_indices, gamma=self.fitter.gamma)
+            if self.calc_p_guess:
+                self.fitter.make_p_guess(self.flux_axis[self.flat_flux_indices], y=self.MagAbsFilt_sq, indices=self.flat_indices, gamma=self.fitter.gamma)
         return self.fitter.fit_params
 
-    @tag_property(sub=True)
+    @tag_property(private=True)
     def MagAbsFit(self):
         #if self.fitter.fit_params is None:
         #    self.fitter.full_fit(x=self.flux_axis, y=self.MagAbsFilt_sq, indices=self.indices, gamma=self.fitter.gamma)
         #    if 1:
         #        self.fitter.make_p_guess(self.flux_axis, y=self.MagAbsFilt_sq, indices=self.indices, gamma=self.fitter.gamma)
-        return sqrt(self.fitter.reconstruct_fit(self.flux_axis, self.fit_params))#array([self.fit_func(self.flux_axis, fp) for fp in self.fit_params]))
+        return sqrt(self.fitter.reconstruct_fit(self.flux_axis[self.flat_flux_indices], self.fit_params))#array([self.fit_func(self.flux_axis, fp) for fp in self.fit_params]))
 
     #@tag_property(sub=True)
     #def fit_params(self):
@@ -282,57 +309,60 @@ class Lyzer(LyzerBase):
     def widths_plot(self, **kwargs):
         process_kwargs(self, kwargs)
         pl=kwargs.pop("pl", "widths_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
-        pl=scatter(self.freq_axis[self.indices], absolute([fp[0] for fp in self.fit_params]), plotter=pl)
+        pl=scatter(self.freq_axis[self.flat_indices], absolute([fp[0] for fp in self.fit_params]), plotter=pl)
         if self.flux_axis_type=="fq":
-            line(self.freq_axis, self.qdt._get_coupling(self.frequency)/1e9, plotter=pl, color="red")
+            line(self.freq_axis[self.indices], self.qdt._get_coupling(self.frequency[self.indices])/1e9, plotter=pl, color="red")
+        elif self.flux_axis_type=="yoko":
+            line(self.freq_axis[self.indices], self.qdt._get_VfFWHM(f=self.frequency[self.indices])[2]/2.0, pl=pl, color="red") #self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
         else:
-            line(self.freq_axis, self.qdt._get_VfFWHM(f=self.frequency)[2]/2.0, pl=pl, color="red") #self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
+            line(self.freq_axis[self.indices], self.qdt._get_fluxfFWHM(f=self.frequency[self.indices])[2]/2.0, pl=pl, color="red") #self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
         if self.fitter.p_guess is not None:
-            line(self.freq_axis[self.indices], array([pg[0] for pg in self.fitter.p_guess]), pl=pl, color="green") #self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
+            line(self.freq_axis[self.flat_indices], array([pg[0] for pg in self.fitter.p_guess]), pl=pl, color="green") #self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
         return pl
 
     #@plots
     def center_plot(self, pl=None):
-        pl=scatter(self.frequency[self.indices]/1e9, array([fp[1] for fp in self.fit_params]), plotter=pl)
+        pl=scatter(self.freq_axis[self.flat_indices], array([fp[1] for fp in self.fit_params]), plotter=pl)
         if self.flux_axis_type=="fq":
-            line(self.frequency/1e9, self.ls_f/1e9, plotter=pl, color="red", linewidth=1.0)
+            line(self.freq_axis[self.indices], self.ls_f[self.indices]/1e9, plotter=pl, color="red", linewidth=1.0)
+        elif self.flux_axis_type=="yoko":
+            line(self.freq_axis[self.indices], self.qdt._get_Vfq0(f=self.frequency[self.indices]), plotter=pl, color="red", linewidth=1.0)
         else:
-            line(self.frequency/1e9, self.qdt._get_Vfq0(f=self.frequency), plotter=pl, color="red", linewidth=1.0)
+            line(self.freq_axis[self.indices], self.qdt._get_fluxfq0(f=self.frequency[self.indices]), plotter=pl, color="red", linewidth=1.0)
         if self.fitter.p_guess is not None:
             line(self.freq_axis[self.indices], array([pg[1] for pg in self.fitter.p_guess]), pl=pl, color="green", linewidth=1.0) #self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
         return pl
 
     #@plots
     def heights_plot(self, pl=None):
-        pl=line(self.frequency[self.indices]/1e9, array([fp[2] for fp in self.fit_params]), pl=pl)
+        pl=line(self.freq_axis[self.flat_indices], array([fp[2] for fp in self.fit_params]), pl=pl)
         if self.fitter.p_guess is not None:
-            line(self.freq_axis[self.indices], array([pg[2] for pg in self.fitter.p_guess]), pl=pl, color="green", linewidth=1.0) #self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
+            line(self.freq_axis[self.flat_indices], array([pg[2] for pg in self.fitter.p_guess]), pl=pl, color="green", linewidth=1.0) #self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
         return pl
 
     #@plots
     def background_plot(self, pl=None):
-        pl=line(self.frequency[self.indices]/1e9, array([fp[2]+fp[3] for fp in self.fit_params]), pl=pl)
-        line(self.frequency[self.indices]/1e9, self.MagAbsFilt_sq[self.indices,0], plotter=pl, color="red", linewidth=1.0)
+        pl=line(self.freq_axis[self.flat_indices], array([fp[2]+fp[3] for fp in self.fit_params]), pl=pl)
+        line(self.freq_axis[self.indices], self.MagAbsFilt_sq[self.indices,0], plotter=pl, color="red", linewidth=1.0)
         if self.fitter.p_guess is not None:
-            line(self.freq_axis[self.indices], array([pg[2]+pg[3] for pg in self.fitter.p_guess]), pl=pl, color="green", linewidth=0.5)
+            line(self.freq_axis[self.flat_indices], array([pg[2]+pg[3] for pg in self.fitter.p_guess]), pl=pl, color="green", linewidth=0.5)
         return pl
 
     def magabs_colormesh(self, **kwargs):
         process_kwargs(self, kwargs)
         pl=kwargs.pop("pl", "magabs_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
-        self.get_member("Magcom").reset(self)
         if self.filter_type=="Fit":
-            freq_axis=self.freq_axis[self.indices]
-            pl=colormesh(self.flux_axis, freq_axis, self.MagAbs, pl=pl, **kwargs)
+            start_ind=0
+            for ind in self.fit_indices:
+                pl=colormesh(self.flux_axis[self.flat_flux_indices], self.freq_axis[ind], self.MagAbs[start_ind:start_ind+len(ind), :], pl=pl, **kwargs)
+                start_ind+=len(ind)
+        elif self.filter_type=="None":
+            pl=colormesh(self.flux_axis, self.freq_axis, self.MagAbs, pl=pl, **kwargs)
         else:
-            if self.index_restricted:
-                freq_axis=self.freq_axis[self.indices]
-                pl=colormesh(self.flux_axis, freq_axis, self.MagAbs[self.indices, :], pl=pl, **kwargs)
-            else:
-                freq_axis=self.freq_axis
-                pl=colormesh(self.flux_axis, freq_axis, self.MagAbs, pl=pl, **kwargs)
-        pl.set_ylim(min(freq_axis), max(freq_axis))
-        pl.set_xlim(min(self.flux_axis), max(self.flux_axis))
+            pl=colormesh(self.flux_axis[self.flat_flux_indices], self.freq_axis[self.indices], self.MagAbs, pl=pl, **kwargs)
+
+        pl.set_ylim(min(self.freq_axis[self.indices]), max(self.freq_axis[self.indices]))
+        pl.set_xlim(min(self.flux_axis[self.flat_flux_indices]), max(self.flux_axis[self.flat_flux_indices]))
         pl.xlabel=kwargs.pop("xlabel", self.flux_axis_label)
         pl.ylabel=kwargs.pop("ylabel", self.freq_axis_label)
         return pl
@@ -340,18 +370,14 @@ class Lyzer(LyzerBase):
     def phase_colormesh(self, **kwargs):
         process_kwargs(self, kwargs)
         pl=kwargs.pop("pl", "phase_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
-        self.get_member("Magcom").reset(self)
         if self.filter_type=="Fit":
-            freq_axis=self.freq_axis[self.indices]
-            pl=colormesh(self.flux_axis, freq_axis, self.Phase, pl=pl, **kwargs)
+            start_ind=0
+            for ind in self.fit_indices:
+                pl=colormesh(self.flux_axis, self.freq_axis[ind], self.Phase[start_ind:start_ind+len(ind), :], pl=pl, **kwargs)
+                start_ind+=len(ind)
         else:
-            if self.index_restricted:
-                freq_axis=self.freq_axis[self.indices]
-                pl=colormesh(self.flux_axis, freq_axis, self.Phase[self.indices, :], pl=pl, **kwargs)
-            else:
-                freq_axis=self.freq_axis
-                pl=colormesh(self.flux_axis, freq_axis, self.Phase, pl=pl, **kwargs)
-        pl.set_ylim(min(freq_axis), max(freq_axis))
+            pl=colormesh(self.flux_axis, self.freq_axis[self.indices], self.Phase, pl=pl, **kwargs)
+        pl.set_ylim(min(self.freq_axis[self.indices]), max(self.freq_axis[self.indices]))
         pl.set_xlim(min(self.flux_axis), max(self.flux_axis))
         pl.xlabel=kwargs.pop("xlabel", self.flux_axis_label)
         pl.ylabel=kwargs.pop("ylabel", self.freq_axis_label)
@@ -386,17 +412,19 @@ class Lyzer(LyzerBase):
         stop=absolute(self.filt.window_ifft(self.MagcomData[:,self.stop_ind]))
 
         self.filt.N=len(on_res)
-        pl=line(self.ifft_time, self.filt.fftshift(on_res), pl=pl, color="red",
+        pl=line(self.ifft_time/1e-6, self.filt.fftshift(on_res), pl=pl, color="red",
                plot_name="onres_{}".format(self.on_res_ind),label="i {}".format(self.on_res_ind))
-        line(self.ifft_time, self.filt.fftshift(strt), pl=pl, linewidth=1.0,
+        line(self.ifft_time/1e-6, self.filt.fftshift(strt), pl=pl, linewidth=1.0,
              plot_name="strt {}".format(self.start_ind), label="i {}".format(self.start_ind))
-        line(self.ifft_time, self.filt.fftshift(stop), pl=pl, linewidth=1.0,
+        line(self.ifft_time/1e-6, self.filt.fftshift(stop), pl=pl, linewidth=1.0,
              plot_name="stop {}".format(self.stop_ind), label="i {}".format(self.stop_ind))
 
         filt=self.filt.freqz
         #filt=filt_prep(len(on_res), self.filt_start_ind, self.filt_end_ind)
         top=max([amax(on_res), amax(strt), amax(stop)])
-        line(self.ifft_time, filt*top, plotter=pl, color="green")
+        line(self.ifft_time/1e-6, filt*top, plotter=pl, color="green")
+        pl.xlabel=kwargs.pop("xlabel", "Time (us)")
+        pl.ylabel=kwargs.pop("ylabel", "Time (us)")
         return pl
 
     def MagdB_cs(self, pl, ind):

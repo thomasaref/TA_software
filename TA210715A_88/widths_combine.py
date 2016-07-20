@@ -8,26 +8,51 @@ Created on Tue May 17 18:36:21 2016
 from D0514_highfrq1sidelobe import a as d0514
 from D0316_S4A1_coupling_midpeak import a as d0316
 from D0629_fft_try import a as d0629
-#from D0506_lowfrq34sidelobe import a as d0506
-#from D0509_lowfrq2sidelobe import a as d0509
-#from D0503_lowfrq1sidelobe import a as d0503
-#from D0518_highfrq3sidelobe import a as d0518
+from D0506_lowfrq34sidelobe import a as d0506
+from D0509_lowfrq2sidelobe import a as d0509
+from D0503_lowfrq1sidelobe import a as d0503
+from D0518_highfrq3sidelobe import a as d0518
 from numpy import sqrt, linspace
 from atom.api import FloatRange
 from taref.plotter.fitter import LineFitter2
 from taref.plotter.api import line
 from taref.core.api import tag_property
 
-pl=d0514.widths_plot()#.show()
-d0316.widths_plot(pl=pl)#.show()
-d0629.widths_plot(pl=pl)
-pl=d0514.heights_plot()#.show()
-d0316.heights_plot(pl=pl).show()
+lyzers=[d0514, d0316, d0629, d0518, d0506, d0509, d0503,
+]
 
-d0506.widths_plot(pl=pl)#.show()
-d0509.widths_plot(pl=pl)#.show()
-d0503.widths_plot(pl=pl)#.show()
-d0518.widths_plot(pl=pl)
+for d in lyzers:
+    d.filter_type="FFT"
+    d.bgsub_type="dB"
+
+
+pl="combined centers"
+for d in lyzers:
+    pl=d.center_plot(pl=pl)
+
+pl="combined heights"
+for d in lyzers:
+    pl=d.heights_plot(pl=pl)
+
+pl="combined backgrounds"
+for d in lyzers:
+    pl=d.background_plot(pl=pl)
+
+pl="FFT magabs"
+for d in lyzers:
+    pl=d.magabs_colormesh(pl=pl)
+
+pl="Fit magabs"
+for d in lyzers:
+    d.filter_type="Fit"
+    pl=d.magabs_colormesh(pl=pl)
+pl.set_xlim(0.2, 1.6)
+pl.set_ylim(3.8, 6.0)
+
+pl="combined widths"
+for d in lyzers:
+    pl=d.widths_plot(pl=pl)
+pl.show()
 
 class Fitter(LineFitter2):
             f0=FloatRange(4.0, 6.0, d0514.qdt.f0/1e9).tag(tracking=True)

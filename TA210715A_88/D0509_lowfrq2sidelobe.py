@@ -17,17 +17,29 @@ from scipy.optimize import fsolve
 from scipy.signal import freqz
 from taref.physics.fitting_functions import lorentzian, rpt_fit, lorentzian2
 from time import time
-a=TA88_Lyzer(filt_center=28, filt_halfwidth=15, on_res_ind=256, VNA_name="RS VNA",
+a=TA88_Lyzer(on_res_ind=256, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0509/S1A4_lowfrq_trans_2_sidelobe.hdf5"),
-            fit_func=lorentzian, p_guess=[5e6,4.32e9, 3e-7, 3e-6], #[0.2,2.3, 3e-7, 7.5e-7],
-            offset=-0.035) #33, 70
+            #fit_func=lorentzian, p_guess=[5e6,4.32e9, 3e-7, 3e-6], #[0.2,2.3, 3e-7, 7.5e-7],
+            #offset=-0.035,
+            fit_indices=[range(93, 298+1)], #[range(30,580+1)]) #33, 70
+            )
 #print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
-
-
+a.filt.center=28
+a.filt.halfwidth=15
+a.fitter.fit_type="lorentzian"
+a.fitter.gamma=0.01
+a.flux_axis_type="flux"
+a.end_skip=10
 a.read_data()
 
 
 if __name__=="__main__":
+    a.filter_type="FFT"
+    pl=a.magabs_colormesh()
+    a.filter_type="Fit"
+    a.magabs_colormesh(pl=pl)
+    a.ifft_plot()
+    a.ifft_plot_time()
     #pl=a.magabs_colormesh()#magabs_colormesh3(s3a4_wg)
     #pl=a.hann_ifft_plot()
     #pl=a.ifft_plot()
@@ -35,9 +47,9 @@ if __name__=="__main__":
     #filt=filt_prep(601, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind)
     #line(filt*0.001, plotter=pl)
     #colormesh(s3a4_wg.MagAbsFilt)#, plotter="magabsfilt_{}".format(self.name))
-    pl=a.magabsfilt_colormesh()
+    #pl=a.magabsfilt_colormesh()
     #line(a.frequency, a.ls_f)[0].show()
-    a.widths_plot()
+    a.widths_plot().show()
     a.center_plot()
     a.heights_plot()
     a.background_plot().show()
