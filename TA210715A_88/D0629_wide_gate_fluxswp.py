@@ -15,6 +15,10 @@ from taref.plotter.api import LineFitter
 from taref.physics.fundamentals import h
 from scipy.optimize import fsolve
 
+from scipy.signal import savgol_filter
+#savgol_filter(x, 5, 2)
+from scipy.interpolate import interp1d
+
 a=TA88_Lyzer(on_res_ind=201,# VNA_name="RS VNA", filt_center=15, filt_halfwidth=15,
         rd_hdf=TA88_Read(main_file="Data_0628/S4A4_just_gate_overnight_flux_swp.hdf5"),
         flux_indices=[range(400, 610)]) #Data_0629/S4A4_just_gate_FFT_high_frq_test.hdf5"))
@@ -31,7 +35,12 @@ a.bgsub_type="dB"
 #a.bgsub_type="Complex"
 if __name__=="__main__":
     pl=a.magabs_colormesh()#.show()
+    #pl=colormesh(a.MagAbs.transpose())
+    #colormesh(savgol_filter(a.MagAbs, 11, 3, axis=1).transpose(), pl=pl).show()
+    #colormesh(array([savgol_filter(a.MagAbs[:, n], 5, 2) for n in range(len(a.yoko))]), pl=pl)
+    #pl.show()
     a.filter_type="FFT"
+    #colormesh(array([savgol_filter(a.MagAbs[:, n], 5, 2) for n in range(len(a.yoko[a.flux_indices]))]))
     a.magabs_colormesh(pl=pl).show()
     from taref.physics.filtering import Filter
     from numpy import absolute

@@ -46,9 +46,12 @@
 <span class="sd">@author: thomasaref</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">taref.core.log</span> <span class="kn">import</span> <span class="n">log_debug</span>
-<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Unicode</span><span class="p">,</span> <span class="n">ContainerList</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Typed</span><span class="p">,</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Unicode</span><span class="p">,</span> <span class="n">ContainerList</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Typed</span><span class="p">,</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">Property</span><span class="p">,</span> <span class="n">ReadOnly</span>
 <span class="kn">from</span> <span class="nn">taref.core.backbone</span> <span class="kn">import</span> <span class="n">Backbone</span>
-<span class="kn">from</span> <span class="nn">taref.core.atom_extension</span> <span class="kn">import</span> <span class="n">private_property</span><span class="p">,</span> <span class="n">set_log</span><span class="p">,</span> <span class="n">reset_properties</span><span class="p">,</span> <span class="n">safe_setattr</span><span class="p">,</span> <span class="n">check_initialized</span><span class="p">,</span> <span class="n">set_tag</span>
+<span class="kn">from</span> <span class="nn">taref.core.atom_extension</span> <span class="kn">import</span> <span class="n">set_log</span><span class="p">,</span> <span class="n">check_initialized</span><span class="p">,</span> <span class="n">set_tag</span><span class="p">,</span> <span class="n">defaulter</span>
+<span class="kn">from</span> <span class="nn">taref.core.property</span> <span class="kn">import</span> <span class="n">private_property</span><span class="p">,</span> <span class="n">reset_properties</span>
+<span class="kn">from</span> <span class="nn">taref.core.threadsafe</span> <span class="kn">import</span> <span class="n">safe_setattr</span><span class="p">,</span> <span class="n">safe_call</span>
+<span class="kn">from</span> <span class="nn">taref.core.universal</span> <span class="kn">import</span> <span class="n">name_generator</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">taref.core.shower</span> <span class="kn">import</span> <span class="n">shower</span>
 <span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span><span class="p">,</span> <span class="n">sleep</span>
@@ -60,19 +63,38 @@
 <div class="viewcode-block" id="AgentError"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.AgentError">[docs]</a><span class="k">class</span> <span class="nc">AgentError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;An Error for use by Operatives, Agents and Spies&quot;&quot;&quot;</span>
     <span class="k">pass</span>
+
+
+
+<span class="c1">#def name_generator(name, indict, suffix=&quot;{name}__{num}&quot;):</span>
+<span class="c1">#    &quot;&quot;&quot;checks indict to see if name is in it and generates a new name based on length of indict if it is&quot;&quot;&quot;</span>
+<span class="c1">#    if name in indict:</span>
+<span class="c1">#        name=&quot;{name}__{num}&quot;.format(name=name, num=len(indict))</span>
+<span class="c1">#    return name</span>
 </div>
 <div class="viewcode-block" id="Operative"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative">[docs]</a><span class="k">class</span> <span class="nc">Operative</span><span class="p">(</span><span class="n">Backbone</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Adds functionality for auto showing to Backbone&quot;&quot;&quot;</span>
-    <span class="n">name</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Name of agent. This name will be modified to be unique, if necessary&quot;</span><span class="p">,</span> <span class="n">initialized</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">name</span><span class="o">=</span><span class="n">ReadOnly</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Name of agent. This name will be modified to be unique, if necessary&quot;</span><span class="p">,</span> <span class="n">initialized</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="c1">#def _default_name(self):</span>
+    <span class="c1">#    return self.base_name</span>
+    <span class="c1">#def _observe_name(self, change):</span>
+    <span class="c1">#    check_initialized(self, change)</span>
+
     <span class="n">desc</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Optional description of agent&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">_observe_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
-        <span class="n">check_initialized</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">)</span>
 
     <span class="n">saving</span><span class="o">=</span><span class="bp">False</span>
     <span class="n">save_file</span><span class="o">=</span><span class="bp">None</span>
 
     <span class="n">base_name</span><span class="o">=</span><span class="s2">&quot;operative&quot;</span>
 
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Operative.process_kwargs"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.process_kwargs">[docs]</a>    <span class="k">def</span> <span class="nf">process_kwargs</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">agent</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">base_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">agent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">agent</span>
+</div>
     <span class="n">timeout</span><span class="o">=</span><span class="n">Float</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">sub</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Timeout in seconds&quot;</span><span class="p">)</span>
 
     <span class="nd">@private_property</span>
@@ -144,6 +166,9 @@
                     <span class="k">raise</span> <span class="n">value</span>
                 <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">thread</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
                     <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">thread</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;show&quot;</span><span class="p">):</span>
+                    <span class="n">safe_call</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">show</span><span class="p">)</span>
+                    <span class="n">safe_call</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chief_window</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s2">&quot;agent_win_dict&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chief_window</span><span class="p">)</span>
             <span class="k">finally</span><span class="p">:</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thread_list</span><span class="o">!=</span><span class="p">[]:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">start_thread</span><span class="p">()</span>
@@ -151,6 +176,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">busy</span><span class="o">=</span><span class="bp">False</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">thread</span><span class="o">=</span><span class="bp">None</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="o">=</span><span class="bp">False</span>
+            <span class="k">return</span> <span class="n">value</span>
 </div>
 <div class="viewcode-block" id="Operative.start_thread"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.start_thread">[docs]</a>    <span class="k">def</span> <span class="nf">start_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;starts first thread in thread_list and sets busy to true&quot;&quot;&quot;</span>
@@ -218,11 +244,14 @@
 
     <span class="n">run_func_dict</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">()</span>
 
-<div class="viewcode-block" id="Operative.add_func"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.add_func">[docs]</a>    <span class="k">def</span> <span class="nf">add_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">funcs</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Operative.add_func"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.add_func">[docs]</a>    <span class="k">def</span> <span class="nf">add_func</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">funcs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Adds functions to run_func_dict. functions should be a classmethod, a staticmethod</span>
 <span class="sd">        or a separate function that takes no arguments&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">funcs</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">run_func_dict</span><span class="p">[</span><span class="n">func</span><span class="o">.</span><span class="n">func_name</span><span class="p">]</span><span class="o">=</span><span class="n">func</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">run_func_dict</span><span class="p">[</span><span class="n">func</span><span class="o">.</span><span class="n">func_name</span><span class="p">]</span><span class="o">=</span><span class="n">func</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">funcs</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">funcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </div>
     <span class="nd">@private_property</span>
     <span class="k">def</span> <span class="nf">cls_run_funcs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -237,16 +266,15 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;extends Backbone __init__ to add agent to boss&#39;s agent list</span>
 <span class="sd">        and give unique default name.&quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Operative</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">set_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">initialized</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-        <span class="n">agent_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span>
-        <span class="k">if</span> <span class="n">agent_name</span><span class="o">==</span><span class="s2">&quot;&quot;</span><span class="p">:</span>
-            <span class="n">agent_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_name</span>
-        <span class="k">if</span> <span class="n">agent_name</span> <span class="ow">in</span> <span class="n">Operative</span><span class="o">.</span><span class="n">agent_dict</span><span class="p">:</span>
-            <span class="n">agent_name</span><span class="o">=</span><span class="s2">&quot;{name}__{num}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">agent_name</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">Operative</span><span class="o">.</span><span class="n">agent_dict</span><span class="p">))</span>
+        <span class="n">agent_name</span><span class="o">=</span><span class="n">defaulter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">agent_name</span><span class="o">=</span><span class="n">name_generator</span><span class="p">(</span><span class="n">agent_name</span><span class="p">,</span> <span class="n">Operative</span><span class="o">.</span><span class="n">agent_dict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_name</span><span class="p">)</span>
+        <span class="c1">#if agent_name in Operative.agent_dict:</span>
+        <span class="c1">#    agent_name=&quot;{name}__{num}&quot;.format(name=agent_name, num=len(Operative.agent_dict))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="n">agent_name</span>
         <span class="n">Operative</span><span class="o">.</span><span class="n">agent_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">=</span><span class="bp">self</span>
-        <span class="n">set_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">initialized</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="c1">#set_tag(self, &quot;name&quot;, initialized=False)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Operative</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1">#set_tag(self, &quot;name&quot;, initialized=True)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">add_func</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">cls_run_funcs</span><span class="p">)</span>
 
 </div>
@@ -290,8 +318,14 @@
             <span class="n">reset_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </div></div>
 <span class="k">if</span> <span class="n">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">a</span><span class="o">=</span><span class="n">Agent</span><span class="p">()</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">Agent</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;bob&quot;</span><span class="p">)</span>
+    <span class="n">b</span><span class="o">=</span><span class="n">Agent</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;bob&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;blah&quot;</span><span class="p">)</span>
+    <span class="k">print</span> <span class="n">b</span><span class="o">.</span><span class="n">desc</span>
+    <span class="k">print</span> <span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">print</span> <span class="n">a</span><span class="o">.</span><span class="n">agent_dict</span>
+    <span class="c1">#b.name=&quot;yoya&quot;</span>
     <span class="k">print</span> <span class="n">Agent</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">==</span><span class="n">Agent</span>
+    <span class="n">b</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 
           </div>

@@ -54,6 +54,7 @@
 <span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">Unicode</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">cached_property</span>
 <span class="kn">from</span> <span class="nn">sys</span> <span class="kn">import</span> <span class="n">exc_info</span>
 <span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">basename</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 
 <span class="c1">#redefine DEBUG level so doesn&#39;t catch debug warnings from IPythonConsole in enaml</span>
 
@@ -65,7 +66,6 @@
 <span class="n">LOGLEVEL</span><span class="o">=</span><span class="n">MYDEBUG</span> <span class="c1">#INFO #DEBUG</span>
 
 <span class="n">basicConfig</span><span class="p">(</span><span class="n">format</span><span class="o">=</span><span class="n">LOGFORMATTER</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">LOGLEVEL</span><span class="p">)</span>
-
 
 <div class="viewcode-block" id="f_top_finder"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.f_top_finder">[docs]</a><span class="k">def</span> <span class="nf">f_top_finder</span><span class="p">(</span><span class="n">fb</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;recursive top frame finder&quot;&quot;&quot;</span>
@@ -131,11 +131,10 @@
 
     <span class="n">log_str</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
 
-<div class="viewcode-block" id="StreamCatch.write"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.StreamCatch.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">log_str</span><span class="o">=</span><span class="nb">str</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">log_str</span>
+<div class="viewcode-block" id="StreamCatch.write"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.StreamCatch.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instr</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_str</span><span class="o">+=</span><span class="n">instr</span><span class="c1">#+self.log_str</span>
 </div>
 <div class="viewcode-block" id="StreamCatch.redirect_stdout"><a class="viewcode-back" href="../../../core_doc/log.html#taref.core.log.StreamCatch.redirect_stdout">[docs]</a>    <span class="k">def</span> <span class="nf">redirect_stdout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">visible</span><span class="p">):</span>
-        <span class="kn">import</span> <span class="nn">sys</span>
         <span class="k">if</span> <span class="n">visible</span><span class="p">:</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">=</span><span class="bp">self</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">=</span><span class="bp">self</span>

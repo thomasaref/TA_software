@@ -45,11 +45,32 @@
 
 <span class="sd">@author: thomasaref</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">taref.core.log</span> <span class="kn">import</span> <span class="n">f_top</span><span class="c1">#, log_debug</span>
-<span class="kn">from</span> <span class="nn">taref.core.shower_backbone</span> <span class="kn">import</span> <span class="n">get_view_window</span>
+<span class="c1">#from taref.core.log import f_top#, log_debug</span>
+<span class="c1">#from taref.core.shower_backbone import get_view_window</span>
 <span class="kn">from</span> <span class="nn">taref.core.backbone</span> <span class="kn">import</span> <span class="n">Backbone</span>
 <span class="kn">from</span> <span class="nn">enaml</span> <span class="kn">import</span> <span class="n">imports</span>
 <span class="kn">from</span> <span class="nn">enaml.qt.qt_application</span> <span class="kn">import</span> <span class="n">QtApplication</span>
+<span class="k">with</span> <span class="n">imports</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">taref.core.agent_e</span> <span class="kn">import</span> <span class="n">AutoAgentView</span>
+<span class="c1">#</span>
+<span class="c1">#def get_view_window(obj, default_name=&quot;NO_NAME&quot;):</span>
+<span class="c1">#    view=getattr(obj, &quot;view_window&quot;, None)</span>
+<span class="c1">#    if view is None:</span>
+<span class="c1">#        view=AutoAgentView(agent=obj)</span>
+<span class="c1">#    view.name=getattr(obj, &quot;name&quot;, default_name)</span>
+<span class="c1">#    if view.title==&quot;&quot;:</span>
+<span class="c1">#        view.title=view.name</span>
+<span class="c1">#    return view</span>
+
+<span class="c1">#def get_chief_window(obj, default_name=&quot;Show_Control&quot;):</span>
+<span class="c1">#    view=getattr(obj, &quot;chief_window&quot;, None)</span>
+<span class="c1">#    if view is None:</span>
+<span class="c1">#        view=Backbone.chief_window</span>
+<span class="c1">#    if view.name==&quot;&quot;:</span>
+<span class="c1">#        view.name=default_name</span>
+<span class="c1">#    if view.title==&quot;&quot;:</span>
+<span class="c1">#        view.title=view.name</span>
+<span class="c1">#    return view</span>
 
 <div class="viewcode-block" id="shower"><a class="viewcode-back" href="../../../core_doc/shower.html#taref.core.shower.shower">[docs]</a><span class="k">def</span> <span class="nf">shower</span><span class="p">(</span><span class="o">*</span><span class="n">agents</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A powerful showing function for any Atom object(s) specified in agents.</span>
@@ -72,50 +93,25 @@
         <span class="n">app</span> <span class="o">=</span> <span class="n">QtApplication</span><span class="p">()</span>
         <span class="n">start_it</span><span class="o">=</span><span class="bp">True</span>
 
-    <span class="k">with</span> <span class="n">imports</span><span class="p">():</span>
-        <span class="kn">from</span> <span class="nn">taref.core.agent_e</span> <span class="kn">import</span> <span class="n">AutoAgentView</span>
     <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">agent</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">agents</span><span class="p">):</span>
-        <span class="n">view</span><span class="o">=</span><span class="n">get_view_window</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">AutoAgentView</span><span class="p">(</span><span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">),</span> <span class="s2">&quot;window_{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+        <span class="c1">#view=get_view_window(agent, default_name=&quot;window_{0}&quot;.format(n))</span>
+        <span class="n">view</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="s2">&quot;view_window&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">view</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">view</span><span class="o">=</span><span class="n">AutoAgentView</span><span class="p">(</span><span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">)</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;window_{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">view</span><span class="o">.</span><span class="n">title</span><span class="o">==</span><span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="n">view</span><span class="o">.</span><span class="n">title</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">name</span>
         <span class="n">view</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">start_it</span><span class="p">:</span>
         <span class="n">chief_cls</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;chief_cls&quot;</span><span class="p">,</span> <span class="n">agents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">agents</span><span class="o">!=</span><span class="p">()</span> <span class="k">else</span> <span class="n">Backbone</span><span class="p">)</span>
-        <span class="n">show_log</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;show_log&quot;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="n">show_ipy</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;show_ipy&quot;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="n">show_code</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;show_code&quot;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">chief_cls</span><span class="p">,</span> <span class="s2">&quot;log_window&quot;</span><span class="p">):</span>
-            <span class="n">view</span><span class="o">=</span><span class="n">chief_cls</span><span class="o">.</span><span class="n">log_window</span>
-            <span class="n">view</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-            <span class="n">view</span><span class="o">.</span><span class="n">send_to_back</span><span class="p">()</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">show_log</span><span class="p">:</span>
-                <span class="n">view</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-
         <span class="n">chief_view</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">chief_cls</span><span class="p">,</span> <span class="s2">&quot;chief_window&quot;</span><span class="p">,</span> <span class="n">Backbone</span><span class="o">.</span><span class="n">chief_window</span><span class="p">)</span>
         <span class="n">chief_view</span><span class="o">.</span><span class="n">chief_cls</span><span class="o">=</span><span class="n">chief_cls</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="n">chief_view</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
         <span class="n">chief_view</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">chief_cls</span><span class="p">,</span> <span class="s2">&quot;interactive_window&quot;</span><span class="p">):</span>
-            <span class="n">fb</span><span class="o">=</span><span class="n">f_top</span><span class="p">()</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">chief_cls</span><span class="p">,</span> <span class="s2">&quot;code_window&quot;</span><span class="p">):</span>
-                <span class="n">file_location</span><span class="o">=</span><span class="n">fb</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_filename</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_location</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                    <span class="n">showfile</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-                <span class="n">view</span><span class="o">=</span><span class="n">chief_cls</span><span class="o">.</span><span class="n">code_window</span>
-                <span class="n">view</span><span class="o">.</span><span class="n">show_code</span><span class="o">.</span><span class="n">text</span><span class="o">=</span><span class="n">showfile</span>
-                <span class="n">view</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-                <span class="n">view</span><span class="o">.</span><span class="n">send_to_back</span><span class="p">()</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">show_code</span><span class="p">:</span>
-                    <span class="n">view</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-
-            <span class="n">locals_dict</span><span class="o">=</span><span class="nb">dict</span><span class="p">(([(</span><span class="n">key</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">fb</span><span class="o">.</span><span class="n">f_locals</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)]))</span>
-            <span class="n">view</span><span class="o">=</span><span class="n">chief_cls</span><span class="o">.</span><span class="n">interactive_window</span>
-            <span class="n">view</span><span class="o">.</span><span class="n">input_dict</span><span class="o">=</span><span class="n">locals_dict</span>
-            <span class="n">view</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-            <span class="n">view</span><span class="o">.</span><span class="n">send_to_back</span><span class="p">()</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">show_ipy</span><span class="p">:</span>
-                <span class="n">view</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">chief_cls</span><span class="p">,</span> <span class="s2">&quot;interact&quot;</span><span class="p">):</span>
+            <span class="n">chief_cls</span><span class="o">.</span><span class="n">interact</span><span class="o">.</span><span class="n">make_input_code</span><span class="p">()</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">app</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>

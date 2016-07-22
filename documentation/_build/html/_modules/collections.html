@@ -39,7 +39,19 @@
           <div class="body" role="main">
             
   <h1>Source code for collections</h1><div class="highlight"><pre>
-<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Counter&#39;</span><span class="p">,</span> <span class="s1">&#39;deque&#39;</span><span class="p">,</span> <span class="s1">&#39;defaultdict&#39;</span><span class="p">,</span> <span class="s1">&#39;namedtuple&#39;</span><span class="p">,</span> <span class="s1">&#39;OrderedDict&#39;</span><span class="p">]</span>
+<span></span><span class="sd">&#39;&#39;&#39;This module implements specialized container datatypes providing</span>
+<span class="sd">alternatives to Python&#39;s general purpose built-in containers, dict,</span>
+<span class="sd">list, set, and tuple.</span>
+
+<span class="sd">* namedtuple   factory function for creating tuple subclasses with named fields</span>
+<span class="sd">* deque        list-like container with fast appends and pops on either end</span>
+<span class="sd">* Counter      dict subclass for counting hashable objects</span>
+<span class="sd">* OrderedDict  dict subclass that remembers the order entries were added</span>
+<span class="sd">* defaultdict  dict subclass that calls a factory function to supply missing values</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Counter&#39;</span><span class="p">,</span> <span class="s1">&#39;deque&#39;</span><span class="p">,</span> <span class="s1">&#39;defaultdict&#39;</span><span class="p">,</span> <span class="s1">&#39;namedtuple&#39;</span><span class="p">,</span> <span class="s1">&#39;OrderedDict&#39;</span><span class="p">]</span>
 <span class="c1"># For bootstrapping reasons, the collection ABCs are defined in _abcoll.py.</span>
 <span class="c1"># They should however be considered an integral part of collections.py.</span>
 <span class="kn">from</span> <span class="nn">_abcoll</span> <span class="kn">import</span> <span class="o">*</span>
@@ -343,7 +355,7 @@
 <span class="sd">    &gt;&gt;&gt; x, y = p                        # unpack like a regular tuple</span>
 <span class="sd">    &gt;&gt;&gt; x, y</span>
 <span class="sd">    (11, 22)</span>
-<span class="sd">    &gt;&gt;&gt; p.x + p.y                       # fields also accessable by name</span>
+<span class="sd">    &gt;&gt;&gt; p.x + p.y                       # fields also accessible by name</span>
 <span class="sd">    33</span>
 <span class="sd">    &gt;&gt;&gt; d = p._asdict()                 # convert to a dictionary</span>
 <span class="sd">    &gt;&gt;&gt; d[&#39;x&#39;]</span>

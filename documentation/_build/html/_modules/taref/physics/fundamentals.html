@@ -52,9 +52,13 @@
 <span class="n">c_eta</span> <span class="o">=</span> <span class="mf">0.8</span>
 
 <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="p">(</span><span class="n">sin</span><span class="p">,</span> <span class="n">fft</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">empty</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">log10</span><span class="p">,</span> <span class="n">arange</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">delete</span><span class="p">,</span>
-                   <span class="n">absolute</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">amin</span><span class="p">,</span> <span class="n">amax</span><span class="p">,</span> <span class="n">linspace</span><span class="p">,</span> <span class="n">zeros</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
+                   <span class="n">absolute</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">amin</span><span class="p">,</span> <span class="n">amax</span><span class="p">,</span> <span class="n">linspace</span><span class="p">,</span> <span class="n">zeros</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">interp</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">float64</span><span class="p">,</span> <span class="n">int64</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">eig</span>
-<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Float</span>
+
+<span class="k">def</span> <span class="nf">bgsub2D</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">start_ind</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stop_ind</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">axis</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">arr</span><span class="o">-</span><span class="n">mean</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">start_ind</span><span class="p">:</span><span class="n">stop_ind</span><span class="p">,:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">arr</span><span class="o">-</span><span class="n">mean</span><span class="p">(</span><span class="n">arr</span><span class="p">[:,</span> <span class="n">start_ind</span><span class="p">:</span><span class="n">stop_ind</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">zero_arr</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
@@ -120,16 +124,49 @@
 <div class="viewcode-block" id="sinc_sq"><a class="viewcode-back" href="../../../physics_doc/fundamentals.html#taref.physics.fundamentals.sinc_sq">[docs]</a><span class="k">def</span> <span class="nf">sinc_sq</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;sinc squared which doesn&#39;t autoinclude pi&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">sinc</span><span class="p">(</span><span class="n">X</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span>
-
 </div>
-<span class="k">def</span> <span class="nf">fft_filter</span><span class="p">(</span><span class="n">Magcom</span><span class="p">,</span> <span class="n">filt_start_ind</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">filt_end_ind</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="n">myifft</span><span class="o">=</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">Magcom</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">filt_end_ind</span><span class="o">!=</span><span class="mi">0</span><span class="p">:</span>
-        <span class="n">myifft</span><span class="p">[</span><span class="n">filt_end_ind</span><span class="p">:</span><span class="o">-</span><span class="n">filt_end_ind</span><span class="p">]</span><span class="o">=</span><span class="mf">0.0</span>
-    <span class="k">if</span> <span class="n">filt_start_ind</span><span class="o">!=</span><span class="mi">0</span><span class="p">:</span>
-        <span class="n">myifft</span><span class="p">[:</span><span class="n">filt_start_ind</span><span class="p">]</span><span class="o">=</span><span class="mf">0.0</span>
-        <span class="n">myifft</span><span class="p">[</span><span class="o">-</span><span class="n">filt_start_ind</span><span class="p">:]</span><span class="o">=</span><span class="mf">0.0</span>
-    <span class="k">return</span> <span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">myifft</span><span class="p">)</span>
+<span class="k">if</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">=</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0e9</span><span class="p">,</span> <span class="mf">41e9</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">f0</span><span class="o">=</span><span class="mf">3e9</span>
+
+
+<span class="k">if</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">legendre</span>
+    <span class="kn">from</span> <span class="nn">timeit</span> <span class="kn">import</span> <span class="n">repeat</span>
+
+    <span class="k">print</span> <span class="n">rho</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span><span class="n">f0</span><span class="p">),</span> <span class="n">rho</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">ft</span><span class="o">=</span><span class="s2">&quot;single&quot;</span><span class="p">)</span>
+    <span class="n">plot</span><span class="p">(</span><span class="n">f</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">f0</span><span class="p">),</span> <span class="n">rho</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">f0</span><span class="p">))</span>
+    <span class="n">show</span><span class="p">()</span>
+    <span class="k">print</span> <span class="mf">2.0</span><span class="o">/</span><span class="n">lgf</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="n">cos</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">pi</span><span class="p">)),</span> <span class="mf">2.0</span><span class="o">/</span><span class="n">lgf</span><span class="p">(</span><span class="o">-</span><span class="mf">0.25</span><span class="p">,</span> <span class="o">-</span><span class="n">cos</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">pi</span><span class="p">))</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">x</span><span class="o">=</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+
+    <span class="k">print</span> <span class="n">repeat</span><span class="p">(</span><span class="s2">&quot;legendre(2)(x)&quot;</span><span class="p">,</span> <span class="s2">&quot;from __main__ import lgf, x, legendre&quot;</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+    <span class="k">print</span> <span class="n">repeat</span><span class="p">(</span><span class="s2">&quot;lgf(2,x)&quot;</span><span class="p">,</span> <span class="s2">&quot;from __main__ import lgf, x, legendre&quot;</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+    <span class="n">tstart</span><span class="o">=</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">lp3</span><span class="o">=</span><span class="n">legendre</span><span class="p">(</span><span class="mi">2</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">lp4</span><span class="o">=</span><span class="n">legendre</span><span class="p">(</span><span class="mi">3</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="c1">#print time()-tstart</span>
+
+    <span class="n">tstart</span><span class="o">=</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">lp1</span><span class="o">=</span><span class="n">lgf</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">lp2</span><span class="o">=</span><span class="n">lgf</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="n">x</span><span class="p">)</span>
+    <span class="c1">#print time()-tstart</span>
+
+    <span class="c1">#plot(lp1)</span>
+    <span class="n">plot</span><span class="p">(</span><span class="n">lp2</span><span class="p">)</span>
+
+    <span class="c1">#plot((3.0*x**2-1.0)/2.0)</span>
+    <span class="n">plot</span><span class="p">((</span><span class="mf">5.0</span><span class="o">*</span><span class="n">x</span><span class="o">**</span><span class="mi">3</span><span class="o">-</span><span class="mf">3.0</span><span class="o">*</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span>
+
+
+    <span class="c1">#plot(lp3)</span>
+    <span class="n">plot</span><span class="p">(</span><span class="n">lp4</span><span class="p">)</span>
+    <span class="n">show</span><span class="p">()</span>
+
+<span class="c1">#print lpn(0, x), lpn(1, x), lpn(2, x), lpn(3,x)</span>
 
 <span class="c1">#</span>
 <span class="c1">#_material_dict=dict(</span>

@@ -68,21 +68,9 @@ extends __setattr__ to perform low/high check on params</p>
 <code class="descname">app</code><em class="property"> = None</em><a class="headerlink" href="#taref.core.backbone.Backbone.app" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="taref.core.backbone.Backbone.call_func">
-<code class="descname">call_func</code><span class="sig-paren">(</span><em>name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#Backbone.call_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.Backbone.call_func" title="Permalink to this definition">¶</a></dt>
-<dd><p>calls a func using keyword assignments. If name corresponds to a Property, calls the get func.
-otherwise, if name_mangled func &#8220;_get_&#8221;+name exists, calls that. Finally calls just the name if these are not the case</p>
-</dd></dl>
-
 <dl class="attribute">
 <dt id="taref.core.backbone.Backbone.chief_window">
 <code class="descname">chief_window</code><em class="property"> = &lt;taref.core.agent_e.BasicView object&gt;</em><a class="headerlink" href="#taref.core.backbone.Backbone.chief_window" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="taref.core.backbone.Backbone.code_window">
-<code class="descname">code_window</code><em class="property"> = &lt;taref.core.interactive_e.CodeWindow object&gt;</em><a class="headerlink" href="#taref.core.backbone.Backbone.code_window" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -98,14 +86,24 @@ Can be customized in child classes. default extra setup handles units, auto tags
 <dd><p>decorator for adding instancemethods defined outside of class (meant for Callables)</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="taref.core.backbone.Backbone.interact">
+<code class="descname">interact</code><em class="property"> = &lt;taref.core.interact.Interact object&gt;</em><a class="headerlink" href="#taref.core.backbone.Backbone.interact" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="method">
 <dt id="taref.core.backbone.Backbone.latex_table">
 <code class="descname">latex_table</code><span class="sig-paren">(</span><em>param_list=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#Backbone.latex_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.Backbone.latex_table" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
-<dt id="taref.core.backbone.Backbone.log_window">
-<code class="descname">log_window</code><em class="property"> = &lt;taref.core.log_e.LogWindow object&gt;</em><a class="headerlink" href="#taref.core.backbone.Backbone.log_window" title="Permalink to this definition">¶</a></dt>
+<dl class="method">
+<dt id="taref.core.backbone.Backbone.latex_table2">
+<code class="descname">latex_table2</code><span class="sig-paren">(</span><em>param_list=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#Backbone.latex_table2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.Backbone.latex_table2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.core.backbone.Backbone.latex_table_entry">
+<code class="descname">latex_table_entry</code><span class="sig-paren">(</span><em>param=None</em>, <em>value=None</em>, <em>expression=None</em>, <em>comment=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#Backbone.latex_table_entry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.Backbone.latex_table_entry" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -143,7 +141,7 @@ Can be customized in child classes. default extra setup handles units, auto tags
 
 <dl class="attribute">
 <dt id="taref.core.backbone.Backbone.unit_dict">
-<code class="descname">unit_dict</code><em class="property"> = {'pW': &lt;taref.physics.units.mult_unit object at 0x106a73b90&gt;, 'cm': &lt;taref.physics.units.mult_unit object at 0x106a738d0&gt;, 'm/s': &lt;taref.physics.units.unit_func object at 0x106a73f10&gt;, 'm': &lt;taref.physics.units.unit_func object at 0x106a73910&gt;, 'GHz': &lt;taref.physics.units.mult_unit object at 0x106a89050&gt;, 'nW': &lt;taref.physics.units.mult_unit object at 0x106a73bd0&gt;, 'Hz': &lt;taref.physics.units.unit_func object at 0x106a73f50&gt;, 'dBm': &lt;taref.physics.units.dBm_unit object at 0x106a73ad0&gt;, 'nm': &lt;taref.physics.units.mult_unit object at 0x106a73810&gt;, 'hHz': &lt;taref.physics.units.unit_func object at 0x106a89110&gt;, 'um^2': &lt;taref.physics.units.mult_unit object at 0x106a73990&gt;, 'nA': &lt;taref.physics.units.mult_unit object at 0x106a73e10&gt;, 'dB_pwr': &lt;taref.physics.units.dB_pwr_unit object at 0x106a73a90&gt;, 'eV': &lt;taref.physics.units.mult_unit object at 0x106a73d10&gt;, 'K': &lt;taref.physics.units.unit_func object at 0x106a89210&gt;, 'pm': &lt;taref.physics.units.mult_unit object at 0x106a737d0&gt;, 'A': &lt;taref.physics.units.unit_func object at 0x106a73e50&gt;, 'F': &lt;taref.physics.units.unit_func object at 0x106a73dd0&gt;, 'uW': &lt;taref.physics.units.mult_unit object at 0x106a73c10&gt;, 'mW': &lt;taref.physics.units.mult_unit object at 0x106a73c50&gt;, 'W': &lt;taref.physics.units.unit_func object at 0x106a73c90&gt;, 'V': &lt;taref.physics.units.unit_func object at 0x106a73cd0&gt;, '%': &lt;taref.physics.units.mult_unit object at 0x106a89250&gt;, 'Ohm': &lt;taref.physics.units.unit_func object at 0x106a73e90&gt;, 'fm': &lt;taref.physics.units.mult_unit object at 0x106a73790&gt;, 'hGHz': &lt;taref.physics.units.mult_unit object at 0x106a890d0&gt;, 'kHz': &lt;taref.physics.units.mult_unit object at 0x106a73f90&gt;, 'ueV': &lt;taref.physics.units.mult_unit object at 0x106a73d50&gt;, 'THz': &lt;taref.physics.units.mult_unit object at 0x106a89090&gt;, 'fW': &lt;taref.physics.units.mult_unit object at 0x106a73b50&gt;, 'mm': &lt;taref.physics.units.mult_unit object at 0x106a73890&gt;, 'dB': &lt;taref.physics.units.dB_unit object at 0x106a73a10&gt;, 'km': &lt;taref.physics.units.mult_unit object at 0x106a73950&gt;, 'kOhm': &lt;taref.physics.units.mult_unit object at 0x106a73ed0&gt;, 'um': &lt;taref.physics.units.mult_unit object at 0x106a73850&gt;, 'MHz': &lt;taref.physics.units.mult_unit object at 0x106a73fd0&gt;, 'fF': &lt;taref.physics.units.mult_unit object at 0x106a73d90&gt;, 'dBm/mW': &lt;taref.physics.units.new_unit object at 0x106a89190&gt;}</em><a class="headerlink" href="#taref.core.backbone.Backbone.unit_dict" title="Permalink to this definition">¶</a></dt>
+<code class="descname">unit_dict</code><em class="property"> = {'pW': &lt;taref.physics.units.mult_unit object at 0x10562a610&gt;, 'cm': &lt;taref.physics.units.mult_unit object at 0x10562a390&gt;, 'm/s': &lt;taref.physics.units.unit_func object at 0x10562a990&gt;, 'm': &lt;taref.physics.units.unit_func object at 0x10562a3d0&gt;, 'GHz': &lt;taref.physics.units.mult_unit object at 0x10562aa90&gt;, 'nW': &lt;taref.physics.units.mult_unit object at 0x10562a650&gt;, 'Hz': &lt;taref.physics.units.unit_func object at 0x10562a9d0&gt;, 'dBm': &lt;taref.physics.units.dBm_unit object at 0x10562a550&gt;, 'nm': &lt;taref.physics.units.mult_unit object at 0x10562a2d0&gt;, 'hHz': &lt;taref.physics.units.unit_func object at 0x10562ab50&gt;, 'um^2': &lt;taref.physics.units.mult_unit object at 0x10562a450&gt;, 'nA': &lt;taref.physics.units.mult_unit object at 0x10562a890&gt;, 'dB_pwr': &lt;taref.physics.units.dB_pwr_unit object at 0x10562a510&gt;, 'eV': &lt;taref.physics.units.mult_unit object at 0x10562a790&gt;, 'K': &lt;taref.physics.units.unit_func object at 0x10562ac50&gt;, 'pm': &lt;taref.physics.units.mult_unit object at 0x10562a290&gt;, 'A': &lt;taref.physics.units.unit_func object at 0x10562a8d0&gt;, 'F': &lt;taref.physics.units.unit_func object at 0x10562a850&gt;, 'uW': &lt;taref.physics.units.mult_unit object at 0x10562a690&gt;, 'mW': &lt;taref.physics.units.mult_unit object at 0x10562a6d0&gt;, 'W': &lt;taref.physics.units.unit_func object at 0x10562a710&gt;, 'V': &lt;taref.physics.units.unit_func object at 0x10562a750&gt;, '%': &lt;taref.physics.units.mult_unit object at 0x10562ac90&gt;, 'Ohm': &lt;taref.physics.units.unit_func object at 0x10562a910&gt;, 'fm': &lt;taref.physics.units.mult_unit object at 0x105650ed0&gt;, 'hGHz': &lt;taref.physics.units.mult_unit object at 0x10562ab10&gt;, 'kHz': &lt;taref.physics.units.mult_unit object at 0x10562aa10&gt;, 'ueV': &lt;taref.physics.units.mult_unit object at 0x10562a7d0&gt;, 'THz': &lt;taref.physics.units.mult_unit object at 0x10562aad0&gt;, 'fW': &lt;taref.physics.units.mult_unit object at 0x10562a5d0&gt;, 'mm': &lt;taref.physics.units.mult_unit object at 0x10562a350&gt;, 'dB': &lt;taref.physics.units.dB_unit object at 0x10562a490&gt;, 'km': &lt;taref.physics.units.mult_unit object at 0x10562a410&gt;, 'kOhm': &lt;taref.physics.units.mult_unit object at 0x10562a950&gt;, 'um': &lt;taref.physics.units.mult_unit object at 0x10562a310&gt;, 'MHz': &lt;taref.physics.units.mult_unit object at 0x10562aa50&gt;, 'fF': &lt;taref.physics.units.mult_unit object at 0x10562a810&gt;, 'dBm/mW': &lt;taref.physics.units.new_unit object at 0x10562abd0&gt;}</em><a class="headerlink" href="#taref.core.backbone.Backbone.unit_dict" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -152,6 +150,28 @@ Can be customized in child classes. default extra setup handles units, auto tags
 <dd><p>A Member which behaves similar to a Python property.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.core.backbone.BackboneAtomMeta">
+<em class="property">class </em><code class="descclassname">taref.core.backbone.</code><code class="descname">BackboneAtomMeta</code><a class="reference internal" href="../_modules/taref/core/backbone.html#BackboneAtomMeta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.BackboneAtomMeta" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="classmethod">
+<dt id="taref.core.backbone.BackboneAtomMeta.extra_setup">
+<em class="property">classmethod </em><code class="descname">extra_setup</code><span class="sig-paren">(</span><em>param</em>, <em>itm</em>, <em>update_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#BackboneAtomMeta.extra_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.BackboneAtomMeta.extra_setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.backbone.setup_ranges">
+<code class="descclassname">taref.core.backbone.</code><code class="descname">setup_ranges</code><span class="sig-paren">(</span><em>self</em>, <em>param</em>, <em>typer</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#setup_ranges"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.setup_ranges" title="Permalink to this definition">¶</a></dt>
+<dd><p>Autosets low/high tags for Range and FloatRange</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.backbone.setup_units">
+<code class="descclassname">taref.core.backbone.</code><code class="descname">setup_units</code><span class="sig-paren">(</span><em>self</em>, <em>param</em>, <em>typer</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#setup_units"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.setup_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>autosets units using unit_dict</p>
 </dd></dl>
 
 </div>
