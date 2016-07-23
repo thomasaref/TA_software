@@ -11,9 +11,9 @@ class Value(object):
         self.metadata={}
         if value is None:
             self.typer=None
-        else:            
+        else:
             self.typer=type(value)
-        
+
     def tag(self, **kwargs):
         self.metadata.update(kwargs)
         return self
@@ -24,28 +24,30 @@ def test_f(obj):
 
 def test_f2():
     print "hi"
-    
+
+
+
 class Big(object):
     def get_tag(self, name, key, none_value=None):
         member=self.get_member(name)
         if member is None:
             return none_value
         return member.metadata.get(key, none_value)
-        
+
     def set_tag(self, name, **kwargs):
         self.__members__[name].tag(**kwargs)
-        
+
     def get_member(self, name):
         return self.__members__.get(name, None)
 
     def notify(self, name, value):
         print name, value
-        
+
     def set_attr(self, name, value):
         setattr(self, name, value)
         if name in self.__members__:
             return self.get_member(name)
-        
+
     def __setattr__(self, name, value):
         if not name.startswith("_") and not name.endswith("_"):
             if not hasattr(self, "__members__"):
@@ -60,15 +62,15 @@ class Big(object):
             self.__members__[name]=cval
             self.notify(name, value)
         super(Big, self).__setattr__(name, value)
-            
+
     def __getattribute__(self, name):
         cval=None
         if not name.startswith("_") and not name.endswith("_"):
             cval=self.__members__.get(name, None)
-        if cval is None:  
+        if cval is None:
             return super(Big, self).__getattribute__(name)
         return cval.value
-           
+
 class Test(Big):
     def __init__(self, a=1):
         self.a=a
@@ -85,7 +87,7 @@ if __name__=="__main__":
     print a.get_member("a").typer
     a.a=10
     print a.a, a._b
-    a._b="1"  
+    a._b="1"
     a.b_="1"
     a.c=test_f
     a.c(3)
