@@ -33,13 +33,13 @@ class Value(object):
             else:
                 self.value=def_func()
 
-    def __get__(self, obj, typ):
-        self.namer(obj)
+    def __get__(self, obj, typ=None):
+        #self.namer(obj)
         self.defaulter(obj)
         return self.get_func(obj, typ)
 
     def __set__(self, obj, value):
-        self.namer(obj)
+        #self.namer(obj)
         obj.notify(self, value)
         self.set_func(obj, value)
 
@@ -78,8 +78,7 @@ class Coerced(Value):
         if factory is not None:
             self.def_func=factory
         else:
-            factory = lambda: coercer(*args, **kwargs)
-            self.def_func=factory
+            self.def_func = lambda: coercer(*args, **kwargs)
         self.coercer=coercer or typer
 
     def get_func(self, obj, typ):
@@ -102,24 +101,22 @@ class Typed(TypedValue):
             self.def_func = lambda: None
         self.typer=typer
 
+def get_member(self, name):
+    mbr=type(self).__dict__.get(name, None)
+    return self.__dict__.get(name, mbr)
+
 class Obj(object):
     def __getattribute__(self, name):
-        #cval=super(Obj, self).__getattribute__(name)
-        if name in ("get_member", "get_ins_member", "get_cls_member", "__dict__"):
-            return super(Obj, self).__getattribute__(name)
-        cval=self.get_member(name)
-        if isinstance(cval, Value):
-            return cval.__get__(self, name)
+        if name!="__dict__":
+            cval=get_member(self, name)
+            if isinstance(cval, Value):
+                if cval.name is None:
+                    cval.name=name
+                return cval.__get__(self)
         return super(Obj, self).__getattribute__(name)
 
     def notify(self, mbr, value):
         print "set", mbr.name, value
-
-    def get_member(self, name):
-        mbr=self.get_ins_member(name)
-        if mbr is None:
-            return self.get_cls_member(name)
-        return mbr
 
     @classmethod
     def get_cls_member(cls, name):
@@ -141,8 +138,10 @@ class Obj(object):
         return dict([(name, member) for name, member in self.__dict__.items() if isinstance(member, Value)])
 
     def __setattr__(self, name, value):
-        cval=self.get_ins_member(name)
+        cval=get_member(self, name)
         if isinstance(cval, Value):
+            if cval.name is None:
+                cval.name=name
             cval.__set__(self, value)
         else:
             super(Obj, self).__setattr__(name, value)
@@ -151,6 +150,7 @@ class Test(Obj):
     c=Int(20)
     d=Coerced(int, (2,))
     f=Typed(int, (21,))
+    g=Typed(float)
 
     def _default_d(self):
         return 4
@@ -162,7 +162,9 @@ if __name__=="__main__":
     a.d=2
     print a.f
     a.f=3
-    print a.get_member("f").typer
+    print get_member(a, "f").typer
+    print get_member(a, "g").typer
+
     #print a.a
     #print a.c, a.d
     #a.c=3
