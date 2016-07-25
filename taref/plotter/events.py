@@ -136,6 +136,11 @@ class mpl_cross_section(mpl_event):
                         #self.pltr.horiz_axe.set_xlim(min(pf.xdata), max(pf.xdata))
                     #if self.pltr.auto_cs_ylim:
                         #self.pltr.horiz_axe.set_ylim(min(pf.ydata), max(pf.ydata))
+                    if min(pf.xdata)<=event.xdata<=max(pf.xdata) and min(pf.ydata)<=event.ydata<=max(pf.ydata):
+                        pf.h_line.set_visible(True)
+                    else:
+                        pf.h_line.set_visible(False)
+
                     if self.pltr.horiz_fig.canvas!=None:
                         self.pltr.horiz_fig.canvas.draw()
                     if self.pltr.vert_fig.canvas!=None:

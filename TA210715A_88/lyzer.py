@@ -328,7 +328,7 @@ class Lyzer(LyzerBase):
         elif self.flux_axis_type=="yoko":
             line(self.freq_axis[self.indices], self.qdt._get_Vfq0(f=self.frequency[self.indices]), plotter=pl, color="red", linewidth=1.0)
         else:
-            line(self.freq_axis[self.indices], self.qdt._get_fluxfq0(f=self.frequency[self.indices]), plotter=pl, color="red", linewidth=1.0)
+            line(self.freq_axis, -self.qdt._get_fluxfq0(f=self.frequency), plotter=pl, color="red", linewidth=1.0)
         if self.fitter.p_guess is not None:
             line(self.freq_axis[self.indices], array([pg[1] for pg in self.fitter.p_guess]), pl=pl, color="green", linewidth=1.0) #self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
         return pl
@@ -352,17 +352,23 @@ class Lyzer(LyzerBase):
         process_kwargs(self, kwargs)
         pl=kwargs.pop("pl", "magabs_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
         if self.filter_type=="Fit":
+            flux_axis=self.flux_axis[self.flat_flux_indices]
+            freq_axis=self.freq_axis[self.indices]
             start_ind=0
             for ind in self.fit_indices:
-                pl=colormesh(self.flux_axis[self.flat_flux_indices], self.freq_axis[ind], self.MagAbs[start_ind:start_ind+len(ind), :], pl=pl, **kwargs)
+                pl=colormesh(flux_axis, self.freq_axis[ind], self.MagAbs[start_ind:start_ind+len(ind), :], pl=pl, **kwargs)
                 start_ind+=len(ind)
         elif self.filter_type=="None":
+            flux_axis=self.flux_axis
+            freq_axis=self.freq_axis
             pl=colormesh(self.flux_axis, self.freq_axis, self.MagAbs, pl=pl, **kwargs)
         else:
-            pl=colormesh(self.flux_axis[self.flat_flux_indices], self.freq_axis[self.indices], self.MagAbs, pl=pl, **kwargs)
+            flux_axis=self.flux_axis[self.flat_flux_indices]
+            freq_axis=self.freq_axis[self.indices]
+            pl=colormesh(flux_axis, freq_axis, self.MagAbs, pl=pl, **kwargs)
 
-        pl.set_ylim(min(self.freq_axis[self.indices]), max(self.freq_axis[self.indices]))
-        pl.set_xlim(min(self.flux_axis[self.flat_flux_indices]), max(self.flux_axis[self.flat_flux_indices]))
+        pl.set_ylim(min(freq_axis), max(freq_axis))
+        pl.set_xlim(min(flux_axis), max(flux_axis))
         pl.xlabel=kwargs.pop("xlabel", self.flux_axis_label)
         pl.ylabel=kwargs.pop("ylabel", self.freq_axis_label)
         return pl

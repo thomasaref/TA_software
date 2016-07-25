@@ -22,13 +22,26 @@ def get_property_values(obj):
         return obj.property_values
     return [obj.get_member(name) for name in get_all_params(obj) if isinstance(obj.get_member(name), Property)]
 
-def reset_property(obj, name):
-    """shortcut to reset of property"""
-    obj.get_member(name).reset(obj)
+#def reset_property(obj, name):
+#    """shortcut to reset of property"""
+#    obj.get_member(name).reset(obj)
 
-def reset_properties(obj):
+def reset_property(obj, *args):
+    """resets all  properties in args. resets all properties in  all_params if no args passed"""
+    if args==():
+        for item in get_property_values(obj):
+            print item
+            item.reset(obj)
+    else:
+        for name in args:
+            print name
+            obj.get_member(name).reset(obj)
+
+def reset_properties(obj, property_list=None):
     """resets all  properties that are in all_params"""
-    for item in get_property_values(obj):
+    if property_list is None:
+        property_list=get_property_values(obj)
+    for item in property_list:
         item.reset(obj)
 
 def private_property(fget):

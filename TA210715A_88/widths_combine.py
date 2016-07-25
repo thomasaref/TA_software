@@ -8,17 +8,19 @@ Created on Tue May 17 18:36:21 2016
 from D0514_highfrq1sidelobe import a as d0514
 from D0316_S4A1_coupling_midpeak import a as d0316
 from D0629_fft_try import a as d0629
+from D0629_wide_gate_fluxswp import a as d0629wg
 from D0506_lowfrq34sidelobe import a as d0506
 from D0509_lowfrq2sidelobe import a as d0509
 from D0503_lowfrq1sidelobe import a as d0503
 from D0518_highfrq3sidelobe import a as d0518
+
 from numpy import sqrt, linspace
 from atom.api import FloatRange
 from taref.plotter.fitter import LineFitter2
 from taref.plotter.api import line
 from taref.core.api import tag_property
 
-lyzers=[d0514, d0316, d0629, d0518, d0506, d0509, d0503,
+lyzers=[d0514, d0316, d0629, d0518, d0506, d0509, d0503, d0629wg,
 ]
 
 for d in lyzers:
