@@ -19,7 +19,6 @@ from scipy.optimize import leastsq
 from taref.core.log import log_debug
 from taref.plotter.plotter import line, colormesh, Plotter
 from taref.physics.units import dBm, dB
-from taref.physics.fitting_functions import fano, lorentzian, refl_lorentzian, refl_fano
 from taref.physics.fundamentals import h#Ej, fq, flux_over_flux0
 
 from lyzer import Lyzer

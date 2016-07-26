@@ -15,9 +15,11 @@ from taref.core.log import log_info#, log_debug
 
 _MAPPING_SUFFIX_="_mapping"
 
-def process_kwargs(self, kwargs):
+def process_kwargs(self, kwargs, **exkwargs):
     """Goes through all_params and sets the attribute if it is included in kwargs, also popping it out of kwargs.
     if the param is tagged with "former", the kwarg is added back using the value of the param. Returns the processed kwargs"""
+    for kw, item in exkwargs.iteritems():
+        kwargs[kw]=kwargs.get(kw, item)
     for arg in get_all_params(self): #get_all_tags(self, "former"):
         if arg in kwargs:
             setattr(self, arg, kwargs[arg])

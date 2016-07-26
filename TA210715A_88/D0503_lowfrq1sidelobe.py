@@ -7,7 +7,7 @@ Created on Tue May 17 20:49:11 2016
 
 
 from TA88_fundamental import TA88_Lyzer, TA88_Read
-from taref.physics.fitting_functions import lorentzian
+
 
 a=TA88_Lyzer( on_res_ind=256, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0503/S1A4_lowfrq_trans_1st_sidelobe.hdf5"),

@@ -5,7 +5,6 @@ Created on Sun May  8 13:25:50 2016
 @author: thomasaref
 """
 from TA88_fundamental import TA88_Lyzer, TA88_Read, qdt
-from taref.physics.fitting_functions import lorentzian
 from numpy import absolute, fft
 from taref.plotter.api import Plotter, line, scatter
 

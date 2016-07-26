@@ -20,8 +20,8 @@ from scipy.signal import savgol_filter
 from scipy.interpolate import interp1d
 
 a=TA88_Lyzer(on_res_ind=201,# VNA_name="RS VNA", filt_center=15, filt_halfwidth=15,
-        rd_hdf=TA88_Read(main_file="Data_0628/S4A4_just_gate_overnight_flux_swp.hdf5"),
-        flux_indices=[range(400, 610)]) #Data_0629/S4A4_just_gate_FFT_high_frq_test.hdf5"))
+        rd_hdf=TA88_Read(main_file="Data_0628/S4A4_just_gate_overnight_flux_swp.hdf5"))
+
 a.filt.center=0
 a.filt.halfwidth=200
 a.fitter.fit_type="lorentzian"
@@ -30,13 +30,48 @@ a.flux_axis_type="flux"
 a.end_skip=10
 a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(29, 37), range(38, 39), range(44, 46), range(48, 52),
                range(54, 66), range(67, 69), range(70, 85), range(105, 107), range(108, 116), range(122, 129), [130], range(132, 134), [138],
- range(189, 193), range(199, 200), range(217, 251+1), range(266, 275+1), range(314, 324+1)]
+ range(189, 193), range(217, 251+1), range(266, 275+1), range(314, 324+1)]
 a.flux_indices=[range(400,434), range(436, 610)]
+#a.flux_indices=[range(200, 400)]
 a.read_data()
 a.ifft_plot()
 
 a.bgsub_type="dB"
 #a.bgsub_type="Complex"
+if __name__=="__main__":
+    pl="magabs"
+    pl1="centers"
+
+if __name__=="__main__":
+
+    class Fitter(LineFitter):
+        Ejmax=FloatRange(0.001, 100.0, qdt.Ejmax/h/1e9).tag(tracking=True)
+        offset=FloatRange(-5.0, 5.0, 0.0).tag(tracking=True)
+        flux_factor=FloatRange(0.1, 5.0, 0.3).tag(tracking=True)
+        f0=FloatRange(4.0, 6.0, qdt.f0/1e9).tag(tracking=True)
+        alpha=FloatRange(0.0, 2.0, 0.0*qdt.couple_mult).tag(tracking=True)
+        Ct=FloatRange(0.1, 10.0, 1.3).tag(tracking=True)
+
+        def _default_plotter2(self):
+            if self.plot_name=="":
+                self.plot_name=self.name
+            freq=s3a4_wg.frequency[:]/1e9
+            freq=append(freq, freq)
+            freq=append(freq, freq)
+            pl1, pf=line(freq, self.data, plot_name=self.plot_name, plotter=pl)
+            self.plot_name=pf.plot_name
+            return pl1
+
+        @tag_property(private=True, plot=True)
+        def data(self):
+            return a.freq_axis, a.qdt._get_fluxfq0(f=a.frequency)#, plotter=pl, color="red", linewidth=1.0)
+            return flux_par3(s3a4_wg, offset=self.offset, flux_factor=self.flux_factor,
+                             C=self.Ct*1e-13, Ejmax=self.Ejmax*h*1e9, f0=self.f0*1e9, alpha=self.alpha)
+
+    f=Fitter(plot_name="centers")
+    pl1=f.plotter
+
+
 if __name__=="__main__":
     pl=a.magabs_colormesh()#.show()
     #pl=colormesh(a.MagAbs.transpose())
@@ -54,20 +89,70 @@ if __name__=="__main__":
     print [a.indices[n] for n, fp in enumerate(a.fit_params) if absolute(fp[1]-centers[n])<0.3]
     print [a.indices[n] for n, fp in enumerate(a.fit_params) if absolute(fp[1]-centers[n])>0.1]
     print [a.indices[n] for n, fp in enumerate(a.fit_params[:-1]) if absolute(fp[1]-a.fit_params[n+1][1])>0.1]
-
+    print shape(a.flat_indices)
+    print shape(a.flat_flux_indices)
+    print shape(a.MagAbsFilt_sq)
     pl1=a.center_plot()
 
-    a.flux_indices=[range(610,800)]#, range(436, 610)]
-    a.fitter.fit_params=None
-    #reset_property(a)
-    reset_property(a, "fit_params", "MagAbsFit", "Magcom")
+if __name__=="__main__":
+    a.flux_indices=[range(200, 400)]#, range(436, 610)]
+    fit1=a.fit_indices[:]
+    a.fit_indices=[[1], range(4, 11), [15], range(17, 23), range(26, 28), range(29, 37), range(38, 41), range(42,53), range(56,68),
+                   range(71,77), range(78,81), [84], range(104,107), range(108,111), [116], range(124,129), [138], range(189,194),
+                   range(218, 255), range(264, 285), range(310,325)]#, range(337,348)]
+    #a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(29, 37), range(38, 39), range(44, 46), range(48, 52),
+    #           range(54, 66), range(67, 69), range(70, 85), range(105, 107), range(108, 116), range(122, 129), [130], range(132, 134), [138],
+    #             range(189, 193), range(199, 200), range(217, 251+1), range(266, 275+1), range(314, 324+1)]
 
-    #a.magabs_colormesh(pl=pl)
+    a.fitter.fit_params=None
+    reset_property(a, "fit_params", "MagAbsFit", "MagcomFilt", "Magcom")
+    if 0:
+        a.filter_type="None"
+
+        pl=a.magabs_colormesh(pl=pl)
+
+        a.filter_type="FFT"
+        a.magabs_colormesh(pl=pl)#.show()
+    a.filter_type="Fit"
+
+    a.magabs_colormesh(pl=pl)#.show()
+    centers=a.qdt._get_fluxfq0(f=a.frequency[a.indices])
+
+    print [a.indices[n] for n, fp in enumerate(a.fit_params) if absolute(fp[1]-centers[n])>0.3]
+
+    pl1=a.center_plot(pl=pl1)
+
+if __name__=="__main2__":
+    a.flux_indices=[range(610,800)]#, range(436, 610)]
+
+    #a.fit_indices=list(set(fit1).union(set(fit2)))
+    #a.fit_indices=[range(len(a.frequency))]
+    #a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(29, 37), range(38, 39), range(44, 46), range(48, 52),
+    #           range(54, 66), range(67, 69), range(70, 85), range(105, 107), range(108, 116), range(122, 129), [130], range(132, 134), [138],
+    #             range(189, 193), range(199, 200), range(217, 251+1), range(266, 275+1), range(314, 324+1)]
+    a.fitter.fit_params=None
+    reset_property(a, "fit_params", "MagAbsFit", "MagcomFilt", "Magcom")
+
+    pl=a.magabs_colormesh()
+
+
+    pl1=a.center_plot(pl=pl1)
+
+
+if __name__=="__main2__":
+    a.flux_indices=[range(0,200)]#, range(436, 610)]
+    a.fitter.fit_params=None
+    reset_property(a, "fit_params", "MagAbsFit", "MagcomFilt", "Magcom")
+
+    a.magabs_colormesh(pl=pl)
+
 
     a.center_plot(pl=pl1)
 
-    pl.show()
+if __name__=="__main__":
+    pl1.show()
 
+if __name__=="__main__":
     from taref.physics.filtering import Filter
     from numpy import absolute
     b=Filter(center=0, halfwidth=40, reflect=False, N=len(a.yoko))

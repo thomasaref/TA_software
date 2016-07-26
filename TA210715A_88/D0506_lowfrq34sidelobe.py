@@ -15,7 +15,6 @@ from taref.plotter.api import LineFitter
 from taref.physics.fundamentals import h#, filt_prep
 from scipy.optimize import fsolve
 from scipy.signal import freqz
-from taref.physics.fitting_functions import lorentzian, rpt_fit, lorentzian2
 from time import time
 a=TA88_Lyzer(on_res_ind=256, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0505/S1A4_lowfrq_trans_3and4_sidelobe.hdf5"),
