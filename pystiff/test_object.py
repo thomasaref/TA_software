@@ -10,6 +10,10 @@ from pystiff.api import Object, Int, Coerced, Typed
 class Test(Object):
     c=Int(20)
     d=Coerced(int, (2,))
+    
+    def __init__(self):
+        self.b=Int()
+        
     f=Typed(int, (21,))
     g=Typed(float)
 
@@ -25,6 +29,7 @@ if __name__=="__main__":
     a.f=3
     print a.get_member("f").typer
     print a.get_member("g").typer
+    print a.members("class").keys()
 
     #print a.a
     #print a.c, a.d

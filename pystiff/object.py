@@ -5,6 +5,22 @@ Created on Mon Jul 25 21:17:56 2016
 @author: thomasaref
 """
 from .value import Value
+from collections import OrderedDict
+
+def members(self, search="all"):
+    """returns members as an ordered dictionary in order of creation.
+    'all' returns all members, 'instance' returns instance members only
+    and 'class' returns class members"""
+    ins_dict=OrderedDict(sorted([(name, member) for name, member in self.__dict__.iteritems() if isinstance(member, Value)],
+                                 key = lambda mbr: mbr[1].creation_order))
+    if search=="instance":
+        return ins_dict
+    cls_dict=OrderedDict(sorted([(name, member) for name, member in type(self).__dict__.iteritems() if isinstance(member, Value)],
+                           key = lambda mbr: mbr[1].creation_order))
+    if search=="class":
+        return cls_dict    
+    cls_dict.update(ins_dict)
+    return cls_dict
 
 def get_member(self, name, search="all"):
     if search=="all":
@@ -33,14 +49,7 @@ class Object(object):
         return get_member(self, name, search=search)
 
     def members(self, search="all"):
-        ins_dict=dict([(name, member) for name, member in self.__dict__.items() if isinstance(member, Value)])
-        if search=="ins":
-            return ins_dict
-        cls_dict=dict([(name, member) for name, member in type(self).__dict__.items() if isinstance(member, Value)])
-        if search=="cls":
-            return cls_dict    
-        ins_dict.update(cls_dict)
-        return ins_dict
+        return members(self, search=search)
 
     def __setattr__(self, name, value):
         cval=get_member(self, name)

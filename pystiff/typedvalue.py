@@ -15,19 +15,18 @@ class TypedValue(Value):
             return True
         return type(value)==self.typer
 
-    def defaulter(self, obj):
-        if self.value is None:
-            def_func=getattr(obj, "_default_"+self.name, None)
-            if def_func is None:
-                value=self.def_func()
-            else:
-                value=def_func()
-            if not self.validate(value):
-                raise Exception("Wrong type")
-            self.value=value
+#    def defaulter(self, obj):
+#        if self.uninitialized:
+#            def_func=getattr(obj, "_default_"+self.name, None)
+#            if def_func is None:
+#                value=self.def_func()
+#            else:
+#                value=def_func()
+#            self.__set__(obj, value)
 
     def __set__(self, obj, value):
         #self.namer(obj)
+        self.uninitialized=False
         obj.notify(self, value)
         if not self.validate(value):
             raise Exception("Wrong type")
