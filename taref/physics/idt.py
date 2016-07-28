@@ -507,11 +507,11 @@ def couple_comparison(pl="couple_compare", **kwargs):
     #idt.eta=0.7
 
     idt.S_type="RAM"
-    pl, pf=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="cyan", linewidth=0.3, label=idt.couple_type, **kwargs)
+    pl=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="cyan", linewidth=0.3, label=idt.couple_type, **kwargs)
     idt.S_type="simple"
     idt.fixed_reset()
     idt.couple_type="sinc^2"
-    pl, pf=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, linewidth=0.3, label=idt.couple_type, **kwargs)
+    pl=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, linewidth=0.3, label=idt.couple_type, **kwargs)
     idt.couple_type="giant atom"
     line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="red", linewidth=0.3, label=idt.couple_type)
     idt.couple_type="df giant atom"
@@ -561,7 +561,7 @@ def Lamb_shift_comparison(pl="ls_comp", **kwargs):
     idt.S_type="RAM"
     #print idt.fixed_Lamb_shift
     #print imag(hilbert(idt.fixed_coupling))
-    pl, pf=line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="cyan", linewidth=0.3, label=idt.couple_type, **kwargs)
+    pl=line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="cyan", linewidth=0.3, label=idt.couple_type, **kwargs)
     #pl.show()
     idt.S_type="simple"
     idt.fixed_reset()
@@ -569,7 +569,7 @@ def Lamb_shift_comparison(pl="ls_comp", **kwargs):
     idt.Lamb_shift_type="formula"
     idt.couple_type="sinc^2"
     #idt=IDT(Lamb_shift_type="formula", couple_type="sinc^2")
-    pl, pf=line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, linewidth=0.3, label="sinc^2", **kwargs)
+    pl=line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, linewidth=0.3, label="sinc^2", **kwargs)
     #a=IDT(Lamb_shift_type="formula", couple_type="giant atom")
     idt.couple_type="giant atom"
     line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="red", linewidth=0.3, label=idt.couple_type)
@@ -596,7 +596,7 @@ def Lamb_shift_check(pl="ls_check", **kwargs):
     idt.Lamb_shift_type="formula"
     idt.couple_type="sinc^2"
     frq=linspace(0e9, 10e9, 10000)
-    pl, pf=line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, linewidth=0.3, label=idt.couple_type, **kwargs)
+    pl=line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, linewidth=0.3, label=idt.couple_type, **kwargs)
     idt.couple_type="giant atom"
     line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, color="red", linewidth=0.3, label=idt.couple_type)
     idt.couple_type="df giant atom"
@@ -654,7 +654,7 @@ if __name__=="__main__":
     #print a.fixed_P
     a.fixed_reset()
     a.S_type="RAM"
-    Lamb_shift_comparison().show()
+    Lamb_shift_comparison()#.show()
     couple_comparison().show()
     #print a.fixed_P
     #print squeeze(a.fixed_coupling)

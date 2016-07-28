@@ -8,8 +8,9 @@ Created on Mon Feb 15 14:08:41 2016
 from taref.physics.qdt import QDT
 from taref.physics.idt import IDT
 #from taref.core.atom_extension import get_tag, tag_property
-from taref.filer.read_file import Read_HDF5
+from taref.filer.read_file import Read_HDF5, Read_NP
 from taref.filer.filer import Folder
+from taref.filer.save_file import Save_NP
 from taref.core.agent import Agent
 from atom.api import Float, Unicode, Typed, Int, Callable, Enum
 from taref.core.universal import Array
@@ -26,6 +27,14 @@ from lyzer import Lyzer
 class TA88_Read(Read_HDF5):
     def _default_folder(self):
         return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216", quality="", main_dir="Data_0221")
+
+class TA88_Save_NP(Save_NP):
+    def _default_folder(self):
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/TA88_processed")
+
+class TA88_Read_NP(Read_NP):
+    def _default_folder(self):
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/TA88_processed")
 
 #read_dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216"
 

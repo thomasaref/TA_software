@@ -65,7 +65,7 @@ def reread(g, md=dict()):
 
 def read_hdf5_dict(file_path):
     with File(file_path, 'r') as f:
-        data=reread(f)#print key, item.keys(), isinstance(item, Group)
+        data=reread(f)
     return data
 
 def reread_group(g, store_data=True, md=group()):

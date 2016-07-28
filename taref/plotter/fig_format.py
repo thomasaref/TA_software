@@ -8,13 +8,13 @@ from taref.core.log import log_debug
 from matplotlib import use#('Agg')
 use('Agg')
 
-from taref.plotter.plotter_backbone import plot_observe, PlotMaster, simple_set, process_kwargs
+from taref.plotter.plotter_backbone import plot_observe, PlotMaster, simple_set
 from atom.api import Bool, Unicode, Float, Enum, Int, observe, cached_property#, Typed
 
 from taref.core.agent import Operative
 from enaml import imports
 #from plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh, multiline_plot
-from taref.core.property import private_property
+from taref.core.api import private_property
 
 from matplotlib import rcParams
 #print rcParams

@@ -7,9 +7,9 @@ Created on Tue Mar 24 16:21:06 2015
 
 from taref.core.log import log_info#, log_debug
 from taref.filer.filer import Filer
-from atom.api import Dict, Event, Typed, Unicode, cached_property, Atom, observe, Bool, List
+from atom.api import Dict, Event, Typed, Unicode, cached_property, Atom, observe, Bool, List, Int
 from taref.core.api import tag_callable
-from taref.core.universal import read_text
+from taref.core.universal import read_text, Array
 #from DXF_functions import readdxflayer
 from taref.filer.HDF5_functions import read_hdf5, group
 from numpy import loadtxt
@@ -49,14 +49,14 @@ class Read_File(Filer):
         self.read_event()
         return self.data
 
-    @cached_property
-    def view(self):
-        return ReadFileExt
+    #@cached_property
+    #def view(self):
+    #    return ReadFileExt
 
-    @cached_property
-    def view_window(self):
-        """stand alone for showing filer."""
-        return ReadFileMain(agent=self)
+    #@cached_property
+    #def view_window(self):
+    #    """stand alone for showing filer."""
+    #    return ReadFileMain(agent=self)
 
 
 
@@ -76,7 +76,9 @@ class Read_HDF5(Read_File):
 
 class Read_NP(Read_File):
     """Reads data using numpy's loadtxt"""
-    data=Dict()
+    data=Array()
+    delimiter=Unicode(',')
+    skiprows=Int()
 
     def _default_file_suffiz(self):
         return ".txt"
@@ -85,8 +87,8 @@ class Read_NP(Read_File):
         log_info("Read data from numpy text file: {0}".format(self.file_path))
 
     def read(self):
-        self.data={"data":loadtxt(self.file_path)}
-        return super(Read_HDF5, self).read()
+        self.data=loadtxt(self.file_path, delimiter=self.delimiter, skiprows=self.skiprows)
+        return super(Read_NP, self).read()
 
 class Read_DXF(Read_File):
     def _default_file_suffix(self):

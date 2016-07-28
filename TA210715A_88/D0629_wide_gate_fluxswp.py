@@ -5,8 +5,8 @@ Created on Sun Apr 24 18:55:33 2016
 @author: thomasaref
 """
 
-from TA88_fundamental import TA88_Lyzer, TA88_Read, qdt
-from taref.plotter.api import colormesh, line, Plotter
+from TA88_fundamental import TA88_Lyzer, TA88_Read, qdt, TA88_Read_NP, TA88_Save_NP
+from taref.plotter.api import colormesh, line, Plotter, scatter
 from taref.core.api import set_tag, set_all_tags
 from numpy import array, absolute, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape
 from atom.api import FloatRange
@@ -42,7 +42,7 @@ if __name__=="__main__":
     pl="magabs"
     pl1="centers"
 
-if __name__=="__main__":
+if __name__=="__main2__":
 
     class Fitter(LineFitter):
         Ejmax=FloatRange(0.001, 100.0, qdt.Ejmax/h/1e9).tag(tracking=True)
@@ -121,6 +121,15 @@ if __name__=="__main__":
     print [a.indices[n] for n, fp in enumerate(a.fit_params) if absolute(fp[1]-centers[n])>0.3]
 
     pl1=a.center_plot(pl=pl1)
+
+    nps=TA88_Save_NP(file_path=r"/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/TA88_processed/discard/S2016_07_28_171620/meas.txt")
+    nps.save(pl1.savedata())
+    npr=TA88_Read_NP(file_path=nps.file_path, show_data_str=True)
+    data=npr.read()
+    scatter(data[:, 0], data[:, 1])
+    #nps.data_buffer=pl1.savedata()
+    pl1.show(nps, npr)
+
 
 if __name__=="__main2__":
     a.flux_indices=[range(610,800)]#, range(436, 610)]

@@ -68,10 +68,6 @@ class Filer(Atom):
     def _default_folder(self):
         return Folder()
 
-    #log_name=Unicode("record")
-    #log_suffix=Unicode(".log")
-    #comment=Unicode()
-
     @cached_property
     def main_file(self):
         return self.file_name+self.file_suffix
@@ -94,10 +90,6 @@ class Filer(Atom):
     @file_path.setter
     def set_file_path(self, fp_str):
         self.folder.dir_path, div, self.main_file=fp_str.rpartition(self.folder.divider)
-
-    #@cached_property
-    #def log_path(self):
-    #    return self.dir_path+self.divider+self.log_name+self.log_suffix
 
     @observe("file_name", "file_suffix", "folder.dir_path")#, "log_name", "log_suffix")
     def update_properties(self, change):
@@ -126,4 +118,6 @@ if __name__=="__main__":
         f=Typed(Filer).tag(no_spacer=True)
         a=Typed(Folder).tag(no_spacer=True)
     t=Test(f=f, a=a)
+    t.f.folder.show_simple=False
+    t.f.folder.show_details=False
     shower(a, f, t)

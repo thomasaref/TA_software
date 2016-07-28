@@ -6,14 +6,13 @@ Created on Fri Apr 22 14:50:17 2016
 """
 
 from taref.plotter.fig_format import Fig
-from taref.plotter.plotter_backbone import process_kwargs
-from taref.core.property import private_property
+from taref.core.api import process_kwargs, private_property
 from taref.plotter.plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh_plot, multiline_plot, polygon_plot
-from atom.api import Unicode, Bool
+from atom.api import Unicode
+from numpy import concatenate
 
 class Plotter(Fig):
     fig_name=Unicode()
-    #return_plot_format=Bool(False)
 
     def line(self, *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
@@ -51,11 +50,18 @@ class Plotter(Fig):
                             bbox_inches='tight',
                             transparent=self.transparent)#, format=self.save_type)
 
+    def savedata(self, file_path=None):
+        print "saving figure data"
+        temp_list=[]
+        for pf in self.plot_dict.values():
+            temp_list.extend([[x, pf.ydata[n]] for n,x in enumerate(pf.xdata)])
+            #print concatenate((pf.xdata, pf.ydata), axis=1)
+        return temp_list
     @classmethod
     def plot_do(cls, plot_func, *args, **kwargs):
         """utility function that extracts plotter and plot_name from kwargs and then does plot specified by func_name"""
-        plotter=kwargs.pop("plotter", None)
         pf_too=kwargs.pop("pf_too", False)
+        plotter=kwargs.pop("plotter", None)
         if plotter is None:
             plotter=kwargs.pop("pl", None)
         if plotter is None:

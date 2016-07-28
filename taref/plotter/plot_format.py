@@ -5,12 +5,12 @@ Created on Thu Feb  4 12:51:21 2016
 @author: thomasaref
 """
 from taref.core.log import log_debug
-from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names, simple_set, process_kwargs
+from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names, simple_set
 from taref.core.universal import Array, name_generator
 from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict, observe, ReadOnly
 from numpy import linspace, arange, asanyarray, amax, amin, ndarray, nanmax, nanmin
 from taref.core.shower import shower
-from taref.core.atom_extension import get_all_tags, get_tag, set_tag, check_initialized, defaulter
+from taref.core.atom_extension import get_all_tags, get_tag, set_tag, check_initialized, defaulter, process_kwargs
 
 from enaml import imports
 with imports():
@@ -110,15 +110,13 @@ class PlotFormat(PlotUpdate):
                 self.clt.remove()
 
     def __init__(self, **kwargs):
-        plot_name=defaulter(self, "plot_name", kwargs)
+        plot_name=kwargs.pop("plot_name", self.plot_type) #defaulter(self, "plot_name", kwargs)
         plotter=kwargs["plotter"]
         #if plot_name in plotter.plot_dict:
         #    if self.remove:
         #        self.remove_collection()
         #    else:
-        plot_name=name_generator(plot_name, plotter.plot_dict, kwargs.get("plot_type", self.plot_type))
-        self.plot_name=plot_name
-
+        self.plot_name=name_generator(plot_name, plotter.plot_dict, kwargs.get("plot_type", self.plot_type))
         super(PlotFormat, self).__init__(**kwargs)
         #if plot_name is None:
         #    plot_name=self.plot_type

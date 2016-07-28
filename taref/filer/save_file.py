@@ -6,20 +6,21 @@ Created on Thu Mar  5 20:50:49 2015
 """
 
 from taref.core.log import  log_info, make_log_file, remove_log_file, log_debug
-from taref.filer.filer import Filer
+from taref.filer.filer import Filer, Folder
 from atom.api import cached_property, Unicode, List, Event, Enum, Typed, Int, Bool
 from os.path import exists as os_path_exists#, splitext as os_path_splitext, split as os_path_split
 from os import makedirs as os_makedirs
 from shutil import move#, copyfile
 #from inspect import getfile
-from numpy import ndarray, size
+from numpy import ndarray, size, savetxt
 #from taref.core.read_file import Read_HDF5, Read_NP, Read_TXT, Read_DXF
 #from collections import OrderedDict
 from taref.core.api import tag_callable
 
 from taref.filer.HDF5_functions import rewrite_hdf5, group, dataset#, File
-from taref.core.universal import write_text
+from taref.core.universal import write_text, CArray
 #from taref.core.TXTNP_functions import  save_txt_data, save_np_data, save_txt
+from taref.ebl.DXF_functions import save_dxf
 
 from enaml import imports
 with imports():
@@ -34,11 +35,11 @@ class Save_File(Filer):
     fixed_mode=Bool(False)
     comment=Unicode()
 
-    def _default_show_details(self):
-        return False
+    def _default_folder(self):
+        return Folder(show_details=False, show_simple=False)
 
-    def _default_show_simple(self):
-        return False
+    def _default_show_data_str(self):
+        return True
 
     @tag_callable(button_label="Save")
     def file_action(self):
@@ -66,8 +67,8 @@ class Save_File(Filer):
         flush_buffer=kwargs.pop("flush_buffer", None)
         if flush_buffer is not None:
             self.flush_buffer=flush_buffer
-        if data is None:
-            self.flush_buffer=True
+        if not hasattr(self, "buffer_save") or data is None:
+            flush_buffer=True
         else:
             self.buffer_save(data, *args, **kwargs)
             self.get_member("data_str").reset(self)
@@ -83,14 +84,14 @@ class Save_File(Filer):
             self.write_mode="a"
         self.log_save()
 
-    @cached_property
-    def view(self):
-        return ReadFileExt
+    #@cached_property
+    #def view(self):
+    #    return ReadFileExt
 
-    @cached_property
-    def view_window(self):
-        """stand alone for showing save file."""
-        return ReadFileMain(agent=self)
+    #@cached_property
+    #def view_window(self):
+    #    """stand alone for showing save file."""
+    #    return ReadFileMain(agent=self, title="Save file")
 
     def close(self):
         """flushes the butter using save"""
@@ -186,11 +187,9 @@ class Save_HDF5(Save_File):
         if size(self.data_buffer[group_name][name][namestr])>self.buffer_size or size(self.data_buffer[group_name][name].keys())>self.buffer_size:
             self.flush_buffer=True #() #self.do_data_save(data, name, group_name, append)
 
-    @cached_property
-    def view_window(self):
-        with imports():
-            from taref.filer.filer_e import SaveMain
-        return SaveMain(save_file=self, read_file=Read_HDF5(file_path=self.file_path))
+    #@cached_property
+    #def view_window(self):
+    #    return SaveMain(save_file=self, read_file=Read_HDF5(file_path=self.file_path))
 
 class Save_TXT(Save_File):
     data_buffer=List()
@@ -227,13 +226,32 @@ class Save_TXT(Save_File):
     #    return SaveMain(save_file=self, read_file=Read_TXT(file_path=self.file_path))
 
 class Save_NP(Save_TXT):
+    data_buffer=CArray()
+    fmt=Unicode('.18e')
+    delimiter=Unicode(',')
+    newline=Unicode('\n')
+    header=Unicode('')
+    footer=Unicode('')
+    comment=Unicode('')
+
     def _default_file_suffix(self):
         return ".txt"
 
-    def do_data_save(self, data, name, group_name, append):
-        save_np_data(self.dir_path+self.divider, data, name)
+    def buffer_save(self, data):
+        self.data_buffer=data
+        self.flush_buffer=True
 
-from taref.ebl.DXF_functions import save_dxf
+    def save_to_file(self):
+        savetxt(self.file_path, self.data_buffer, delimiter=self.delimiter, newline=self.newline,
+                 header=self.header, footer=self.footer, comments='# '+self.comment)
+
+    def save(self, data=None):
+        super(Save_NP, self).save(data)
+
+    #def save(self)
+    #def do_data_save(self, data, name, group_name, append):
+    #    save_np_data(self.dir_path+self.divider, data, name)
+
 
 class Save_DXF(Save_File):
     def _default_file_suffix(self):
@@ -251,9 +269,14 @@ class Save_DXF(Save_File):
 
 if __name__=="__main__":
     from taref.core.shower import shower
+    from taref.filer.read_file import Read_NP
 
-    a=Save_TXT()
-    shower(a)
+    #a=Save_TXT()
+    a=Save_NP()
+    b=Read_NP(show_data_str=True, file_path=a.file_path)
+    a.save([[1,2,3], [4,5,6], [7,7,7]])
+    b.read()
+    shower(a, b)
 
 if __name__=="__main__2":
 

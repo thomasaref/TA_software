@@ -69,15 +69,23 @@ enamldef SimpleDirHGroup(HGroup):
 
 enamldef DirectoryInterface(VGroup):
     attr folder
-    alias main_file : ddhg.main_file
-    BaseDirHGroup:
-        pass
-    DetailsDirHGroup: ddhg:
-        pass
-    Separator:
-        pass
-    SimpleDirHGroup:
-        pass
+    attr dmain_file
+    Conditional:
+        condition = folder.show_details
+        #alias main_file : ddhg.main_file
+
+        BaseDirHGroup:
+            pass
+        DetailsDirHGroup: ddhg:
+            main_file=dmain_file
+    Conditional:
+        condition = folder.show_simple
+        Conditional:
+            condition = folder.show_details
+            Separator:
+                pass
+        SimpleDirHGroup:
+            pass
 
 enamldef FilerHGroup(HGroup):
     padding=0
@@ -114,11 +122,13 @@ enamldef SimpleFilerInterface(VGroup):
 enamldef FilerInterface(VGroup):
     attr filer
     attr show_data_str = filer.show_data_str
-    DirectoryInterface:
-        folder=filer.folder
-        main_file = filer.main_file
-    Separator:
-        pass
+    Conditional:
+        condition=filer.folder.show_details or filer.folder.show_simple
+        DirectoryInterface:
+            folder=filer.folder
+            dmain_file = filer.main_file
+        Separator:
+            pass
     FilerHGroup:
         pass
     Conditional:

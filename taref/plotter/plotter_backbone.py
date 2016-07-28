@@ -40,19 +40,19 @@ def simple_set(clt, mpl, param, set_str="set_"):
     """utility function that uses clt set_ function to set param"""
     getattr(clt, set_str+param)(getattr(mpl, param))
 
-def process_kwargs(self, kwargs):
-    """Goes through all_params and sets the attribute if it is included in kwargs, also popping it out of kwargs.
-    if the param is tagged with "former", the kwarg is added back using the value of the param. Returns the processed kwargs"""
-    for arg in get_all_params(self): #get_all_tags(self, "former"):
-        if arg in kwargs:
-            setattr(self, arg, kwargs[arg])
-        val=kwargs.pop(arg, None)
-        key=get_tag(self, arg, "former", False)
-        if key is not False:
-            if val is None:
-                val=getattr(self, arg)
-            kwargs[key]=val
-    return kwargs
+#def process_kwargs(self, kwargs):
+#    """Goes through all_params and sets the attribute if it is included in kwargs, also popping it out of kwargs.
+#    if the param is tagged with "former", the kwarg is added back using the value of the param. Returns the processed kwargs"""
+#    for arg in get_all_params(self): #get_all_tags(self, "former"):
+#        if arg in kwargs:
+#            setattr(self, arg, kwargs[arg])
+#        val=kwargs.pop(arg, None)
+#        key=get_tag(self, arg, "former", False)
+#        if key is not False:
+#            if val is None:
+#                val=getattr(self, arg)
+#            kwargs[key]=val
+#    return kwargs
 
 class PlotMaster(Atom):
     """base plot class contains figure, axes, plot_dict"""
