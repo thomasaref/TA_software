@@ -409,6 +409,8 @@ class ColormeshFormat(PlotFormat):
     def do_autolim(self):
         if self.plotter.auto_zlim:
             self.set_clim(nanmin(self.zdata), nanmax(self.zdata))
+        else:
+            self.set_clim(self.vmin, self.vmax)
         super(ColormeshFormat, self).do_autolim()
 
     def pcolormesh(self, *args, **kwargs):

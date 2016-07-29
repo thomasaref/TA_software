@@ -338,7 +338,7 @@ class Lyzer(LyzerBase):
             flux_axis=self.flux_axis[self.flat_flux_indices]
             freq_axis=self.freq_axis[self.indices]
             pl=colormesh(flux_axis, freq_axis, self.MagAbs,  **kwargs)
-
+        #if isinstance(pl, tuple):
         pl.set_ylim(min(freq_axis), max(freq_axis))
         pl.set_xlim(min(flux_axis), max(flux_axis))
         pl.xlabel=kwargs.pop("xlabel", self.flux_axis_label)

@@ -26,11 +26,11 @@ a.filt.center=0
 a.filt.halfwidth=200
 a.fitter.fit_type="lorentzian"
 a.fitter.gamma=0.01
-a.flux_axis_type="flux"
+a.flux_axis_type="yoko"#"flux"
 a.end_skip=10
 a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(29, 37), range(38, 39), range(44, 46), range(48, 52),
                range(54, 66), range(67, 69), range(70, 85), range(105, 107), range(108, 116), range(122, 129), [130], range(132, 134), [138],
- range(189, 193), range(217, 251+1), range(266, 275+1), range(314, 324+1)]
+ range(182,184), range(188, 193), range(217, 251+1), range(266, 275+1), range(314, 324+1)]
 a.flux_indices=[range(400,434), range(436, 610)]
 #a.flux_indices=[range(200, 400)]
 a.read_data()
@@ -73,17 +73,21 @@ if __name__=="__main2__":
 
 
 if __name__=="__main__":
-    pl=a.magabs_colormesh()#.show()
+    a.magabs_colormesh(vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False, pl="mag")
+
+    pl=a.magabs_colormesh(vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False)
+
     #pl=colormesh(a.MagAbs.transpose())
     #colormesh(savgol_filter(a.MagAbs, 11, 3, axis=1).transpose(), pl=pl).show()
     #colormesh(array([savgol_filter(a.MagAbs[:, n], 5, 2) for n in range(len(a.yoko))]), pl=pl)
     #pl.show()
-    a.filter_type="FFT"
-    #colormesh(array([savgol_filter(a.MagAbs[:, n], 5, 2) for n in range(len(a.yoko[a.flux_indices]))]))
-    a.magabs_colormesh(pl=pl)#.show()
+    if 0:
+        a.filter_type="FFT"
+        #colormesh(array([savgol_filter(a.MagAbs[:, n], 5, 2) for n in range(len(a.yoko[a.flux_indices]))]))
+        a.magabs_colormesh(pl=pl)#.show()
     a.filter_type="Fit"
 
-    a.magabs_colormesh(pl=pl)
+    a.magabs_colormesh(pl=pl, vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False)
     a.widths_plot()
     centers=-a.qdt._get_fluxfq0(f=a.frequency[a.indices])
     print [a.indices[n] for n, fp in enumerate(a.fit_params) if absolute(fp[1]-centers[n])<0.3]
@@ -98,7 +102,8 @@ if __name__=="__main__":
     a.flux_indices=[range(200, 400)]#, range(436, 610)]
     fit1=a.fit_indices[:]
     a.fit_indices=[[1], range(4, 11), [15], range(17, 23), range(26, 28), range(29, 37), range(38, 41), range(42,53), range(56,68),
-                   range(71,77), range(78,81), [84], range(104,107), range(108,111), [116], range(124,129), [138], range(189,194),
+                   range(71,77), range(78,81), [84], range(104,107), range(108,111), [116], range(124,129), [138],
+                   range(182,184), range(189,194),
                    range(218, 255), range(264, 285), range(310,325)]#, range(337,348)]
     #a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(29, 37), range(38, 39), range(44, 46), range(48, 52),
     #           range(54, 66), range(67, 69), range(70, 85), range(105, 107), range(108, 116), range(122, 129), [130], range(132, 134), [138],
@@ -115,13 +120,76 @@ if __name__=="__main__":
         a.magabs_colormesh(pl=pl)#.show()
     a.filter_type="Fit"
 
-    a.magabs_colormesh(pl=pl)#.show()
+    a.magabs_colormesh(pl=pl, vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False)#.show()
     centers=a.qdt._get_fluxfq0(f=a.frequency[a.indices])
 
     print [a.indices[n] for n, fp in enumerate(a.fit_params) if absolute(fp[1]-centers[n])>0.3]
 
     pl1=a.center_plot(pl=pl1)
 
+
+
+
+if __name__=="__main__":
+    a.flux_indices=[range(610, 748), range(751, 758), range(761,800)]#, range(436, 610)]
+
+    #a.fit_indices=list(set(fit1).union(set(fit2)))
+    #a.fit_indices=[range(len(a.frequency))]
+    a.fit_indices=[range(5,9), [11], range(15, 22), [23,24], range(30,35),
+                   [36], range(44, 51), range(59, 62), [63, 64], [66], range(70, 72),
+                   range(73, 75), range(76, 83), [87], range(104, 107), range(109, 111),
+                   range(112, 116), range(124, 130), [138], range(182,184), range(189, 194), [201],
+                   range(217, 253), range(265, 281), range(314, 326)]#, range(343, 350)]
+    #a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(29, 37), range(38, 39), range(44, 46), range(48, 52),
+    #           range(54, 66), range(67, 69), range(70, 85), range(105, 107), range(108, 116), range(122, 129), [130], range(132, 134), [138],
+    #             range(189, 193), range(199, 200), range(217, 251+1), range(266, 275+1), range(314, 324+1)]
+    a.fitter.fit_params=None
+    reset_property(a, "fit_params", "MagAbsFit", "MagcomFilt", "Magcom")
+    if 0:
+        a.filter_type="None"
+
+        pl=a.magabs_colormesh(pl=pl)
+
+        a.filter_type="FFT"
+        a.magabs_colormesh(pl=pl)#.show()
+    a.filter_type="Fit"
+
+    a.magabs_colormesh(pl=pl, vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False)#.show()
+    centers=a.qdt._get_fluxfq0(f=a.frequency[a.indices])
+
+    print [a.indices[n] for n, fp in enumerate(a.fit_params) if absolute(fp[1]-centers[n])>0.3]
+
+    pl1=a.center_plot(pl=pl1)
+
+
+if __name__=="__main__":
+    a.flux_indices=[range(0, 2), range(5,200)]#, range(436, 610)]
+    a.fit_indices=[range(len(a.frequency))]
+
+    a.fit_indices=[range(4, 7), [21], [47,48], [50], [72], [75], [78,79], [104], [109, 110],
+                   range(137, 140), range(182,184),
+                   range(188, 194), range(220,253), range(265, 282), range(314, 327)]
+
+    a.fitter.fit_params=None
+    reset_property(a, "fit_params", "MagAbsFit", "MagcomFilt", "Magcom")
+    if 0:
+        a.filter_type="None"
+
+        pl=a.magabs_colormesh(pl=pl)#.show()
+
+        a.filter_type="FFT"
+        a.magabs_colormesh(pl=pl)#.show()
+    a.filter_type="Fit"
+
+    a.magabs_colormesh(pl=pl, vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False)#.show()
+    centers=a.qdt._get_fluxfq0(f=a.frequency[a.indices])
+
+    print [a.indices[n] for n, fp in enumerate(a.fit_params) if absolute(fp[1]-centers[n])>0.3]
+
+
+    pl1=a.center_plot(pl=pl1)
+
+if __name__=="__main__2":
     nps=TA88_Save_NP(file_path=r"/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/TA88_processed/discard/S2016_07_28_171620/meas.txt")
     nps.save(pl1.savedata())
     npr=TA88_Read_NP(file_path=nps.file_path, show_data_str=True)
@@ -129,34 +197,6 @@ if __name__=="__main__":
     scatter(data[:, 0], data[:, 1])
     #nps.data_buffer=pl1.savedata()
     pl1.show(nps, npr)
-
-
-if __name__=="__main2__":
-    a.flux_indices=[range(610,800)]#, range(436, 610)]
-
-    #a.fit_indices=list(set(fit1).union(set(fit2)))
-    #a.fit_indices=[range(len(a.frequency))]
-    #a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(29, 37), range(38, 39), range(44, 46), range(48, 52),
-    #           range(54, 66), range(67, 69), range(70, 85), range(105, 107), range(108, 116), range(122, 129), [130], range(132, 134), [138],
-    #             range(189, 193), range(199, 200), range(217, 251+1), range(266, 275+1), range(314, 324+1)]
-    a.fitter.fit_params=None
-    reset_property(a, "fit_params", "MagAbsFit", "MagcomFilt", "Magcom")
-
-    pl=a.magabs_colormesh()
-
-
-    pl1=a.center_plot(pl=pl1)
-
-
-if __name__=="__main2__":
-    a.flux_indices=[range(0,200)]#, range(436, 610)]
-    a.fitter.fit_params=None
-    reset_property(a, "fit_params", "MagAbsFit", "MagcomFilt", "Magcom")
-
-    a.magabs_colormesh(pl=pl)
-
-
-    a.center_plot(pl=pl1)
 
 if __name__=="__main__":
     pl1.show()
