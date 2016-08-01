@@ -75,19 +75,20 @@ if __name__=="__main2__":
 if __name__=="__main__":
     a.magabs_colormesh(vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False, pl="mag")
 
-    pl=a.magabs_colormesh(vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False)
-
     #pl=colormesh(a.MagAbs.transpose())
     #colormesh(savgol_filter(a.MagAbs, 11, 3, axis=1).transpose(), pl=pl).show()
     #colormesh(array([savgol_filter(a.MagAbs[:, n], 5, 2) for n in range(len(a.yoko))]), pl=pl)
     #pl.show()
     if 0:
+
+        pl=a.magabs_colormesh(vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False)
+
         a.filter_type="FFT"
         #colormesh(array([savgol_filter(a.MagAbs[:, n], 5, 2) for n in range(len(a.yoko[a.flux_indices]))]))
         a.magabs_colormesh(pl=pl)#.show()
     a.filter_type="Fit"
 
-    a.magabs_colormesh(pl=pl, vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False)
+    pl=a.magabs_colormesh(pl=pl, vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False, fig_width=9, fig_height=6)
     a.widths_plot()
     centers=-a.qdt._get_fluxfq0(f=a.frequency[a.indices])
     print [a.indices[n] for n, fp in enumerate(a.fit_params) if absolute(fp[1]-centers[n])<0.3]
@@ -120,7 +121,7 @@ if __name__=="__main__":
         a.magabs_colormesh(pl=pl)#.show()
     a.filter_type="Fit"
 
-    a.magabs_colormesh(pl=pl, vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False)#.show()
+    a.magabs_colormesh(pl=pl, vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False, fig_width=9, fig_height=6)#.show()
     centers=a.qdt._get_fluxfq0(f=a.frequency[a.indices])
 
     print [a.indices[n] for n, fp in enumerate(a.fit_params) if absolute(fp[1]-centers[n])>0.3]
@@ -199,7 +200,11 @@ if __name__=="__main__2":
     pl1.show(nps, npr)
 
 if __name__=="__main__":
+    pl.set_xlim(-6,6)
+    pl.set_ylim(3.5, 7.5)
+    pl.savefig(r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/TA88_processed/", "fit_fluxmap")
     pl1.show()
+
 
 if __name__=="__main__":
     from taref.physics.filtering import Filter

@@ -70,7 +70,7 @@ class LineFitter(Operative):
     def update_plot(self, change):
         if change["type"]=="update":
             for param, plot_name in self.data_dict.iteritems():
-                print param, plot_name
+                #print param, plot_name
                 self.get_member(param).reset(self)
                 #self.plotter.plot_dict[plot_name].clt.set_xdata(getattr(self, param)[0])
                 #self.plotter.plot_dict[plot_name].clt.set_ydata(getattr(self, param)[1])

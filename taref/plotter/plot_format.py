@@ -163,7 +163,7 @@ class LineFormat(PlotFormat):
     alpha=Float(1.0).tag(former="alpha")
     label=Unicode().tag(former="label")
     color=Enum(*colors_tuple[1:]).tag(former="color")
-    linewidth=Float(2.0).tag(former="linewidth")
+    linewidth=Float(0.5).tag(former="linewidth")
     linestyle=Enum('solid', 'dashed', 'dashdot', 'dotted').tag(former="linestyle")
 
     @plot_observe("alpha", "label", "linewidth", "linestyle", "color", update_legend=True)
@@ -300,7 +300,7 @@ class ScatterFormat(LineFormat):
     clt=Typed(PathCollection)
 
     marker = Enum(*markers_tuple)
-    marker_size = Float(1.0).tag(former="s")
+    marker_size = Float(0.5).tag(former="s")
 
     facecolor=Enum(*colors_tuple[1:]).tag(former="facecolor")
     edgecolor=Enum(*colors_tuple[1:]).tag(former="edgecolor")
@@ -347,6 +347,7 @@ def scatter_plot(plotter, *args, **kwargs):
 class ColormeshFormat(PlotFormat):
     clt=Typed(QuadMesh)
     zdata=Array()
+    expand_XY=Bool(False).tag(desc="expands X and Y array by one so all zdata is plotted")
 
     cmap=Enum(*colormap_names).tag(former="cmap")
 
@@ -429,6 +430,10 @@ class ColormeshFormat(PlotFormat):
         #    self.xdata, self.ydata, self.zdata= [asanyarray(a) for a in args]
         elif len(args) == 3:
             self.xdata, self.ydata, self.zdata = [asanyarray(a) for a in args]
+            if self.expand_XY:
+                self.xdata=linspace(min(self.xdata), max(self.xdata), len(self.xdata)+1)
+                self.ydata=linspace(min(self.ydata), max(self.ydata), len(self.ydata)+1)
+
         self.clt=self.plotter.axes.pcolormesh(self.xdata, self.ydata, self.zdata, **kwargs)
         self.do_autolim()
         #if self.plotter.auto_xlim:
