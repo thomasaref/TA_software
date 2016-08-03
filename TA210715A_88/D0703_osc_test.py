@@ -72,7 +72,7 @@ wi=window_ifft(data, shift=True)
 
 data=decimate(data, q=q, ftype="fir")
 #wi=window_ifft(data, shift=True)
-xd=ifft_x(t, shift=True)[::q]/q
+#xd=ifft_x(t, shift=True)[::q]/q
 line(absolute(wi))
 pl, pf=line(absolute(data))
 #pl.show()

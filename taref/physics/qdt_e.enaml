@@ -1,0 +1,68 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jan  5 01:08:32 2016
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import ScrollArea, MainWindow, VGroup, Form, Label, ObjectCombo, Notebook, Page, GroupBox, DockArea, DockItem, Container, PushButton
+from enaml.core.api import Looper, Conditional
+from enaml.layout.api import HSplitLayout, VSplitLayout, TabLayout, DockLayout, InsertItem, hbox, vbox, spacer, RetractItem, DockBarLayout
+
+from taref.core.fundcore_e import UnitIntField, aHGroup, aWindow, UnitFloatField, AgentWindow
+from taref.core.var_e import EnumVar, UnitFloatVar, UnitIntVar, UnitComplexVar
+from taref.core.instrview_e import DynVar, AgentLooper, InstrHolder, AgentVGroup, AgentForm
+from taref.physics.surface_charge_e import MaterialDockItem, FingerDockItem, FrequencyDockItem, AlphaDockItem, PlotDockItem, NumericDockItem
+from taref.physics.idt_e import IDTDockItem, ExtraIDTDockItem, CoupleIDTDockItem, GaIDTDockItem, TypeControlsDockItem
+from taref.physics.qubit_e import QubitDockItem, ApproxQubitDockItem, SuperconductorDockItem, SQUIDDockItem
+
+enamldef QDTDockItem(DockItem):
+    name = 'qdt'
+    title = 'QDT Properties'
+    VGroup:
+        attr vmodel = agent
+        AgentLooper:
+            iterable=("fq0",)
+
+enamldef QDTDockArea(DockArea):
+    layout = VSplitLayout(HSplitLayout( 'qubit', 'approx_qubit', "superconductor", "squid", ),
+                          HSplitLayout('plots', 'material', 'finger', "frequency", "alpha"),
+                          HSplitLayout("type_controls", "idt", "couple_idt", "Ga_idt"),
+                          HSplitLayout("extra_idt", "numeric"))
+
+    QubitDockItem:
+        pass
+    ApproxQubitDockItem:
+        pass
+    SuperconductorDockItem:
+        pass
+    SQUIDDockItem:
+        pass
+    MaterialDockItem:
+        pass
+    FingerDockItem:
+        pass
+    FrequencyDockItem:
+        pass
+    NumericDockItem:
+        pass
+    AlphaDockItem:
+        pass
+    PlotDockItem:
+        pass
+    IDTDockItem:
+        pass
+    CoupleIDTDockItem:
+        pass
+    GaIDTDockItem:
+        pass
+    ExtraIDTDockItem:
+        pass
+    TypeControlsDockItem:
+        pass
+
+enamldef QDTView(AgentWindow):
+    VGroup:
+        QDTDockArea:
+            pass
+

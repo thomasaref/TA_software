@@ -8,16 +8,27 @@ Created on Sun Apr 24 13:05:32 2016
 from numpy import pi, linspace, sin, amax, argmin, argmax, cos, append
 from scipy.constants import h
 from taref.plotter.api import Plotter, line
-from taref.core.api import SProperty, s_property
+from taref.core.api import SProperty, s_property, private_property
 from taref.physics.idt import IDT
 from taref.physics.qubit import Qubit
 
 from taref.physics.fundamentals import sqrt, pi, e, h, array, eig, delete, sin, sinc_sq, sinc, linspace, zeros, absolute, cos, arange
 
+from enaml import imports
+with imports():
+    from taref.physics.qdt_e import QDTView
+
+
+Tc_Al=1.315 #critical temperature of aluminum
+Delta_Al=200.0e-6*e #gap of aluminum
 
 
 class QDT(IDT, Qubit):
     base_name="QDT"
+
+    @private_property
+    def view_window(self):
+        return QDTView(agent=self)
 
     fq0=SProperty().tag(desc="center frequency of oscillator")
     @fq0.getter
@@ -338,6 +349,8 @@ def anton_lamb_shift_plot(fig_width=9.0, fig_height=6.0):
     return pl
 
 if __name__=="__main__":
+    qdt=QDT()
+    qdt.show()
     anton_anharm_plot()
     #anharm_plot(antonqdt).show()
     anton_lamb_shift_plot().show()

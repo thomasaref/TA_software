@@ -144,8 +144,9 @@ MHz= mult_unit(1.0e6,  unit="MHz", output_unit="Hz")
 GHz= mult_unit(1.0e9,  unit="GHz", output_unit="Hz")
 THz= mult_unit(1.0e12, unit="THz", output_unit="Hz")
 
-hGHz=mult_unit(unit_factor=1.0e9*h, unit="hGHz", output_unit="hHz")
-hHz = unit_func(unit="hHz",  output_unit="hHz")
+hGHz=mult_unit(unit_factor=1.0e9*h, unit="hGHz", output_unit="J")
+hHz = unit_func(unit="hHz",  output_unit="J")
+#J = unit_func(unit="hHz",  output_unit="J")
 
 dBm_per_mW=dBm/mW
 dBm_per_mW.unit="dBm/mW"

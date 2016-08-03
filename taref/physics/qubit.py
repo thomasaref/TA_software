@@ -14,9 +14,14 @@ from numpy import (sin, cos, arccos, sqrt, exp, empty, mean, exp, log10, arange,
                    absolute, dtype, angle, amin, amax, linspace, zeros, shape, append)
 
 
-from taref.core.api import Agent, Array, SProperty
+from taref.core.api import Agent, Array, SProperty, private_property
 from atom.api import Enum, Float, Int
 from taref.plotter.api import Plotter, line
+from enaml import imports
+with imports():
+    from taref.physics.qubit_e import QubitView
+
+
 Tc_Al=1.315 #critical temperature of aluminum
 Delta_Al=200.0e-6*e #gap of aluminum
 
@@ -29,6 +34,10 @@ class Qubit(Agent):
     #            "Rn", "Ic", "Ejmax", "Ej", "Ec", "EjmaxdivEc", "EjdivEc",
     #            "fq", "fq_max", "fq_max_full", "flux_over_flux0", "G_f0", "G_f",
    #             "ng", "Nstates", "EkdivEc"]
+
+    @private_property
+    def view_window(self):
+        return QubitView(agent=self)
 
     superconductor=Enum("Al")
 
@@ -119,17 +128,17 @@ class Qubit(Agent):
     def _get_EjdivEc(self, Ej, Ec):
         return Ej/Ec
 
-    fq_approx_max=SProperty().tag(unit="GHz", label="fq max")
+    fq_approx_max=SProperty().tag(unit="GHz", label="fq approx max")
     @fq_approx_max.getter
     def _get_fq_approx_max(self, Ejmax, Ec):
         return self._get_fq_approx(Ej=Ejmax, Ec=Ec)
 
-    fq_approx=SProperty()
+    fq_approx=SProperty().tag(unit="GHz")
     @fq_approx.getter
     def _get_fq_approx(self, Ej, Ec):
         return (sqrt(8.0*Ej*Ec)-Ec)/h
 
-    fq_max=SProperty().tag(unit="hGHz", label="fq max full")
+    fq_max=SProperty().tag(unit="hGHz", label="fq max")
     @fq_approx.getter
     def _get_fq_max(self, Ejmax, Ec):
         return  self._get_fq(Ej=Ejmax, Ec=Ec)
@@ -150,7 +159,7 @@ class Qubit(Agent):
     def _get_L(self, fq, Ct):
         return 1.0/(Ct*(2*pi*fq)**2)
 
-    anharm=SProperty().tag(desc="absolute anharmonicity", unit="hGHz")
+    anharm=SProperty().tag(desc="absolute anharmonicity", unit="GHz")
     @anharm.getter
     def _get_anharm(self, Ej, Ec):
         E0, E1, E2=self._get_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=3)
@@ -183,7 +192,7 @@ class Qubit(Agent):
         return self._get_fq(Ej=qEj, Ec=Ec)#, fq2(qEj, Ec)
 
     #freq_arr=Array().tag(desc="array of frequencies to evaluate over")
-    f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured")
+    f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured", unit="GHz")
 
     flux_from_fq=SProperty().tag(sub=True)
     @flux_from_fq.getter
@@ -347,6 +356,7 @@ def anharm_plot(qbt):
 
 if __name__=="__main__":
     a=Qubit()
+    a.show()
     from atom.api import FloatRange
     from taref.core.api import tag_property
     from taref.plotter.api import LineFitter
