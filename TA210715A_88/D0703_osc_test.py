@@ -45,7 +45,7 @@ a=TA88_Lyzer( on_res_ind=201, read_data=read_data, # VNA_name="RS VNA",
 a.filt.center=4469
 a.filt.halfwidth=300
 a.filt.reflect=True
-from taref.physics.filtering import window_ifft, fir_filt_prep, fir_filter, fir_freqz, fft_filt_prep, fft_filter, ifft_x_fs
+from taref.physics.filtering import Filter#, window_ifft, fir_filt_prep, fir_filter, fir_freqz, fft_filt_prep, fft_filter, ifft_x_fs
 from scipy.signal import decimate, resample
 from numpy import exp
 
@@ -60,31 +60,33 @@ a.read_data()
 #    N=len(fs)
 #    df=1.0/(fs[1]-fs[0])/2.0
 #    return linspace(-df/2.0, df/2.0, N)
-
+b=Filter(center=4465, halfwidth=85, reflect=False)
 t=a.frequency
 f=4.468e9
-data=fft_filter(a.Magcom[:, 25], 4380, 4550)
+wi=b.window_ifft(a.Magcom[:, 25])
+
+data=b.fft_filter(a.Magcom[:, 25]) #, 4380, 4550)
 #fd=fir_filter(data, 4380, 4550, numtaps=1000)
 
 data=data[10:-10]*exp(-2.0j*pi*f*t[10:-10])
 q=200
-wi=window_ifft(data, shift=True)
 
-data=decimate(data, q=q, ftype="fir")
+#data=decimate(data, q=q, ftype="fir")
 #wi=window_ifft(data, shift=True)
 #xd=ifft_x(t, shift=True)[::q]/q
-line(absolute(wi))
-pl, pf=line(absolute(data))
+pl=line(absolute(wi))
+line(b.fftshift(b.freqz*max(absolute(wi))), pl=pl, color="green")
+pl=line(absolute(data))
 #pl.show()
 
-filt=fir_filt_prep(20003, 4380, 4550, numtaps=1000)
-ff2=filt2=fft_filt_prep(20003, 4380, 4550)
-ff=fir_freqz(filt, 20003)
+#filt=fir_filt_prep(20003, 4380, 4550, numtaps=1000)
+#ff2=filt2=fft_filt_prep(20003, 4380, 4550)
+#ff=fir_freqz(filt, 20003)
 
 #pl, pf=line(ifft_x(t, shift=False), absolute(wi))
 
 #pl, pf=line(xd, absolute(wi))
-print "hih"
+#print "hih"
 #data=array([fft_filter(a.Magcom[:, n], 4380, 4550)[10:-10] for n in range(len(a.yoko))])
 data=a.Magcom[10:-10].transpose()
 data2d=data*exp(-2.0j*pi*f*t[10:-10])
