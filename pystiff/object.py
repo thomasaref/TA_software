@@ -10,7 +10,7 @@ from collections import OrderedDict
 def members(self, search="all"):
     """returns members as an ordered dictionary in order of creation.
     'all' returns all members, 'instance' returns instance members only
-    and 'class' returns class members"""
+    and 'class' returns class members only"""
     ins_dict=OrderedDict(sorted([(name, member) for name, member in self.__dict__.iteritems() if isinstance(member, Value)],
                                  key = lambda mbr: mbr[1].creation_order))
     if search=="instance":
@@ -18,7 +18,7 @@ def members(self, search="all"):
     cls_dict=OrderedDict(sorted([(name, member) for name, member in type(self).__dict__.iteritems() if isinstance(member, Value)],
                            key = lambda mbr: mbr[1].creation_order))
     if search=="class":
-        return cls_dict    
+        return cls_dict
     cls_dict.update(ins_dict)
     return cls_dict
 
@@ -26,9 +26,9 @@ def get_member(self, name, search="all"):
     if search=="all":
         mbr=type(self).__dict__.get(name, None)
         return self.__dict__.get(name, mbr)
-    elif search=="ins":
+    elif search=="instance":
         return self.__dict__.get(name, None)
-    elif search=="cls":
+    elif search=="class":
         return type(self).__dict__.get(name, None)
 
 class Object(object):

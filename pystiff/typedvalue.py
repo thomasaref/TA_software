@@ -9,10 +9,14 @@ from .value import Value
 class TypedValue(Value):
     """extends value to allow type checking. defaulter is also updated"""
     typer=None
+    allow_None=False
+
+    def default_func(self):
+        return self.typer()
 
     def validate(self, value):
         if value is None:
-            return True
+            return self.allow_None
         return type(value)==self.typer
 
 #    def defaulter(self, obj):
