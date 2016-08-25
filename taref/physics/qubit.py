@@ -211,14 +211,16 @@ class Qubit(Agent):
 
     voltage_from_flux_par_many=SProperty().tag(sub=True)
     @voltage_from_flux_par_many.getter
-    def _get_voltage_from_flux_par_many(self, f, Ct, Ejmax, offset, flux_factor):
-        Ec=self._get_Ec(Ct=Ct)
-        Ej=self._get_Ej_get_fq(fq=f, Ec=Ec)
-        fdf0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
+    def _get_voltage_from_flux_par_many(self, fq, Ct, Ejmax, offset, flux_factor):
+        #Ec=self._get_Ec(Ct=Ct)
+        #Ej=self._get_Ej_get_fq(fq=f, Ec=Ec)
+        fdf0=self._get_flux_from_fq(fq, Ct, Ejmax) #self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
+
+        #fdf0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
         flux_d_flux0=append(fdf0, -fdf0)
         flux_d_flux0=append(flux_d_flux0, -fdf0+pi)
         flux_d_flux0=append(flux_d_flux0, fdf0-pi)
-        freq=append(f, f)
+        freq=append(fq, fq)
         freq=append(freq, freq)
         return freq/1e9, self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
 

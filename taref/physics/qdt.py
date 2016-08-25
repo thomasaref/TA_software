@@ -77,41 +77,47 @@ class QDT(IDT, Qubit):
         Vplus=self._get_voltage_from_flux_par(fq=fminus, Ct=Ct, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
         return Vplus, Vminus, Vplus-Vminus
 
+    Vfq0_many=SProperty().tag(sub=True)
+    @Vfq0_many.getter
+    def _get_Vfq0_many(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, Ejmax, offset, flux_factor):
+        fq0=self._get_fq0(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        return self._get_voltage_from_flux_par_many(fq=fq0, Ct=Ct, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
+
     #lamb_shifted_transmon_energy=SProperty()
     #@lamb_shifted_transmon_energy.getter
-    def _get_lamb_shifted_transmon_energy(self, Ej, Ec, m, couple_mult, f0, K2, Np):
-        Em=-Ej+sqrt(8.0*Ej*Ec)*(m+0.5) - (Ec/12.0)*(6.0*m**2+6.0*m+3.0)
-        if m==0:
-            return Em
-        Emm1=-Ej+sqrt(8.0*Ej*Ec)*(m-1+0.5) - (Ec/12.0)*(6.0*(m-1)**2+6.0*(m-1)+3.0)
-        fq=(Em-Emm1)/h
-        fls=self._get_Lamb_shift(f=fq, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
-        return Em+h*fls
-
-    lamb_shifted_transmon_energy_levels=SProperty()
-    @lamb_shifted_transmon_energy_levels.getter
-    def _get_lamb_shifted_transmon_energy_levels(self, Ej, couple_mult, f0, K2, Np, Ec, n_energy):
-        return [self._get_lamb_shifted_transmon_energy(Ej=Ej, Ec=Ec, m=m, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np) for m in range(n_energy)]
-
-    lamb_shifted_fq=SProperty().tag(desc="""Operating frequency of qubit""", unit="GHz")
-    @lamb_shifted_fq.getter
-    def _get_lamb_shifted_fq(self, Ej, Ec):
-        E0, E1=self._get_lamb_shifted_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=2)
-        return (E1-E0)/h
-
-    lamb_shifted_anharm=SProperty().tag(desc="absolute anharmonicity", unit="hGHz")
-    @lamb_shifted_anharm.getter
-    def _get_lamb_shifted_anharm(self, Ej, Ec):
-        E0, E1, E2=self._get_lamb_shifted_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=3)
-        return (E2-E1)/h-(E1-E0)/h
-
-    lamb_shifted_fq2=SProperty().tag(desc="""20 over 2 freq""", unit="GHz")
-    @lamb_shifted_fq2.getter
-    def _get_lamb_shifted_fq2(self, Ej, Ec):
-        E0, E1, E2=self._get_lamb_shifted_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=3)
-        return (E2-E0)/h/2.0
-
-    #@s_property(desc="shunt capacitance of QDT", unit="fF")
+#    def _get_lamb_shifted_transmon_energy(self, Ej, Ec, m, couple_mult, f0, K2, Np):
+#        Em=-Ej+sqrt(8.0*Ej*Ec)*(m+0.5) - (Ec/12.0)*(6.0*m**2+6.0*m+3.0)
+#        if m==0:
+#            return Em
+#        Emm1=-Ej+sqrt(8.0*Ej*Ec)*(m-1+0.5) - (Ec/12.0)*(6.0*(m-1)**2+6.0*(m-1)+3.0)
+#        fq=(Em-Emm1)/h
+#        fls=self._get_Lamb_shift(f=fq, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+#        return Em+h*fls
+#
+#    lamb_shifted_transmon_energy_levels=SProperty()
+#    @lamb_shifted_transmon_energy_levels.getter
+#    def _get_lamb_shifted_transmon_energy_levels(self, Ej, couple_mult, f0, K2, Np, Ec, n_energy):
+#        return [self._get_lamb_shifted_transmon_energy(Ej=Ej, Ec=Ec, m=m, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np) for m in range(n_energy)]
+#
+#    lamb_shifted_fq=SProperty().tag(desc="""Operating frequency of qubit""", unit="GHz")
+#    @lamb_shifted_fq.getter
+#    def _get_lamb_shifted_fq(self, Ej, Ec):
+#        E0, E1=self._get_lamb_shifted_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=2)
+#        return (E1-E0)/h
+#
+#    lamb_shifted_anharm=SProperty().tag(desc="absolute anharmonicity", unit="hGHz")
+#    @lamb_shifted_anharm.getter
+#    def _get_lamb_shifted_anharm(self, Ej, Ec):
+#        E0, E1, E2=self._get_lamb_shifted_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=3)
+#        return (E2-E1)/h-(E1-E0)/h
+#
+#    lamb_shifted_fq2=SProperty().tag(desc="""20 over 2 freq""", unit="GHz")
+#    @lamb_shifted_fq2.getter
+#    def _get_lamb_shifted_fq2(self, Ej, Ec):
+#        E0, E1, E2=self._get_lamb_shifted_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=3)
+#        return (E2-E0)/h/2.0
+#
+#    #@s_property(desc="shunt capacitance of QDT", unit="fF")
     #def Cq(self, C):
     #    return C
 
@@ -119,66 +125,66 @@ class QDT(IDT, Qubit):
     #def _get_C_get_Cq(self, Cq):
     #    return Cq
 
-    ls_flux_parabola=SProperty()
-    @ls_flux_parabola.getter
-    def _get_ls_flux_parabola(self, voltage, offset, flux_factor, Ejmax, Ec):
-        flx_d_flx0=self._get_flux_over_flux0(voltage=voltage, offset=offset, flux_factor=flux_factor)
-        qEj=self._get_Ej(Ejmax=Ejmax, flux_over_flux0=flx_d_flx0)
-        return self._get_lamb_shifted_fq(Ej=qEj, Ec=Ec)#, fq2(qEj, Ec)
-
-    ls_f=SProperty().tag(sub=True)
-    @ls_f.getter
-    def _get_ls_f(self, f, couple_mult, f0, K2, Np):
-        try:
-            return array([sqrt(qf*(qf-2*self._get_Lamb_shift(f=qf, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np))) for qf in f])
-        except TypeError:
-            return sqrt(f*(f-2*self._get_Lamb_shift(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)))
-
-    ls_voltage_from_flux_par=SProperty().tag(sub=True)
-    @ls_voltage_from_flux_par.getter
-    def _get_ls_voltage_from_flux_par(self, f, Ct, Ejmax, offset, flux_factor, couple_mult, f0, K2, Np):
-        ls_f=self._get_ls_f(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
-        Ec=self._get_Ec(Ct=Ct)
-        Ej=self._get_Ej_get_fq(fq=ls_f, Ec=Ec)
-        flux_d_flux0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
-        return ls_f/1e9, self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
-
-    ls_voltage_from_flux_par_many=SProperty().tag(sub=True)
-    @ls_voltage_from_flux_par_many.getter
-    def _get_ls_voltage_from_flux_par_many(self, f, Ct, Ejmax, offset, flux_factor, couple_mult, f0, K2, Np):
-        ls_f=self._get_ls_f(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
-        Ec=self._get_Ec(Ct=Ct)
-        Ej=self._get_Ej_get_fq(fq=ls_f, Ec=Ec)
-        fdf0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
-        flux_d_flux0=append(fdf0, -fdf0)
-        flux_d_flux0=append(flux_d_flux0, -fdf0+pi)
-        flux_d_flux0=append(flux_d_flux0, fdf0-pi)
-        freq=append(f, f)
-        freq=append(freq, freq)
-        return freq/1e9, self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
-
-    S11=SProperty()
-    @S11.getter
-    def _get_S11(self, f, couple_mult, f0, K2, Np, Ct, L):
-        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, Ct=Ct)
-        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, Ct=Ct)
-        w=2*pi*f
-        print "in s11"
-        #try:
-        #    return Ga/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*L))
-        #except ValueError:
-        return array([Ga/(Ga+1j*Ba+1j*w*Ct+1.0/(1j*w*qL)) for qL in L])
-
-    S13=SProperty()
-    @S13.getter
-    def _get_S13(self, f, couple_mult, f0, K2, Np, Ct, L, GL):
-        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, Ct=Ct)
-        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, Ct=Ct)
-        w=2*pi*f
-        try:
-            return 1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*Ct+1.0/(1j*w*L))
-        except ValueError:
-            return array([1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*Ct+1.0/(1j*w*qL)) for qL in L])
+#    ls_flux_parabola=SProperty()
+#    @ls_flux_parabola.getter
+#    def _get_ls_flux_parabola(self, voltage, offset, flux_factor, Ejmax, Ec):
+#        flx_d_flx0=self._get_flux_over_flux0(voltage=voltage, offset=offset, flux_factor=flux_factor)
+#        qEj=self._get_Ej(Ejmax=Ejmax, flux_over_flux0=flx_d_flx0)
+#        return self._get_lamb_shifted_fq(Ej=qEj, Ec=Ec)#, fq2(qEj, Ec)
+#
+#    ls_f=SProperty().tag(sub=True)
+#    @ls_f.getter
+#    def _get_ls_f(self, f, couple_mult, f0, K2, Np):
+#        try:
+#            return array([sqrt(qf*(qf-2*self._get_Lamb_shift(f=qf, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np))) for qf in f])
+#        except TypeError:
+#            return sqrt(f*(f-2*self._get_Lamb_shift(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)))
+#
+#    ls_voltage_from_flux_par=SProperty().tag(sub=True)
+#    @ls_voltage_from_flux_par.getter
+#    def _get_ls_voltage_from_flux_par(self, f, Ct, Ejmax, offset, flux_factor, couple_mult, f0, K2, Np):
+#        ls_f=self._get_ls_f(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+#        Ec=self._get_Ec(Ct=Ct)
+#        Ej=self._get_Ej_get_fq(fq=ls_f, Ec=Ec)
+#        flux_d_flux0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
+#        return ls_f/1e9, self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
+#
+#    ls_voltage_from_flux_par_many=SProperty().tag(sub=True)
+#    @ls_voltage_from_flux_par_many.getter
+#    def _get_ls_voltage_from_flux_par_many(self, f, Ct, Ejmax, offset, flux_factor, couple_mult, f0, K2, Np):
+#        ls_f=self._get_ls_f(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
+#        Ec=self._get_Ec(Ct=Ct)
+#        Ej=self._get_Ej_get_fq(fq=ls_f, Ec=Ec)
+#        fdf0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
+#        flux_d_flux0=append(fdf0, -fdf0)
+#        flux_d_flux0=append(flux_d_flux0, -fdf0+pi)
+#        flux_d_flux0=append(flux_d_flux0, fdf0-pi)
+#        freq=append(f, f)
+#        freq=append(freq, freq)
+#        return freq/1e9, self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)
+#
+#    S11=SProperty()
+#    @S11.getter
+#    def _get_S11(self, f, couple_mult, f0, K2, Np, Ct, L):
+#        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, Ct=Ct)
+#        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, Ct=Ct)
+#        w=2*pi*f
+#        print "in s11"
+#        #try:
+#        #    return Ga/(Ga+1j*Ba+1j*w*C+1.0/(1j*w*L))
+#        #except ValueError:
+#        return array([Ga/(Ga+1j*Ba+1j*w*Ct+1.0/(1j*w*qL)) for qL in L])
+#
+#    S13=SProperty()
+#    @S13.getter
+#    def _get_S13(self, f, couple_mult, f0, K2, Np, Ct, L, GL):
+#        Ga=self._get_Ga(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, Ct=Ct)
+#        Ba=self._get_Ba(f=f, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np, Ct=Ct)
+#        w=2*pi*f
+#        try:
+#            return 1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*Ct+1.0/(1j*w*L))
+#        except ValueError:
+#            return array([1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*Ct+1.0/(1j*w*qL)) for qL in L])
 
 
 def energy_level_plot(qdt, fig_width=9.0, fig_height=6.0):
