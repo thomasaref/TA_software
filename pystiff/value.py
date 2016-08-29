@@ -49,15 +49,17 @@ class Value(object):
     def defaulter(self, obj):
         """determines default value if value is None"""
         if self.uninitialized:
-            #self.uninitialized=False
-
+            self.uninitialized=False
             if self.value is not None:
                 self.__set__(obj, self.value)
             else:
                 def_func=getattr(obj, "_default_"+self.name, self.default_func)
                 value=def_func()
                 self.__set__(obj, value)
-            self.parent=obj
+            self.set_parent(obj)
+            
+    def set_parent(self, obj):
+        self.parent=obj
 
     def __get__(self, obj, typ=None):
         #self.namer(obj)
@@ -66,7 +68,9 @@ class Value(object):
 
     def __set__(self, obj, value):
         #self.namer(obj)
-        self.uninitialized=False
+        if self.uninitialized:
+            self.uninitialized=False
+            self.set_parent(obj)
         obj.notify(self, value)
         self.set_func(obj, value)
 

@@ -12,4 +12,5 @@ from .coerced import Coerced
 from .typed import Typed
 from .object import Object
 from .array import List, Tuple, Array, CArray, Set, Dict, ODict
+from .notify_array import NDict, NODict, NList
 

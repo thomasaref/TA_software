@@ -42,8 +42,8 @@ class Object(object):
                 return cval.__get__(self)
         return super(Object, self).__getattribute__(name)
 
-    def notify(self, mbr, value):
-        print "set", mbr.name, value
+    def notify(self, change):
+        print change
 
     def get_member(self, name, search="all"):
         return get_member(self, name, search=search)

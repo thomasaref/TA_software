@@ -30,8 +30,10 @@ class TypedValue(Value):
 
     def __set__(self, obj, value):
         #self.namer(obj)
-        self.uninitialized=False
-        obj.notify(self, value)
+        if self.uninitialized:
+            self.uninitialized=False
+            self.set_parent(obj)
+        obj.notify({"obj" : self, "value" : value, "op" : "set"})
         if not self.validate(value):
             raise Exception("Wrong type")
         self.set_func(obj, value)
