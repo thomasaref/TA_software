@@ -87,13 +87,19 @@ qdt=QDTFitter(name="fitting_qdt",
         Rn=3780.0, #(3570.0+4000.0)/2.0, Ejmax=h*44.0e9,
         W=25.0e-6,
         eta=0.5,
-        flux_factor=0.515, #0.2945, #0.52,
+        flux_factor=0.495, #0.515, #0.2945, #0.52,
         voltage=1.21,
         offset=-0.07,
         plot_name="centers")
-qdt.Ejmax=h*44.0e9 #h*44.0e9
-qdt.f0=5.38e9 #5.35e9
-qdt.Ct=1.25e-13
+qdt.Ejmax=2.75e-23 #h*44.0e9 #h*44.0e9
+qdt.f0=5.32e9 #5.35e9
+#qdt.Ct=1.25e-13
+qdt.K2=0.038
+qdt.S_type="simple"
+qdt.couple_type="sinc^2"
+qdt.Lamb_shift_type="formula"
+qdt.Np=9.5
+qdt.Ec=1e-25
 #f=Fitter(plot_name="centers")
 pl1=qdt.plotter
 scatter(data[:, 0], data[:, 1], fig_width=9, fig_height=6, pl=pl1, color="red").show()

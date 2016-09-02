@@ -35,6 +35,8 @@ class Qubit(Agent):
     #            "fq", "fq_max", "fq_max_full", "flux_over_flux0", "G_f0", "G_f",
    #             "ng", "Nstates", "EkdivEc"]
 
+    dephasing=Float(0.0).tag(unit="GHz")
+
     @private_property
     def view_window(self):
         return QubitView(agent=self)

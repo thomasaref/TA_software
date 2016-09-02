@@ -11,7 +11,6 @@ from taref.plotter.api import Plotter, line
 from taref.core.api import SProperty, s_property, private_property
 from taref.physics.idt import IDT
 from taref.physics.qubit import Qubit
-
 from taref.physics.fundamentals import sqrt, pi, e, h, array, eig, delete, sin, sinc_sq, sinc, linspace, zeros, absolute, cos, arange
 
 from enaml import imports
@@ -42,12 +41,12 @@ class QDT(IDT, Qubit):
 
     fFWHM=SProperty().tag(desc="center frequency of oscillator plus half width")
     @fFWHM.getter
-    def _get_fFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
+    def _get_fFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, dephasing):
         ls=self._get_Lamb_shift(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         gamma=self._get_coupling(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         fplus=sqrt(f*(f-2.0*ls+2.0*gamma))
         fminus=sqrt(f*(f-2.0*ls-2.0*gamma))
-        return fplus, fminus, fplus-fminus
+        return fplus, fminus, fplus-fminus+dephasing
 
     fluxfq0=SProperty().tag(desc="center frequency of oscillator as voltage")
     @fluxfq0.getter

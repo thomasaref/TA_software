@@ -15,13 +15,13 @@ a=TA88_Lyzer(name="S4A1_midpeak", #filt_center=31, filt_halfwidth=22,
               fit_indices=[range(65, 984+1)],
               #fit_func=lorentzian,
               flux_factor=qdt.flux_factor*1000.0/560.0,
-              #offset=0.0-0.025
+              offset=-0.045
               )#, fit_type="yoko")
 a.filt.center=31
 a.filt.halfwidth=22
 a.fitter.fit_type="lorentzian"
-a.fitter.gamma=0.01
-a.flux_axis_type="flux"
+a.fitter.gamma=0.055 #0.01
+a.flux_axis_type="fq" #"flux"
 a.end_skip=10
 a.read_data()
 

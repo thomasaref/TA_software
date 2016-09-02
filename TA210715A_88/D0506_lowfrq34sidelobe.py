@@ -19,14 +19,14 @@ from time import time
 a=TA88_Lyzer(on_res_ind=256, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0505/S1A4_lowfrq_trans_3and4_sidelobe.hdf5"),
             #fit_func=lorentzian, p_guess=[50e6,4.1e9, 3e-7, 7.5e-7], #[0.2,2.3, 3e-7, 7.5e-7],
-            #offset=-0.035,
+            offset=-0.09,
             fit_indices=[range(19, 259+1),range(300, 566+1)],
             ) #33, 70
 a.filt.center=50
 a.filt.halfwidth=20
 a.fitter.fit_type="lorentzian"
-a.fitter.gamma=0.01
-a.flux_axis_type="flux"
+a.fitter.gamma=0.05 #0.01
+a.flux_axis_type="fq" #"flux"
 a.end_skip=10
 a.read_data()
 

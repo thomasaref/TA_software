@@ -20,7 +20,7 @@ from taref.plotter.fitter import LineFitter2
 from taref.plotter.api import line
 from taref.core.api import tag_property
 
-lyzers=[d0514, d0316, d0629, d0518, d0506, d0509, d0503, d0629wg,
+lyzers=[d0514, d0316, d0629, d0518, d0506, d0509, d0503#, d0629wg,
 ]
 
 for d in lyzers:

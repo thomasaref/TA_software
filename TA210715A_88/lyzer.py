@@ -83,7 +83,7 @@ class Lyzer(LyzerBase):
     flux_axis_type=Enum("yoko", "flux", "fq")
     freq_axis_type=Enum("f", "ls_f")
     calc_p_guess=Bool(False)
-    show_quick_fit=Bool(False)
+    show_quick_fit=Bool(True)
 
     def _observe_filter_type(self, change):
         if self.filter_type=="FIR":
@@ -283,7 +283,8 @@ class Lyzer(LyzerBase):
         pl=scatter(self.freq_axis[self.flat_indices], absolute([fp[0] for fp in self.fit_params]), **kwargs)
         if self.show_quick_fit:
             if self.flux_axis_type=="fq":
-                line(self.freq_axis[self.indices], self.qdt._get_coupling(self.frequency[self.indices])/1e9, plotter=pl, color="red")
+                #line(self.freq_axis[self.indices], self.qdt._get_coupling(f=self.frequency[self.indices])/1e9, plotter=pl, color="red")
+                line(self.freq_axis[self.indices], self.qdt._get_fFWHM(f=self.frequency[self.indices])[2]/2.0/1e9, plotter=pl, color="red")
             elif self.flux_axis_type=="yoko":
                 line(self.freq_axis[self.indices], self.qdt._get_VfFWHM(f=self.frequency[self.indices])[2]/2.0, pl=pl, color="red") #self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
             else:

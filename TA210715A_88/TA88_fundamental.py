@@ -50,20 +50,43 @@ ideal_qdt=QDT(name="idealQDT",
         voltage=1.21,
         offset=0.0)
 
-qdt=QDT(material='LiNbYZ',
+#qdt=QDT(material='LiNbYZ',
+#        ft="double",
+#        a=80.0e-9, #f0=5.35e9,
+#        Np=9,
+#        Rn=3780.0, #(3570.0+4000.0)/2.0, Ejmax=h*44.0e9,
+#        W=25.0e-6,
+#        eta=0.5,
+#        flux_factor=0.515, #0.2945, #0.52,
+#        voltage=1.21,
+#        offset=-0.07)
+#qdt.Ejmax=h*44.0e9 #h*44.0e9
+#qdt.f0=5.38e9 #5.35e9
+#qdt.Ct=1.25e-13
+#qdt.K2=qdt.K2*0.9
+
+qdt=QDT(name="fitted_qdt",
+        material='LiNbYZ',
         ft="double",
+        #S_type="RAM",
         a=80.0e-9, #f0=5.35e9,
         Np=9,
         Rn=3780.0, #(3570.0+4000.0)/2.0, Ejmax=h*44.0e9,
         W=25.0e-6,
         eta=0.5,
-        flux_factor=0.515, #0.2945, #0.52,
+        flux_factor=0.495, #0.515, #0.2945, #0.52,
         voltage=1.21,
         offset=-0.07)
-qdt.Ejmax=h*44.0e9 #h*44.0e9
-qdt.f0=5.38e9 #5.35e9
-qdt.Ct=1.25e-13
-qdt.K2=qdt.K2*0.9
+qdt.Ejmax=2.75e-23 #h*44.0e9 #h*44.0e9
+qdt.f0=5.3e9 #5.35e9
+#qdt.Ct=1.25e-13
+qdt.K2=0.038
+qdt.S_type="simple"
+qdt.couple_type="sinc^2"
+qdt.Lamb_shift_type="formula"
+qdt.Np=9.5
+qdt.Ec=1e-25
+qdt.dephasing=25e6
 
 ideal_idt=IDT(name="idealIDT",
               material='LiNbYZ',

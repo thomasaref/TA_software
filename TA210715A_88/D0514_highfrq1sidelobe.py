@@ -26,8 +26,8 @@ a=TA88_Lyzer(on_res_ind=413, VNA_name="RS VNA",
 a.filt.center=26
 a.filt.halfwidth=10
 a.fitter.fit_type="lorentzian"
-a.fitter.gamma=0.01
-a.flux_axis_type="flux"
+a.fitter.gamma=0.05
+a.flux_axis_type="fq" #"flux"
 a.end_skip=10
 
 #print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
@@ -38,7 +38,7 @@ a.read_data()
 if __name__=="__main__":
     from scipy.misc import derivative
     from numpy import diff, exp
-    if 1:
+    if 0:
         class ElectricalDelay(LineFitter):
             ed=Float(1260e-9)
 
@@ -70,7 +70,7 @@ if __name__=="__main__":
     #colormesh(s3a4_wg.MagAbsFilt)#, plotter="magabsfilt_{}".format(self.name))
 
     pl=a.magabs_colormesh()
-    a.phase_colormesh()#.show()
+    #a.phase_colormesh()#.show()
     a.filter_type="FFT"
     #a.filt.filter_type="FFT"
     pl=a.magabs_colormesh()

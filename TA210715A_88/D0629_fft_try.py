@@ -61,8 +61,8 @@ a.read_data()
 #a.filt.center=26
 #a.filt.halfwidth=10
 a.fitter.fit_type="lorentzian"
-a.fitter.gamma=0.035
-a.flux_axis_type="flux"
+a.fitter.gamma=0.2 #0.035
+a.flux_axis_type="fq" #"flux"
 a.bgsub_type="dB"
 a.end_skip=10
 a.flux_indices=[range(0,41), range(43, 479), range(482, len(a.yoko))]
