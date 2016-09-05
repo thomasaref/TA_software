@@ -91,12 +91,13 @@ class PlotMaster(Atom):
 
     def legend(self, *args, **kwargs):
         """adds the legend and makes it draggable if it does not exist"""
+        self.legend_remove()
         lgnd=self.axes.legend(*args, **kwargs)
         if lgnd is not None:
             lgnd.draggable(state=True)
 
     def legend_remove(self):
-        """removes the legen if it exists"""
+        """removes the legend if it exists"""
         if self.axes.legend_ is not None:
             self.axes.legend_.remove()
 

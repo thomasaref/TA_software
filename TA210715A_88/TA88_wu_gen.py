@@ -11,7 +11,7 @@ from TA88_fundamental import qdt, idt, ideal_qdt, ideal_idt
 
 tx=TEX(source_path=r"/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/TA210715A88_writeup.tex")
 #"/Users/thomasaref/Dropbox/Current stuff/test_data/source/TA210715A88_source/TA210715A88_writeup.tex")
-tx.save_file.file_name="TA210715A88_writeup"
+tx.save_file.file_name="TA210715A88_writeupy"
 tx.tex_title="Sample TA210715A88 in Lumi 21-02-16 cooldown"
 print tx.source_folder.dir_path
 #tx.locals_dict=dict(idt=idt, qdt=qdt)
@@ -19,6 +19,18 @@ print tx.source_folder.dir_path
 
 
 tx.TEX_start()
+from D0506_lowfrq34sidelobe import a as d0506
+tx.mult_fig_start()
+d0506.filter_type="None"
+tx.add_mult_fig(d0506.magabs_colormesh, fig_width=6.0, fig_height=4.0)
+d0506.filter_type="FFT"
+tx.add_mult_fig(d0506.ifft_plot, fig_width=6.0, fig_height=4.0, time_axis_type="time",
+    auto_xlim=False, x_min=0.0, x_max=1.0, show_legend=True, auto_ylim=False, y_min=-0.0001, y_max=0.0012)
+tx.add_mult_fig(d0506.magabs_colormesh, fig_width=6.0, fig_height=4.0, auto_zlim=False, vmin=0.0, vmax=0.0009)
+d0506.filter_type="Fit"
+tx.add_mult_fig(d0506.magabs_colormesh, fig_width=6.0, fig_height=4.0, auto_zlim=False, vmin=0.0, vmax=0.0009)
+tx.mult_fig_end(caption="low freq side lobes")
+
 tx.ext("summary")
 
 tx.add(r"\subsection{Material values}")
@@ -26,14 +38,14 @@ tx.make_table(qdt.latex_table(["material", "epsinf", "vf", "K2", "Dvv"]), r"|p{4
 tx.make_table(ideal_qdt.latex_table(["material", "epsinf", "vf", "K2", "Dvv"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
 
 tx.add(r"\subsection{Qubit values}")
-tx.make_table(qdt.latex_table(["ft", "Np", "ef", "W", "a", "Rn", "max_coupling", "coupling", "C", "loop_width", "loop_height"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
-tx.make_table(ideal_qdt.latex_table(["ft", "Np", "ef", "W", "a", "Rn", "max_coupling", "coupling", "C", "loop_width", "loop_height"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
+tx.make_table(qdt.latex_table(["ft", "Np", "ef", "W", "a", "Rn", "max_coupling", "coupling", "Ct", "loop_width", "loop_height"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
+tx.make_table(ideal_qdt.latex_table(["ft", "Np", "ef", "W", "a", "Rn", "max_coupling", "coupling", "Ct", "loop_width", "loop_height"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
 
 tx.add(r"\subsection{More Qubit values}")
-tx.make_table(qdt.latex_table(["f0", "Np", "Ic", "Ejmax", "C", "Ec", "EjmaxdivEc", "fq_max",
+tx.make_table(qdt.latex_table(["f0", "Np", "Ic", "Ejmax", "Ct", "Ec", "EjmaxdivEc", "fq_max",
                                "fq_approx_max", "flux_over_flux0", "loop_area", "Ej", "EjdivEc", "fq"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
 
-tx.make_table(ideal_qdt.latex_table(["f0", "Np", "Ic", "Ejmax", "C", "Ec", "EjmaxdivEc", "fq_max",
+tx.make_table(ideal_qdt.latex_table(["f0", "Np", "Ic", "Ejmax", "Ct", "Ec", "EjmaxdivEc", "fq_max",
                                "fq_approx_max", "flux_over_flux0", "loop_area", "Ej", "EjdivEc", "fq"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
 
 #tx.make_table(idt.latex_table(["material", "epsinf", "vf", "K2", "Dvv"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
@@ -69,7 +81,7 @@ calc_qubit=[[r"Calculated values qubit"            ,  r"Value"                  
             [r"Gap $\Delta(0)$"                    ,  r"200e-6 eV"                                 ,  r"$1.764 k_B T_c$"                     , r"BCS"                         ],
             [r"Critical current, $I_c$"            ,  r"{0} nA".format(qdt.Ic/1.0e-9)              ,  r"$\dfrac{\pi \Delta(0)}{2e}$"         , r"Ambegaokar Baratoff formula" ],
             [r"$E_{Jmax}$"                         ,  r"{0} GHz".format(qdt.Ejmax)                 ,  r"$\dfrac{\hbar I_c}{2e R_n}$"         , r"{}"                          ],
-            [r"Capacitance from fingers $C_q$"     ,  r"{0} fF".format(qdt.C/1.0e-15)             ,  r"$\sqrt{2} W N_{pq} \epsilon_\infty$" , r"Morgan chp 1"                ],
+            [r"Capacitance from fingers $C_q$"     ,  r"{0} fF".format(qdt.Ct/1.0e-15)             ,  r"$\sqrt{2} W N_{pq} \epsilon_\infty$" , r"Morgan chp 1"                ],
             [r"\(E_c\)"                            ,  r"{0} MHz".format(qdt.Ec)                    ,  r"$\dfrac{e^2}{2 C}$"                  , r"Charging energy"             ],
             [r"Ejmax/Ec"                           ,  r"{0}".format(qdt.EjmaxdivEc)                ,  r"Ejmax/Ec"                            , r"transmon limit"              ],
             [r"Estimated max frequency of qubit"   ,  r"{0} GHz".format(qdt.fq_max)                ,  r"{}"                                  , r"full transmon expression"    ],
@@ -84,7 +96,7 @@ calc_qubit=[[r"Calculated values qubit"            ,  r"Value"                  
 tx.add(r"\subsection{Calculated IDT values}")
 calc_idt=[[r"Calculated values IDT"          ,  r"Value"                            ,  r"Expression"                          , r"Comment"                ],
           [r"Center frequency"               ,  r"{0} GHz".format(idt.f0)           ,  r"$v/(8a)$"                            , r"speed over wavelength"  ],
-          [r"Capacitance from fingers, $C$"  ,  r"{0} fF".format(idt.C/1.0e-15)    ,  r"$\sqrt{2} W N_{p} \epsilon_\infty$"  , r"Morgan chp 1"           ],
+          [r"Capacitance from fingers, $C$"  ,  r"{0} fF".format(idt.Ct/1.0e-15)    ,  r"$\sqrt{2} W N_{p} \epsilon_\infty$"  , r"Morgan chp 1"           ],
           [r"$Ga0$"                          ,  r"{0} $\Omega$".format(1.0/idt.Ga0) ,  r"$\dfrac{1}{G_{a0}}$"                  , r"Electrical impedance"  ],
          ]
           #[r"F width at half max"            ,  r"115"                 ,  r"Ejmax/Ec"                            , r"transmon limit"         ]]
@@ -93,17 +105,17 @@ tx.make_table(calc_idt, r"|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|")
 tx.ext("giant atom theory")
 from taref.physics.qdt import energy_level_plot, anton_anharm_plot, anton_lamb_shift_plot, anharm_plot
 
-tx.mult_fig_start()
-tx.add_mult_image("Anton_anharm.png", "Anharmonicity", "anharm")
-tx.add_mult_fig(anton_anharm_plot, "anton_anharm_plot.pdf", fig_width=6.0, fig_height=4.0)
-tx.add_mult_image("anton_lamb_shift.png", "Lamb shift", "anharm")
-tx.add_mult_fig(anton_lamb_shift_plot, "anton_lamb_shift_plot.pdf", fig_width=6.0, fig_height=4.0)
-tx.mult_fig_end(caption="Comparison to Anton's plots")
+#tx.mult_fig_start()
+#tx.add_mult_image("Anton_anharm.png", "Anharmonicity", "anharm")
+#tx.add_mult_fig(anton_anharm_plot, "anton_anharm_plot.pdf", fig_width=6.0, fig_height=4.0)
+#tx.add_mult_image("anton_lamb_shift.png", "Lamb shift", "anharm")
+#tx.add_mult_fig(anton_lamb_shift_plot, "anton_lamb_shift_plot.pdf", fig_width=6.0, fig_height=4.0)
+#tx.mult_fig_end(caption="Comparison to Anton's plots")
 
-tx.mult_fig_start()
-tx.add_mult_fig(energy_level_plot, "energy_levels.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
-tx.add_mult_fig(anharm_plot, "theory_anharm.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
-tx.mult_fig_end(caption="Theory plots based on QDT parameters")
+#tx.mult_fig_start()
+#tx.add_mult_fig(energy_level_plot, "energy_levels.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
+#tx.add_mult_fig(anharm_plot, "theory_anharm.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
+#tx.mult_fig_end(caption="Theory plots based on QDT parameters")
 
 tx.add(r"\FloatBarrier")
 

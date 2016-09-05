@@ -76,9 +76,15 @@ class PlotFormat(PlotUpdate):
         if self.plotter.auto_xlim:
             self.plotter.x_min=float(min((self.plotter.x_min, nanmin(self.xdata))))
             self.plotter.x_max=float(max((self.plotter.x_max, nanmax(self.xdata))))
+        else:
+            self.plotter.set_xlim(self.plotter.x_min, self.plotter.x_max)
         if self.plotter.auto_ylim:
             self.plotter.y_min=float(min((self.plotter.y_min, nanmin(self.ydata))))
             self.plotter.y_max=float(max((self.plotter.y_max, nanmax(self.ydata))))
+        else:
+            self.plotter.set_ylim(self.plotter.y_min, self.plotter.y_max)
+        if self.plotter.show_legend:
+            self.plotter.legend()
 
 
     xdata=Array()

@@ -226,12 +226,16 @@ class TEX(Operative):
         self.caption=caption
         #include_image(self.tex_list, relative_path, fig_name, caption, label)
 
-    def add_mult_fig(self, graph_gen, fig_name, **kwargs):
+    def add_mult_fig(self, graph_gen, fig_name=None, **kwargs):
         """adds a graph to a multi figure using the function graph_gen and given kwargs"""
         if fig_name not in [p.fig_name for p in self.plots_to_save]:
             pl=graph_gen(**kwargs)
+            if fig_name is None:
+                fig_name=pl.name
             pl.fig_name=fig_name
             self.plots_to_save.append(pl)
+        #else:
+        #    pl
 
         file_name=graph_gen.func_code.co_filename.split("Documents")[1]
         #savefig(dir_path+fig_name, bbox_inches='tight')

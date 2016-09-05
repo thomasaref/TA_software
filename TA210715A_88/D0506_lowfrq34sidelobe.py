@@ -16,8 +16,11 @@ from taref.physics.fundamentals import h#, filt_prep
 from scipy.optimize import fsolve
 from scipy.signal import freqz
 from time import time
-a=TA88_Lyzer(on_res_ind=256, VNA_name="RS VNA",
+from taref.filer.filer import Folder
+
+a=TA88_Lyzer(name="d0506", on_res_ind=256, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0505/S1A4_lowfrq_trans_3and4_sidelobe.hdf5"),
+              save_folder=Folder(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data/D0506/"),
             #fit_func=lorentzian, p_guess=[50e6,4.1e9, 3e-7, 7.5e-7], #[0.2,2.3, 3e-7, 7.5e-7],
             offset=-0.09,
             fit_indices=[range(19, 259+1),range(300, 566+1)],
@@ -38,15 +41,18 @@ if __name__=="__main__":
     #filt=filt_prep(601, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind)
     #line(filt*0.001, plotter=pl)
     #colormesh(s3a4_wg.MagAbsFilt)#, plotter="magabsfilt_{}".format(self.name))
-    a.magabs_colormesh()
-    a.filter_type="FFT"
-    a.ifft_plot()
     pl=a.magabs_colormesh()
+    #pl.savefig(dir_path=a.save_folder.dir_path, fig_name=pl.name)
+    a.filter_type="FFT"
+    a.ifft_plot(auto_xlim=False, x_min=0.0, x_max=1.0, time_axis_type="time", show_legend=True, auto_ylim=False, y_min=-0.0001, y_max=0.0012).show()
+    pl=a.magabs_colormesh(auto_zlim=False, vmin=0.0, vmax=0.0009)
     a.filter_type="Fit"
-    a.magabs_colormesh(pl=pl)
+    a.magabs_colormesh(auto_zlim=False, vmin=0.0, vmax=0.0009)
 
     a.widths_plot()
     a.center_plot().show()
+
+    #pl.savefig(dir_path=self.folder.dir_path+self.folder.divider, fig_name=pl.fig_name)
     #a.magdBfilt_colormesh()
     #a.magdBfiltbgsub_colormesh()
 

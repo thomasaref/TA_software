@@ -13,11 +13,12 @@ from taref.physics.filtering import Filter #window_ifft, fft_filter, filt_prep, 
 from taref.plotter.api import line, colormesh, scatter, Plotter
 from atom.api import Float, Typed, Unicode, Int, Callable, Enum, List, Bool
 from h5py import File
-from numpy import pi, append, angle, cos, sin, unwrap, arccos, float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin, sqrt
+from numpy import pi, append, angle, arange, cos, sin, unwrap, arccos, float64, shape, reshape, linspace, squeeze, fft, log10, absolute, array, amax, amin, sqrt
 from scipy.optimize import leastsq, curve_fit
 from taref.physics.qdt import QDT
 from taref.physics.fundamentals import bgsub2D
 from functools import wraps
+from taref.filer.filer import Folder
 
 class plots(object):
     def __init__(self, pl=None):
@@ -42,6 +43,11 @@ class LyzerBase(Agent):
 
 
     rd_hdf=Typed(Read_HDF5)
+    save_folder=Typed(Folder)
+
+    #def _default_save_folder(self):
+    #    return Folder(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data/blah")
+
     rt_atten=Float(40)
     rt_gain=Float(23*2)
 
@@ -82,6 +88,7 @@ class Lyzer(LyzerBase):
     bgsub_type=Enum("None", "Complex", "Abs", "dB")
     flux_axis_type=Enum("yoko", "flux", "fq")
     freq_axis_type=Enum("f", "ls_f")
+    time_axis_type=Enum("points", "time", "fft_points")
     calc_p_guess=Bool(False)
     show_quick_fit=Bool(True)
 
@@ -116,6 +123,19 @@ class Lyzer(LyzerBase):
     def freq_axis_label(self):
         return {"f" : "Frequency (GHz)",
                 "ls_f" : "LS Frequency (GHz)"}[self.freq_axis_type]
+
+    @tag_property(sub=True)
+    def time_axis(self):
+        if self.time_axis_type=="time":
+            return self.ifft_time/1e-6
+        elif self.time_axis_type=="points":
+            return arange(len(self.frequency))
+        elif self.time_axis_type=="fft_points":
+            return self.filt.fftshift(arange(len(self.frequency)))
+
+    @t_property()
+    def time_axis_label(self):
+        return {"time" : "Time (us)", "points" : "Points", "fft_points" : "FFT Points"}[self.time_axis_type]
 
     frequency=Array().tag(unit="GHz", plot=True, label="Frequency", sub=True)
     yoko=Array().tag(unit="V", plot=True, label="Yoko", sub=True)
@@ -363,24 +383,25 @@ class Lyzer(LyzerBase):
         return pl
 
     def ifft_plot(self, **kwargs):
-        process_kwargs(self, kwargs)
-        pl=kwargs.pop("pl", "hannifft_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
+        process_kwargs(self, kwargs, pl="hannifft_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
         on_res=absolute(self.filt.window_ifft(self.MagcomData[:,self.on_res_ind]))
         strt=absolute(self.filt.window_ifft(self.MagcomData[:,self.start_ind]))
         stop=absolute(self.filt.window_ifft(self.MagcomData[:,self.stop_ind]))
 
-        pl=line(self.filt.fftshift(on_res), pl=pl, color="red",
-               plot_name="onres_{}".format(self.on_res_ind),label="i {}".format(self.on_res_ind))
-        line(self.filt.fftshift(strt), pl=pl, linewidth=1.0,
-             plot_name="strt {}".format(self.start_ind), label="i {}".format(self.start_ind))
-        line(self.filt.fftshift(stop), pl=pl, linewidth=1.0,
-             plot_name="stop {}".format(self.stop_ind), label="i {}".format(self.stop_ind))
+        pl=line(self.time_axis, self.filt.fftshift(on_res),  color="red",
+               plot_name="onres_{}".format(self.on_res_ind),label="{:.4g}".format(self.flux_axis[self.on_res_ind]), **kwargs)
+        line(self.time_axis, self.filt.fftshift(strt), pl=pl, linewidth=1.0, color="purple",
+             plot_name="strt {}".format(self.start_ind), label="{:.4g}".format(self.flux_axis[self.start_ind]))
+        line(self.time_axis, self.filt.fftshift(stop), pl=pl, linewidth=1.0, color="blue",
+             plot_name="stop {}".format(self.stop_ind), label="{:.4g}".format(self.flux_axis[self.stop_ind]))
 
         self.filt.N=len(on_res)
         filt=self.filt.freqz
         #filt=filt_prep(len(on_res), self.filt_start_ind, self.filt_end_ind)
         top=max([amax(on_res), amax(strt), amax(stop)])
-        line(filt*top, plotter=pl, color="green")
+        line(self.time_axis, filt*top, plotter=pl, color="green", label="wdw")
+        pl.xlabel=kwargs.pop("xlabel", self.time_axis_label)
+        pl.ylabel=kwargs.pop("ylabel", "Mag abs")
         return pl
 
     def ifft_plot_time(self, **kwargs):

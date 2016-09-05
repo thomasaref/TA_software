@@ -65,7 +65,7 @@ ideal_qdt=QDT(name="idealQDT",
 #qdt.Ct=1.25e-13
 #qdt.K2=qdt.K2*0.9
 
-qdt=QDT(name="fitted_qdt",
+qdt=QDT(name="fittedQDT",
         material='LiNbYZ',
         ft="double",
         #S_type="RAM",

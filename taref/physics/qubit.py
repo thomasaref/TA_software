@@ -140,7 +140,7 @@ class Qubit(Agent):
     def _get_fq_approx(self, Ej, Ec):
         return (sqrt(8.0*Ej*Ec)-Ec)/h
 
-    fq_max=SProperty().tag(unit="hGHz", label="fq max")
+    fq_max=SProperty().tag(unit="GHz", label="fq max")
     @fq_approx.getter
     def _get_fq_max(self, Ejmax, Ec):
         return  self._get_fq(Ej=Ejmax, Ec=Ec)
