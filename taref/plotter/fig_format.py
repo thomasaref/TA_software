@@ -43,6 +43,11 @@ class Fig(PlotMaster, Operative):
 
     base_name="plot"
 
+    corner_label=Unicode()
+
+    def add_label(self, txt):
+        self.figure.text(0,1, txt)
+
     show_cross_cursor=Bool(False)
     xlabel_size=Float(14.0)
 

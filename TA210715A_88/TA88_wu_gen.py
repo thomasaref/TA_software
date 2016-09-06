@@ -8,6 +8,7 @@ Created on Thu Feb 11 13:33:17 2016
 from taref.tex.tex import TEX
 from taref.core.shower import shower
 from TA88_fundamental import qdt, idt, ideal_qdt, ideal_idt
+from taref.filer.read_file import Read_TXT
 
 tx=TEX(source_path=r"/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/TA210715A88_writeup.tex")
 #"/Users/thomasaref/Dropbox/Current stuff/test_data/source/TA210715A88_source/TA210715A88_writeup.tex")
@@ -19,17 +20,27 @@ print tx.source_folder.dir_path
 
 
 tx.TEX_start()
-from D0506_lowfrq34sidelobe import a as d0506
+from D0506_lowfrq34sidelobe import d0506_plots #a as d0506
+
+file_names=Read_TXT(file_path="/Users/thomasaref/Dropbox/Current stuff/test_data/tex_processed/d0506_file_names.txt").read()
+
 tx.mult_fig_start()
-d0506.filter_type="None"
-tx.add_mult_fig(d0506.magabs_colormesh, fig_width=6.0, fig_height=4.0)
-d0506.filter_type="FFT"
-tx.add_mult_fig(d0506.ifft_plot, fig_width=6.0, fig_height=4.0, time_axis_type="time",
-    auto_xlim=False, x_min=0.0, x_max=1.0, show_legend=True, auto_ylim=False, y_min=-0.0001, y_max=0.0012)
-tx.add_mult_fig(d0506.magabs_colormesh, fig_width=6.0, fig_height=4.0, auto_zlim=False, vmin=0.0, vmax=0.0009)
-d0506.filter_type="Fit"
-tx.add_mult_fig(d0506.magabs_colormesh, fig_width=6.0, fig_height=4.0, auto_zlim=False, vmin=0.0, vmax=0.0009)
-tx.mult_fig_end(caption="low freq side lobes")
+#tx.add_mult_figs(d0506_plots)
+for fn in file_names:
+    if fn!="":
+        tx.add_mult_image(fn, "lowfrq34", "lowfrq34")
+
+
+#d0506.filter_type="None"
+#tx.add_mult_fig(d0506.magabs_colormesh, fig_width=6.0, fig_height=4.0)
+#d0506.filter_type="FFT"
+#tx.add_mult_fig(d0506.ifft_plot, fig_width=6.0, fig_height=4.0, time_axis_type="time",
+#    auto_xlim=False, x_min=0.0, x_max=1.0, show_legend=True, auto_ylim=False, y_min=-0.0001, y_max=0.0012)
+#tx.add_mult_fig(d0506.magabs_colormesh, fig_width=6.0, fig_height=4.0, auto_zlim=False, vmin=0.0, vmax=0.0009)
+#d0506.filter_type="Fit"
+#tx.add_mult_fig(d0506.magabs_colormesh, fig_width=6.0, fig_height=4.0, auto_zlim=False, vmin=0.0, vmax=0.0009)
+
+tx.mult_fig_end(caption="Low frequency side lobes 3 and 4 a) raw VNA data b) IFFT showing filter c) FFT filtered data d) Lorentzian fits with same scale as (c)")
 
 tx.ext("summary")
 

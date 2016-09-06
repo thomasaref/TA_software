@@ -17,10 +17,10 @@ from scipy.optimize import fsolve
 from scipy.signal import freqz
 from time import time
 from taref.filer.filer import Folder
-
-a=TA88_Lyzer(name="d0506", on_res_ind=256, VNA_name="RS VNA",
+from taref.filer.read_file import Read_TXT
+a=TA88_Lyzer(name="d0506", on_res_ind=329, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0505/S1A4_lowfrq_trans_3and4_sidelobe.hdf5"),
-              save_folder=Folder(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data/D0506/"),
+              #save_folder=Folder(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data/D0506/"),
             #fit_func=lorentzian, p_guess=[50e6,4.1e9, 3e-7, 7.5e-7], #[0.2,2.3, 3e-7, 7.5e-7],
             offset=-0.09,
             fit_indices=[range(19, 259+1),range(300, 566+1)],
@@ -33,7 +33,31 @@ a.flux_axis_type="fq" #"flux"
 a.end_skip=10
 a.read_data()
 
+def d0506_plots():
+    a.filter_type="None"
+    pl1=a.magabs_colormesh(fig_width=6.0, fig_height=4.0)
+    pl1.add_label("a)")
+    a.filter_type="FFT"
+    pl2=a.ifft_plot(fig_width=6.0, fig_height=4.0, time_axis_type="time",
+                auto_xlim=False, x_min=0.0, x_max=1.0, show_legend=True, auto_ylim=False, y_min=-0.0001, y_max=0.0012)
+    pl2.add_label("b)")
+
+    pl3=a.magabs_colormesh(fig_width=6.0, fig_height=4.0, auto_zlim=False, vmin=0.0, vmax=0.0009)
+    pl3.add_label("c)")
+
+    a.filter_type="Fit"
+    pl4=a.magabs_colormesh(fig_width=6.0, fig_height=4.0, auto_zlim=False, vmin=0.0, vmax=0.0009, auto_ylim=False,
+                           y_min=pl3.y_min, y_max=pl3.y_max)
+    pl4.add_label("d)")
+
+    pl_list=[pl1, pl2, pl3, pl4]
+    return pl_list
+
 if __name__=="__main__":
+
+    pls=d0506_plots()
+    a.save_plots(pls)
+    pls[0].show()
     #pl=a.magabs_colormesh()#magabs_colormesh3(s3a4_wg)
     #pl=a.hann_ifft_plot()
     #pl=a.ifft_plot()

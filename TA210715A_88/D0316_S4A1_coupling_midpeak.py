@@ -31,7 +31,7 @@ if __name__=="__main__":
     a.ifft_plot()
     pl=a.magabs_colormesh()
     a.filter_type="Fit"
-    a.magabs_colormesh(pl=pl)
+    a.magabs_colormesh()
     #line(a.frequency, a.ls_f)[0].show()
     a.widths_plot()
     a.center_plot()

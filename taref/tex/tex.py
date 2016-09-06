@@ -31,7 +31,7 @@ class TEX(Operative):
     base_name="tex"
     #initial_size=(800,800)
 
-    folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data")
+    folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data", main_dir="tex_processed", quality="")
     source_folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data", main_dir="", quality="")
     read_file=Typed(Read_TXT)
     save_file=Typed(Save_TXT)
@@ -210,7 +210,7 @@ class TEX(Operative):
         tex.append(r"\begin{figure}[ht!]")
         tex.append(r"\centering")
         tex.append("\\includegraphics[width=\\textwidth]{{{}}}".format(fig_name))
-        tex.append("\\cprotect\\caption{{{}}}".format(caption))
+        #tex.append("\\cprotect\\caption{{{}}}".format(caption))
         tex.append("\\label{{{}}}".format(label))
         tex.append(r"\end{figure}")
         #savefig(dir_path+fig_name, bbox_inches='tight')
@@ -225,6 +225,15 @@ class TEX(Operative):
                    r"\end{subfigure}"])
         self.caption=caption
         #include_image(self.tex_list, relative_path, fig_name, caption, label)
+
+    def add_mult_figs(self, graph_gen, **kwargs):
+        pl_list=graph_gen(**kwargs)
+        self.plots_to_save.extend(pl_list)
+        for pl in pl_list:
+            self.tex_list.extend(["\\begin{{subfigure}}[b]{{{}\\textwidth}}".format(self.fig_width),
+                   "\\includegraphics[width=\\textwidth]{{{}}}".format(pl.fig_name),
+                   #"\\cprotect\\caption{{{}}}".format(caption),
+                   r"\end{subfigure}"])
 
     def add_mult_fig(self, graph_gen, fig_name=None, **kwargs):
         """adds a graph to a multi figure using the function graph_gen and given kwargs"""

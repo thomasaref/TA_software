@@ -30,8 +30,12 @@ class Folder(Atom):
 
     @observe("divider", "quality", "base_dir", "main_dir")
     def update_properties(self, change):
-        for name in ("dir_path",):
+        for name in ("dir_path", "dir_path_d"):
             self.get_member(name).reset(self)
+
+    @cached_property
+    def dir_path_d(self):
+        return self.dir_path+self.divider
 
     @cached_property
     def dir_path(self):

@@ -19,6 +19,8 @@ from taref.physics.qdt import QDT
 from taref.physics.fundamentals import bgsub2D
 from functools import wraps
 from taref.filer.filer import Folder
+from taref.filer.save_file import Save_TXT
+
 
 class plots(object):
     def __init__(self, pl=None):
@@ -45,8 +47,24 @@ class LyzerBase(Agent):
     rd_hdf=Typed(Read_HDF5)
     save_folder=Typed(Folder)
 
-    #def _default_save_folder(self):
-    #    return Folder(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data/blah")
+    save_file=Typed(Save_TXT)
+    save_code=Typed(Save_TXT)
+
+    def _default_save_folder(self):
+        return Folder(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data/tex_processed")
+
+    def _default_save_file(self):
+        return Save_TXT(folder=self.save_folder, file_name="file_names", file_suffix=".txt", fixed_mode=True, write_mode="a")
+
+    def _default_save_code(self):
+        return Save_TXT(folder=self.save_file.folder, file_name=self.save_file.file_name+"_code", file_suffix=".py", fixed_mode=True)
+
+    def save_plots(self, pl_list):
+        names="\n".join([pl.fig_name for pl in pl_list])
+        self.save_file.file_name=self.name+"_file_names"
+        self.save_file.save(names, write_mode="w", flush_buffer=True)
+        for pl in pl_list:
+            pl.savefig(self.save_folder.dir_path_d, pl.fig_name)
 
     rt_atten=Float(40)
     rt_gain=Float(23*2)
@@ -360,8 +378,10 @@ class Lyzer(LyzerBase):
             freq_axis=self.freq_axis[self.indices]
             pl=colormesh(flux_axis, freq_axis, self.MagAbs,  **kwargs)
         #if isinstance(pl, tuple):
-        pl.set_ylim(min(freq_axis), max(freq_axis))
-        pl.set_xlim(min(flux_axis), max(flux_axis))
+        if pl.auto_ylim:
+            pl.set_ylim(min(freq_axis), max(freq_axis))
+        if pl.auto_xlim:
+            pl.set_xlim(min(flux_axis), max(flux_axis))
         pl.xlabel=kwargs.pop("xlabel", self.flux_axis_label)
         pl.ylabel=kwargs.pop("ylabel", self.freq_axis_label)
         return pl

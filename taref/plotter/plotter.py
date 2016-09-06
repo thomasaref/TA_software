@@ -14,6 +14,9 @@ from numpy import concatenate
 class Plotter(Fig):
     fig_name=Unicode()
 
+    def _default_fig_name(self):
+        return self.name
+
     def line(self, *args, **kwargs):
         kwargs=process_kwargs(self, kwargs)
         return line_plot(self, *args, **kwargs)
