@@ -35,7 +35,7 @@ def alpha(f, f0, eta=0.5, ft_mult=1, Nmax=2000):
 class Rho(Agent):
     base_name="rho"
 
-    material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz')
+    material = Enum('LiNbYZ', 'GaAs', 'LiNb128', 'LiNbYZX', 'STquartz').tag(label="material", expression="Substrate")
 
     def _default_material(self):
         return 'LiNbYZ'
@@ -46,12 +46,12 @@ class Rho(Agent):
             self.vf=None
             self.epsinf=None
 
-    @t_property(desc="coupling strength", unit="%", tex_str=r"$\Delta v/v$", expression=r"$(v_f-v_m))/v_f$")
+    @t_property(desc="coupling strength", unit="%", tex_str=r"$\Delta v/v$", expression=r"$\Delta v/v=(v_f-v_m)/v_f$", label="piezoelectric coupling")
     def Dvv(self, material):
         return {"STquartz" : 0.06e-2, 'GaAs' : 0.035e-2, 'LiNbYZ' : 2.4e-2,
                  'LiNb128' : 2.7e-2, 'LiNbYZX'  : 0.8e-2}[material]
 
-    K2=SProperty().tag(desc="coupling strength", unit="%", tex_str=r"K$^2$", expression=r"K$^2=2\Delta v/v$")
+    K2=SProperty().tag(desc="coupling strength", unit="%", tex_str=r"K$^2$", expression=r"K$^2=2\Delta v/v$", label="piezoelectric coupling")
     @K2.getter
     def _get_K2(self, Dvv):
         r"""Coupling strength. K$^2=2\Delta v/v$"""
@@ -62,12 +62,12 @@ class Rho(Agent):
         """other coupling strength. free speed minus metal speed all over free speed"""
         return K2/2.0
 
-    @t_property(desc="speed of SAW on free surface", unit="m/s", tex_str=r"$v_f$", format_str=r"{0:.4g} m/s")
+    @t_property(desc="speed of SAW on free surface", unit="m/s", expression=r"$v_f$", format_str=r"{0:.4g} m/s", label="free SAW speed")
     def vf(self, material):
         return {"STquartz" : 3159.0, 'GaAs' : 2900.0, 'LiNbYZ' : 3488.0,
                  'LiNb128' : 3979.0, 'LiNbYZX' : 3770.0}[material]
 
-    @t_property(desc="Capacitance of single finger pair per unit length", tex_str=r"$\epsilon_\infty$")
+    @t_property(desc="Capacitance of one finger pair per unit length", expression=r"$\epsilon_\infty$", label="SAW permittivity")
     def epsinf(self, material):
         return {"STquartz" : 5.6*eps0, 'GaAs' : 1.2e-10, 'LiNbYZ' : 46.0*eps0,
                  'LiNb128' : 56.0*eps0, 'LiNbYZX' : 46.0*eps0}[material]
@@ -82,23 +82,23 @@ class Rho(Agent):
     def _default_ft(self):
         return "double"
 
-    @t_property(desc="multiplier based on finger type")
+    @t_property(desc="multiplier based on finger type", label="finger type multiplier", expression=r"$c_{ft}$")
     def ft_mult(self, ft):
         return {"double" : 2.0, "single" : 1.0}[ft]
 
-    @t_property(dictify={ "single" : 1.0, "double" : sqrt(2)})
+    @t_property(dictify={ "single" : 1.0, "double" : sqrt(2)}, label="Capacitance multiplier", expression=r"$c_c$")
     def Ct_mult(self, ft):
         return get_tag(self, "Ct_mult", "dictify")[ft]
 
-    f=Float().tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured", unit="GHz")
+    f=Float().tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured", unit="GHz", label="frequency", expression=r"$f$$")
 
     def _default_f(self):
         """default f is 1Hz off from f0"""
         return self.f0#-1.0
 
-    f0=Float(5.0000001e9).tag(unit="GHz", desc="Center frequency of IDT", reference="", tex_str=r"$f_0$", label="Center frequency")
+    f0=Float(5.0000001e9).tag(unit="GHz", desc="Center frequency of IDT", reference="", expression=r"$f_0$", label="Center frequency")
 
-    lbda=SProperty()
+    lbda=SProperty().tag(unit="um", desc="wavelength", reference="", label="wavelength", expression=r"$\lambda=v_f/f$")
     @lbda.getter
     def _get_lbda(self, f, vf):
         """wavelength relationship to speed and frequency"""
@@ -109,7 +109,7 @@ class Rho(Agent):
         """frequency relationship to speed and wavelength"""
         return vf/lbda
 
-    lbda0=SProperty().tag(unit="um", desc="Center wavelength", reference="")
+    lbda0=SProperty().tag(unit="um", desc="Center wavelength", reference="", label="center wavelength", expression=r"$\lambda_0=v_f/f_0$")
     @lbda0.getter
     def _get_lbda0(self, f0, vf):
         return vf/f0
@@ -136,14 +136,14 @@ class Rho(Agent):
     def _get_lbda0_get_k0(self, k0):
         return 2*pi/k0
 
-    eta=Float(0.5).tag(desc="metalization ratio")
+    eta=Float(0.5).tag(desc="metalization ratio", label="metallization ratio", expression=r"$\eta$")
 
     @log_func
     def _get_eta(self, a, g):
          """metalization ratio"""
          return a/(a+g)
 
-    g=SProperty().tag(desc="gap between fingers (um). about 0.096 for double fingers at 4.5 GHz", unit="um")
+    g=SProperty().tag(desc="gap between fingers (um). about 0.096 for double fingers at 4.5 GHz", unit="um", label="finger gap", expression=r"$g$")
     @g.getter
     def _get_g(self, a, eta):
         """gap given metalization and finger width
@@ -162,7 +162,7 @@ class Rho(Agent):
         => a=g*eta/(1-eta)"""
         return g*eta/(1.0-eta)
 
-    a=SProperty().tag(desc="width of fingers", unit="um")
+    a=SProperty().tag(desc="width of fingers", unit="um", label="finger width", expression=r"$a$")
     @a.getter
     def _get_a(self, eta, lbda0, ft_mult):
         """finger width from lbda0"""
@@ -172,7 +172,7 @@ class Rho(Agent):
     def _get_lbda0_get_a(self, a, eta, ft_mult):
         return a/eta*2.0*ft_mult
 
-    p=SProperty().tag(desc="periodicity", unit="um")
+    p=SProperty().tag(desc="periodicity", unit="um", label="finger periodicity", expression=r"$p=a+g$")
     @p.getter
     def _get_p(self, a, g):
         """periodicity from a and g"""
@@ -254,7 +254,7 @@ class Rho(Agent):
     def _get_fs(self, f, f0, ft_mult):
         return f/(2.0*ft_mult*f0)
 
-    alpha=SProperty().tag(desc="single : 1.694, double : 1.247")
+    alpha=SProperty().tag(desc="single : 1.694, double : 1.247", label="mu multiplier", expression=r"$\alpha$")
     @alpha.getter
     def _get_alpha(self, f, f0, ft_mult, eta, epsinf):
         m=self._get_m(f=f, f0=f0, ft_mult=ft_mult)

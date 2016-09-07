@@ -51,7 +51,7 @@ class LyzerBase(Agent):
     save_code=Typed(Save_TXT)
 
     def _default_save_folder(self):
-        return Folder(dir_path="/Users/thomasaref/Dropbox/Current stuff/test_data/tex_processed")
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/tex_processed", main_dir="overall")
 
     def _default_save_file(self):
         return Save_TXT(folder=self.save_folder, file_name="file_names", file_suffix=".txt", fixed_mode=True, write_mode="a")
@@ -61,7 +61,7 @@ class LyzerBase(Agent):
 
     def save_plots(self, pl_list):
         names="\n".join([pl.fig_name for pl in pl_list])
-        self.save_file.file_name=self.name+"_file_names"
+        #self.save_file.file_name=self.name+"_file_names"
         self.save_file.save(names, write_mode="w", flush_buffer=True)
         for pl in pl_list:
             pl.savefig(self.save_folder.dir_path_d, pl.fig_name)
@@ -377,14 +377,19 @@ class Lyzer(LyzerBase):
             flux_axis=self.flux_axis[self.flat_flux_indices]
             freq_axis=self.freq_axis[self.indices]
             pl=colormesh(flux_axis, freq_axis, self.MagAbs,  **kwargs)
-        #if isinstance(pl, tuple):
+        if isinstance(pl, tuple):
+            pl, pf=pl
+        else:
+            pf=None
         if pl.auto_ylim:
             pl.set_ylim(min(freq_axis), max(freq_axis))
         if pl.auto_xlim:
             pl.set_xlim(min(flux_axis), max(flux_axis))
         pl.xlabel=kwargs.pop("xlabel", self.flux_axis_label)
         pl.ylabel=kwargs.pop("ylabel", self.freq_axis_label)
-        return pl
+        if pf is None:
+            return pl
+        return pl, pf
 
     def phase_colormesh(self, **kwargs):
         process_kwargs(self, kwargs)

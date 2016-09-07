@@ -23,6 +23,18 @@ with imports():
     from taref.core.log_e import LogWindow
 
 
+def latex_value(self, param):
+    unit=get_tag(self, param, "unit")
+    if unit is None:
+        if type(getattr(self, param)) in (int, float, float64):
+            value=(r"{0:."+str(get_tag(self, param, "precision", 4))+"g}").format(getattr(self, param))
+        else:
+            value = str(getattr(self, param))
+    else:
+        value=unit.show_unit(getattr(self, param)/unit, get_tag(self, param, "precision", 4))
+    return value
+
+
 class BackboneAtomMeta(AtomMeta):
     @classmethod
     def extra_setup(cls, param, itm, update_dict):
@@ -136,38 +148,36 @@ class Backbone(Atom):
             typer=get_type(self, param)
             self.extra_setup(param, typer)
 
-    def latex_table_entry(self, param=None, value=None, expression=None, comment=None):
+    def latex_table_entry(self, param=None, value=None, expression=None, comment=None, design=None, label=None):
         if param is None:
-            return [self.name,  r"Value",  r"Expression", r"Comment"]
+            return [self.name.replace("_", " "),  r"Label", r"Value",  r"Design", r"Comment"]
 
-        tex_str=get_tag(self, param, "tex_str")
-        if tex_str is None:
-            tex_str=param.replace("_", " ")
-        label=get_tag(self, param, "label")
-        if label is not None:
-            tex_str=label+", "+tex_str
-        unit=get_tag(self, param, "unit")
+        #tex_str=get_tag(self, param, "tex_str")
+        #if tex_str is None:
+        #    tex_str=param.replace("_", " ")
+        if label is None:
+            label=get_tag(self, param, "label", r"{}")
         if value is None:
-            if unit is None:
-                if type(getattr(self, param)) in (int, float, float64):
-                    value=(r"{0:."+str(get_tag(self, param, "precision", 4))+"g}").format(getattr(self, param))
-                else:
-                    value = str(getattr(self, param))
-            else:
-                value=unit.show_unit(getattr(self, param)/unit, get_tag(self, param, "precision", 4))
+            value=latex_value(self, param)
         if expression is None:
-            expression=get_tag(self, param, "expression", r"{}")
+            expression=get_tag(self, param, "expression", param.replace("_", " "))
         if comment is None:
             comment=get_tag(self, param, "desc", r"{}")
-        return [tex_str, value, expression, comment]
+        if design is None:
+            design=get_tag(self, param, "design", r"{}")
+        return [expression, label, value, design, comment]
 
 
-    def latex_table(self, param_list=None):
+    def latex_table(self, param_list=None, design=None):
         if param_list is None:
             param_list=self.main_params
         lt=[self.latex_table_entry()]
         for param in param_list:
-            lt.append(self.latex_table_entry(param))
+            if design is None:
+                lt.append(self.latex_table_entry(param))
+            else:
+                design_param=latex_value(design, param)
+                lt.append(self.latex_table_entry(param, design=design_param))
         return lt
 
     def latex_table2(self, param_list=None):

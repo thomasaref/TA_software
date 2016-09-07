@@ -43,7 +43,7 @@ def read_data(self):
         print shape(self.MagcomData)
         self.stop_ind=len(self.yoko)-1
 
-a=TA88_Lyzer( on_res_ind=240, filt=Filter(center=2, halfwidth=10, reflect=False),#read_data=read_data, # VNA_name="RS VNA",
+a=TA88_Lyzer(name="d0629", on_res_ind=240, filt=Filter(center=2, halfwidth=10, reflect=False),#read_data=read_data, # VNA_name="RS VNA",
         rd_hdf=TA88_Read(main_file="Data_0629/S4A4_just_gate_FFT_high_frq_n20dBm.hdf5"),
         fit_indices=[range(48,154+1), range(276, 578+1)],
         )
@@ -57,7 +57,6 @@ from scipy.signal import decimate, resample
 from numpy import exp, log10
 from time import time
 
-a.read_data()
 #a.filt.center=26
 #a.filt.halfwidth=10
 a.fitter.fit_type="lorentzian"
@@ -67,6 +66,14 @@ a.bgsub_type="dB"
 a.end_skip=10
 a.flux_indices=[range(0,41), range(43, 479), range(482, len(a.yoko))]
 #a.bgsub_type="Abs"
+
+a.save_folder.main_dir=a.name
+
+if __name__=="__main__":
+    pls=a.fft_plots()
+    a.save_plots(pls)
+    pls[0].show()
+
 if __name__=="__main__":
     a.magabs_colormesh()#.show()
     pl1=line(a.freq_axis, a.MagAbs[:, 234])

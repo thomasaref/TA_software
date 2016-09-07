@@ -8,7 +8,8 @@ from TA88_fundamental import TA88_Lyzer, TA88_Read, qdt
 from numpy import absolute, fft
 from taref.plotter.api import Plotter, line, scatter
 
-a=TA88_Lyzer(name="S4A1_midpeak", #filt_center=31, filt_halfwidth=22,
+a=TA88_Lyzer(name="S4A1_midpeak",
+             desc="S4A1 Main peak",
                    on_res_ind=260,
               VNA_name='RS VNA', port_name='S21',
               rd_hdf=TA88_Read(main_file="Data_0316/S4A1_TA88_coupling_search_midpeak.hdf5"),
@@ -23,9 +24,42 @@ a.fitter.fit_type="lorentzian"
 a.fitter.gamma=0.055 #0.01
 a.flux_axis_type="fq" #"flux"
 a.end_skip=10
-a.read_data()
+
+a.save_folder.main_dir=a.name
+#a.read_data()
+
+def S4A1_midpeak_plots():
+    a.read_data()
+    a.filter_type="None"
+    pl1=a.magabs_colormesh(fig_width=6.0, fig_height=4.0)
+    pl1.add_label("a)")
+    a.filter_type="FFT"
+    pl2=a.ifft_plot(fig_width=6.0, fig_height=4.0, time_axis_type="time",
+                auto_xlim=False, x_min=-0.05, x_max=1.0, show_legend=True)#, auto_ylim=False, y_min=-0.0001, y_max=0.008)
+    pl2.add_label("b)")
+    dif=pl2.y_max*0.1
+    pl2.y_min=-dif
+    pl2.y_max+=dif
+
+    pl3, pf3=a.magabs_colormesh(fig_width=6.0, fig_height=4.0, pf_too=True)
+                           #auto_zlim=False, vmin=0.0, vmax=0.02)
+    pl3.add_label("c)")
+
+    a.filter_type="Fit"
+    pl4=a.magabs_colormesh(fig_width=6.0, fig_height=4.0,
+                           auto_zlim=False, vmin=pf3.vmin, vmax=pf3.vmax, auto_ylim=False, y_min=pl3.y_min, y_max=pl3.y_max)
+    pl4.add_label("d)")
+
+    pl_list=[pl1, pl2, pl3, pl4]
+    return pl_list
 
 if __name__=="__main__":
+    #pls=S4A1_midpeak_plots()
+    pls=a.fft_plots()
+
+    a.save_plots(pls)
+    pls[0].show()
+
     pl=a.magabs_colormesh()
     a.filter_type="FFT"
     a.ifft_plot()

@@ -18,46 +18,65 @@ print tx.source_folder.dir_path
 #tx.locals_dict=dict(idt=idt, qdt=qdt)
 #sample holder 12
 
+def fft_plots(a, desc=None, label="None", caption="None"):
+    if desc is None:
+        desc=a.desc
+    file_names=Read_TXT(file_path=a.save_file.file_path).read()
+    tx.mult_fig_start()
+    for fn in file_names:
+        if fn!="":
+            tx.add_mult_image(fn, label, caption, a.save_folder)
+    tx.mult_fig_end(caption=desc+r" \\a) raw VNA data b) IFFT showing filter c) FFT filtered data d) Lorentzian fits with same scale as (c)")
+
 
 tx.TEX_start()
-from D0506_lowfrq34sidelobe import d0506_plots #a as d0506
-
-file_names=Read_TXT(file_path="/Users/thomasaref/Dropbox/Current stuff/test_data/tex_processed/d0506_file_names.txt").read()
-
-tx.mult_fig_start()
+tx.ext("FFT filtered")
+tx.add(r"\FloatBarrier")
+from D0506_lowfrq34sidelobe import a as d0506 #d0506_plots
 #tx.add_mult_figs(d0506_plots)
-for fn in file_names:
-    if fn!="":
-        tx.add_mult_image(fn, "lowfrq34", "lowfrq34")
+from D0316_S4A1_coupling_midpeak import a as d0316
+from D0514_highfrq1sidelobe import a as d0514
+from D0509_lowfrq2sidelobe import a as d0509
+from D0503_lowfrq1sidelobe import a as d0503
+from D0518_highfrq3sidelobe import a as d0518
+
+##needs work
+from D0629_fft_try import a as d0629
 
 
-#d0506.filter_type="None"
-#tx.add_mult_fig(d0506.magabs_colormesh, fig_width=6.0, fig_height=4.0)
-#d0506.filter_type="FFT"
-#tx.add_mult_fig(d0506.ifft_plot, fig_width=6.0, fig_height=4.0, time_axis_type="time",
-#    auto_xlim=False, x_min=0.0, x_max=1.0, show_legend=True, auto_ylim=False, y_min=-0.0001, y_max=0.0012)
-#tx.add_mult_fig(d0506.magabs_colormesh, fig_width=6.0, fig_height=4.0, auto_zlim=False, vmin=0.0, vmax=0.0009)
-#d0506.filter_type="Fit"
-#tx.add_mult_fig(d0506.magabs_colormesh, fig_width=6.0, fig_height=4.0, auto_zlim=False, vmin=0.0, vmax=0.0009)
-
-tx.mult_fig_end(caption="Low frequency side lobes 3 and 4 a) raw VNA data b) IFFT showing filter c) FFT filtered data d) Lorentzian fits with same scale as (c)")
+lyzers=[
+d0506,
+ d0509,
+ d0503,
+ d0316,
+  d0514,
+  d0518,
+  d0629,
+ #, d0629wg,
+]
+for lyz in lyzers:
+    fft_plots(lyz)
+tx.add(r"\FloatBarrier")
 
 tx.ext("summary")
 
 tx.add(r"\subsection{Material values}")
-tx.make_table(qdt.latex_table(["material", "epsinf", "vf", "K2", "Dvv"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
-tx.make_table(ideal_qdt.latex_table(["material", "epsinf", "vf", "K2", "Dvv"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
+tx.make_table(qdt.latex_table(["material", "epsinf", "vf", "K2", "Dvv"], design=ideal_qdt),
+                               r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
+#tx.make_table(ideal_qdt.latex_table(["material", "epsinf", "vf", "K2", "Dvv"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
 
 tx.add(r"\subsection{Qubit values}")
-tx.make_table(qdt.latex_table(["ft", "Np", "ef", "W", "a", "Rn", "max_coupling", "coupling", "Ct", "loop_width", "loop_height"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
-tx.make_table(ideal_qdt.latex_table(["ft", "Np", "ef", "W", "a", "Rn", "max_coupling", "coupling", "Ct", "loop_width", "loop_height"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
+tx.make_table(qdt.latex_table(["ft", "Np", "ef", "W", "a", "Rn", "max_coupling", "coupling", "Ct", "loop_width", "loop_height"], design=ideal_qdt),
+                               r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
+#tx.make_table(ideal_qdt.latex_table(["ft", "Np", "ef", "W", "a", "Rn", "max_coupling", "coupling", "Ct", "loop_width", "loop_height"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
 
 tx.add(r"\subsection{More Qubit values}")
 tx.make_table(qdt.latex_table(["f0", "Np", "Ic", "Ejmax", "Ct", "Ec", "EjmaxdivEc", "fq_max",
-                               "fq_approx_max", "flux_over_flux0", "loop_area", "Ej", "EjdivEc", "fq"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
+                               "fq_approx_max", "flux_over_flux0", "loop_area", "Ej", "EjdivEc", "fq"], design=ideal_qdt),
+                               r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
 
-tx.make_table(ideal_qdt.latex_table(["f0", "Np", "Ic", "Ejmax", "Ct", "Ec", "EjmaxdivEc", "fq_max",
-                               "fq_approx_max", "flux_over_flux0", "loop_area", "Ej", "EjdivEc", "fq"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
+#tx.make_table(ideal_qdt.latex_table(["f0", "Np", "Ic", "Ejmax", "Ct", "Ec", "EjmaxdivEc", "fq_max",
+#                               "fq_approx_max", "flux_over_flux0", "loop_area", "Ej", "EjdivEc", "fq"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
 
 #tx.make_table(idt.latex_table(["material", "epsinf", "vf", "K2", "Dvv"]), r"|p{4 cm}|p{4 cm}|p{4 cm}|p{4 cm}|")
 

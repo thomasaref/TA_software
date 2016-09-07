@@ -15,9 +15,9 @@ from taref.plotter.api import LineFitter
 from taref.physics.fundamentals import h#, filt_prep
 
 from time import time
-a=TA88_Lyzer(on_res_ind=256, VNA_name="RS VNA",
+a=TA88_Lyzer(name="d0509", on_res_ind=256, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0509/S1A4_lowfrq_trans_2_sidelobe.hdf5"),
-            #fit_func=lorentzian, p_guess=[5e6,4.32e9, 3e-7, 3e-6], #[0.2,2.3, 3e-7, 7.5e-7],
+            desc="S1A4 low frequency side lobe 2",
             #offset=-0.035,
             fit_indices=[range(93, 298+1)], #[range(30,580+1)]) #33, 70
             )
@@ -28,8 +28,13 @@ a.fitter.fit_type="lorentzian"
 a.fitter.gamma=0.01
 a.flux_axis_type="flux"
 a.end_skip=10
-a.read_data()
 
+a.save_folder.main_dir=a.name
+
+if __name__=="__main__":
+    pls=a.fft_plots()
+    a.save_plots(pls)
+    pls[0].show()
 
 if __name__=="__main__":
     a.filter_type="FFT"

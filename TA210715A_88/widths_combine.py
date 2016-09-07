@@ -26,6 +26,7 @@ lyzers=[d0514, d0316, d0629, d0518, d0506, d0509, d0503#, d0629wg,
 for d in lyzers:
     d.filter_type="FFT"
     d.bgsub_type="dB"
+    d.read_data()
 
 
 pl="combined centers"

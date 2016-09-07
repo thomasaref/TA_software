@@ -215,9 +215,11 @@ class TEX(Operative):
         tex.append(r"\end{figure}")
         #savefig(dir_path+fig_name, bbox_inches='tight')
         #close()
-    def add_mult_image(self, fig_name, caption="", label=""):
+    def add_mult_image(self, fig_name, caption="", label="", source_folder=None):
         """inserts th image specified by dir_path and fig_name into the list tex"""
-        relative_path=relpath(self.source_folder.dir_path, self.save_file.folder.dir_path)+self.source_folder.divider
+        if source_folder is None:
+            source_folder=self.source_folder
+        relative_path=relpath(source_folder.dir_path, self.save_file.folder.dir_path)+source_folder.divider
         self.tex_list.extend(["\\begin{{subfigure}}[b]{{{}\\textwidth}}".format(self.fig_width),
                    "\\includegraphics[width=\\textwidth]{{{}}}".format(relative_path+fig_name),
                    #"\\cprotect\\caption{{{}}}".format(caption),

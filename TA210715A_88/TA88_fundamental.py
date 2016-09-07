@@ -109,6 +109,32 @@ class TA88_Lyzer(Lyzer):
     idt=idt
 
 
+    def fft_plots(self):
+        self.read_data()
+        self.filter_type="None"
+        pl1=self.magabs_colormesh(fig_width=6.0, fig_height=4.0)
+        pl1.add_label("a)")
+        self.filter_type="FFT"
+        pl2=self.ifft_plot(fig_width=6.0, fig_height=4.0, time_axis_type="time",
+                    auto_xlim=False, x_min=-0.05, x_max=1.0, show_legend=True)#, auto_ylim=False, y_min=-0.0001, y_max=0.008)
+        pl2.add_label("b)")
+        dif=pl2.y_max*0.1
+        pl2.y_min=-dif
+        pl2.y_max+=dif
+
+        pl3, pf3=self.magabs_colormesh(fig_width=6.0, fig_height=4.0, pf_too=True)
+                               #auto_zlim=False, vmin=0.0, vmax=0.02)
+        pl3.add_label("c)")
+
+        self.filter_type="Fit"
+        pl4=self.magabs_colormesh(fig_width=6.0, fig_height=4.0,
+                               auto_zlim=False, vmin=pf3.vmin, vmax=pf3.vmax, auto_ylim=False, y_min=pl3.y_min, y_max=pl3.y_max)
+        pl4.add_label("d)")
+
+        pl_list=[pl1, pl2, pl3, pl4]
+        return pl_list
+
+
 def coupling_plot():
     pl=Plotter(fig_width=6.0, fig_height=4.0)
     fw0=linspace(4e9, 7e9, 2000)

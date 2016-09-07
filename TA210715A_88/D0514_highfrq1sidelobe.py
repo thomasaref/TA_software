@@ -18,10 +18,9 @@ from scipy.signal import freqz
 #from taref.physics.fitting_functions import lorentzian, rpt_fit, lorentzian2
 #from taref.physics.fitting import Fitter
 from time import time
-a=TA88_Lyzer(on_res_ind=413, VNA_name="RS VNA",
+a=TA88_Lyzer(name="d0514", on_res_ind=413, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0514/S1A4_high_frq_trans_1_sidelobe.hdf5"),
-            #fit_func=lorentzian, p_guess=[5e6,4.9e9, 5e-5, 4e-5], #[0.2,2.3, 3e-7, 7.5e-7],
-            #offset=0.0,
+            desc="S1A4 First high frequency side lobe",
             fit_indices=[range(50, 534)]) #33, 70
 a.filt.center=26
 a.filt.halfwidth=10
@@ -30,10 +29,13 @@ a.fitter.gamma=0.05
 a.flux_axis_type="fq" #"flux"
 a.end_skip=10
 
-#print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
+a.save_folder.main_dir=a.name
 
+if __name__=="__main__":
+    pls=a.fft_plots()
+    a.save_plots(pls)
+    pls[0].show()
 
-a.read_data()
 
 if __name__=="__main__":
     from scipy.misc import derivative
