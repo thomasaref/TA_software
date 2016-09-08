@@ -354,7 +354,7 @@ class Lyzer(LyzerBase):
 
     def background_plot(self, pl=None):
         pl=line(self.freq_axis[self.flat_indices], array([fp[2]+fp[3] for fp in self.fit_params]), pl=pl)
-        line(self.freq_axis[self.indices], self.MagAbsFilt_sq[self.indices,0], plotter=pl, color="red", linewidth=1.0)
+        line(self.freq_axis[self.indices], self.MagAbsFilt_sq[self.indices,0], plotter=pl, color="red", linewidth=1.0, alpha=0.5)
         if self.show_quick_fit:
             if self.fitter.p_guess is not None:
                 line(self.freq_axis[self.flat_indices], array([pg[2]+pg[3] for pg in self.fitter.p_guess]), pl=pl, color="green", linewidth=0.5)
@@ -377,6 +377,37 @@ class Lyzer(LyzerBase):
             flux_axis=self.flux_axis[self.flat_flux_indices]
             freq_axis=self.freq_axis[self.indices]
             pl=colormesh(flux_axis, freq_axis, self.MagAbs,  **kwargs)
+        if isinstance(pl, tuple):
+            pl, pf=pl
+        else:
+            pf=None
+        if pl.auto_ylim:
+            pl.set_ylim(min(freq_axis), max(freq_axis))
+        if pl.auto_xlim:
+            pl.set_xlim(min(flux_axis), max(flux_axis))
+        pl.xlabel=kwargs.pop("xlabel", self.flux_axis_label)
+        pl.ylabel=kwargs.pop("ylabel", self.freq_axis_label)
+        if pf is None:
+            return pl
+        return pl, pf
+
+    def magdB_colormesh(self, **kwargs):
+        process_kwargs(self, kwargs, pl="magdB_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
+        if self.filter_type=="Fit":
+            flux_axis=self.flux_axis[self.flat_flux_indices]
+            freq_axis=self.freq_axis[self.indices]
+            start_ind=0
+            for ind in self.fit_indices:
+                pl=colormesh(flux_axis, self.freq_axis[ind], self.MagdB[start_ind:start_ind+len(ind), :],  **kwargs)
+                start_ind+=len(ind)
+        elif self.filter_type=="None":
+            flux_axis=self.flux_axis
+            freq_axis=self.freq_axis
+            pl=colormesh(self.flux_axis, self.freq_axis, self.MagdB,  **kwargs)
+        else:
+            flux_axis=self.flux_axis[self.flat_flux_indices]
+            freq_axis=self.freq_axis[self.indices]
+            pl=colormesh(flux_axis, freq_axis, self.MagdB,  **kwargs)
         if isinstance(pl, tuple):
             pl, pf=pl
         else:

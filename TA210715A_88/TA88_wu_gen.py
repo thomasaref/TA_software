@@ -30,6 +30,42 @@ def fft_plots(a, desc=None, label="None", caption="None"):
 
 
 tx.TEX_start()
+
+
+tx.ext("flux fitting")
+tx.add(r"\FloatBarrier")
+
+tx.mult_fig_start()
+tx.add_mult_image("fluxmap", "fluxmap", include_caption=True)
+tx.add_mult_image("fluxmap_w_peaks", "fluxmap_w_peaks", include_caption=True)
+tx.add_mult_image("fit_fluxmap", "fit_fluxmap", include_caption=True)
+tx.add_mult_image("just_peaks", "fluxmap", include_caption=True)
+tx.mult_fig_end(caption=r"a) raw flux vs frequency colormap b) flux vs frequency colormap with peak locations as cyan points c) Lorentzian fits of flux map d) peak locations with flux parabola fitting flux periodicity")
+
+from flux_parabola import flux_plots
+tx.mult_fig_start()
+tx.add_mult_figs(flux_plots)
+tx.mult_fig_end(caption = r"a) flux parabola with fit parameters b) flux parabola with design parameters c) transpose of (a) d) transpose of (b)")
+tx.add(r"\FloatBarrier")
+
+tx.ext("widths fitting")
+tx.add(r"\FloatBarrier")
+from widths_combine import a as wc
+file_names=Read_TXT(file_path=wc.save_file.file_path).read()
+
+tx.mult_fig_start()
+for fn in file_names[0:4]:
+    if fn!="":
+        tx.add_mult_image(fn, fn, "", wc.save_folder)
+tx.mult_fig_end(caption=r"a) centers of Lorentzians b) heights of Lorentzians c) HWFM of Lorentzians d)zoom of HWFM of Lorentzians")
+
+tx.mult_fig_start()
+for fn in file_names[4:]:
+    if fn!="":
+        tx.add_mult_image(fn, "fn", "", wc.save_folder)
+tx.mult_fig_end(caption=r"a) combined filtered data colormaps (arbitrary color scales) b) Lorentzians fits colormap (arbitrary colorscales)")
+tx.add(r"\FloatBarrier")
+
 tx.ext("FFT filtered")
 tx.add(r"\FloatBarrier")
 from D0506_lowfrq34sidelobe import a as d0506 #d0506_plots
@@ -40,7 +76,7 @@ from D0509_lowfrq2sidelobe import a as d0509
 from D0503_lowfrq1sidelobe import a as d0503
 from D0518_highfrq3sidelobe import a as d0518
 
-##needs work
+#needs work
 from D0629_fft_try import a as d0629
 
 

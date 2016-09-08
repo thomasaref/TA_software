@@ -58,7 +58,7 @@ class PlotMaster(Atom):
     """base plot class contains figure, axes, plot_dict"""
     figure=Typed(Figure)
     fig_height=Float(4.0)
-    fig_width=Float(4.0)
+    fig_width=Float(6.0)
     colorbar=Instance(Colorbar)
 
     axes=Typed(Axes)

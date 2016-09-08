@@ -46,10 +46,13 @@ ideal_qdt=QDT(name="idealQDT",
         Rn=(3570.0+4000.0)/2.0,# Ejmax=h*44.0e9,
         W=25.0e-6,
         eta=0.5,
-        flux_factor=0.52, #0.2945, #0.52,
+        flux_factor=0.495, #0.52, #0.2945, #0.52,
         voltage=1.21,
-        offset=0.0)
+        offset=-0.07)
 
+ideal_qdt.S_type="simple"
+ideal_qdt.couple_type="sinc^2"
+ideal_qdt.Lamb_shift_type="formula"
 #qdt=QDT(material='LiNbYZ',
 #        ft="double",
 #        a=80.0e-9, #f0=5.35e9,
@@ -122,16 +125,18 @@ class TA88_Lyzer(Lyzer):
         pl2.y_min=-dif
         pl2.y_max+=dif
 
+        self.filter_type="Fit"
+
         pl3, pf3=self.magabs_colormesh(fig_width=6.0, fig_height=4.0, pf_too=True)
                                #auto_zlim=False, vmin=0.0, vmax=0.02)
-        pl3.add_label("c)")
+        pl3.add_label("d)")
 
-        self.filter_type="Fit"
+        self.filter_type="FFT"
         pl4=self.magabs_colormesh(fig_width=6.0, fig_height=4.0,
                                auto_zlim=False, vmin=pf3.vmin, vmax=pf3.vmax, auto_ylim=False, y_min=pl3.y_min, y_max=pl3.y_max)
-        pl4.add_label("d)")
+        pl4.add_label("c)")
 
-        pl_list=[pl1, pl2, pl3, pl4]
+        pl_list=[pl1, pl2, pl4, pl3]
         return pl_list
 
 

@@ -46,6 +46,7 @@ def read_data(self):
 a=TA88_Lyzer(name="d0629", on_res_ind=240, filt=Filter(center=2, halfwidth=10, reflect=False),#read_data=read_data, # VNA_name="RS VNA",
         rd_hdf=TA88_Read(main_file="Data_0629/S4A4_just_gate_FFT_high_frq_n20dBm.hdf5"),
         fit_indices=[range(48,154+1), range(276, 578+1)],
+         desc="Gate high frequency",
         )
 #a.filt.center=0
 #a.filt.halfwidth=50

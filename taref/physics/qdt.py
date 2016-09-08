@@ -5,14 +5,14 @@ Created on Sun Apr 24 13:05:32 2016
 @author: thomasaref
 """
 
-from numpy import pi, linspace, sin, amax, argmin, argmax, cos, append
+from numpy import pi, linspace, sin, amax, argmin, argmax, cos, append, real, exp
 from scipy.constants import h
 from taref.plotter.api import Plotter, line
 from taref.core.api import SProperty, s_property, private_property
 from taref.physics.idt import IDT
 from taref.physics.qubit import Qubit
 from taref.physics.fundamentals import sqrt, pi, e, h, array, eig, delete, sin, sinc_sq, sinc, linspace, zeros, absolute, cos, arange
-
+from atom.api import Float
 from enaml import imports
 with imports():
     from taref.physics.qdt_e import QDTView
@@ -82,6 +82,25 @@ class QDT(IDT, Qubit):
         fq0=self._get_fq0(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
         return self._get_voltage_from_flux_par_many(fq=fq0, Ct=Ct, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
 
+    GL=Float(1.0)
+    simple_S_qdt=SProperty().tag(sub=True)
+    @simple_S_qdt.getter
+    def _get_simple_S_qdt(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, L, dL, vf, L_IDT, GL):
+        Ga=self._get_Ga(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        Ba=self._get_Ba(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+        w=2*pi*f
+        YL=-1.0j/(w*L)
+
+        k=2*pi*f/vf
+        jkL=1.0j*k*L_IDT
+        P33plusYL=Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL+YL
+        S11=S22=-Ga/P33plusYL*exp(-jkL)
+        S12=S21=exp(-jkL)+S11
+        S13=S23=S32=S31=1.0j*sqrt(2.0*Ga*GL)/P33plusYL*exp(-jkL/2.0)
+        S33=(YL-Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL)/P33plusYL
+        return (S11, S12, S13,
+                S21, S22, S23,
+                S31, S32, S33)
     #lamb_shifted_transmon_energy=SProperty()
     #@lamb_shifted_transmon_energy.getter
 #    def _get_lamb_shifted_transmon_energy(self, Ej, Ec, m, couple_mult, f0, K2, Np):
