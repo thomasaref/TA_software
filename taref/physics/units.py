@@ -5,7 +5,7 @@ Created on Wed Feb 17 00:02:26 2016
 @author: thomasaref
 """
 from taref.core.log import log_debug
-from numpy import log10, absolute
+from numpy import log10, absolute, pi
 from taref.physics.fundamentals import h, e
 
 class unit_func(object):
@@ -76,7 +76,7 @@ class mult_unit(unit_func):
 
     def inv_func(self, value):
         return value/self.unit_factor
-
+upi= mult_unit(pi, unit="pi",  format_str=r"$\pi$")
 fm= mult_unit(1.0e-15, unit="fm", output_unit="m")
 pm= mult_unit(1.0e-12, unit="pm", output_unit="m")
 nm= mult_unit(1.0e-9,  unit="nm", output_unit="m")
@@ -168,7 +168,7 @@ UNIT_TUPLE=(fm, pm, nm, um, mm, cm, m, km,
             A, nA,
             m_per_s,
             K,
-            percent)
+            percent, upi)
 UNIT_DICT=dict([(unit.unit, unit) for unit in UNIT_TUPLE])
 #UNIT_DICT["%"]=percent
 #UNIT_DICT["m/s"]=m_per_s

@@ -41,16 +41,16 @@ class Qubit(Agent):
     def view_window(self):
         return QubitView(agent=self)
 
-    superconductor=Enum("Al")
+    superconductor=Enum("Al").tag(label="material")
 
     def _observe_superconductor(self, change):
         if self.superconductor=="Al":
             self.Delta=Delta_Al
 
-    Tc=Float(Tc_Al).tag(desc="Critical temperature of superconductor", unit="K")
+    Tc=Float(Tc_Al).tag(desc="Critical temperature of superconductor", unit="K", label="Critical temperature")
 
-    Delta=SProperty().tag(label="Gap", tex_str=r"$\Delta(0)$", unit="ueV", desc="Superconducting gap 200 ueV for Al",
-                     reference="BCS", expression=r"$1.764 k_B T_c$")
+    Delta=SProperty().tag(label="Gap", tex_str=r"$\Delta(0)$", unit="ueV", desc="BCS superconducting gap, 200 ueV for Al",
+                     reference="BCS", expression=r"$\Delta(0)=1.764 k_B T_c$")
     @Delta.getter
     def _get_Delta(self, Tc):
         """BCS theory superconducting gap"""
@@ -71,9 +71,10 @@ class Qubit(Agent):
 
     Ct=Float(1.0e-13).tag(desc="shunt capacitance", unit="fF", tex_str=r"$C_q$")
 
-    Rn=Float(10.0e3).tag(desc="Normal resistance of SQUID", unit="kOhm", label="DC Junction resistance", tex_str=r"$R_n$")
+    Rn=Float(10.0e3).tag(desc="Normal resistance of SQUID", unit="kOhm", label="DC Junction resistance", expression=r"$R_N$")
 
-    Ic=SProperty().tag(desc="critical current of SQUID", unit="nA", label="Critical current", tex_str=r"$I_C$")
+    Ic=SProperty().tag(desc="critical current of SQUID, Ambegaokar Baratoff formula", unit="nA", label="Critical current",
+             expression=r"$I_C=\pi \Delta/(2e R_N)$")
     @Ic.getter
     def _get_Ic(self, Rn, Delta):
         """Ic*Rn=pi*Delta/(2.0*e) #Ambegaokar Baratoff formula"""
@@ -85,7 +86,7 @@ class Qubit(Agent):
         return pi*Delta/(2.0*e)/Ic
 
 
-    Ejmax=SProperty().tag(desc="""Max Josephson Energy""", unit="hGHz")#, unit_factor=1.0e9*h)
+    Ejmax=SProperty().tag(desc="""Max Josephson Energy""", unit="hGHz", expression=r'$E_{Jmax}=\hbar I_C/2e$', label="Max Josephson energy")#, unit_factor=1.0e9*h)
     @Ejmax.getter
     def _get_Ejmax(self, Ic):
         """Josephson energy"""
@@ -96,7 +97,7 @@ class Qubit(Agent):
         """inverse Josephson energy"""
         return Ejmax*(2.0*e)/hbar
 
-    Ec=SProperty().tag(desc="Charging Energy", unit="hGHz")#, unit_factor=1.0e9*h)
+    Ec=SProperty().tag(desc="Charging Energy", unit="hGHz", label="Charging energy", expression=r"$E_C=e^2/2 C_t$")#, unit_factor=1.0e9*h)
     @Ec.getter
     def _get_Ec(self, Ct):
         """Charging energy"""
@@ -111,12 +112,12 @@ class Qubit(Agent):
     def _get_Ejmax_get_Ec(self, Ec, EjmaxdivEc):
         return EjmaxdivEc*Ec
 
-    EjmaxdivEc=SProperty().tag(desc="Maximum Ej over Ec")
+    EjmaxdivEc=SProperty().tag(desc="Maximum Ej over Ec", label=r"Maximum $E_J$ over $E_C$", expression=r"$E_{Jmax}/E_C$")
     @EjmaxdivEc.getter
     def _get_EjmaxdivEc(self, Ejmax, Ec):
         return Ejmax/Ec
 
-    Ej=SProperty().tag(unit="hGHz")
+    Ej=SProperty().tag(unit="hGHz", label="Josephson energy", expression=r"$E_J=E_{Jmax}|\cos(\Phi/\Phi_0)|$")
     @Ej.getter
     def _get_Ej(self, Ejmax, flux_over_flux0):
         return Ejmax*absolute(cos(flux_over_flux0)) #*pi
@@ -125,27 +126,28 @@ class Qubit(Agent):
     def _get_flux_over_flux0_get_Ej(self, Ej, Ejmax):
         return arccos(Ej/Ejmax)#/pi
 
-    EjdivEc=SProperty().tag(desc="Ej over Ec")
+    EjdivEc=SProperty().tag(desc="Ej over Ec", label="Ej over Ec", expression=r"$E_J/E_C$")
     @EjdivEc.getter
     def _get_EjdivEc(self, Ej, Ec):
         return Ej/Ec
 
-    fq_approx_max=SProperty().tag(unit="GHz", label="fq approx max")
+    fq_approx_max=SProperty().tag(unit="GHz", label="fq approx max", desc="qubit frequency using approximate transmon formula",
+                  expression=r"$f_{qmax} \approx (\sqrt{8E_{Jmax} E_C}-E_C)/h$")
     @fq_approx_max.getter
     def _get_fq_approx_max(self, Ejmax, Ec):
         return self._get_fq_approx(Ej=Ejmax, Ec=Ec)
 
-    fq_approx=SProperty().tag(unit="GHz")
+    fq_approx=SProperty().tag(unit="GHz", expression=r"$f_q \approx (\sqrt{8E_J E_C}-E_C)/h$")
     @fq_approx.getter
     def _get_fq_approx(self, Ej, Ec):
         return (sqrt(8.0*Ej*Ec)-Ec)/h
 
-    fq_max=SProperty().tag(unit="GHz", label="fq max")
-    @fq_approx.getter
+    fq_max=SProperty().tag(unit="GHz", label="fq max", expression=r"$f_{qmax}$")
+    @fq_max.getter
     def _get_fq_max(self, Ejmax, Ec):
         return  self._get_fq(Ej=Ejmax, Ec=Ec)
 
-    fq=SProperty().tag(desc="""Operating frequency of qubit""", unit="GHz")
+    fq=SProperty().tag(desc="""Operating frequency of qubit""", unit="GHz", expression=r"$f_q$")
     @fq.getter
     def _get_fq(self, Ej, Ec):
         E0, E1=self._get_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=2)
@@ -156,7 +158,7 @@ class Qubit(Agent):
         """h*fq=sqrt(8.0*Ej*Ec) - Ec"""
         return ((h*fq+Ec)**2)/(8.0*Ec)
 
-    L=SProperty()
+    L=SProperty().tag(label="Kinetic inductance of SQUID", expression=r"$L$")
     @L.getter
     def _get_L(self, fq, Ct):
         return 1.0/(Ct*(2*pi*fq)**2)
@@ -167,17 +169,17 @@ class Qubit(Agent):
         E0, E1, E2=self._get_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=3)
         return (E2-E1)/h-(E1-E0)/h
 
-    fq2=SProperty().tag(desc="""20 over 2 freq""", unit="GHz")
+    fq2=SProperty().tag(desc="""20 over 2 freq""", unit="GHz", expression = r"$f_{20}/2$")
     @fq2.getter
     def _get_fq2(self, Ej, Ec):
         E0, E1, E2=self._get_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=3)
         return (E2-E0)/h/2.0
 
-    voltage=Float().tag(unit="V")
-    offset=Float(0.09).tag(unit="V")
-    flux_factor=Float(0.195)
+    voltage=Float().tag(unit="V", desc="Yoko voltage on coil")
+    offset=Float(0.09).tag(unit="V", desc="offset of flux in volts")
+    flux_factor=Float(0.195).tag(desc="converts voltage to flux")
 
-    flux_over_flux0=SProperty()
+    flux_over_flux0=SProperty().tag(expression=r"$\Phi/\Phi_0=$(voltage-offset)fluxfactor", unit="pi")
     @flux_over_flux0.getter
     def _get_flux_over_flux0(self, voltage, offset, flux_factor):
         return (voltage-offset)*flux_factor
@@ -194,7 +196,7 @@ class Qubit(Agent):
         return self._get_fq(Ej=qEj, Ec=Ec)#, fq2(qEj, Ec)
 
     #freq_arr=Array().tag(desc="array of frequencies to evaluate over")
-    f=Float(4.4e9).tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured", unit="GHz")
+    f=Float(4.4e9).tag(label="Operating frequency", desc="what frequency is being stimulated/measured", unit="GHz")
 
     flux_from_fq=SProperty().tag(sub=True)
     @flux_from_fq.getter

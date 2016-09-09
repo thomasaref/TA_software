@@ -30,7 +30,7 @@ class IDT(Rho):
         """default f is 0.01Hz off from f0"""
         return self.f0-0.01
 
-    Ga0_mult=SProperty().tag(desc="single: 2.87=1.694^2, double: 3.11=(1.247*sqrt(2))^2", expression=r"$\alpha$")
+    Ga0_mult=SProperty().tag(desc="single: $2.87=1.694^2$, double: $3.11=(1.247 \sqrt{2})^2$", expression=r"$c_{Ga}(f)$", label=r"$G_a$ multiplier")
     @Ga0_mult.getter
     def _get_Ga0_mult(self, f, f0, ft_mult, eta, epsinf, ft):
         alpha=self._get_alpha(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf)
@@ -38,20 +38,20 @@ class IDT(Rho):
             return alpha**2
         return (alpha*2.0*cos(pi*f/(4.0*f0)))**2
 
-    couple_mult=SProperty().tag(desc="single: 0.71775. double: 0.54995", label="coupling multiplier", expression=r"$c_g$")
+    couple_mult=SProperty().tag(desc="single: 0.71775. double: 0.54995, f dependent", label="coupling multiplier", expression=r"$c_g(f)$")
     @couple_mult.getter
     def _get_couple_mult(self, f, f0, ft_mult, eta, epsinf, Ct_mult):
         Ga0_mult=self._get_Ga0_mult(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf)
         return Ga0_mult/(4.0*Ct_mult)
 
-    couple_factor=SProperty().tag(unit="GHz", label="qubit coupling", expression=r"$\Gamma/2\pi \approx c_g f_0 K^2 N_p$" )
+    couple_factor=SProperty().tag(unit="GHz", label="Qubit coupling ($f$) (no sinc)", expression=r"$\Gamma/2\pi \approx c_g(f) f_0 K^2 N_p$", desc="frequency dependent")
     @couple_factor.getter
     def _get_couple_factor(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
         """coupling for one positive finger as function of frequency"""
         couple_mult=self._get_couple_mult(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult)
         return couple_mult*f0*K2*Np
 
-    couple_factor0=SProperty().tag(unit="GHz", label="qubit coupling (center frequency)", expression=r"$\Gamma/2\pi \approx 0.5 f_0 K^2 N_p$" )
+    couple_factor0=SProperty().tag(unit="GHz", label="Qubit coupling ($f_0$)", expression=r"$\Gamma/2\pi \approx c_g(f_0) f_0 K^2 N_p$" )
     @couple_factor0.getter
     def _get_couple_factor0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
         """coupling at center frequency, in Hz (2 pi removed)"""
@@ -62,7 +62,7 @@ class IDT(Rho):
     ef=Int(0).tag(desc="for edge effect compensation",
                     label="\# of extra fingers", low=0)
 
-    W=Float(25.0e-6).tag(desc="height of finger.", unit="um")
+    W=Float(25.0e-6).tag(desc="IDT width", unit="um", label="IDT width")
 
     Ct=SProperty().tag(unit="fF", label="IDT capacitance", expression=r"$C_t$", desc="Total capacitance of IDT", reference="Morgan page 16/145")
     @Ct.getter
@@ -82,15 +82,15 @@ class IDT(Rho):
         Ga0_mult=self._get_Ga0_mult(f=f0, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, ft=ft)
         return Ga0_mult*2.0*pi*f0*epsinf*W*Dvv*(Np**2)
 
-    X=SProperty()
+    X=SProperty().tag(label="relative frequency", expression=r"$X=N_p \pi (f-f_0)/f_0$")
     @X.getter
     def _get_X(self, Np, f, f0):
         """standard normalized frequency dependence"""
         return Np*pi*(f-f0)/f0
 
-    couple_type=Enum("sinc^2", "giant atom", "df giant atom", "full expr", "full sum")
+    couple_type=Enum("sinc sq", "giant atom", "df giant atom", "full expr", "full sum")
 
-    coupling=SProperty().tag(desc="""Coupling adjusted by sinc sq""", unit="GHz", expression=r"$\Gamma(f)$", label="qubit coupling")
+    coupling=SProperty().tag(desc="""Coupling adjusted by sinc sq""", unit="GHz", expression=r"$\Gamma(f)/2 \pi$", label="full qubit coupling")
     @coupling.getter
     def _get_coupling(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
         if self.couple_type=="full sum" or self.S_type=="RAM":
@@ -289,22 +289,22 @@ class IDT(Rho):
     def _get_ts(self, rs):
         return sqrt(1.0-absolute(rs)**2)
 
-    Gs=SProperty().tag(desc="Inglebrinsten's approximation of Gamma_s (Morgan)", expression=r"$\Gamma_S=(\Delta v/v)/\epsilon_\infty$")
+    Gs=SProperty().tag(desc="Inglebrinsten's approximation of $\Gamma_S$ (Morgan)", expression=r"$\Gamma_S \approx (\Delta v/v)/\epsilon_\infty$")
     @Gs.getter
     def _get_Gs(self, Dvv, epsinf):
         return Dvv/epsinf
 
-    Y0=SProperty().tag(desc="Datta's characteristic SAW impedance", expression=r"$Y_0=\pi f W \epsilon_\infty / (\Delta v/v)")
+    Y0=SProperty().tag(desc="Datta's characteristic SAW impedance", expression=r"$Y_0=\pi f W \epsilon_\infty / (\Delta v/v)$", label="Characteristic impedance")
     @Y0.getter
     def _get_Y0(self, f, Dvv, epsinf, W):
         return pi*f*W*epsinf/Dvv
 
-    L_IDT=SProperty().tag(desc="length of IDT", unit="um", expression=r"$L_{IDT}$")
+    L_IDT=SProperty().tag(desc="length of IDT", unit="um", expression=r"$L_{IDT}=N_{IDT}p$", label="IDT length")
     @L_IDT.getter
     def _get_L_IDT(self, N_IDT, p):
         return N_IDT*p
 
-    N_IDT=SProperty().tag(desc="total number of IDT fingers", label="Total IDT fingers", expression=r"$N_{IDT}$")
+    N_IDT=SProperty().tag(desc="total number of IDT fingers", label="Total IDT fingers", expression=r"$N_{IDT}=2 c_{ft} N_p$")
     @N_IDT.getter
     def _get_N_IDT(self, ft_mult, Np):
         return 2*ft_mult*Np#+ft_mult*(Np+1)

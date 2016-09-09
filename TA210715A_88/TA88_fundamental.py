@@ -47,12 +47,13 @@ ideal_qdt=QDT(name="idealQDT",
         W=25.0e-6,
         eta=0.5,
         flux_factor=0.495, #0.52, #0.2945, #0.52,
-        voltage=1.21,
+        voltage=2.2, #1.21,
         offset=-0.07)
 
 ideal_qdt.S_type="simple"
-ideal_qdt.couple_type="sinc^2"
+ideal_qdt.couple_type="sinc sq"
 ideal_qdt.Lamb_shift_type="formula"
+ideal_qdt.f=ideal_qdt.fq
 #qdt=QDT(material='LiNbYZ',
 #        ft="double",
 #        a=80.0e-9, #f0=5.35e9,
@@ -78,18 +79,19 @@ qdt=QDT(name="fittedQDT",
         W=25.0e-6,
         eta=0.5,
         flux_factor=0.495, #0.515, #0.2945, #0.52,
-        voltage=1.21,
+        voltage=2.2, #1.21,
         offset=-0.07)
 qdt.Ejmax=2.75e-23 #h*44.0e9 #h*44.0e9
 qdt.f0=5.3e9 #5.35e9
 #qdt.Ct=1.25e-13
 qdt.K2=0.038
 qdt.S_type="simple"
-qdt.couple_type="sinc^2"
+qdt.couple_type="sinc sq"
 qdt.Lamb_shift_type="formula"
 qdt.Np=9.5
 qdt.Ec=1e-25
 qdt.dephasing=25e6
+qdt.f=qdt.fq
 
 ideal_idt=IDT(name="idealIDT",
               material='LiNbYZ',
@@ -107,6 +109,8 @@ idt=IDT(material='LiNbYZ',
         a=96.0e-9)
 idt.f0=4.452e9
 
+#print qdt.all_params
+#print idt.all_params
 class TA88_Lyzer(Lyzer):
     qdt=qdt
     idt=idt

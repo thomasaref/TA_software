@@ -30,23 +30,25 @@ a.save_folder.main_dir=a.name
 lyzers=[d0514, d0316, d0629, d0518, d0506, d0509, d0503#, d0629wg,
 ]
 
-frequency=linspace(3.8e9, 6.05e9, 1000)
-fq=linspace(3.8e9, 6.05e9, 1000)
+def theory_Splot():
+    frequency=linspace(3.8e9, 6.05e9, 1000)
+    fq=linspace(3.8e9, 6.05e9, 1000)
 
 
-L=qdt._get_L(fq=fq)
+    L=qdt._get_L(fq=fq)
 
-S11_arr=[]
-S33_arr=[]
-for f in frequency:
-    (S11, S12, S13,
-     S21, S22, S23,
-     S31, S32, S33)=qdt._get_simple_S_qdt(f=f, L=L)
-    S11_arr.append(S11)
-    S33_arr.append(sqrt(1-absolute(S11)**2))
+    S11_arr=[]
+    S33_arr=[]
+    for f in frequency:
+        (S11, S12, S13,
+         S21, S22, S23,
+         S31, S32, S33)=qdt._get_simple_S_qdt(f=f, L=L)
+        S11_arr.append(S11)
+        S33_arr.append(sqrt(1-absolute(S11)**2))
 
-colormesh(frequency, fq, absolute(S11_arr))
-colormesh(frequency, fq, absolute(S33_arr)).show()
+if __name__=="__main2__":
+    colormesh(frequency, fq, absolute(S11_arr))
+    colormesh(frequency, fq, absolute(S33_arr)).show()
 
 def combo_plots():
     pls=[]

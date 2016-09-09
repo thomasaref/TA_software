@@ -46,7 +46,7 @@ class Rho(Agent):
             self.vf=None
             self.epsinf=None
 
-    @t_property(desc="coupling strength", unit="%", tex_str=r"$\Delta v/v$", expression=r"$\Delta v/v=(v_f-v_m)/v_f$", label="piezoelectric coupling")
+    @t_property(desc="coupling strength (relative speed difference)", unit="%", tex_str=r"$\Delta v/v$", expression=r"$\Delta v/v=(v_f-v_m)/v_f$", label="piezoelectric coupling")
     def Dvv(self, material):
         return {"STquartz" : 0.06e-2, 'GaAs' : 0.035e-2, 'LiNbYZ' : 2.4e-2,
                  'LiNb128' : 2.7e-2, 'LiNbYZX'  : 0.8e-2}[material]
@@ -67,7 +67,7 @@ class Rho(Agent):
         return {"STquartz" : 3159.0, 'GaAs' : 2900.0, 'LiNbYZ' : 3488.0,
                  'LiNb128' : 3979.0, 'LiNbYZX' : 3770.0}[material]
 
-    @t_property(desc="Capacitance of one finger pair per unit length", expression=r"$\epsilon_\infty$", label="SAW permittivity")
+    @t_property(desc="Capacitance of one finger pair per unit length", expression=r"$\epsilon_\infty=C_S$", label="SAW permittivity")
     def epsinf(self, material):
         return {"STquartz" : 5.6*eps0, 'GaAs' : 1.2e-10, 'LiNbYZ' : 46.0*eps0,
                  'LiNb128' : 56.0*eps0, 'LiNbYZX' : 46.0*eps0}[material]
@@ -82,15 +82,15 @@ class Rho(Agent):
     def _default_ft(self):
         return "double"
 
-    @t_property(desc="multiplier based on finger type", label="finger type multiplier", expression=r"$c_{ft}$")
+    @t_property(desc=r"single : 1, double : 2", label="finger type multiplier", expression=r"$c_{ft}$")
     def ft_mult(self, ft):
         return {"double" : 2.0, "single" : 1.0}[ft]
 
-    @t_property(dictify={ "single" : 1.0, "double" : sqrt(2)}, label="Capacitance multiplier", expression=r"$c_c$")
+    @t_property(dictify={ "single" : 1.0, "double" : sqrt(2)}, label="Capacitance multiplier", expression=r"$c_c$", desc=r"single : $1$, double : $\sqrt{2}$")
     def Ct_mult(self, ft):
         return get_tag(self, "Ct_mult", "dictify")[ft]
 
-    f=Float().tag(desc="Operating frequency, e.g. what frequency is being stimulated/measured", unit="GHz", label="frequency", expression=r"$f$$")
+    f=Float().tag(desc="what frequency is being stimulated/measured", unit="GHz", label="Operating frequency", expression=r"$f$")
 
     def _default_f(self):
         """default f is 1Hz off from f0"""
@@ -118,7 +118,7 @@ class Rho(Agent):
     def _get_f0(self, lbda0, vf):
         return vf/lbda0
 
-    k=SProperty()
+    k=SProperty().tag(label="Wavenumber", expression=r"$k=2\pi/\lambda$")
     @k.getter
     def _get_k(self, lbda):
         return 2*pi/lbda
@@ -127,7 +127,7 @@ class Rho(Agent):
     def _get_lbda_get_k(self, k):
         return 2*pi/k
 
-    k0=SProperty()
+    k0=SProperty().tag(label="Center wavenumber", expression=r"$k_0=2\pi/\lambda_0$")
     @k0.getter
     def _get_k0(self, lbda0):
         return 2*pi/lbda0
@@ -143,7 +143,7 @@ class Rho(Agent):
          """metalization ratio"""
          return a/(a+g)
 
-    g=SProperty().tag(desc="gap between fingers (um). about 0.096 for double fingers at 4.5 GHz", unit="um", label="finger gap", expression=r"$g$")
+    g=SProperty().tag(desc="gap between fingers", unit="um", label="finger gap", expression=r"$g$")
     @g.getter
     def _get_g(self, a, eta):
         """gap given metalization and finger width
