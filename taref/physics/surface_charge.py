@@ -342,13 +342,14 @@ def element_factor_plot(pl="element_factor", **kwargs):
     rho.ft="single"
     f=linspace(0.0, 500e9, 10000)
     print "start plot"
-    pl, pf=line(f/rho.f0, rho._get_alpha(f=f), plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
+    pl=line(f/rho.f0, rho._get_alpha(f=f), plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
     print "finish plot"
     rho.ft="double"
-    pl= line(f/rho.f0, rho._get_alpha(f=f), plotter=pl, plot_name="double", color="red", label="double finger", linestyle="dashed")[0]
+    pl= line(f/rho.f0, rho._get_alpha(f=f), plotter=pl, plot_name="double", color="red", label="double finger", linestyle="dashed")
     pl.xlabel="frequency/center frequency"
     pl.ylabel="element factor"
     pl.set_ylim(-1.0, 2.0)
+    pl.set_xlim(0.0, 20.0)
     pl.legend()
     return pl
 
@@ -357,7 +358,7 @@ def metallization_plot(pl="metalization", **kwargs):
     rho=Rho.process_kwargs(kwargs)
     rho.eta=0.5
     rho.ft="single"
-    pl=line(rho.fixed_freq/rho.f0, rho.fixed_alpha, plotter=pl, plot_name="0.5", color="blue", label="0.5", **kwargs)[0]
+    pl=line(rho.fixed_freq/rho.f0, rho.fixed_alpha, plotter=pl, plot_name="0.5", color="blue", label="0.5", **kwargs)
     rho.eta=0.75
     rho.fixed_reset()
     line(rho.fixed_freq/rho.f0, rho.fixed_alpha, plotter=pl, plot_name="0.6", color="red", label="0.6", **kwargs)
@@ -366,6 +367,8 @@ def metallization_plot(pl="metalization", **kwargs):
     line(rho.fixed_freq/rho.f0, rho.fixed_alpha, plotter=pl, plot_name="0.4", color="green", label="0.4", **kwargs)
     pl.set_xlim(0.0, 20.0)
     pl.set_ylim(-2.0, 2.0)
+    pl.xlabel="frequency/center frequency"
+    pl.ylabel="element factor"
     pl.legend()
     return pl
 

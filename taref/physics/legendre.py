@@ -87,22 +87,22 @@ class Legendre(Atom):
     def fixed_reset(self):
         self.get_member("fixed_leg").reset(self)
 
-    def lgf_test_plot(self, pl="lgf test", **kwargs):
+    def lgf_test_plot(self, pl="lgf_test", **kwargs):
         """test plot of legendre functions to legendre polynomials using Legendre class"""
         nu_max=30
         v_arr=linspace(-1.0, nu_max, 1000)
         print "start plot"
-        pl=line(v_arr, self.Pv(v_arr, 0.0), pl=pl, color="blue", linewidth=0.5, label=r"$P_{\nu}(0)$")[0]
+        pl=line(v_arr, self.Pv(v_arr, 0.0), pl=pl, color="blue", linewidth=0.5, label=r"$P_{\nu}(0)$")
         line(v_arr, self.Pv(v_arr, 0.25), pl=pl, color="red", linewidth=0.5, label=r"$P_{\nu}(0.25)$")
         line(v_arr, self.Pv(v_arr, 0.5), pl=pl, color="green", linewidth=0.5, label=r"$P_{\nu}(0.5)$")
         line(v_arr, self.Pv(v_arr, 0.75), pl=pl, color="purple", linewidth=0.5, label=r"$P_{\nu}(0.75)$")
         print "stop plot"
         if 1:
             for nu in range(nu_max):
-                scatter(array([nu]), array([legendre(nu)(0.0)]), pl=pl, color="blue")
-                scatter(array([nu]), array([legendre(nu)(0.25)]), pl=pl, color="red")
-                scatter(array([nu]), array([legendre(nu)(0.5)]), pl=pl, color="green")
-                scatter(array([nu]), array([legendre(nu)(0.75)]), pl=pl, color="purple")
+                scatter(array([nu]), array([legendre(nu)(0.0)]), pl=pl, color="blue", marker_size=3.0)
+                scatter(array([nu]), array([legendre(nu)(0.25)]), pl=pl, color="red", marker_size=3.0)
+                scatter(array([nu]), array([legendre(nu)(0.5)]), pl=pl, color="green", marker_size=3.0)
+                scatter(array([nu]), array([legendre(nu)(0.75)]), pl=pl, color="purple", marker_size=3.0)
 
             pl.xlabel=r"$\nu$"
             pl.ylabel=r"$P_{\nu}(x)$"

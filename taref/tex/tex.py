@@ -267,8 +267,14 @@ class TEX(Operative):
         mult_fig_end(self.tex_list, self.caption)
         self.caption=""
 
-    def include_image(self, fig_name, caption="", label=""):
-        relative_path=relpath(self.source_folder.dir_path, self.save_file.folder.dir_path)+self.source_folder.divider
+    def include_image(self, fig_name, label="", caption="", source_folder=None):
+        if source_folder is None:
+            source_folder=self.source_folder
+        relative_path=relpath(source_folder.dir_path, self.save_file.folder.dir_path)+source_folder.divider
+        #self.tex_list.extend(["\\begin{{subfigure}}[b]{{{}\\textwidth}}".format(self.fig_width),
+        #           "\\includegraphics[width=\\textwidth]{{{}}}".format(relative_path+fig_name)])
+
+        #relative_path=relpath(self.source_folder.dir_path, self.save_file.folder.dir_path)+self.source_folder.divider
         include_image(self.tex_list, relative_path, fig_name, caption, label)
 
     @cached_property

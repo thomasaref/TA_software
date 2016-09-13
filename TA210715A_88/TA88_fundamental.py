@@ -48,7 +48,9 @@ ideal_qdt=QDT(name="idealQDT",
         eta=0.5,
         flux_factor=0.495, #0.52, #0.2945, #0.52,
         voltage=2.2, #1.21,
-        offset=-0.07)
+        offset=-0.07,
+        loop_width=2.7e-6,
+        loop_height=1.5e-6)
 
 ideal_qdt.S_type="simple"
 ideal_qdt.couple_type="sinc sq"
@@ -80,7 +82,9 @@ qdt=QDT(name="fittedQDT",
         eta=0.5,
         flux_factor=0.495, #0.515, #0.2945, #0.52,
         voltage=2.2, #1.21,
-        offset=-0.07)
+        offset=-0.07,
+        loop_width=2.7e-6,
+        loop_height=1.5e-6)
 qdt.Ejmax=2.75e-23 #h*44.0e9 #h*44.0e9
 qdt.f0=5.3e9 #5.35e9
 #qdt.Ct=1.25e-13
@@ -143,6 +147,10 @@ class TA88_Lyzer(Lyzer):
         pl_list=[pl1, pl2, pl4, pl3]
         return pl_list
 
+a=TA88_Lyzer( name="theory_check",
+         desc="theory check plots",
+         )
+a.save_folder.main_dir=a.name
 
 def coupling_plot():
     pl=Plotter(fig_width=6.0, fig_height=4.0)
@@ -242,6 +250,17 @@ def S13_phase_theory(qdt, fig_width=9.0, fig_height=6.0):
     return pl
 
 if __name__=="__main__":
+    pls=[]
+    pl=qdt.lgf1.lgf_test_plot()
+    pls.append(pl)
+    from taref.physics.surface_charge import element_factor_plot, metallization_plot
+    pl=element_factor_plot()
+    pls.append(pl)
+    pl=metallization_plot()
+    pls.append(pl)
+    a.save_plots(pls)
+    pl.show()
+
     from taref.physics.qdt import anharm_plot
     print qdt.max_coupling
     #anharm_plot2(qdt)#.show()

@@ -17,7 +17,7 @@ tx.tex_title="Sample TA210715A88 in Lumi 21-02-16 cooldown"
 print tx.source_folder.dir_path
 #tx.locals_dict=dict(idt=idt, qdt=qdt)
 #sample holder 12
-include_all=True
+include_all=False #True
 include_text=True
 
 def fft_plots(a, desc=None, label="None", caption="None"):
@@ -33,6 +33,62 @@ def fft_plots(a, desc=None, label="None", caption="None"):
 
 tx.TEX_start()
 
+if include_text:
+    tx.ext("summary")
+    #tx.add(r"\FloatBarrier")
+
+if include_text:
+    #tx.add(r"\FloatBarrier")
+    tx.ext("switch")
+    tx.add(r"\FloatBarrier")
+
+if include_all:
+    tx.add(r"\subsection{Wiring details}")
+    tx.include_image("fridgewiring.png", "Fridge Wiring", "fridgewiring")
+    tx.include_image("switchwiring", "Switch Wiring", "switchwiring")
+    #tx.add(r"\FloatBarrier")
+
+if include_text:
+    tx.add(r"\FloatBarrier")
+    tx.ext("sample")
+
+if include_all:
+    tx.include_image("sample_images", label="sample_images",
+        caption="""Images of sister sample. There are two talking listening IDTs located 200 um and 300 um respectively from the QDT.
+        The talking listening IDTs have finger widths 96 nm. The QDT has finger widths 80 nm. The SQUID is connected in a separate lithography step.""")
+
+
+if include_text:
+    tx.add(r"\FloatBarrier")
+    tx.add(r"\section{Qubit parameters}")
+    tx.add(r"\subsection{Qubit material values}")
+    tx.make_table(qdt.latex_table(['material', 'vf', 'Dvv', 'K2',  'epsinf', 'superconductor', 'Delta', 'Tc',], design=ideal_qdt),
+                                   r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
+
+    tx.add(r"\subsection{QDT IDT properties}")
+    tx.make_table(qdt.latex_table(['ft', 'ft_mult', 'Np', 'N_IDT', 'Ct_mult', 'W', 'Ct', 'eta',
+                                   'a', 'g', 'f0', 'lbda0', 'k0', 'p', 'L_IDT', 'Y0'], design=ideal_qdt),
+                                   r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
+
+    tx.add(r"\subsection{QDT Qubit  properties}")
+    tx.make_table(qdt.latex_table([ 'fq_approx_max','fq_max',  'Ejmax',  'Ec', 'EjmaxdivEc',  'Ic','Rn', 'flux_factor', 'offset',
+    'loop_height', "loop_width", "loop_area",
+    ], design=ideal_qdt),
+                                   r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
+
+    tx.add(r"\subsection{QDT working frequency}")
+    tx.make_table(qdt.latex_table(['f', 'lbda', 'k', 'X', 'Ej','EjdivEc', 'anharm','fq_approx','fq','fq2','voltage', 'flux_over_flux0','L'], design=ideal_qdt),
+                                   r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
+
+
+    tx.add(r"\subsection{QDT coupling}")
+    tx.make_table(qdt.latex_table(['couple_mult','couple_factor', 'couple_factor0','coupling','Lamb_shift', 'Ga0_mult', 'Ga0', 'Ga', 'Ba'], design=ideal_qdt),
+                                   r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
+
+    tx.add(r"\subsection{extra IDT properties}")
+    tx.make_table(qdt.latex_table(['couple_type','Lamb_shift_type', 'S_type', 'alpha0', 'alpha', 'fs',  'm', 's', 'YL',  'rs', 'ts', 'dloss1', 'dloss2', 'dL',  'Gs', 'N_fixed', 'fixed_freq_min', 'fixed_freq_max'], design=ideal_qdt),
+                                   r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
+    tx.add(r"\FloatBarrier")
 
 if include_text:
     tx.ext("flux fitting")
@@ -111,39 +167,70 @@ if include_all:
         fft_plots(lyz)
     tx.add(r"\FloatBarrier")
 
+
+
+#if include_all:
+#    from taref.physics.qdt import energy_level_plot, anton_anharm_plot, anton_lamb_shift_plot, anharm_plot
+
+    #tx.mult_fig_start()
+    #tx.add_mult_image("Anton_anharm.png", "Anharmonicity", "anharm")
+    #tx.add_mult_fig(anton_anharm_plot, "anton_anharm_plot.pdf", fig_width=6.0, fig_height=4.0)
+    #tx.add_mult_image("anton_lamb_shift.png", "Lamb shift", "anharm")
+    #tx.add_mult_fig(anton_lamb_shift_plot, "anton_lamb_shift_plot.pdf", fig_width=6.0, fig_height=4.0)
+    #tx.mult_fig_end(caption="Comparison to Anton's plots")
+
+    #tx.mult_fig_start()
+    #tx.add_mult_fig(energy_level_plot, "energy_levels.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
+    #tx.add_mult_fig(anharm_plot, "theory_anharm.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
+    #tx.mult_fig_end(caption="Theory plots based on QDT parameters")
+
+
 if include_text:
-    tx.ext("summary")
+    tx.ext("qubit model")
+    tx.ext("useful relations")
+    tx.ext("giant atom theory")
+
+    tx.ext("sum")
+    tx.ext("double finger")
+    tx.ext("IDT model")
+    tx.ext("PtoS")
+    tx.ext("FWHM")
+    tx.ext("semiclassical model")
+
+    tx.ext("surface charge")
+    tx.add(r"\FloatBarrier")
+    tx.ext("Legendre")
+
+if 1:#include_all:
+    from TA88_fundamental import a as fund
+    file_names=Read_TXT(file_path=fund.save_file.file_path).read()
+    tx.include_image(file_names[0], label=file_names[0],
+        caption="""The first 30 Legendre polynomials evaluated at $0$, $0.25$, $0.5$ and $0.75$ are plotted as points along with the series expansion, recurrence relation, interpolated result for the Legendre functions.""",
+        source_folder=fund.save_folder)
+
+    tx.mult_fig_start()
+    for fn in file_names[1:]:
+        if fn!="":
+            tx.add_mult_image(fn, fn, "", fund.save_folder)
+    tx.mult_fig_end(caption=r"a) Element factor for single and double finger vs normalized frequency b) metallization ratio effect on element factor vs normalized frequency")
+
+    tx.add(r"\FloatBarrier")
 
 if include_text:
-    tx.add(r"\section{Qubit parameters}")
-    tx.add(r"\subsection{Qubit material values}")
-    tx.make_table(qdt.latex_table(['material', 'vf', 'Dvv', 'K2',  'epsinf', 'superconductor', 'Delta', 'Tc',], design=ideal_qdt),
-                                   r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
+    tx.ext("sumRAMy")
 
-    tx.add(r"\subsection{QDT IDT properties}")
-    tx.make_table(qdt.latex_table(['ft', 'ft_mult', 'Np', 'N_IDT', 'Ct_mult', 'W', 'Ct', 'eta',
-                                   'a', 'g', 'f0', 'lbda0', 'k0', 'p', 'L_IDT', 'Y0'], design=ideal_qdt),
-                                   r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
+    tx.ext("RAM")
+    tx.ext("rs")
+    tx.ext("PtoS proofs")
+    tx.ext("TtoP")
 
-    tx.add(r"\subsection{QDT Qubit  properties}")
-    tx.make_table(qdt.latex_table([ 'fq_approx_max','fq_max',  'Ejmax',  'Ec', 'EjmaxdivEc',  'Ic','Rn', 'flux_factor', 'offset',
-    #'loop_height', "loop_height", "loop_area",
-    ], design=ideal_qdt),
-                                   r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
+tx.TEX_end()
 
-    tx.add(r"\subsection{QDT working frequency}")
-    tx.make_table(qdt.latex_table(['f', 'lbda', 'k', 'X', 'Ej','EjdivEc', 'anharm','fq_approx','fq','fq2','voltage', 'flux_over_flux0','L'], design=ideal_qdt),
-                                   r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
-
-
-    tx.add(r"\subsection{QDT coupling}")
-    tx.make_table(qdt.latex_table(['couple_mult','couple_factor', 'couple_factor0','coupling','Lamb_shift', 'Ga0_mult', 'Ga0', 'Ga', 'Ba'], design=ideal_qdt),
-                                   r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
-
-    tx.add(r"\subsection{extra IDT properties}")
-    tx.make_table(qdt.latex_table(['couple_type','Lamb_shift_type', 'S_type', 'alpha0', 'alpha', 'fs',  'm', 's', 'YL',  'rs', 'ts', 'dloss1', 'dloss2', 'dL',  'Gs', 'N_fixed', 'fixed_freq_min', 'fixed_freq_max'], design=ideal_qdt),
-                                   r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
-
+#tx.make_tex_file()
+#tx.compile_tex()
+#tx.show()
+#qdt.show()
+shower(tx)
 
 
 #['flux_parabola',
@@ -222,60 +309,3 @@ if include_text:
 #         ]
 #          #[r"F width at half max"            ,  r"115"                 ,  r"Ejmax/Ec"                            , r"transmon limit"         ]]
 #tx.make_table(calc_idt, r"|p{3 cm}|p{3 cm}|p{3 cm}|p{3 cm}|")
-if include_text:
-    tx.ext("giant atom theory")
-
-if include_all:
-    from taref.physics.qdt import energy_level_plot, anton_anharm_plot, anton_lamb_shift_plot, anharm_plot
-
-    #tx.mult_fig_start()
-    #tx.add_mult_image("Anton_anharm.png", "Anharmonicity", "anharm")
-    #tx.add_mult_fig(anton_anharm_plot, "anton_anharm_plot.pdf", fig_width=6.0, fig_height=4.0)
-    #tx.add_mult_image("anton_lamb_shift.png", "Lamb shift", "anharm")
-    #tx.add_mult_fig(anton_lamb_shift_plot, "anton_lamb_shift_plot.pdf", fig_width=6.0, fig_height=4.0)
-    #tx.mult_fig_end(caption="Comparison to Anton's plots")
-
-    #tx.mult_fig_start()
-    #tx.add_mult_fig(energy_level_plot, "energy_levels.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
-    #tx.add_mult_fig(anharm_plot, "theory_anharm.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
-    #tx.mult_fig_end(caption="Theory plots based on QDT parameters")
-
-if include_text:
-    tx.add(r"\FloatBarrier")
-
-    tx.ext("switch")
-if include_all:
-    tx.add(r"\subsection{Wiring details}")
-    tx.include_image("fridgewiring.png", "Fridge Wiring", "fridgewiring")
-    tx.include_image("switchwiring", "Switch Wiring", "switchwiring")
-    tx.add(r"\FloatBarrier")
-
-if include_text:
-    tx.ext("qubit model")
-    tx.ext("sum")
-    tx.ext("double finger")
-    tx.ext("element factor")
-    tx.ext("Ga and Ba")
-    tx.ext("IDT model")
-    tx.ext("semiclassical model")
-
-
-    tx.ext("Legendre")
-    tx.ext("useful relations")
-    tx.ext("surface charge")
-
-    tx.ext("FWHM")
-    tx.ext("PtoS")
-    tx.ext("TtoP")
-    tx.ext("sumRAMy")
-
-    tx.ext("RAM")
-    tx.ext("rs")
-    tx.ext("PtoS proofs")
-tx.TEX_end()
-
-#tx.make_tex_file()
-#tx.compile_tex()
-#tx.show()
-#qdt.show()
-shower(tx)
