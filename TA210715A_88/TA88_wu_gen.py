@@ -208,11 +208,25 @@ if 1:#include_all:
         caption="""The first 30 Legendre polynomials evaluated at $0$, $0.25$, $0.5$ and $0.75$ are plotted as points along with the series expansion, recurrence relation, interpolated result for the Legendre functions.""",
         source_folder=fund.save_folder)
 
+if include_text:
+    tx.add(r"\FloatBarrier")
+    tx.ext("element factor")
+
+if 1:
     tx.mult_fig_start()
-    for fn in file_names[1:]:
+    for fn in file_names[1:3]:
         if fn!="":
             tx.add_mult_image(fn, fn, "", fund.save_folder)
     tx.mult_fig_end(caption=r"a) Element factor for single and double finger vs normalized frequency b) metallization ratio effect on element factor vs normalized frequency")
+
+    tx.mult_fig_start()
+    for fn in file_names[3:]:
+        if fn!="":
+            tx.add_mult_image(fn, fn, "", fund.save_folder)
+    tx.mult_fig_end(caption="""a) Element factor extended evaluation to higher frequencies.
+    b) surface charge via inverse Fourier transform as a function of position.
+    c) corresponding surface voltage as a function of position.
+    d) superposition of surface voltages for a double finger and single finger.""")
 
     tx.add(r"\FloatBarrier")
 

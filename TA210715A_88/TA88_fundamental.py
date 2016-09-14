@@ -250,16 +250,21 @@ def S13_phase_theory(qdt, fig_width=9.0, fig_height=6.0):
     return pl
 
 if __name__=="__main__":
-    pls=[]
-    pl=qdt.lgf1.lgf_test_plot()
-    pls.append(pl)
-    from taref.physics.surface_charge import element_factor_plot, metallization_plot
-    pl=element_factor_plot()
-    pls.append(pl)
-    pl=metallization_plot()
-    pls.append(pl)
-    a.save_plots(pls)
-    pl.show()
+    pl0=qdt.lgf1.lgf_test_plot()
+    from taref.physics.surface_charge import element_factor_plot, metallization_plot, Rho
+    pl1=element_factor_plot()
+    pl2=metallization_plot()
+    rho=Rho()
+    rho.fixed_freq_max=2000.0*rho.f0
+    pl3=rho.plot_alpha() #auto_xlim=False, x_min=0, x_max=20)
+    pl4=rho.plot_surface_charge(auto_xlim=False, x_min=-3, x_max=3, auto_ylim=False, y_min=-3e-12, y_max=3e-12)
+    pl5=rho.plot_surface_voltage(auto_xlim=False, x_min=-3, x_max=3)
+    pl6=line(rho.surface_x[2000:-500], rho.surface_voltage[2000:-500]+rho.surface_voltage[500:-2000]+rho.surface_voltage[2500:],
+         pl="superposition", auto_xlim=False, x_min=-3, x_max=3)
+    pl6.xlabel="x/center wavelength"
+    pl6.ylabel="surface voltage"
+    a.save_plots([pl0, pl1, pl2, pl3, pl4, pl5, pl6])
+    pl1.show()
 
     from taref.physics.qdt import anharm_plot
     print qdt.max_coupling

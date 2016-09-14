@@ -26,6 +26,10 @@ class IDT(Rho):
     """Theoretical description of IDT"""
     base_name="IDT"
 
+    def _default_fixed_freq_max(self):
+        return 200.0*self.f0
+
+
     def _default_f(self):
         """default f is 0.01Hz off from f0"""
         return self.f0-0.01
@@ -53,7 +57,7 @@ class IDT(Rho):
 
     couple_factor0=SProperty().tag(unit="GHz", label="Qubit coupling ($f_0$)", expression=r"$\Gamma/2\pi \approx c_g(f_0) f_0 K^2 N_p$" )
     @couple_factor0.getter
-    def _get_couple_factor0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
+    def _get_couple_factor0(self, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
         """coupling at center frequency, in Hz (2 pi removed)"""
         return self._get_couple_factor(f=f0, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
 
@@ -141,6 +145,7 @@ class IDT(Rho):
         gamma=self._get_couple_factor(f=f)
         if self.couple_type=="full expr":
             return gamma*((1.0/Np)*sin(X)/sin(X/Np))**2
+        f0=self.f0
         gamma0=self._get_couple_factor(f=f0)
         if self.couple_type=="giant atom":
             return gamma0*(1.0/Np*sin(X)/sin(X/Np))**2
@@ -181,7 +186,7 @@ class IDT(Rho):
         if self.S_type=="RAM":
             return -self.fixed_P[2]/(2.0*self.Ct)/(2.0*pi)
         if self.Lamb_shift_type=="formula":
-            X, Np=self.fixed_X, self.Np
+            X, Np, f0=self.fixed_X, self.Np, self.f0
             gamma0=self._get_couple_factor(f=f0)
             if self.couple_type=="sinc^2":
                 return -gamma0*(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
@@ -195,7 +200,7 @@ class IDT(Rho):
     def _get_max_coupling(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
         return self._get_coupling(f=f0+0.001, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
 
-    Lamb_shift_type=Enum("hilbert", "formula")
+    Lamb_shift_type=Enum("formula", "hilbert")
 
     Lamb_shift=SProperty().tag(desc="""Lamb shift""", unit="GHz", expression=r"$B_a/\omega C$", label="Lamb shift")
     @Lamb_shift.getter
@@ -284,6 +289,14 @@ class IDT(Rho):
 
     rs=Complex()
 
+    def _get_rs(self, f):
+        h=30e-9
+        lbda=self._get_lbda(f=f)
+        rs=(-1.7/100-0.24*h/lbda)*1.0j
+        if absolute(rs)>=1.0:
+            return 0.9999j
+        return rs
+
     ts=SProperty()
     @ts.getter
     def _get_ts(self, rs):
@@ -309,8 +322,10 @@ class IDT(Rho):
     def _get_N_IDT(self, ft_mult, Np):
         return 2*ft_mult*Np#+ft_mult*(Np+1)
 
-    def _get_RAM_P_one_f(self, f, Dvv, epsinf, W, vf,  rs, p, N_IDT, alpha, ft, Np, f0, dloss1, dloss2):
+    def _get_RAM_P_one_f(self, f, Dvv, epsinf, W, vf,  rs, p, N_IDT, alpha, ft, Np, f0, dloss1, dloss2, L_IDT):
         Y0=self._get_Y0(f=f, Dvv=Dvv, epsinf=epsinf, W=W)
+        rs=self._get_rs(f=f)
+        #print rs
         k=2*pi*f/vf-1.0j*(f/f0*dloss1+dloss2*(f/f0)**2)
         ts = sqrt(1.0-absolute(rs)**2)
         A = 1.0/ts*matrix([[exp(-1.0j*k*p),       rs      ],
@@ -323,13 +338,13 @@ class IDT(Rho):
         P22=AN12/AN22
         D = -1.0j*alpha*Dvv*sqrt(Y0)
         B = matrix([(1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0), (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)])
-
+        I = eye(2)
         if ft=="single":
-            P32=D*(B*A*inv(eye(2)-A**2)*(eye(2)-A**(2*int(Np)))*matrix([[0],
-                                                                   [1.0/AN[1,1]]]))[0] #geometric series
+            P32=D*(B*inv(I-A**2)*(I-A**(2*int(Np)))*matrix([[0],
+                                                            [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-p)/2.0)]]))[0] #geometric series
         else:
-            P32=D*(B*(A**2+A**3)*inv(eye(2)-A**4)*(eye(2)-A**(4*int(Np)))*matrix([[0],
-                                                                          [1.0/AN[1,1]]]))[0] #geometric series
+            P32=D*(B*(I+A)*inv(I-A**4)*(I-A**(4*int(Np)))*matrix([[0],
+                                                                  [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-2.0*p)/2.0)]]))[0] #geometric series
         P31=P32
         P13=P23=-P31/2.0
         return (P11, P12, P13,
@@ -339,11 +354,11 @@ class IDT(Rho):
 
 
     @log_func
-    def _get_RAM_P(self, W, rs, Np, vf, Dvv, epsinf, Ct, p, N_IDT, ft, f0, dloss1, dloss2):
+    def _get_RAM_P(self, W, rs, Np, vf, Dvv, epsinf, Ct, p, N_IDT, ft, f0, dloss1, dloss2, L_IDT):
         frq, alpha=self.fixed_freq, self.fixed_alpha
         print "start P"
         P=[self._get_RAM_P_one_f(f=f, Dvv=Dvv, epsinf=epsinf, W=W, vf=vf, rs=rs, p=p,
-                                 N_IDT=N_IDT, alpha=alpha[i], ft=ft, Np=Np, f0=f0, dloss1=dloss1, dloss2=dloss2) for i, f in enumerate(frq)]
+                                 N_IDT=N_IDT, alpha=alpha[i], ft=ft, Np=Np, f0=f0, dloss1=dloss1, dloss2=dloss2, L_IDT=L_IDT) for i, f in enumerate(frq)]
         print "P_done"
 
         (P11, P12, P13,
@@ -446,14 +461,19 @@ class IDT(Rho):
 #    if idt is None:
 #        return IDT()
 #    return idt
-def metallization_couple(pl="metalization", **kwargs):
+def metallization_couple(pl="metallization_couple", **kwargs):
     idt=IDT.process_kwargs(kwargs)
     frq=linspace(0e9, 10e9, 10000)
+    idt.N_fixed=100000
+    #idt.fixed_freq_max=20.0*idt.f0
     idt.eta=0.5
     #idt.ft="single"
-    idt.couple_type="full sum"
+    #idt.S_type="RAM"
+    idt.couple_type="full expr"
     idt.fixed_reset()
-    pl=line(frq/idt.f0, idt.get_fix("coupling", frq), plotter=pl, plot_name="0.5", color="blue", linewidth=0.3, label="0.5", **kwargs)[0]
+    line(idt.fixed_freq/idt.f0, idt.fixed_coupling, plot_name="0.5", color="blue", linewidth=0.3, label="0.5", **kwargs)
+
+    pl=line(frq/idt.f0, idt.get_fix("coupling", frq), plotter=pl, plot_name="0.5", color="blue", linewidth=0.3, label="0.5", **kwargs)
     idt.eta=0.6
     idt.fixed_reset()
     line(frq/idt.f0, idt.get_fix("coupling", frq), plotter=pl, plot_name="0.6", color="red", linewidth=0.3, label="0.6", **kwargs)
@@ -463,14 +483,18 @@ def metallization_couple(pl="metalization", **kwargs):
     idt.eta=0.5
     return pl
 #metallization_couple()#.show()
-def metallization_Lamb(pl="metalization", **kwargs):
-    idt=idt_process(kwargs)
+def metallization_Lamb(pl="metallization_lamb", **kwargs):
+    idt=IDT.process_kwargs(kwargs)
     frq=linspace(0e9, 10e9, 10000)
     idt.eta=0.5
+    idt.N_fixed=100000
+    #idt.fixed_freq_max=20.0*idt.f0
+
     #idt.ft="single"
-    idt.couple_type="full sum"
+    idt.couple_type="full expr"
+    #idt.Lamb_shift_type="hilbert"
     idt.fixed_reset()
-    pl=line(frq/idt.f0, idt.get_fix("Lamb_shift", frq), plotter=pl, plot_name="0.5", color="blue", linewidth=0.3, label="0.5", **kwargs)[0]
+    pl=line(frq/idt.f0, idt.get_fix("Lamb_shift", frq), plotter=pl, plot_name="0.5", color="blue", linewidth=0.3, label="0.5", **kwargs)
     idt.eta=0.6
     idt.fixed_reset()
     #line(idt.fixed_freq/idt.f0, idt.fixed_Lamb_shift/idt.max_coupling, plotter=pl, linewidth=0.3, color="purple")
@@ -480,23 +504,8 @@ def metallization_Lamb(pl="metalization", **kwargs):
     line(frq/idt.f0, idt.get_fix("Lamb_shift", frq), plotter=pl, plot_name="0.4", color="green", linewidth=0.3, label="0.4", **kwargs)
     idt.eta=0.5
     return pl
-#metallization_Lamb().show()
+#metallization_Lamb()#.show()
 
-def center_coupling_vs_eta(pl="f0_vs_eta", **kwargs):
-    idt=idt_process(kwargs)
-    eta=linspace(0.0, 1.0, 100)
-    idt.ft="single"
-    #idt.N_legendre=1000
-    alpha=idt._get_alpha(f=idt.f0, eta=eta, N_legendre=1000)
-    pl=line(eta, alpha, plotter=pl)[0]
-    alpha=idt._get_alpha(f=3*idt.f0, eta=eta, N_legendre=1000)
-    line(eta, alpha, plotter=pl, color="red")
-    alpha=idt._get_alpha(f=5*idt.f0, eta=eta, N_legendre=1000)
-    line(eta, alpha, plotter=pl, color="green")
-    return pl #line(eta, idt._get_alpha(f=3*idt.f0, eta=eta))[0]
-
-#center_coupling_vs_eta().show()
-@IDT.add_func
 def couple_comparison(pl="couple_compare", **kwargs):
     idt=IDT.process_kwargs(kwargs)
     frq=linspace(0e9, 10e9, 10000)
@@ -505,33 +514,58 @@ def couple_comparison(pl="couple_compare", **kwargs):
     #idt.rs=-0.05j
     #idt.dloss2=0.1*5e6
     #idt.eta=0.7
-
+    #idt.N_fixed=100000
+    idt.fixed_freq_max=20.0*idt.f0
     idt.S_type="RAM"
-    pl=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="cyan", linewidth=0.3, label=idt.couple_type, **kwargs)
+    pl=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="cyan", linewidth=0.5, label=idt.S_type, **kwargs)
     idt.S_type="simple"
     idt.fixed_reset()
-    idt.couple_type="sinc^2"
-    pl=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, linewidth=0.3, label=idt.couple_type, **kwargs)
+    idt.couple_type="sinc sq"
+    pl=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, linewidth=0.5, label=idt.couple_type, **kwargs)
     idt.couple_type="giant atom"
-    line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="red", linewidth=0.3, label=idt.couple_type)
+    line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="red", linewidth=0.5, label=idt.couple_type)
     idt.couple_type="df giant atom"
-    line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="green", linewidth=0.3, label=idt.couple_type)
+    line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="green", linewidth=0.5, label=idt.couple_type)
     idt.couple_type="full expr"
-    line(frq/idt.f0, (idt._get_coupling(frq)), plotter=pl, color="black", linewidth=0.3, label=idt.couple_type)
-    idt.couple_type="full sum"
-    line(frq/idt.f0, (idt._get_coupling(frq)), plotter=pl, color="purple", linewidth=0.3, label=idt.couple_type)
+    line(frq/idt.f0, (idt._get_coupling(frq)), plotter=pl, color="black", linewidth=0.5, label=idt.couple_type)
+    #idt.couple_type="full sum"
+    #line(frq/idt.f0, (idt._get_coupling(frq)), plotter=pl, color="purple", linewidth=0.5, label=idt.couple_type)
     pl.xlabel="frequency/center frequency"
-    pl.ylabel="coupling/max coupling (dB)"
+    pl.ylabel="coupling"
     #pl.set_ylim(-30, 1.0)
     pl.legend()
     return pl
 
+def RAM_comparison(pl="RAM_compare", **kwargs):
+    idt=IDT.process_kwargs(kwargs)
+    frq=linspace(0e9, 10e9, 10000)
+    idt.fixed_freq_max=60.0*idt.f0
+    idt.ft="double"
+    idt.S_type="RAM"
+    line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="red", linewidth=0.5, label=idt.ft)
+    idt.ft="single"
+    idt.fixed_reset()
+    line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="green", linewidth=0.5, label=idt.ft)
+    idt.S_type="simple"
+    idt.ft="double"
+    idt.fixed_reset()
+    idt.couple_type="sinc sq"
+    pl=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, linewidth=0.5, label=idt.couple_type, **kwargs)
+
+    pl.xlabel="frequency/center frequency"
+    pl.ylabel="coupling"
+    #pl.set_ylim(-30, 1.0)
+    pl.legend()
+    return pl
+RAM_comparison().show()
+#couple_comparison()#.show()
 def fix_couple_comparison(pl="fix couple", **kwargs):
-    idt=idt_process(kwargs)
-    idt.couple_type="sinc^2"
+    idt=IDT.process_kwargs(kwargs)
+    idt.fixed_freq_max=20.0*idt.f0
+    idt.couple_type="sinc sq"
     idt.fixed_reset()
     frq=linspace(0e9, 10e9, 10000)
-    pl, pf=line(frq/idt.f0, 10*log10(idt.get_fix("coupling", frq)/idt.max_coupling), plotter=pl, linewidth=0.3, label=idt.couple_type, **kwargs)
+    pl=line(frq/idt.f0, 10*log10(idt.get_fix("coupling", frq)/idt.max_coupling), plotter=pl, linewidth=0.3, label=idt.couple_type, **kwargs)
     idt.couple_type="giant atom"
     idt.fixed_reset()
     line(frq/idt.f0, 10*log10(idt.get_fix("coupling", frq)/idt.max_coupling), plotter=pl, color="red", linewidth=0.3, label=idt.couple_type)
@@ -549,7 +583,8 @@ def fix_couple_comparison(pl="fix couple", **kwargs):
     pl.set_ylim(-30, 1.0)
     pl.legend()
     return pl
-@IDT.add_func
+
+#fix_couple_comparison().show()
 def Lamb_shift_comparison(pl="ls_comp", **kwargs):
     idt=IDT.process_kwargs(kwargs)
 
@@ -557,54 +592,81 @@ def Lamb_shift_comparison(pl="ls_comp", **kwargs):
     #idt.dloss2=0.1*1e6
     #idt.eta=0.4
     frq=linspace(0e9, 10e9, 10000)
+    #idt.N_fixed=100000
+    idt.fixed_freq_max=20.0*idt.f0
 
     idt.S_type="RAM"
-    #print idt.fixed_Lamb_shift
-    #print imag(hilbert(idt.fixed_coupling))
-    pl=line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="cyan", linewidth=0.3, label=idt.couple_type, **kwargs)
-    #pl.show()
+    pl=line(frq/idt.f0, idt._get_Lamb_shift(f=frq), plotter=pl, color="cyan", linewidth=0.5, label=idt.S_type, **kwargs)
     idt.S_type="simple"
     idt.fixed_reset()
 
     idt.Lamb_shift_type="formula"
-    idt.couple_type="sinc^2"
-    #idt=IDT(Lamb_shift_type="formula", couple_type="sinc^2")
-    pl=line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, linewidth=0.3, label="sinc^2", **kwargs)
-    #a=IDT(Lamb_shift_type="formula", couple_type="giant atom")
+    idt.couple_type="sinc sq"
+    pl=line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, linewidth=0.5, label="sinc^2", **kwargs)
     idt.couple_type="giant atom"
-    line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="red", linewidth=0.3, label=idt.couple_type)
-    #a=IDT(Lamb_shift_type="hilbert", couple_type="sinc^2")
+    line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="red", linewidth=0.5, label=idt.couple_type)
+
     idt.Lamb_shift_type="hilbert"
-    idt.couple_type="sinc^2"
-    line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="green", linewidth=0.3, label="h(sinc^2)")
-    #a=IDT(Lamb_shift_type="hilbert", couple_type="giant atom")
-    idt.couple_type="giant atom"
-    line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="black", linewidth=0.3, label="h(giant atom)")
-    idt.couple_type="full sum"
-    line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="purple", linewidth=0.3, label="h(full sum)")
+    idt.couple_type="df giant atom"
+    line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="green", linewidth=0.5, label=idt.couple_type)
+    idt.couple_type="full expr"
+    line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="black", linewidth=0.5, label=idt.couple_type)
+    #idt.couple_type="full sum"
+    #line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="purple", linewidth=0.5, label=idt.couple_type)
 
     pl.xlabel="frequency/center frequency"
-    pl.ylabel="Lamb shift/max coupling"
+    pl.ylabel="Lamb shift"
     pl.set_ylim(-1e9, 1e9)
     pl.legend()
-
-    #line(frq, a._get_full_Lamb_shift(frq)/a.max_coupling, plotter=pl, color="black", linewidth=0.3)
     return pl
 
-def Lamb_shift_check(pl="ls_check", **kwargs):
-    idt=idt_process(kwargs)
-    idt.Lamb_shift_type="formula"
-    idt.couple_type="sinc^2"
+Lamb_shift_comparison()#.show()
+
+def hilbert_check(pl="hilbert", **kwargs):
+    idt=IDT.process_kwargs(kwargs)
     frq=linspace(0e9, 10e9, 10000)
-    pl=line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, linewidth=0.3, label=idt.couple_type, **kwargs)
+    #idt.N_fixed=100000
+    idt.fixed_freq_max=20.0*idt.f0
+    idt.Lamb_shift_type="formula"
+    idt.couple_type="sinc sq"
+    pl=line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, linewidth=0.5, label="sinc^2", **kwargs)
     idt.couple_type="giant atom"
-    line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, color="red", linewidth=0.3, label=idt.couple_type)
+    line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="red", linewidth=0.5, label=idt.couple_type)
+    idt.Lamb_shift_type="hilbert"
+    idt.couple_type="sinc sq"
+    line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="green", linewidth=0.5, label="h(sinc^2)")
+    idt.couple_type="giant atom"
+    line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="black", linewidth=0.5, label="h(giant atom)")
+
+    pl.xlabel="frequency/center frequency"
+    pl.ylabel="Lamb shift"
+    pl.set_ylim(-1e9, 1e9)
+    pl.legend()
+    return pl
+
+#hilbert_check().show()
+
+def Lamb_shift_check(pl="ls_check", **kwargs):
+    idt=IDT.process_kwargs(kwargs)
+    idt.fixed_freq_max=20.0*idt.f0
+    frq=linspace(0e9, 10e9, 10000)
+
+    idt.S_type="RAM"
+    pl=line(frq/idt.f0, idt._get_Lamb_shift(f=frq)/idt.max_coupling, plotter=pl, color="cyan", linewidth=0.5, label=idt.S_type, **kwargs)
+    idt.S_type="simple"
+    idt.fixed_reset()
+
+    idt.Lamb_shift_type="formula"
+    idt.couple_type="sinc sq"
+    pl=line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, linewidth=0.5, label=idt.couple_type, **kwargs)
+    idt.couple_type="giant atom"
+    line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, color="red", linewidth=0.5, label=idt.couple_type)
     idt.couple_type="df giant atom"
-    line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, color="green", linewidth=0.3, label=idt.couple_type)
+    line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, color="green", linewidth=0.5, label=idt.couple_type)
     idt.couple_type="full expr"
-    line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, color="black", linewidth=0.3, label=idt.couple_type)
-    idt.couple_type="full sum"
-    line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, color="purple", linewidth=0.3, label=idt.couple_type)
+    line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, color="black", linewidth=0.5, label=idt.couple_type)
+    #idt.couple_type="full sum"
+    #line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling, plotter=pl, color="purple", linewidth=0.5, label=idt.couple_type)
     pl.xlabel="frequency/center frequency"
     pl.ylabel="Lamb shift/max coupling (dB)"
     pl.set_ylim(-1.0, 1.0)
@@ -613,6 +675,7 @@ def Lamb_shift_check(pl="ls_check", **kwargs):
     #line(frq, a._get_full_Lamb_shift(frq)/a.max_coupling, plotter=pl, color="black", linewidth=0.3)
     return pl
 
+#Lamb_shift_check().show()
 def formula_comparison(pl=None, **kwargs):
     a=IDT()
     frq=linspace(3e9, 7e9, 10000)

@@ -191,10 +191,10 @@ class Rho(Agent):
     fixed_freq_min=Float(0.01)
 
     def _default_fixed_freq_max(self):
-        return 20.0*self.f0
+        return 200.0*self.f0
 
     def _default_fixed_freq_min(self):
-        return 0.01*self.f0
+        return 0.0001#*self.f0
 
     lgf1=Typed(Legendre)#.tag(sub=True)
     lgf2=Typed(Legendre)#.tag(sub=True)
@@ -298,7 +298,7 @@ class Rho(Agent):
         if pl is None:
             pl="alpha_"+self.name
         f, alpha=self.fixed_freq, self.fixed_alpha
-        pl, pf=line(f/self.f0, alpha, plotter=pl, plot_name=self.name, color="blue", label=self.name, **kwargs)
+        pl=line(f/self.f0, alpha, plotter=pl, plot_name=self.name, color="blue", label=self.name, **kwargs)
         pl.xlabel="frequency/center frequency"
         pl.ylabel="element factor"
         pl.set_ylim(-1.0, 2.0)
@@ -308,7 +308,7 @@ class Rho(Agent):
         if pl is None:
             pl="surface_charge_"+self.name
         x, charge=self.surface_x, self.surface_charge
-        pl, pf=line(x, charge, plotter=pl, plot_name=self.name, color="blue", label=self.name, **kwargs)
+        pl=line(x, charge, plotter=pl, plot_name=self.name, color="blue", label=self.name, **kwargs)
         pl.xlabel="x/center wavelength"
         pl.ylabel="surface charge"
         #pl.set_ylim(-1.0, 2.0)
@@ -318,7 +318,7 @@ class Rho(Agent):
         if pl is None:
             pl="surface_voltage_"+self.name
         x, voltage=self.surface_x, self.surface_voltage
-        pl, pf=line(x, voltage, plotter=pl, plot_name=self.name, color="blue", label=self.name, **kwargs)
+        pl=line(x, voltage, plotter=pl, plot_name=self.name, color="blue", label=self.name, **kwargs)
         pl.xlabel="x/center wavelength"
         pl.ylabel="surface voltage"
         #pl.set_ylim(-1.0, 2.0)
@@ -336,7 +336,7 @@ def test_plot(**kwargs):
     return pl
 #test_plot().show()
 
-@Rho.add_func
+#@Rho.add_func
 def element_factor_plot(pl="element_factor", **kwargs):
     rho=Rho.process_kwargs(kwargs)
     rho.ft="single"
@@ -353,7 +353,7 @@ def element_factor_plot(pl="element_factor", **kwargs):
     pl.legend()
     return pl
 
-@Rho.add_func
+#@Rho.add_func
 def metallization_plot(pl="metalization", **kwargs):
     rho=Rho.process_kwargs(kwargs)
     rho.eta=0.5
@@ -372,7 +372,7 @@ def metallization_plot(pl="metalization", **kwargs):
     pl.legend()
     return pl
 
-@Rho.add_func
+#@Rho.add_func
 def surface_charge_plot(pl="surface charge", **kwargs):
     rho=Rho.process_kwargs(kwargs)
     #rho.ft="single" #"double"
@@ -411,9 +411,9 @@ def surface_charge_plot(pl="surface charge", **kwargs):
 
     line(rho.fixed_freq, rho.fixed_alpha)
     print "line done"
-    pl, pf=line(rho.surface_x, rho.surface_charge*rgh[10000]/rho.surface_charge[rho.N_fixed/2], plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
+    pl=line(rho.surface_x, rho.surface_charge*rgh[10000]/rho.surface_charge[rho.N_fixed/2], plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
     #charge=real(fft.fftshift(fft.ifft(rho.fixed_alpha/rho.fixed_freq*rho.f0)))#.astype(float64)
-    pl, pf=line(rho.surface_x, rho.surface_voltage*1e6, plotter=pl, plot_name="singled", color="red", label="single finger2", **kwargs)
+    pl=line(rho.surface_x, rho.surface_voltage*1e6, plotter=pl, plot_name="singled", color="red", label="single finger2", **kwargs)
 
     xprime=linspace(-2.000001, 2.0, 200) #[0.01, 1.01] #range(10)
     print "trapz"
@@ -425,11 +425,11 @@ def surface_charge_plot(pl="surface charge", **kwargs):
     return pl
 
 def surface_charge_plot2(pl="surface charge2", **kwargs):
-    idt=idt_process(kwargs)
+    idt=Rho.process_kwargs(kwargs)
     idt.ft="single"
     charge=fft.fftshift(fft.ifft(idt.fixed_alpha))
 
-    pl, pf=line( charge[:-400]+charge[400:], plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
+    pl=line( charge[:-400]+charge[400:], plotter=pl, plot_name="single", color="blue", label="single finger", **kwargs)
 
 
     #idt.ft="double"
@@ -439,8 +439,44 @@ def surface_charge_plot2(pl="surface charge2", **kwargs):
     pl.ylabel="element factor"
     #pl.legend()
     return pl
+
+def center_coupling_vs_eta(pl="f0_vs_eta", **kwargs):
+    idt=Rho.process_kwargs(kwargs)
+    idt.couple_type="full expr"
+    idt.fixed_update=True
+    idt.N_fixed=1000
+    idt.fixed_freq_max=2*idt.f0
+    idt.ft="single"
+    eta_arr=linspace(0.1, 0.9, 21)
+    alpha_arr1=[]
+    alpha_arr2=[]
+    alpha_arr3=[]
+    for eta in eta_arr:
+        idt.eta=eta
+        alpha=idt._get_alpha(f=idt.f0, eta=eta)
+        alpha_arr1.append(alpha)
+        alpha=idt._get_alpha(f=3*idt.f0, eta=eta)
+        alpha_arr2.append(alpha)
+        alpha=idt._get_alpha(f=5*idt.f0, eta=eta)
+        alpha_arr3.append(alpha)
+
+    pl=line(eta_arr, array(alpha_arr1), plotter=pl)
+    line(eta_arr, array(alpha_arr2), plotter=pl, color="red")
+    line(eta_arr, array(alpha_arr3), plotter=pl, color="green")
+    return pl #line(eta, idt._get_alpha(f=3*idt.f0, eta=eta))[0]
+
 if __name__=="__main__":
+    #surface_charge_plot2()
+    #surface_charge_plot().show()
     rho=Rho()
+    print rho.f0, rho.N_fixed
+    #rho.N_fixed=100000
+    rho.fixed_freq_max=2000.0*rho.f0
+    rho.plot_alpha(auto_xlim=False, x_min=0, x_max=20)
+    rho.plot_surface_charge(auto_xlim=False, x_min=-3, x_max=3, auto_ylim=False, y_min=-3e-12, y_max=3e-12)
+    pl=rho.plot_surface_voltage(auto_xlim=False, x_min=-3, x_max=3)
+    line(rho.surface_x[2000:-500], rho.surface_voltage[2000:-500]+rho.surface_voltage[500:-2000]+rho.surface_voltage[2500:],
+         auto_xlim=False, x_min=-3, x_max=3).show()
     print dir(rho)
     print rho.members().keys()
     rho.show()
