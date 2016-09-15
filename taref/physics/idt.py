@@ -262,7 +262,7 @@ class IDT(Rho):
         jkL=1.0j*k*L_IDT
         P11=P22=0.0
         P12=P21=exp(-jkL)
-        P13=P23= -1.0j*sqrt(Ga/2.0)
+        P13=P23= 1.0j*sqrt(Ga/2.0)*exp(-jkL/2.0)
         P31=P32=-2.0*P13
         P33=Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL
         return (P11, P12, P13,
@@ -323,10 +323,13 @@ class IDT(Rho):
         return 2*ft_mult*Np#+ft_mult*(Np+1)
 
     def _get_RAM_P_one_f(self, f, Dvv, epsinf, W, vf,  rs, p, N_IDT, alpha, ft, Np, f0, dloss1, dloss2, L_IDT):
+        #alpha=self._get_alpha(f=f, f0=f0, ft_mult=self.ft_mult, eta=self.eta, epsinf=epsinf)
+        gamma=self._get_couple_factor(f=f, f0=f0, ft_mult=self.ft_mult, eta=self.eta, epsinf=epsinf, Ct_mult=self.Ct_mult, K2=self.K2, Np=Np)
+
         Y0=self._get_Y0(f=f, Dvv=Dvv, epsinf=epsinf, W=W)
-        rs=self._get_rs(f=f)
+        rs=0.0j #self._get_rs(f=f)
         #print rs
-        k=2*pi*f/vf-1.0j*(f/f0*dloss1+dloss2*(f/f0)**2)
+        k=2*pi*f/vf#-1.0j*(f/f0*dloss1+dloss2*(f/f0)**2)
         ts = sqrt(1.0-absolute(rs)**2)
         A = 1.0/ts*matrix([[exp(-1.0j*k*p),       rs      ],
                            [-rs,             exp(1.0j*k*p)]])#.astype(complex128)
@@ -336,15 +339,24 @@ class IDT(Rho):
         P21=AN11-AN12*AN21/AN22
         P12=1.0/AN22
         P22=AN12/AN22
-        D = -1.0j*alpha*Dvv*sqrt(Y0)
+        D = -1.0j/(2.0*Np)#*alpha*Dvv*sqrt(Y0)
+        #D = -1.0j*sqrt(self.Ga0)/(2.0*Np)#*alpha*Dvv*sqrt(Y0)
+
         B = matrix([(1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0), (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)])
+        #B0 = (1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0)
+        #B1 = (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)
+
         I = eye(2)
         if ft=="single":
             P32=D*(B*inv(I-A**2)*(I-A**(2*int(Np)))*matrix([[0],
                                                             [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-p)/2.0)]]))[0] #geometric series
         else:
-            P32=D*(B*(I+A)*inv(I-A**4)*(I-A**(4*int(Np)))*matrix([[0],
-                                                                  [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-2.0*p)/2.0)]]))[0] #geometric series
+            P32_base=((I+A)*inv(I-A**4)*(I-A**(4*int(Np))))*matrix([[0],
+                                                                  [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-2.0*p)/2.0)]])
+            P32=D*(B*P32_base)
+            #P32=D*(B0*P32_base[0,0]+B1*P32_base[1,0])
+            #P32=D*B*((I+A)*inv(I-A**4)*(I-A**(4*int(Np))))*matrix([[0],
+            #                                                      [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-2.0*p)/2.0)]]))[0] #geometric series
         P31=P32
         P13=P23=-P31/2.0
         return (P11, P12, P13,
@@ -366,11 +378,11 @@ class IDT(Rho):
          P31, P32)=[array(P_ele) for P_ele in zip(*P)]
         print "P_done 2"
         Ga=squeeze(2.0*absolute(P13)**2)
-        Ba=-imag(hilbert(Ga))
+        Ba=imag(hilbert(Ga))
         P33=Ga+1.0j*Ba+2.0j*pi*f*Ct
         return (P11, P12, P13,
                 P21, P22, P23,
-                P31, P32, P33), Ga, Ba
+                P31, P32, P33), Ga, -Ba
 
 
 #    @log_func
@@ -535,21 +547,82 @@ def couple_comparison(pl="couple_compare", **kwargs):
     #pl.set_ylim(-30, 1.0)
     pl.legend()
     return pl
-
+#couple_comparison()
 def RAM_comparison(pl="RAM_compare", **kwargs):
     idt=IDT.process_kwargs(kwargs)
-    frq=linspace(0e9, 10e9, 10000)
-    idt.fixed_freq_max=60.0*idt.f0
-    idt.ft="double"
-    idt.S_type="RAM"
+    #idt2=IDT.process_kwargs(kwargs)
+
+    frq=linspace(0.01e9, 10e9, 10000)
+    idt.fixed_freq_max=2.0*idt.f0
+
+    def _get_RAM_P_one_f(self, f, Dvv, epsinf, W, vf,  rs, p, N_IDT, alpha, ft, Np, f0, dloss1, dloss2, L_IDT):
+        #Y0=self._get_Y0(f=f, Dvv=Dvv, epsinf=epsinf, W=W)
+        #rs=self._get_rs(f=f)
+        #print rs
+        k=2*pi*f/vf#-1.0j*(f/f0*dloss1+dloss2*(f/f0)**2)
+        ts = sqrt(1.0-absolute(rs)**2)
+        A = 1.0/ts*matrix([[exp(-1.0j*k*p),       rs      ],
+                           [-rs,             exp(1.0j*k*p)]])#.astype(complex128)
+        #AN=A**int(N_IDT)
+        #AN11, AN12, AN21, AN22= AN[0,0], AN[0,1], AN[1,0], AN[1,1]
+        #P11=-AN21/AN22
+        #P21=AN11-AN12*AN21/AN22
+        #P12=1.0/AN22
+        #P22=AN12/AN22
+        #D = -1.0j*alpha*Dvv*sqrt(Y0)
+        #B = matrix([(1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0), (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)])
+        I = eye(2)
+
+        P1=(I+A)
+        P2=inv(I-A**4)*(I-A**(4*int(Np)))
+        return 1/sqrt(2)*absolute(P1[1,1]*exp(-1.0j*k*p/2.0))*absolute(P2[1,1])**2 ##, P2
+
+    #idt.Np=37
+    #idt.ft="single"
+    #idt.couple_type="full expr"
+    #pl=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, linewidth=0.5, label=idt.couple_type, **kwargs)
+    #data=[_get_RAM_P_one_f(idt, f=f, Dvv=idt.Dvv, epsinf=idt.epsinf, W=idt.W, vf=idt.vf, rs=idt.rs, p=idt.p,
+    #                             N_IDT=idt.N_IDT, alpha=idt.alpha0, ft=idt.ft, Np=idt.Np, f0=idt.f0, dloss1=idt.dloss1, dloss2=idt.dloss2, L_IDT=idt.L_IDT) for f in frq]
+    #data=array(data)
+    #print data.shape
+    #line(frq, array(data), pl=pl, color="green")
+    Np=idt.Np
+    gX=idt._get_X(f=frq)
+    #line(frq, 1/81.0*(sqrt(2.0)*cos(pi*frq/(4.0*idt.f0))*sin(gX)/sin(gX/Np))**2, pl=pl)#.show()
+    #line(frq, 2.0*cos(pi*frq/(4.0*idt.f0)), pl=pl).show()
+    print idt.f0, idt.Dvv, idt.epsinf, idt.W, idt.vf,  idt.rs, idt.p, idt.N_IDT, idt.alpha, idt.ft, idt.Np, idt.f0, idt.dloss1, idt.dloss2, idt.L_IDT
+    #idt.S_type="RAM"
+    idt.couple_type="full expr"
+    idt.fixed_reset()
+
+    #P=idt._get_RAM_P()
+    gamma=idt._get_couple_factor(f=idt.fixed_freq)
+    line(idt.fixed_freq, idt._get_couple_factor(f=idt.fixed_freq), plotter=pl, color="red", linewidth=0.5, label=idt.ft)#.show()
+    line(idt.fixed_freq, gamma, plotter=pl, color="blue", linewidth=0.5, label=idt.ft).show()
+
+    #line(idt.fixed_freq, gamma*2*idt.Ct*2*pi*P[1], plotter=pl, color="red", linewidth=0.5, label=idt.ft)#.show()
+    #line(idt.fixed_freq, P[2], plotter=pl, color="green", linewidth=0.5, label=idt.ft)
+    idt.S_type="simple"
+    #idt.ft="double"
+    idt.couple_type="df giant atom" #"full expr"
+    idt.fixed_reset()
+    line(idt.fixed_freq, gamma*2*idt.Ct*2*pi*idt._get_Ga(idt.fixed_freq)/idt.Ga0, plotter=pl, color="blue", linewidth=0.5, label=idt.ft).show()
+    line(idt.fixed_freq, idt._get_Ba(idt.fixed_freq), plotter=pl, color="black", linewidth=0.5, label=idt.ft).show()
+
+    #idt.Np=37
+    #idt.fixed_freq_max=20.0*idt.f0
+
+    #idt2.ft="single"
+
+    #idt.fixed_reset()
     line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="red", linewidth=0.5, label=idt.ft)
     idt.ft="single"
     idt.fixed_reset()
     line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="green", linewidth=0.5, label=idt.ft)
     idt.S_type="simple"
     idt.ft="double"
+    idt.couple_type="full expr"
     idt.fixed_reset()
-    idt.couple_type="sinc sq"
     pl=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, linewidth=0.5, label=idt.couple_type, **kwargs)
 
     pl.xlabel="frequency/center frequency"
@@ -644,7 +717,7 @@ def hilbert_check(pl="hilbert", **kwargs):
     pl.legend()
     return pl
 
-#hilbert_check().show()
+hilbert_check().show()
 
 def Lamb_shift_check(pl="ls_check", **kwargs):
     idt=IDT.process_kwargs(kwargs)
