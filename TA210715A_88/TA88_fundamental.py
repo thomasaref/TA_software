@@ -263,7 +263,13 @@ if __name__=="__main__":
          pl="superposition", auto_xlim=False, x_min=-3, x_max=3)
     pl6.xlabel="x/center wavelength"
     pl6.ylabel="surface voltage"
-    a.save_plots([pl0, pl1, pl2, pl3, pl4, pl5, pl6])
+    from taref.physics.idt import metallization_couple, metallization_Lamb, couple_comparison, Lamb_shift_comparison, hilbert_check
+    pl7=metallization_couple()
+    pl8=metallization_Lamb()
+    pl9=couple_comparison()
+    pl10=Lamb_shift_comparison()
+    pl11=hilbert_check()
+    a.save_plots([pl0, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11])
     pl1.show()
 
     from taref.physics.qdt import anharm_plot

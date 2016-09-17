@@ -339,7 +339,7 @@ class IDT(Rho):
         P21=AN11-AN12*AN21/AN22
         P12=1.0/AN22
         P22=AN12/AN22
-        D = -1.0j/(2.0*Np)#*alpha*Dvv*sqrt(Y0)
+        D = -1.0j*alpha*Dvv*sqrt(Y0) #/(2.0*Np)
         #D = -1.0j*sqrt(self.Ga0)/(2.0*Np)#*alpha*Dvv*sqrt(Y0)
 
         B = matrix([(1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0), (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)])
@@ -493,6 +493,9 @@ def metallization_couple(pl="metallization_couple", **kwargs):
     idt.fixed_reset()
     line(frq/idt.f0, idt.get_fix("coupling", frq), plotter=pl, plot_name="0.4", color="green", linewidth=0.3, label="0.4", **kwargs)
     idt.eta=0.5
+    pl.xlabel="frequency/center frequency"
+    pl.ylabel="coupling"
+    pl.legend()
     return pl
 #metallization_couple()#.show()
 def metallization_Lamb(pl="metallization_lamb", **kwargs):
@@ -515,6 +518,9 @@ def metallization_Lamb(pl="metallization_lamb", **kwargs):
     idt.fixed_reset()
     line(frq/idt.f0, idt.get_fix("Lamb_shift", frq), plotter=pl, plot_name="0.4", color="green", linewidth=0.3, label="0.4", **kwargs)
     idt.eta=0.5
+    pl.xlabel="frequency/center frequency"
+    pl.ylabel="Lamb shift"
+    pl.legend()
     return pl
 #metallization_Lamb()#.show()
 
@@ -544,10 +550,10 @@ def couple_comparison(pl="couple_compare", **kwargs):
     #line(frq/idt.f0, (idt._get_coupling(frq)), plotter=pl, color="purple", linewidth=0.5, label=idt.couple_type)
     pl.xlabel="frequency/center frequency"
     pl.ylabel="coupling"
-    #pl.set_ylim(-30, 1.0)
+    pl.set_ylim(0.0, 1.3e9)
     pl.legend()
     return pl
-#couple_comparison()
+#couple_comparison().show()
 def RAM_comparison(pl="RAM_compare", **kwargs):
     idt=IDT.process_kwargs(kwargs)
     #idt2=IDT.process_kwargs(kwargs)
@@ -630,7 +636,7 @@ def RAM_comparison(pl="RAM_compare", **kwargs):
     #pl.set_ylim(-30, 1.0)
     pl.legend()
     return pl
-RAM_comparison().show()
+#RAM_comparison().show()
 #couple_comparison()#.show()
 def fix_couple_comparison(pl="fix couple", **kwargs):
     idt=IDT.process_kwargs(kwargs)
@@ -690,10 +696,10 @@ def Lamb_shift_comparison(pl="ls_comp", **kwargs):
     pl.xlabel="frequency/center frequency"
     pl.ylabel="Lamb shift"
     pl.set_ylim(-1e9, 1e9)
-    pl.legend()
+    pl.legend(loc="lower right")
     return pl
 
-Lamb_shift_comparison()#.show()
+#Lamb_shift_comparison()#.show()
 
 def hilbert_check(pl="hilbert", **kwargs):
     idt=IDT.process_kwargs(kwargs)
@@ -702,9 +708,9 @@ def hilbert_check(pl="hilbert", **kwargs):
     idt.fixed_freq_max=20.0*idt.f0
     idt.Lamb_shift_type="formula"
     idt.couple_type="sinc sq"
-    pl=line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, linewidth=0.5, label="sinc^2", **kwargs)
+    pl=line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, linewidth=1.0, label="sinc^2", **kwargs)
     idt.couple_type="giant atom"
-    line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="red", linewidth=0.5, label=idt.couple_type)
+    line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="red", linewidth=1.0, label=idt.couple_type)
     idt.Lamb_shift_type="hilbert"
     idt.couple_type="sinc sq"
     line(frq/idt.f0, idt._get_Lamb_shift(frq), plotter=pl, color="green", linewidth=0.5, label="h(sinc^2)")
@@ -714,10 +720,10 @@ def hilbert_check(pl="hilbert", **kwargs):
     pl.xlabel="frequency/center frequency"
     pl.ylabel="Lamb shift"
     pl.set_ylim(-1e9, 1e9)
-    pl.legend()
+    pl.legend(loc="lower right")
     return pl
 
-hilbert_check().show()
+#hilbert_check().show()
 
 def Lamb_shift_check(pl="ls_check", **kwargs):
     idt=IDT.process_kwargs(kwargs)
@@ -743,7 +749,7 @@ def Lamb_shift_check(pl="ls_check", **kwargs):
     pl.xlabel="frequency/center frequency"
     pl.ylabel="Lamb shift/max coupling (dB)"
     pl.set_ylim(-1.0, 1.0)
-    pl.legend()
+    pl.legend(loc="lower right")
 
     #line(frq, a._get_full_Lamb_shift(frq)/a.max_coupling, plotter=pl, color="black", linewidth=0.3)
     return pl

@@ -17,7 +17,7 @@ tx.tex_title="Sample TA210715A88 in Lumi 21-02-16 cooldown"
 print tx.source_folder.dir_path
 #tx.locals_dict=dict(idt=idt, qdt=qdt)
 #sample holder 12
-include_all=False #True
+include_all=True
 include_text=True
 
 def fft_plots(a, desc=None, label="None", caption="None"):
@@ -61,6 +61,10 @@ if include_all:
 if include_text:
     tx.add(r"\FloatBarrier")
     tx.add(r"\section{Qubit parameters}")
+    tx.add("""These tables show values taken from the numerical models for fitting.
+    The first column is an expression or name for the quantity, the label column has more information when appropriate,
+    the value column has the value used in fitting, the design column has the ideal value used in design, and the comment column contains extra information.""")
+
     tx.add(r"\subsection{Qubit material values}")
     tx.make_table(qdt.latex_table(['material', 'vf', 'Dvv', 'K2',  'epsinf', 'superconductor', 'Delta', 'Tc',], design=ideal_qdt),
                                    r"|p{3.5 cm}|p{3 cm}|p{3 cm}|p{3 cm}|p{3.5 cm}|")
@@ -184,13 +188,35 @@ if include_all:
     #tx.add_mult_fig(anharm_plot, "theory_anharm.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
     #tx.mult_fig_end(caption="Theory plots based on QDT parameters")
 
+from TA88_fundamental import a as fund
+file_names=Read_TXT(file_path=fund.save_file.file_path).read()
 
-if include_text:
-    tx.ext("qubit model")
+if 1: #include_text:
+    #tx.ext("qubit model")
+    tx.add(r"\FloatBarrier")
+    tx.add(r"\section{Theory}")
+    tx.ext("theory compare")
+
+    tx.include_image(file_names[9], label=file_names[9],
+    caption="""Comparison of coupling from different models""",
+    source_folder=fund.save_folder)
+
+    tx.include_image(file_names[10], label=file_names[10],
+    caption="""Comparison of Lamb shift from different models""",
+    source_folder=fund.save_folder)
+    tx.add(r"\FloatBarrier")
     tx.ext("useful relations")
     tx.ext("giant atom theory")
-
+    tx.add(r"\FloatBarrier")
     tx.ext("sum")
+
+if 1:#include_all:
+    tx.include_image(file_names[11], label=file_names[11],
+    caption="""Numerical Hilbert transforms compared to analytical formulas""",
+    source_folder=fund.save_folder)
+    tx.add(r"\FloatBarrier")
+
+if include_text:
     tx.ext("double finger")
     tx.ext("IDT model")
     tx.ext("PtoS")
@@ -202,11 +228,9 @@ if include_text:
     tx.ext("Legendre")
 
 if 1:#include_all:
-    from TA88_fundamental import a as fund
-    file_names=Read_TXT(file_path=fund.save_file.file_path).read()
     tx.include_image(file_names[0], label=file_names[0],
-        caption="""The first 30 Legendre polynomials evaluated at $0$, $0.25$, $0.5$ and $0.75$ are plotted as points along with the series expansion, recurrence relation, interpolated result for the Legendre functions.""",
-        source_folder=fund.save_folder)
+    caption="""The first 30 Legendre polynomials evaluated at $0$, $0.25$, $0.5$ and $0.75$ are plotted as points along with the series expansion, recurrence relation, interpolated result for the Legendre functions.""",
+    source_folder=fund.save_folder)
 
 if include_text:
     tx.add(r"\FloatBarrier")
@@ -216,17 +240,22 @@ if 1:
     tx.mult_fig_start()
     for fn in file_names[1:3]:
         if fn!="":
-            tx.add_mult_image(fn, fn, "", fund.save_folder)
+            tx.add_mult_image(fn, fn, "", fund.save_folder, include_caption=True)
     tx.mult_fig_end(caption=r"a) Element factor for single and double finger vs normalized frequency b) metallization ratio effect on element factor vs normalized frequency")
 
+    tx.add(r"\FloatBarrier")
+    tx.ext("verify element")
+
     tx.mult_fig_start()
-    for fn in file_names[3:]:
+    for fn in file_names[3:7]:
         if fn!="":
-            tx.add_mult_image(fn, fn, "", fund.save_folder)
+            tx.add_mult_image(fn, fn, "", fund.save_folder, include_caption=True)
     tx.mult_fig_end(caption="""a) Element factor extended evaluation to higher frequencies.
     b) surface charge via inverse Fourier transform as a function of position.
     c) corresponding surface voltage as a function of position.
     d) superposition of surface voltages for a double finger and single finger.""")
+    #e) metallization effect on coupling
+    #f) metallization effect on Lamb shift""")
 
     tx.add(r"\FloatBarrier")
 
