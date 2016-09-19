@@ -215,7 +215,7 @@ class TEX(Operative):
         tex.append(r"\end{figure}")
         #savefig(dir_path+fig_name, bbox_inches='tight')
         #close()
-    def add_mult_image(self, fig_name, label="", caption="",  source_folder=None, include_caption=False):
+    def add_mult_image(self, fig_name, label="", caption="",  source_folder=None, include_caption=True):
         """inserts th image specified by dir_path and fig_name into the list tex"""
         if source_folder is None:
             source_folder=self.source_folder

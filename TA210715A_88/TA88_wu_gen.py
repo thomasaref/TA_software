@@ -104,7 +104,7 @@ if include_all:
     tx.add_mult_image("fluxmap", "fluxmap", include_caption=True)
     tx.add_mult_image("fluxmap_w_peaks", "fluxmap_w_peaks", include_caption=True)
     tx.add_mult_image("fit_fluxmap", "fit_fluxmap", include_caption=True)
-    tx.add_mult_image("just_peaks", "fluxmap", include_caption=True)
+    tx.add_mult_image("just_peaks", "just_peaks", include_caption=True)
     tx.mult_fig_end(caption=r"a) raw flux vs frequency colormap b) flux vs frequency colormap with peak locations as cyan points c) Lorentzian fits of flux map d) peak locations with flux parabola fitting flux periodicity")
 
 if include_all:
@@ -136,7 +136,7 @@ if include_all:
     tx.mult_fig_start()
     for fn in file_names[4:]:
         if fn!="":
-            tx.add_mult_image(fn, "fn", "", wc.save_folder)
+            tx.add_mult_image(fn, fn, "", wc.save_folder)
     tx.mult_fig_end(caption=r"a) combined filtered data colormaps (arbitrary color scales) b) Lorentzians fits colormap (arbitrary colorscales)")
     tx.add(r"\FloatBarrier")
 
@@ -273,7 +273,8 @@ tx.TEX_end()
 #tx.compile_tex()
 #tx.show()
 #qdt.show()
-shower(tx)
+tx.make_and_show()
+#shower(tx)
 
 
 #['flux_parabola',
