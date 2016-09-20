@@ -110,6 +110,33 @@ class IDT(Rho):
             return gamma0*(sqrt(2.0)*cos(pi*f/(4*f0))*1.0/Np*sin(gX)/sin(gX/Np))**2
         return gamma0*(sin(gX)/gX)**2.0
 
+    @log_func
+    def sinc(self, f, f0, Np):
+        X=Np*pi*(f-f0)/f0
+        return sin(X)/X
+
+    @log_func
+    def sinc_sq_ls(self, f, f0, Np):
+        X=Np*pi*(f-f0)/f0
+        return -(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
+
+    @log_func
+    def giant_atom(self, f, f0, Np):
+        X=Np*pi*(f-f0)/f0
+        return 1.0/Np*sin(X)/sin(X/Np)
+        
+    @log_func
+    def giant_atom_ls(self, f, f0, Np):
+        X=Np*pi*(f-f0)/f0
+        return (1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
+
+    def hilbert_ls(self, cpl):        
+        return imag(hilbert(cpl))
+        
+    @log_func        
+    def df_corr(self, f, f0):
+        return sqrt(2.0)*cos(pi*f/(4*f0))
+
     #@log_callable()
     def fixed_reset(self):
         """resets fixed properties in proper order"""
