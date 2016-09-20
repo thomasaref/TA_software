@@ -7,15 +7,15 @@ Created on Fri Sep 16 11:55:30 2016
 
 from scipy.constants import pi, epsilon_0 as eps0
 from scipy.signal import hilbert
-from numpy import linspace, sin, cos, imag, sqrt, absolute, matrix, exp, eye, array, squeeze, float64, ones
+from numpy import linspace, sin, cos, imag, sqrt, absolute, matrix, exp, eye, array, squeeze, float64, ones, log
 import matplotlib.pyplot as plt
 from taref.physics.surface_charge import alpha
 from numpy.linalg import inv
 
 f0=5.000000001e9
 
-frq=linspace(0.001e9, 10.0*f0, 10000).astype(float64)
-Np=9
+frq=linspace(0.001e9, 2*f0, 10000).astype(float64)
+Np=29
 W=25.0e-6
 ft="double"
 vf=3488.0
@@ -34,17 +34,18 @@ Y0_arr=_get_Y0(f=frq, W=W, epsinf=epsinf, Dvv=Dvv)
 Ga0=alp_0*Dvv*sqrt(Y0_arr)
 Ga=alp_arr*Dvv*sqrt(Y0_arr)
 
-def _get_rs(self, f, h=30.0e-9, vf=3488.0):
+def _get_rs(f, h=30.0e-9, vf=3488.0):
     lbda= vf/f
     rs=(-1.7/100-0.24*h/lbda)*1.0j
-    if absolute(rs)>=1.0:
-        return 0.9999j
+    #if absolute(rs)>=1.0:
+    #    return 0.9999j
     return rs
 
 def _get_RAM_P_one_f(f, p, N_IDT, L_IDT, f0, alpha, rs, Y0, dloss1, dloss2,
                      W, Np,  ft,
                      vf, Dvv, epsinf):
-    k=2*pi*f/vf#-1.0j*(f/f0*dloss1+dloss2*(f/f0)**2)
+    #k=2*pi*f/vf#-1.0j*(f/f0*dloss1+dloss2*(f/f0)**2) 0.19 f/1e9 + 0.88 (f/1e9)**2 dB/us*1e6/3488 *log(10.0)/20.0
+    k=2*pi*f/vf-1.0j*(0.19*f/1e9 + 0.88*(f/1e9)**2)*1e6/3488*log(10.0)/20.0
     ts = sqrt(1.0-absolute(rs)**2)
     A = 1.0/ts*matrix([[exp(-1.0j*k*p),       rs      ],
                        [-rs,             exp(1.0j*k*p)]])#.astype(complex128)
@@ -116,21 +117,24 @@ def _get_RAM_P(frq, f0=5.000000001e9, alpha=1.247, rs=0.0j, Y0=None, dloss1=0.0,
             P31, P32, P33), Ga, Ba, Ct
 
 
-c1=(sin(X)/X)**2.0
+c1=frq/f0*(sin(X)/X)**2.0
 
 
-c2=(1.0/Np*sin(X)/sin(X/Np))**2
+c2=frq/f0*(1.0/Np*sin(X)/sin(X/Np))**2
 
-c3=(sqrt(2.0)*cos(pi*frq/(4*f0))*1.0/Np*sin(X)/sin(X/Np))**2
+c3=frq/f0*(sqrt(2.0)*cos(pi*frq/(4*f0))*1.0/Np*sin(X)/sin(X/Np))**2
 
-c4=alp_arr/alp_0*(sqrt(2.0)*cos(pi*frq/(4*f0))*1.0/Np*sin(X)/sin(X/Np))**2
+c4=frq/f0*(alp_arr/alp_0*sqrt(2.0)*cos(pi*frq/(4*f0))*1.0/Np*sin(X)/sin(X/Np))**2
 
 (P11, P12, P13,
  P21, P22, P23,
- P31, P32, P33), Ga, Ba, Ct=_get_RAM_P(frq=frq, alpha=alp_0, ft="single")
+ P31, P32, P33), Ga, Ba, Ct=_get_RAM_P(frq=frq, alpha=alp_arr, ft=ft, Y0=Y0_arr, rs=_get_rs(frq), Np=Np)
 
 Y0=pi*f0*W*epsinf/Dvv
-c5=(absolute(P13)/(alp_0*Dvv*sqrt(Y0)*Np*sqrt(1)))**2
+c5=(absolute(P13)/(alp_0*Dvv*sqrt(Y0)*Np*sqrt(2)))**2
+
+absP13=absolute(P13)
+#c5=(absP13/max(absP13[4000:6000]))**2
 
 l1=-(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
 l2=(1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
@@ -146,6 +150,7 @@ plt.plot(frq/f0, l1, linewidth=2.0)
 plt.plot(frq/f0, h1)
 plt.xlim(0.0, 2.0)
 
+
 plt.figure()
 plt.plot(frq/f0, l2, linewidth=2.0)
 plt.plot(frq/f0, h2)
@@ -155,8 +160,8 @@ plt.figure()
 plt.plot(frq/f0, alp_arr)
 
 plt.figure()
-#plt.plot(frq/f0, c1, label="sinc sq")
-plt.plot(frq/f0, c2, label="giant atom")
+plt.plot(frq/f0, c1, label="sinc sq")
+#plt.plot(frq/f0, c2, label="giant atom")
 #plt.plot(frq/f0, c3, label="df giant atom")
 #plt.plot(frq/f0, c4, label="full expr")
 plt.plot(frq/f0, c5, label="RAM")
@@ -164,8 +169,8 @@ plt.plot(frq/f0, c5, label="RAM")
 plt.legend()
 
 plt.figure()
-#plt.plot(frq/f0, l1, label="sinc sq")
-plt.plot(frq/f0, l2, label="giant atom")
+plt.plot(frq/f0, l1, label="sinc sq")
+#plt.plot(frq/f0, l2, label="giant atom")
 #plt.plot(frq/f0, h3, label="df giant atom")
 #plt.plot(frq/f0, h4, label="full expr")
 plt.plot(frq/f0, h5, label="RAM")
