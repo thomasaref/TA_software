@@ -7,14 +7,16 @@ Created on Fri Sep 16 11:55:30 2016
 
 from scipy.constants import pi, epsilon_0 as eps0
 from scipy.signal import hilbert
-from numpy import linspace, sin, cos, imag, sqrt, absolute, matrix, exp, eye, array, squeeze, float64, ones, log
+from numpy import linspace, sin, cos, imag, sqrt, absolute, matrix, exp, eye, array, squeeze, float64, ones, log, meshgrid
 import matplotlib.pyplot as plt
 from taref.physics.surface_charge import alpha
 from numpy.linalg import inv
+from time import time
 
 f0=5.000000001e9
 
-frq=linspace(0.001e9, 2*f0, 10000).astype(float64)
+frq=linspace(0.001e9, 2*f0, 10000)#.astype(float64)
+#fq=linspace(4e9, 6e9, 1000).astype(float64)
 Np=29
 W=25.0e-6
 ft="double"
@@ -111,12 +113,42 @@ def _get_RAM_P(frq, f0=5.000000001e9, alpha=1.247, rs=0.0j, Y0=None, dloss1=0.0,
     print "P_done 2"
     Ga=2.0*absolute(P13)**2
     Ba=-imag(hilbert(Ga))
-    P33=Ga+1.0j*Ba+2.0j*pi*f*Ct
+    P33=Ga+1.0j*Ba+2.0j*pi*frq*Ct
     return (P11, P12, P13,
             P21, P22, P23,
             P31, P32, P33), Ga, Ba, Ct
 
+def _get_RAM_P2(frq, f0=5.000000001e9, alpha=1.247, rs=0.0j, Y0=None, dloss1=0.0, dloss2=0.0,
+               W=25.0e-6, Np=9, ft="double",
+               vf=3488.0, Dvv=0.024, epsinf=46.0*eps0):
+    if Y0 is None:
+        Y0=pi*f0*W*epsinf/Dvv
 
+    Ct_mult={ "single" : 1.0, "double" : sqrt(2)}[ft]
+    Ct=Ct_mult*W*epsinf*Np
+
+    ft_mult={"double" : 2.0, "single" : 1.0}[ft]
+    lbda0=vf/f0
+    p=lbda0/(2*ft_mult)
+    N_IDT=2*ft_mult*Np
+    L_IDT=Np*lbda0
+
+    #f, alp, r, Y=meshgrid(frq, alpha, rs, Y0)
+    print "start P"
+    P=_get_RAM_P_one_f(f=frq, Dvv=Dvv, epsinf=epsinf, W=W, vf=vf, rs=rs, Y0=Y0, p=p,
+                        N_IDT=N_IDT, alpha=alpha, ft=ft, Np=Np, f0=f0, dloss1=dloss1, dloss2=dloss2, L_IDT=L_IDT)
+    print "P_done"
+
+    (P11, P12, P13,
+     P21, P22, P23,
+     P31, P32)=[squeeze(P_ele) for P_ele in zip(*P)]
+    print "P_done 2"
+    Ga=2.0*absolute(P13)**2
+    Ba=-imag(hilbert(Ga))
+    P33=Ga+1.0j*Ba+2.0j*pi*frq*Ct
+    return (P11, P12, P13,
+            P21, P22, P23,
+            P31, P32, P33), Ga, Ba, Ct
 c1=frq/f0*(sin(X)/X)**2.0
 
 
@@ -126,16 +158,30 @@ c3=frq/f0*(sqrt(2.0)*cos(pi*frq/(4*f0))*1.0/Np*sin(X)/sin(X/Np))**2
 
 c4=frq/f0*(alp_arr/alp_0*sqrt(2.0)*cos(pi*frq/(4*f0))*1.0/Np*sin(X)/sin(X/Np))**2
 
+tstart=time()
 (P11, P12, P13,
  P21, P22, P23,
  P31, P32, P33), Ga, Ba, Ct=_get_RAM_P(frq=frq, alpha=alp_arr, ft=ft, Y0=Y0_arr, rs=_get_rs(frq), Np=Np)
-
+print time()-tstart
 Y0=pi*f0*W*epsinf/Dvv
 c5=(absolute(P13)/(alp_0*Dvv*sqrt(Y0)*Np*sqrt(2)))**2
+
 
 absP13=absolute(P13)
 #c5=(absP13/max(absP13[4000:6000]))**2
 
+#tstart=time()
+#(P11, P12, P13,
+# P21, P22, P23,
+# P31, P32, P33), Ga, Ba, Ct=_get_RAM_P2(frq=frq, alpha=alp_arr, ft=ft, Y0=Y0_arr, rs=_get_rs(frq), Np=Np)
+#print time()-tstart
+#Y0=pi*f0*W*epsinf/Dvv
+#c6=(absolute(P13)/(alp_0*Dvv*sqrt(Y0)*Np*sqrt(2)))**2
+
+plt.figure()
+plt.plot(frq/f0, c5, label="sinc sq")
+#plt.plot(frq/f0, c6, label="sinc sq")
+plt.show()
 l1=-(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
 l2=(1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
 

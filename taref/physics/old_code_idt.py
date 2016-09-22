@@ -134,3 +134,62 @@ Created on Wed Sep 21 17:52:51 2016
         return imag(hilbert(self.fixed_coupling))
 
         #Ga0_mult=self._get_Ga0_mult(f=f0, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, ft=ft)
+    def _get_RAM_P_one_f(self, f, Dvv, epsinf, W, vf,  rs, p, N_IDT, alpha, ft, Np, f0, dloss1, dloss2, L_IDT):
+        #alpha=self._get_alpha(f=f, f0=f0, ft_mult=self.ft_mult, eta=self.eta, epsinf=epsinf)
+        gamma=self._get_couple_factor(f=f, f0=f0, ft_mult=self.ft_mult, eta=self.eta, epsinf=epsinf, Ct_mult=self.Ct_mult, K2=self.K2, Np=Np)
+
+        Y0=self._get_Y0(f=f, Dvv=Dvv, epsinf=epsinf, W=W)
+        rs=0.0j #self._get_rs(f=f)
+        #print rs
+        k=2*pi*f/vf#-1.0j*(f/f0*dloss1+dloss2*(f/f0)**2)
+        ts = sqrt(1.0-absolute(rs)**2)
+        A = 1.0/ts*matrix([[exp(-1.0j*k*p),       rs      ],
+                           [-rs,             exp(1.0j*k*p)]])#.astype(complex128)
+        AN=A**int(N_IDT)
+        AN11, AN12, AN21, AN22= AN[0,0], AN[0,1], AN[1,0], AN[1,1]
+        P11=-AN21/AN22
+        P21=AN11-AN12*AN21/AN22
+        P12=1.0/AN22
+        P22=AN12/AN22
+        D = -1.0j*alpha*Dvv*sqrt(Y0) #/(2.0*Np)
+        #D = -1.0j*sqrt(self.Ga0)/(2.0*Np)#*alpha*Dvv*sqrt(Y0)
+
+        B = matrix([(1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0), (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)])
+        #B0 = (1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0)
+        #B1 = (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)
+
+        I = eye(2)
+        if ft=="single":
+            P32=D*(B*inv(I-A**2)*(I-A**(2*int(Np)))*matrix([[0],
+                                                            [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-p)/2.0)]]))[0] #geometric series
+        else:
+            P32_base=((I+A)*inv(I-A**4)*(I-A**(4*int(Np))))*matrix([[0],
+                                                                  [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-2.0*p)/2.0)]])
+            P32=D*(B*P32_base)
+            #P32=D*(B0*P32_base[0,0]+B1*P32_base[1,0])
+            #P32=D*B*((I+A)*inv(I-A**4)*(I-A**(4*int(Np))))*matrix([[0],
+            #                                                      [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-2.0*p)/2.0)]]))[0] #geometric series
+        P31=P32
+        P13=P23=-P31/2.0
+        return (P11, P12, P13,
+                P21, P22, P23,
+                P31, P32)
+    @log_func
+    def _get_RAM_P(self, W, rs, Np, vf, Dvv, epsinf, Ct, p, N_IDT, ft, f0, dloss1, dloss2, L_IDT):
+        frq, alpha=self.fixed_freq, self.fixed_alpha
+        print "start P"
+        P=[self._get_RAM_P_one_f(f=f, Dvv=Dvv, epsinf=epsinf, W=W, vf=vf, rs=rs, p=p,
+                                 N_IDT=N_IDT, alpha=alpha[i], ft=ft, Np=Np, f0=f0, dloss1=dloss1, dloss2=dloss2, L_IDT=L_IDT) for i, f in enumerate(frq)]
+        print "P_done"
+
+        (P11, P12, P13,
+         P21, P22, P23,
+         P31, P32)=[array(P_ele) for P_ele in zip(*P)]
+        print "P_done 2"
+        Ga=squeeze(2.0*absolute(P13)**2)
+        Ba=imag(hilbert(Ga))
+        P33=Ga+1.0j*Ba+2.0j*pi*f*Ct
+        return (P11, P12, P13,
+                P21, P22, P23,
+                P31, P32, P33), Ga, -Ba
+

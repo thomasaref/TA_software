@@ -6,13 +6,10 @@ Created on Tue Jan  5 01:07:15 2016
 """
 
 from taref.core.log import log_debug
-from taref.physics.fundamentals import sinc_sq, pi, eps0
-from taref.physics.legendre import lgf, lgf_arr#, lgf_fixed
-from taref.core.agent import Agent
-from atom.api import Float, Int, Enum, Value, Property, Typed
+from taref.physics.fundamentals import pi
+from atom.api import Float, Int, Enum
 from taref.core.api import private_property, log_callable, get_tag, SProperty, log_func, t_property, s_property, sqze, Complex, Array, tag_callable
-from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, matrix, eye, absolute, exp, ones, squeeze, log10, fft, float64, int64, cumsum
-#from matplotlib.pyplot import plot, show, xlabel, ylabel, title, xlim, ylim, legend
+from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, matrix, eye, absolute, exp, log, ones, squeeze, log10, fft, float64, int64, cumsum
 from numpy.linalg import inv
 from scipy.signal import hilbert
 from taref.plotter.api import line, Plotter, scatter
@@ -31,6 +28,7 @@ class IDT(Rho):
     mus_type=Enum("formula", "center")
     Ga_type=Enum("sinc", "giant atom", "full sum")
     Ba_type=Enum("hilbert", "formula")
+    rs_type=Enum("formula", "constant")
 
 
     def _default_fixed_freq_max(self):
@@ -98,13 +96,13 @@ class IDT(Rho):
     def df_corr(self, f, f0):
         return sqrt(2.0)*cos(pi*f/(4*f0))
 
-    mus=SProperty().tag(desc="Datta voltage coefficient", expression=r"$\mu=j \alpha \Delta v/v$", label="Voltage coeffecient")
+    mus=SProperty().tag(desc="Datta voltage coefficient", expression=r"$\mu=j \alpha \Delta v/v$", label="Voltage coeffecient (one finger)")
     @mus.getter
     def _get_mus(self, f, f0, ft_mult, eta, epsinf, Dvv):
         alpha=self._get_alpha(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf)
         return 1.0j*alpha*Dvv
 
-    mus0=SProperty().tag(desc="Datta voltage coefficient", expression=r"$\mu_0=j \alpha_0 \Delta v/v$", label="Voltage coeffecient (center frequency)")
+    mus0=SProperty().tag(desc="Datta voltage coefficient", expression=r"$\mu_0=j \alpha_0 \Delta v/v$", label="Voltage coeffecient (center frequency, one finger)")
     @mus0.getter
     def _get_mus0(self, f0, ft_mult, eta, epsinf, Dvv):
         return self._get_mus(f=f0, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Dvv=Dvv)
@@ -147,8 +145,11 @@ class IDT(Rho):
         elif self.Ga_type=="giant atom":
             cpl_form=Np*self.giant_atom(f=f, f0=f0, Np=Np)
 
-        #if self.Ga_type=="full sum"
-        mu=mus*df_corr*cpl_form
+        if self.Ga_type=="full sum":
+            mu=mus*self._get_Asum(f=f, f0=f0, Np=Np)
+        else:
+            mu=mus*df_corr*cpl_form
+
         return 2.0*Y0*absolute(mu)**2
 
     Ga0=SProperty().tag(desc="Ga (center frequency)")
@@ -171,7 +172,7 @@ class IDT(Rho):
             if self.Ga_type=="sinc":
                 return -Ga0*self.sinc_sq_ls(f=f, f0=f0, Np=Np) #(sin(2.0*X)-2.0*X)/(2.0*X**2.0)
             if self.Ga_type=="giant atom":
-                return Ga0*self.giant_atom_ls(f=f, f0=f0, Np=Np) #(1.0/Np)**2*2*(Np*sin(2*gX/Np)-sin(2*gX))/(2*(1-cos(2*gX/Np)))
+                return -Ga0*self.giant_atom_ls(f=f, f0=f0, Np=Np) #(1.0/Np)**2*2*(Np*sin(2*gX/Np)-sin(2*gX))/(2*(1-cos(2*gX/Np)))
         Ga=self._get_Ga(f=self.fixed_freq, f0=f0, Np=Np, W=W, Dvv=Dvv, epsinf=epsinf, eta=eta, ft_mult=ft_mult)
         yp=-imag(hilbert(Ga))
         return interp(f, self.fixed_freq, yp)
@@ -241,6 +242,7 @@ class IDT(Rho):
         """resets fixed properties in proper order"""
         super(IDT, self).fixed_reset()
         self.get_member("fixed_P").reset(self)
+        self.get_member("fixed_RAM_P").reset(self)
         self.get_member("fixed_X").reset(self)
         self.get_member("fixed_Asum").reset(self)
         self.get_member("fixed_Ga").reset(self)
@@ -378,14 +380,12 @@ class IDT(Rho):
     def _get_N_IDT(self, ft_mult, Np):
         return 2*ft_mult*Np#+ft_mult*(Np+1)
 
-    def _get_RAM_P_one_f(self, f, Dvv, epsinf, W, vf,  rs, p, N_IDT, alpha, ft, Np, f0, dloss1, dloss2, L_IDT):
-        #alpha=self._get_alpha(f=f, f0=f0, ft_mult=self.ft_mult, eta=self.eta, epsinf=epsinf)
-        gamma=self._get_couple_factor(f=f, f0=f0, ft_mult=self.ft_mult, eta=self.eta, epsinf=epsinf, Ct_mult=self.Ct_mult, K2=self.K2, Np=Np)
 
-        Y0=self._get_Y0(f=f, Dvv=Dvv, epsinf=epsinf, W=W)
-        rs=0.0j #self._get_rs(f=f)
-        #print rs
-        k=2*pi*f/vf#-1.0j*(f/f0*dloss1+dloss2*(f/f0)**2)
+    def _get_RAM_P_one_f(self, f, p, N_IDT, L_IDT, f0, alpha, rs, Y0, dloss1, dloss2,
+                         W, Np,  ft,
+                         vf, Dvv, epsinf):
+        #k=2*pi*f/vf#-1.0j*(f/f0*dloss1+dloss2*(f/f0)**2) 0.19 f/1e9 + 0.88 (f/1e9)**2 dB/us*1e6/3488 *log(10.0)/20.0
+        k=2*pi*f/vf-1.0j*(dloss1*f/1e9 + dloss2*(f/1e9)**2)*1e6/3488*log(10.0)/20.0
         ts = sqrt(1.0-absolute(rs)**2)
         A = 1.0/ts*matrix([[exp(-1.0j*k*p),       rs      ],
                            [-rs,             exp(1.0j*k*p)]])#.astype(complex128)
@@ -395,52 +395,82 @@ class IDT(Rho):
         P21=AN11-AN12*AN21/AN22
         P12=1.0/AN22
         P22=AN12/AN22
-        D = -1.0j*alpha*Dvv*sqrt(Y0) #/(2.0*Np)
-        #D = -1.0j*sqrt(self.Ga0)/(2.0*Np)#*alpha*Dvv*sqrt(Y0)
-
+        D = -1.0j*alpha*Dvv*sqrt(Y0)
         B = matrix([(1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0), (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)])
-        #B0 = (1.0-rs/ts+1.0/ts)*exp(-1.0j*k*p/2.0)
-        #B1 = (1.0+rs/ts+1.0/ts)*exp(1.0j*k*p/2.0)
-
         I = eye(2)
         if ft=="single":
-            P32=D*(B*inv(I-A**2)*(I-A**(2*int(Np)))*matrix([[0],
-                                                            [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-p)/2.0)]]))[0] #geometric series
+            P32_base=(inv(I-A**2)*(I-A**(2*int(Np))))*matrix([[0],
+                                                            [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-p)/2.0)]]) #geometric series
         else:
             P32_base=((I+A)*inv(I-A**4)*(I-A**(4*int(Np))))*matrix([[0],
                                                                   [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-2.0*p)/2.0)]])
-            P32=D*(B*P32_base)
-            #P32=D*(B0*P32_base[0,0]+B1*P32_base[1,0])
-            #P32=D*B*((I+A)*inv(I-A**4)*(I-A**(4*int(Np))))*matrix([[0],
-            #                                                      [1.0/AN[1,1]*exp(1.0j*k*(L_IDT-2.0*p)/2.0)]]))[0] #geometric series
-        P31=P32
+        P31=P32=D*(B*P32_base)
         P13=P23=-P31/2.0
         return (P11, P12, P13,
                 P21, P22, P23,
                 P31, P32)
 
+    @private_property
+    def fixed_RAM_P(self):
+        if self.Y0_type=="center":
+            Y0=self.Y00
+        else:
+            Y0=self._get_Y0(f=self.fixed_freq)
+        if self.mus_type=="center":
+            alpha=self.alpha0
+        else:
+            alpha=self._get_alpha(f=self.fixed_freq)
+        if self.rs_type=="constant":
+            rs=self.rs
+        else:
+            rs=self._get_rs(f=self.fixed_freq)
+        return self._get_RAM_P(frq=self.fixed_frq, alpha=alpha, Y0=Y0, rs=rs)
 
+#    @private_property
+#    def fixed_Y0(self):
+#        return self._get_Y0(f=self.fixed_freq)
+#
+#    @private_property
+#    def fixed_rs(self):
+#        return self._get_rs(f=self.fixed_freq)
 
     @log_func
-    def _get_RAM_P(self, W, rs, Np, vf, Dvv, epsinf, Ct, p, N_IDT, ft, f0, dloss1, dloss2, L_IDT):
-        frq, alpha=self.fixed_freq, self.fixed_alpha
+    def _get_RAM_P(self, frq, f0, alpha, rs, Y0, dloss1, dloss2,
+                   W, Np, ft,
+                   vf, Dvv, epsinf):
+        if Y0 is None:
+            Y0=pi*f0*W*epsinf/Dvv
+
+        Ct_mult={ "single" : 1.0, "double" : sqrt(2)}[ft]
+        Ct=Ct_mult*W*epsinf*Np
+
+        ft_mult={"double" : 2.0, "single" : 1.0}[ft]
+        lbda0=vf/f0
+        p=lbda0/(2*ft_mult)
+        N_IDT=2*ft_mult*Np
+        L_IDT=Np*lbda0
+
+        if isinstance(alpha, float):
+            alpha=ones(len(frq))*alpha
+        if isinstance(rs, complex):
+            rs=ones(len(frq))*rs
+        if isinstance(Y0, float):
+            Y0=ones(len(frq))*Y0
         print "start P"
-        P=[self._get_RAM_P_one_f(f=f, Dvv=Dvv, epsinf=epsinf, W=W, vf=vf, rs=rs, p=p,
-                                 N_IDT=N_IDT, alpha=alpha[i], ft=ft, Np=Np, f0=f0, dloss1=dloss1, dloss2=dloss2, L_IDT=L_IDT) for i, f in enumerate(frq)]
+        P=[self._get_RAM_P_one_f(f=f, Dvv=Dvv, epsinf=epsinf, W=W, vf=vf, rs=rs[i], Y0=Y0[i], p=p,
+                            N_IDT=N_IDT, alpha=alpha[i], ft=ft, Np=Np, f0=f0, dloss1=dloss1, dloss2=dloss2, L_IDT=L_IDT) for i, f in enumerate(frq)]
         print "P_done"
 
         (P11, P12, P13,
          P21, P22, P23,
-         P31, P32)=[array(P_ele) for P_ele in zip(*P)]
+         P31, P32)=[squeeze(P_ele) for P_ele in zip(*P)]
         print "P_done 2"
-        Ga=squeeze(2.0*absolute(P13)**2)
-        Ba=imag(hilbert(Ga))
-        P33=Ga+1.0j*Ba+2.0j*pi*f*Ct
+        Ga=2.0*absolute(P13)**2
+        Ba=-imag(hilbert(Ga))
+        P33=Ga+1.0j*Ba+2.0j*pi*frq*Ct
         return (P11, P12, P13,
                 P21, P22, P23,
-                P31, P32, P33), Ga, -Ba
-
-
+                P31, P32, P33), Ga, Ba, Ct
 
     @private_property
     def view_window(self):
@@ -497,6 +527,88 @@ def metallization_Lamb(pl="metallization_lamb", **kwargs):
     return pl
 #metallization_Lamb()#.show()
 
+def sinc_check(pl="sinc_check", **kwargs):
+    idt=IDT.process_kwargs(kwargs)
+    idt.Y0_type="center"
+    idt.df_type="center"
+    idt.mus_type="center"
+    idt.Ga_type="sinc"#, "giant atom", "full sum"
+    idt.Ba_type="formula"
+    idt.rs_type="constant"
+    frq=linspace(0e9, 10e9, 10000)
+    idt.fixed_freq_max=20.0*idt.f0
+    pl=line(frq/idt.f0, idt._get_Ga(frq)/idt.Ga0_approx, plotter=pl, label=idt.Ga_type, **kwargs)
+    line(frq/idt.f0, idt._get_coupling(frq)/idt.max_coupling_approx, plotter=pl, label=idt.Ga_type, color="red",  **kwargs)
+    X=idt.Np*pi*(frq-idt.f0)/idt.f0
+    line(frq/idt.f0, (sin(X)/X)**2, plotter=pl, label=idt.Ga_type, color="green", **kwargs)
+    line(frq/idt.f0, idt._get_Ba(frq)/idt.Ga0_approx, plotter=pl, label=idt.Ga_type, **kwargs)
+    idt.Ba_type="hilbert"
+    line(frq/idt.f0, idt._get_Ba(frq)/idt.Ga0_approx, plotter=pl, label=idt.Ga_type, **kwargs)
+    line(frq/idt.f0, -imag(hilbert(idt._get_Ga(frq)/idt.Ga0_approx)), plotter=pl, label=idt.Ga_type, **kwargs)
+    print idt.Ga0, idt.Ga0_approx
+    print idt.Ga0_mult
+    print idt.max_coupling, idt.max_coupling_approx
+    return pl
+#sinc_check().show()
+
+def giant_atom_check(pl="giant_atom_check", **kwargs):
+    idt=IDT.process_kwargs(kwargs)
+    idt.Y0_type="center"
+    idt.df_type="center"
+    idt.mus_type="center"
+    idt.Ga_type="giant atom"#, "full sum"
+    idt.Ba_type="formula"
+    idt.rs_type="constant"
+    frq=linspace(0e9, 10e9, 10000)
+    idt.fixed_freq_max=20.0*idt.f0
+    pl=line(frq/idt.f0, idt._get_Ga(frq)/idt.Ga0_approx, plotter=pl, label=idt.Ga_type, **kwargs)
+    line(frq/idt.f0, idt._get_coupling(frq)/idt.max_coupling_approx, plotter=pl, label=idt.Ga_type, color="red",  **kwargs)
+    X=idt.Np*pi*(frq-idt.f0)/idt.f0
+    Np=idt.Np
+    line(frq/idt.f0, (sin(X)/X)**2, plotter=pl, label=idt.Ga_type, color="purple", **kwargs)
+
+    line(frq/idt.f0, (1.0/Np*sin(X)/sin(X/Np))**2, plotter=pl, label=idt.Ga_type, color="green", **kwargs)
+    line(frq/idt.f0, idt._get_Ba(frq)/idt.Ga0_approx, plotter=pl, label=idt.Ga_type, **kwargs)
+    idt.Ba_type="hilbert"
+    line(frq/idt.f0, idt._get_Ba(frq)/idt.Ga0_approx, plotter=pl, label=idt.Ga_type, **kwargs)
+    line(frq/idt.f0, -imag(hilbert(idt._get_Ga(frq)/idt.Ga0_approx)), plotter=pl, label=idt.Ga_type, **kwargs)
+    print idt.Ga0, idt.Ga0_approx
+    print idt.Ga0_mult
+    print idt.max_coupling, idt.max_coupling_approx
+    return pl
+#giant_atom_check().show()
+
+def sinc_variety_check(pl="sinc_check", **kwargs):
+    idt=IDT.process_kwargs(kwargs)
+    idt.Y0_type="center"
+    idt.df_type="center"
+    idt.mus_type="center"
+    idt.Ga_type="sinc"#, "giant atom", "full sum"
+    idt.Ba_type="formula"
+    frq=linspace(0e9, 10e9, 10000)
+    idt.fixed_freq_max=20.0*idt.f0
+    pl=line(frq/idt.f0, idt._get_Ga(frq)/idt.Ga0_approx, plotter=pl, label=idt.Ga_type, **kwargs)
+    idt.Y0_type="formula"
+    line(frq/idt.f0, idt._get_Ga(frq)/idt.Ga0_approx, plotter=pl, label=idt.Ga_type, color="red", **kwargs)
+    idt.Y0_type="center"
+    idt.df_type="formula"
+    line(frq/idt.f0, idt._get_Ga(frq)/idt.Ga0_approx, plotter=pl, label=idt.Ga_type, color="green", **kwargs)
+    idt.df_type="center"
+    idt.mus_type="formula"
+    line(frq/idt.f0, idt._get_Ga(frq)/idt.Ga0_approx, plotter=pl, label=idt.Ga_type, color="purple", **kwargs)
+
+    X=idt.Np*pi*(frq-idt.f0)/idt.f0
+    line(frq/idt.f0, (sin(X)/X)**2, plotter=pl, label=idt.Ga_type, color="blue", **kwargs)
+    #line(frq/idt.f0, idt._get_Ba(frq)/idt.Ga0_approx, plotter=pl, label=idt.Ga_type, **kwargs)
+    #idt.Ba_type="hilbert"
+    #line(frq/idt.f0, idt._get_Ba(frq)/idt.Ga0_approx, plotter=pl, label=idt.Ga_type, **kwargs)
+    #line(frq/idt.f0, -imag(hilbert(idt._get_Ga(frq)/idt.Ga0_approx)), plotter=pl, label=idt.Ga_type, **kwargs)
+    #print idt.Ga0, idt.Ga0_approx
+    #print idt.Ga0_mult
+    #print idt.max_coupling, idt.max_coupling_approx
+    return pl
+sinc_variety_check().show()
+
 def couple_comparison(pl="couple_compare", **kwargs):
     idt=IDT.process_kwargs(kwargs)
     frq=linspace(0e9, 10e9, 10000)
@@ -507,13 +619,13 @@ def couple_comparison(pl="couple_compare", **kwargs):
     #idt.eta=0.7
     #idt.N_fixed=100000
     idt.fixed_freq_max=20.0*idt.f0
-    idt.S_type="RAM"
-    pl=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="cyan", linewidth=0.5, label=idt.S_type, **kwargs)
+    #idt.S_type="RAM"
+    #pl=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="cyan", linewidth=0.5, label=idt.S_type, **kwargs)
     idt.S_type="simple"
     idt.fixed_reset()
-    idt.couple_type="sinc sq"
+    idt.Ga_type="sinc"
     pl=line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, linewidth=0.5, label=idt.couple_type, **kwargs)
-    idt.couple_type="giant atom"
+    idt.Ga_type="giant atom"
     line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="red", linewidth=0.5, label=idt.couple_type)
     idt.couple_type="df giant atom"
     line(frq/idt.f0, idt._get_coupling(frq), plotter=pl, color="green", linewidth=0.5, label=idt.couple_type)
@@ -526,7 +638,7 @@ def couple_comparison(pl="couple_compare", **kwargs):
     pl.set_ylim(0.0, 1.3e9)
     pl.legend()
     return pl
-#couple_comparison().show()
+couple_comparison().show()
 def RAM_comparison(pl="RAM_compare", **kwargs):
     idt=IDT.process_kwargs(kwargs)
     #idt2=IDT.process_kwargs(kwargs)
