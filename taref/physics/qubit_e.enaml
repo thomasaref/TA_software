@@ -20,7 +20,7 @@ enamldef QubitDockItem(DockItem):
     VGroup:
         attr vmodel = agent
         AgentLooper:
-            iterable=("fq_approx", "fq", "fq2", "voltage", "offset", "flux_factor")
+            iterable=("fq_approx", "fq", "fq2", "voltage", "offset", "flux_factor", "flux_factor_beta")
 
 
 enamldef ApproxQubitDockItem(DockItem):

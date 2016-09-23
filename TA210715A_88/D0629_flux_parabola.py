@@ -93,11 +93,13 @@ qdt=QDTFitter(name="fitting_qdt",
         plot_name="centers")
 qdt.Ejmax=2.75e-23 #h*44.0e9 #h*44.0e9
 qdt.f0=5.32e9 #5.35e9
+qdt.fixed_freq_max=20.0*qdt.f0
+
 #qdt.Ct=1.25e-13
 qdt.K2=0.038
 qdt.S_type="simple"
-qdt.couple_type="sinc^2"
-qdt.Lamb_shift_type="formula"
+#qdt.couple_type="sinc^2"
+#qdt.Lamb_shift_type="formula"
 qdt.Np=9.5
 qdt.Ec=1e-25
 #f=Fitter(plot_name="centers")

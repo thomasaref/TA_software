@@ -31,8 +31,8 @@ class QDT(IDT, Qubit):
 
     fq0=SProperty().tag(desc="center frequency of oscillator")
     @fq0.getter
-    def _get_fq0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np):
-        ls=self._get_Lamb_shift(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+    def _get_fq0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, Dvv, Np, W):
+        ls=self._get_Lamb_shift(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, W=W, Dvv=Dvv, Np=Np, Ct_mult=Ct_mult)
         return sqrt(f*(f-2.0*ls))
 
     @fq0.setter
@@ -41,45 +41,45 @@ class QDT(IDT, Qubit):
 
     fFWHM=SProperty().tag(desc="center frequency of oscillator plus half width")
     @fFWHM.getter
-    def _get_fFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, dephasing):
-        ls=self._get_Lamb_shift(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
-        gamma=self._get_coupling(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+    def _get_fFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, Dvv, Np, W, dephasing):
+        ls=self._get_Lamb_shift(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, W=W, Dvv=Dvv, Np=Np, Ct_mult=Ct_mult)
+        gamma=self._get_coupling(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, W=W, Dvv=Dvv, Np=Np, Ct_mult=Ct_mult)
         fplus=sqrt(f*(f-2.0*ls+2.0*gamma))
         fminus=sqrt(f*(f-2.0*ls-2.0*gamma))
         return fplus, fminus, fplus-fminus+dephasing
 
     fluxfq0=SProperty().tag(desc="center frequency of oscillator as voltage")
     @fluxfq0.getter
-    def _get_fluxfq0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, Ejmax):
-        fq0=self._get_fq0(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+    def _get_fluxfq0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, Dvv, Np, W, Ct, Ejmax):
+        fq0=self._get_fq0(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, Dvv=Dvv, Np=Np, W=W)
         return self._get_flux_from_fq(fq=fq0, Ct=Ct, Ejmax=Ejmax)
 
     fluxfFWHM=SProperty().tag(desc="FWHM of oscillator")
     @fluxfFWHM.getter
-    def _get_fluxfFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, Ejmax):
-        fplus, fminus, fwhm=self._get_fFWHM(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+    def _get_fluxfFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, Dvv, Np, W, Ct, Ejmax):
+        fplus, fminus, fwhm=self._get_fFWHM(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, Dvv=Dvv, Np=Np, W=W)
         Vminus=self._get_flux_from_fq(fq=fplus, Ct=Ct, Ejmax=Ejmax)
         Vplus=self._get_flux_from_fq(fq=fminus, Ct=Ct, Ejmax=Ejmax)
         return Vplus, Vminus, Vplus-Vminus
 
     Vfq0=SProperty().tag(desc="center frequency of oscillator as voltage")
     @Vfq0.getter
-    def _get_Vfq0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, Ejmax, offset, flux_factor):
-        fq0=self._get_fq0(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+    def _get_Vfq0(self, f, f0, ft_mult, eta, epsinf, Ct_mult, Dvv, Np, W, Ct, Ejmax, offset, flux_factor):
+        fq0=self._get_fq0(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, Dvv=Dvv, Np=Np, W=W)
         return self._get_voltage_from_flux_par(fq=fq0, Ct=Ct, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
 
     VfFWHM=SProperty().tag(desc="FWHM of oscillator")
     @VfFWHM.getter
-    def _get_VfFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, Ejmax, offset, flux_factor):
-        fplus, fminus, fwhm=self._get_fFWHM(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+    def _get_VfFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, Dvv, Np, W, Ct, Ejmax, offset, flux_factor):
+        fplus, fminus, fwhm=self._get_fFWHM(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, Dvv=Dvv, Np=Np, W=W)
         Vminus=self._get_voltage_from_flux_par(fq=fplus, Ct=Ct, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
         Vplus=self._get_voltage_from_flux_par(fq=fminus, Ct=Ct, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
         return Vplus, Vminus, Vplus-Vminus
 
     Vfq0_many=SProperty().tag(sub=True)
     @Vfq0_many.getter
-    def _get_Vfq0_many(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, Ejmax, offset, flux_factor):
-        fq0=self._get_fq0(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+    def _get_Vfq0_many(self, f, f0, ft_mult, eta, epsinf, Ct_mult, Dvv, Np, W, Ct, Ejmax, offset, flux_factor):
+        fq0=self._get_fq0(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, Dvv=Dvv, Np=Np, W=W)
         return self._get_voltage_from_flux_par_many(fq=fq0, Ct=Ct, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
 
     GL=Float(1.0)

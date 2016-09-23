@@ -34,29 +34,35 @@ enamldef ExtraIDTDockItem(DockItem):
     title = 'extra IDT Properties'
     AgentVGroup:
         vmodel = agent
-        iterable=("YL", "rs", "ts", "dloss1", "dloss2", "dL", "Gs")
+        iterable=("YL", "rs", "ts", "dloss1", "dloss2", "dL", "Gs", "N_IDT", "L_IDT")
 
 enamldef CoupleIDTDockItem(DockItem):
     name = 'couple_idt'
     title = 'Coupling Properties'
     AgentVGroup:
         vmodel = agent
-        iterable=("couple_mult",  "couple_factor0", "couple_factor",
-                  "coupling", "Lamb_shift")
+        iterable=("max_coupling_approx", "max_coupling", "coupling", "Lamb_shift")
+
+enamldef MuIDTDockItem(DockItem):
+    name = 'mu_idt'
+    title = 'Mu Properties'
+    AgentVGroup:
+        vmodel = agent
+        iterable=( "mus0", "mus", "Y00", "Y0")
 
 enamldef GaIDTDockItem(DockItem):
     name = 'Ga_idt'
     title = 'Ga/Ba Properties'
     AgentVGroup:
         vmodel = agent
-        iterable=("Ga0_mult", "Ga0", "Ga", "Ba", "X")
+        iterable=("Ga0_mult", "Ga0_approx", "Ga0", "Ga", "Ba")
 
 enamldef TypeControlsDockItem(DockItem):
     name = 'type_controls'
     title = 'Type Controls'
     AgentVGroup:
         vmodel = agent
-        iterable=("couple_type", "Lamb_shift_type", "S_type")
+        iterable=("Y0_type", "df_type", "mus_type", "Ga_type", "Ba_type", "rs_type", "S_type")
         #Conditional:
         #    condition << agent.S_type =="RAM"
         #    UnitComplexVar:
@@ -106,7 +112,7 @@ enamldef TypeControlsDockItem(DockItem):
 
 enamldef IDTDockArea(DockArea):
     layout = VSplitLayout(HSplitLayout('plots', 'material', 'finger', "frequency", "alpha"),
-                          HSplitLayout("type_controls", "idt", "couple_idt", "Ga_idt"),
+                          HSplitLayout("type_controls", "idt", "couple_idt", "mu_idt", "Ga_idt"),
                           HSplitLayout("extra_idt", "numeric"))
 
     MaterialDockItem:
@@ -124,6 +130,8 @@ enamldef IDTDockArea(DockArea):
     IDTDockItem:
         pass
     CoupleIDTDockItem:
+        pass
+    MuIDTDockItem:
         pass
     GaIDTDockItem:
         pass

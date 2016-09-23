@@ -51,10 +51,15 @@ ideal_qdt=QDT(name="idealQDT",
         offset=-0.07,
         loop_width=2.7e-6,
         loop_height=1.5e-6)
+ideal_qdt.fixed_freq_max=20.0*ideal_qdt.f0
 
 ideal_qdt.S_type="simple"
-ideal_qdt.couple_type="sinc sq"
-ideal_qdt.Lamb_shift_type="formula"
+ideal_qdt.Y0_type="formula"
+ideal_qdt.df_type="formula"
+ideal_qdt.mus_type="formula"
+ideal_qdt.Ga_type="giant atom"
+ideal_qdt.Ba_type="hilbert"
+ideal_qdt.rs_type="formula"
 ideal_qdt.f=ideal_qdt.fq
 #qdt=QDT(material='LiNbYZ',
 #        ft="double",
@@ -87,11 +92,25 @@ qdt=QDT(name="fittedQDT",
         loop_height=1.5e-6)
 qdt.Ejmax=2.75e-23 #h*44.0e9 #h*44.0e9
 qdt.f0=5.3e9 #5.35e9
+qdt.fixed_freq_max=20.0*qdt.f0
+qdt.eta=0.55
+
 #qdt.Ct=1.25e-13
 qdt.K2=0.038
+#qdt.Y0_type="center"
+#qdt.df_type="center"
+#qdt.mus_type="center"
+#qdt.Ga_type="sinc"
+#qdt.Ba_type="formula"
+#qdt.rs_type="constant"
 qdt.S_type="simple"
-qdt.couple_type="sinc sq"
-qdt.Lamb_shift_type="formula"
+qdt.Y0_type="formula"
+qdt.df_type="formula"
+qdt.mus_type="formula"
+qdt.Ga_type="giant atom"
+qdt.Ba_type="hilbert"
+qdt.rs_type="formula"
+qdt.flux_factor_beta=0.01
 qdt.Np=9.5
 qdt.Ec=1e-25
 qdt.dephasing=25e6

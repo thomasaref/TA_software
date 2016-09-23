@@ -11,7 +11,7 @@ from scipy.constants import e, h, hbar, k as kB, epsilon_0 as eps0, pi
 c_eta = 0.8
 
 from numpy import (sin, cos, arccos, sqrt, exp, empty, mean, exp, log10, arange, array, ndarray, delete,
-                   absolute, dtype, angle, amin, amax, linspace, zeros, shape, append)
+                   absolute, dtype, angle, amin, amax, linspace, zeros, shape, append, sign)
 
 
 from taref.core.api import Agent, Array, SProperty, private_property
@@ -179,13 +179,20 @@ class Qubit(Agent):
     offset=Float(0.09).tag(unit="V", desc="offset of flux in volts")
     flux_factor=Float(0.195).tag(desc="converts voltage to flux")
 
+    flux_factor_beta=Float().tag(desc="linear dependenc on magnetic field")
+
     flux_over_flux0=SProperty().tag(expression=r"$\Phi/\Phi_0=$(voltage-offset)fluxfactor", unit="pi")
     @flux_over_flux0.getter
-    def _get_flux_over_flux0(self, voltage, offset, flux_factor):
-        return (voltage-offset)*flux_factor
+    def _get_flux_over_flux0(self, voltage, offset, flux_factor, flux_factor_beta):
+        return (voltage-offset)*flux_factor/(1.0-flux_factor_beta*(voltage-offset))
+        #return (voltage-offset)*flux_factor
 
     @flux_over_flux0.setter
-    def _get_voltage(self, flux_over_flux0, offset, flux_factor):
+    def _get_voltage(self, flux_over_flux0, offset, flux_factor, flux_factor_beta):
+        #return flux_over_flux0/flux_factor*(1-flux_factor_beta/flux_factor*flux_over_flux0)+offset
+        #return flux_over_flux0/flux_factor+offset+sign(flux_over_flux0)*flux_factor_beta*flux_over_flux0**2
+        #return flux_over_flux0/flux_factor+offset+flux_factor_beta*flux_over_flux0**3
+
         return flux_over_flux0/flux_factor+offset
 
     flux_parabola=SProperty()
@@ -215,15 +222,15 @@ class Qubit(Agent):
 
     voltage_from_flux_par_many=SProperty().tag(sub=True)
     @voltage_from_flux_par_many.getter
-    def _get_voltage_from_flux_par_many(self, fq, Ct, Ejmax, offset, flux_factor):
+    def _get_voltage_from_flux_par_many(self, fq, Ct, Ejmax, offset, flux_factor, flux_factor_beta):
         #Ec=self._get_Ec(Ct=Ct)
         #Ej=self._get_Ej_get_fq(fq=f, Ec=Ec)
         fdf0=self._get_flux_from_fq(fq, Ct, Ejmax) #self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
 
         #fdf0=self._get_flux_over_flux0_get_Ej(Ej=Ej, Ejmax=Ejmax)
         flux_d_flux0=append(fdf0, -fdf0)
-        flux_d_flux0=append(flux_d_flux0, -fdf0+pi)
-        flux_d_flux0=append(flux_d_flux0, fdf0-pi)
+        flux_d_flux0=append(flux_d_flux0, -fdf0+pi*(1+flux_factor_beta))
+        flux_d_flux0=append(flux_d_flux0, fdf0-pi*(1+flux_factor_beta))
         freq=append(fq, fq)
         freq=append(freq, freq)
         return freq/1e9, self._get_voltage(flux_over_flux0=flux_d_flux0, offset=offset, flux_factor=flux_factor)

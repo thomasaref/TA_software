@@ -110,22 +110,22 @@ def combo_plots():
     pl.set_ylim(-0.05, 0.15)
     pl.add_label("d)")
     pls.append(pl)
-
-    pl="FFT_magabs"
-    pl1="Fit_magabs"
-    for d in lyzers:
-        d.filter_type="Fit"
-        pl1, pf=d.magabs_colormesh(pl=pl1, pf_too=True)#, cmap="nipy_spectral")
-        d.filter_type="FFT"
-        pl=d.magabs_colormesh(pl=pl, auto_zlim=False, vmin=pf.vmin, vmax=pf.vmax)#, cmap="nipy_spectral")
-    pl.set_xlim(3.8, 6.05)
-    pl.set_ylim(3.8, 6.05)
-    pl.add_label("a)")
-    pl1.set_xlim(3.8, 6.05)
-    pl1.set_ylim(3.8, 6.05)
-    pl1.add_label("b)")
-    pls.append(pl)
-    pls.append(pl1)
+    if 0:
+        pl="FFT_magabs"
+        pl1="Fit_magabs"
+        for d in lyzers:
+            d.filter_type="Fit"
+            pl1, pf=d.magabs_colormesh(pl=pl1, pf_too=True)#, cmap="nipy_spectral")
+            d.filter_type="FFT"
+            pl=d.magabs_colormesh(pl=pl, auto_zlim=False, vmin=pf.vmin, vmax=pf.vmax)#, cmap="nipy_spectral")
+        pl.set_xlim(3.8, 6.05)
+        pl.set_ylim(3.8, 6.05)
+        pl.add_label("a)")
+        pl1.set_xlim(3.8, 6.05)
+        pl1.set_ylim(3.8, 6.05)
+        pl1.add_label("b)")
+        pls.append(pl)
+        pls.append(pl1)
 
 #
 #    pl="Fit magabs"
@@ -139,7 +139,7 @@ def combo_plots():
 
 if __name__=="__main__":
     pls=combo_plots()
-    a.save_plots(pls)
+    #a.save_plots(pls)
 
     pls[0].show()
 

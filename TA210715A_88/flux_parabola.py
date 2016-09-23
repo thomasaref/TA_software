@@ -55,5 +55,5 @@ def flux_plots():
 
 if __name__=="__main__":
     pls=flux_plots()
-    a.save_plots(pls)
+    #a.save_plots(pls)
     pls[0].show()
