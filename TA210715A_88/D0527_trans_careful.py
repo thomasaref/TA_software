@@ -5,45 +5,110 @@ Created on Sun Apr 24 18:55:33 2016
 @author: thomasaref
 """
 
-from TA88_fundamental import TA88_Lyzer, TA88_Read, idt#, qdt
+from TA88_fundamental import TA88_Lyzer, TA88_Read#, idt#, qdt
 from taref.plotter.api import colormesh, line, Plotter, scatter
-from taref.core.api import set_tag, set_all_tags
+from taref.core.api import set_tag, set_all_tags, get_all_tags, get_tag
 from numpy import exp, array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape, linspace, interp, absolute, fft, log10, angle, unwrap
-from atom.api import FloatRange, Int, Float
+from atom.api import FloatRange, Int, Float, Typed, Unicode
 from taref.core.api import tag_property
+from taref.core.universal import ODict
+
 from taref.plotter.api import LineFitter
 from taref.physics.fundamentals import h#, filt_prep
-from scipy.optimize import fsolve
-from scipy.signal import freqz
-from taref.physics.fitting_functions import lorentzian, rpt_fit, lorentzian2
+from taref.physics.idt import IDT
 from time import time
-a=TA88_Lyzer(filt_center=731, filt_halfwidth=200, on_res_ind=0, VNA_name="RS VNA",
+
+a=TA88_Lyzer( on_res_ind=0, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0527/S1A4_careful_trans.hdf5"),
-            fit_func=lorentzian,  #[0.2,2.3, 3e-7, 7.5e-7],
-            offset=0.07, fit_type="yoko", rt_atten=30.0,#indices=range(50, 534),
+            offset=0.07,
+            #fit_type="yoko",
+            rt_atten=30.0,#indices=range(50, 534),
             ) #33, 70
 #print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
 
-
+a.filt.center=731
+a.filt.halfwidth=200
 a.read_data()
 
-b=TA88_Lyzer(filt_center=731, filt_halfwidth=200, on_res_ind=0, VNA_name="RS VNA",
+b=TA88_Lyzer(on_res_ind=0, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0531/S4A4_careful_unswitched.hdf5"),
-            fit_func=lorentzian,  #[0.2,2.3, 3e-7, 7.5e-7],
-            offset=0.07, fit_type="yoko", rt_atten=30.0,#indices=range(50, 534),
+            offset=0.07,
+            #fit_type="yoko",
+            rt_atten=30.0,#indices=range(50, 534),
             ) #33, 70
+b.filt.center=731
+b.filt.halfwidth=200
 b.read_data()
 
 if __name__=="__main__":
 
-    b.filt_compare(a.on_res_ind)
+    #b.filt_compare(a.on_res_ind)
     print a.net_loss, a.rt_atten
-    pl=a.magabs_colormesh()#magabs_colormesh3(s3a4_wg)
-    pl=a.hann_ifft_plot()
+    #pl=a.magabs_colormesh()#magabs_colormesh3(s3a4_wg)
+    #pl=a.hann_ifft_plot()
     pl=a.ifft_plot()#.show()
-    pl=a.filt_compare(a.on_res_ind)
+    pl=a.filt_compare(a.on_res_ind)#.show()
     #line(a.frequency, 20*log10(absolute(idt._get_S13(f=a.frequency))), plotter=pl)[0].show()
-    pl, pf=line(b.frequency, a.MagdBFilt[:, 0]-b.MagdB[:, 0], linewidth=0.5)
+
+    class IDTFitter(IDT):
+        base_name="idt_fitter"
+
+        plotter=Typed(Plotter).tag(private=True)
+        plot_name=Unicode().tag(private=True)
+        data_dict=ODict().tag(private=True)
+
+        def __setattr__(self, name, value):
+            super(IDTFitter, self).__setattr__(name, value)
+            self.update_plot(dict(type="update"))
+
+        def _default_plotter(self):
+            if self.plot_name=="":
+                self.plot_name=self.name
+            pl=Plotter(name=self.name)
+            for param in get_all_tags(self, "plot"):
+                print param
+                pl, pf=line(*getattr(self, param), plot_name=get_tag(self, param, "plot"), plotter=pl, pf_too=True)
+                self.data_dict[param]=pf.plot_name
+            return pl
+
+        def update_plot(self, change):
+            if change["type"]=="update":
+                print self.data_dict
+                for param, plot_name in self.data_dict.iteritems():
+                    print param, plot_name
+                    self.get_member(param).reset(self)
+                    self.plotter.plot_dict[plot_name].alter_xy(*getattr(self,param))
+
+        @tag_property(private=True)
+        def frequency(self):
+            return linspace(3.5e9, 7.5e9, 1000)
+
+        @tag_property(private=True, plot="flux_par")
+        def data(self):
+            (S11, S12, S13,
+             S21, S22, S23,
+             S31, S32, S33)=self._get_simple_S(f=self.frequency)
+            return self.frequency, 20*log10(absolute(S13))
+
+    idt=IDTFitter(name="fitting_idt",
+            material='LiNbYZ',
+            ft="double",
+            a=96.0e-9, #f0=5.35e9,
+            Np=36,
+            W=25.0e-6,
+            eta=0.5,
+            plot_name="transmission")
+    #qdt.f0=5.32e9 #5.35e9
+    #idt.fixed_freq_max=20.0*idt.f0
+
+    #qdt.Ct=1.25e-13
+    #idt.K2=0.038
+    idt.S_type="simple"
+    #qdt.couple_type="sinc^2"
+    #qdt.Lamb_shift_type="formula"
+    #qdt.Np=9.5
+    pl1=idt.plotter
+    line(a.frequency, a.MagdB[:, 0]+8.26+3, linewidth=0.5, pl=pl1, color="red").show()
 
     from taref.plotter.fitter import LineFitter2
 

@@ -33,7 +33,7 @@ class IDT(Rho):
         return "giant atom"
 
     def _default_fixed_freq_max(self):
-        return 200.0*self.f0
+        return 20.0*self.f0
 
     def _default_f(self):
         """default f is 0.01Hz off from f0"""

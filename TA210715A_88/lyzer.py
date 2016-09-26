@@ -489,9 +489,14 @@ class Lyzer(LyzerBase):
         return pl
 
     #@plots
-    def filt_compare(self, ind):
-        pl, pf=line(self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)", plotter="filtcomp_{}".format(self.name))
-        line(self.frequency, self.MagdBFilt[:, ind], label="MagAbs (filtered)", plotter=pl)
+    def filt_compare(self, ind, **kwargs):
+        process_kwargs(self, kwargs)
+        pl=kwargs.pop("pl", "filtcomp_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
+
+        self.filter_type="None"
+        pl=line(self.frequency, self.MagdB[:, ind], label="MagAbs (unfiltered)", plotter=pl)
+        self.filter_type="FFT"
+        line(self.frequency, self.MagdB[:, ind], label="MagAbs (filtered)", plotter=pl)
         return pl
 
     #@plots

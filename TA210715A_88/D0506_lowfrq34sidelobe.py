@@ -32,7 +32,7 @@ if __name__=="__main__":
 
     #pls=d0506_plots()
     pls=a.fft_plots()
-    a.save_plots(pls)
+    #a.save_plots(pls)
     pls[0].show()
     #pl=a.magabs_colormesh()#magabs_colormesh3(s3a4_wg)
     #pl=a.hann_ifft_plot()

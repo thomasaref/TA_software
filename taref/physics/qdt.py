@@ -17,11 +17,6 @@ from enaml import imports
 with imports():
     from taref.physics.qdt_e import QDTView
 
-
-Tc_Al=1.315 #critical temperature of aluminum
-Delta_Al=200.0e-6*e #gap of aluminum
-
-
 class QDT(IDT, Qubit):
     base_name="QDT"
 
@@ -101,21 +96,22 @@ class QDT(IDT, Qubit):
         return (S11, S12, S13,
                 S21, S22, S23,
                 S31, S32, S33)
-    #lamb_shifted_transmon_energy=SProperty()
-    #@lamb_shifted_transmon_energy.getter
-#    def _get_lamb_shifted_transmon_energy(self, Ej, Ec, m, couple_mult, f0, K2, Np):
-#        Em=-Ej+sqrt(8.0*Ej*Ec)*(m+0.5) - (Ec/12.0)*(6.0*m**2+6.0*m+3.0)
-#        if m==0:
-#            return Em
-#        Emm1=-Ej+sqrt(8.0*Ej*Ec)*(m-1+0.5) - (Ec/12.0)*(6.0*(m-1)**2+6.0*(m-1)+3.0)
-#        fq=(Em-Emm1)/h
-#        fls=self._get_Lamb_shift(f=fq, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np)
-#        return Em+h*fls
-#
-#    lamb_shifted_transmon_energy_levels=SProperty()
-#    @lamb_shifted_transmon_energy_levels.getter
-#    def _get_lamb_shifted_transmon_energy_levels(self, Ej, couple_mult, f0, K2, Np, Ec, n_energy):
-#        return [self._get_lamb_shifted_transmon_energy(Ej=Ej, Ec=Ec, m=m, couple_mult=couple_mult, f0=f0, K2=K2, Np=Np) for m in range(n_energy)]
+    lamb_shifted_transmon_energy=SProperty()
+    @lamb_shifted_transmon_energy.getter
+    def _get_lamb_shifted_transmon_energy(self, Ej, Ec, m, f0, ft_mult, eta, epsinf, W, Dvv, Np, Ct_mult):
+        Em=-Ej+sqrt(8.0*Ej*Ec)*(m+0.5) - (Ec/12.0)*(6.0*m**2+6.0*m+3.0)
+        if m==0:
+            return Em
+        Emm1=-Ej+sqrt(8.0*Ej*Ec)*(m-1+0.5) - (Ec/12.0)*(6.0*(m-1)**2+6.0*(m-1)+3.0)
+        fq=(Em-Emm1)/h
+        fls=self._get_Lamb_shift(f=fq, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, W=W, Dvv=Dvv, Np=Np, Ct_mult=Ct_mult)
+        return Em+h*fls
+
+    lamb_shifted_transmon_energy_levels=SProperty()
+    @lamb_shifted_transmon_energy_levels.getter
+    def _get_lamb_shifted_transmon_energy_levels(self, Ej, f0, ft_mult, eta, epsinf, W, Dvv, Np, Ct_mult, Ec, n_energy):
+        return [self._get_lamb_shifted_transmon_energy(Ej=Ej, Ec=Ec, m=m, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf,
+                                                       W=W, Dvv=Dvv, Np=Np, Ct_mult=Ct_mult) for m in range(n_energy)]
 #
 #    lamb_shifted_fq=SProperty().tag(desc="""Operating frequency of qubit""", unit="GHz")
 #    @lamb_shifted_fq.getter
@@ -275,23 +271,28 @@ def anharm_plot(qdt, fig_width=9.0, fig_height=6.0, ymin=-1.5, ymax=1.0):
     #line(EjdivEc, E2p, plotter=pl, color="purple", linewidth=0.5)
     return pl
 
-antonqdt=QDT(name="antonqdt", material='LiNbYZ', #10 finger QDT used for anharmonicity plot in Anton's paper
-        ft="double",
-        a=80.0e-9,
-        Np=10,
-        Rn=3780.0, #(3570.0+4000.0)/2.0,
-        W=25.0e-6,
-        eta=0.5,
-        flux_factor=0.2945,
-        voltage=1.21,
-        offset=0.0)
-antonqdt.Ec=antonqdt.f0*0.1*h #Ec is 1/10 of f0
 
 
-def anton_anharm_plot(fig_width=9, fig_height=6):
+def anton_plots(pl="anton_plot", **kwargs):
+#def anton_anharm_plot(fig_width=9, fig_height=6):
     """reproduces anharm plot in Anton's paper"""
+    antonqdt=QDT(name="antonqdt", material='LiNbYZ', #10 finger QDT used for anharmonicity plot in Anton's paper
+            ft="double",
+            a=80.0e-9,
+            Np=10,
+            Rn=3780.0, #(3570.0+4000.0)/2.0,
+            W=25.0e-6,
+            eta=0.5,
+            flux_factor=0.2945,
+            voltage=1.21,
+            offset=0.0)
+    antonqdt.Ec=antonqdt.f0*0.1*h #Ec is 1/10 of f0
+    antonqdt.Y0_type="center"
+    antonqdt.df_type="center"
+    antonqdt.mus_type="center"
+    antonqdt.Ga_type="sinc"
 
-    pl=Plotter(fig_width=fig_width, fig_height=fig_height)
+
 
     #print qdt.f0*h/qdt.Ec, qdt.epsinf/3.72
     #qdt.Np=10
@@ -315,7 +316,7 @@ def anton_anharm_plot(fig_width=9, fig_height=6):
     fq2=(E2-E1)/h
     ls_fq2=(E2p-E1p)/h #qdt.call_func("lamb_shifted_fq2", EjdivEc=EjdivEc)
 
-    line(fq/antonqdt.f0, (anharmp/h-anharm/h)/(2.0*antonqdt.max_coupling), plotter=pl, linewidth=0.5, color="black", label=r"$\Delta_{2,1}-\Delta_{1,0}$")
+    pl=line(fq/antonqdt.f0, (anharmp/h-anharm/h)/(2.0*antonqdt.max_coupling), plotter=pl, linewidth=0.5, color="black", label=r"$\Delta_{2,1}-\Delta_{1,0}$")
     line(fq/antonqdt.f0, (ls_fq-fq)/(2.0*antonqdt.max_coupling), plotter=pl, color="blue", linewidth=0.5, label=r"$\Delta_{1,0}$")
     line(fq/antonqdt.f0, (ls_fq2-fq2)/(2.0*antonqdt.max_coupling), plotter=pl, color="red", linewidth=0.5, label=r"$\Delta_{2,1}$")
     pl.set_ylim(-1.0, 0.6)
@@ -328,23 +329,27 @@ def anton_anharm_plot(fig_width=9, fig_height=6):
 
     #line(EjdivEc, E1p, plotter=pl, color="green", linewidth=0.5)
     #line(EjdivEc, E2p, plotter=pl, color="purple", linewidth=0.5)
-    return pl
+    #return pl
 
-antonqdt3=QDT(name="antonqdt3", material='LiNbYZ', #10 finger QDT used for anharmonicity plot in Anton's paper
-        ft="double",
-        a=80.0e-9,
-        Np=3,
-        Rn=3780.0, #(3570.0+4000.0)/2.0,
-        W=25.0e-6,
-        eta=0.5,
-        flux_factor=0.2945,
-        voltage=1.21,
-        offset=0.0)
-antonqdt3.Ec=antonqdt3.f0*0.1*h #Ec is 1/10 of f0
+    antonqdt3=QDT(name="antonqdt3", material='LiNbYZ', #10 finger QDT used for anharmonicity plot in Anton's paper
+            ft="double",
+            a=80.0e-9,
+            Np=3,
+            Rn=3780.0, #(3570.0+4000.0)/2.0,
+            W=25.0e-6,
+            eta=0.5,
+            flux_factor=0.2945,
+            voltage=1.21,
+            offset=0.0)
+    antonqdt3.Ec=antonqdt3.f0*0.1*h #Ec is 1/10 of f0
+    antonqdt3.Y0_type="center"
+    antonqdt3.df_type="center"
+    antonqdt3.mus_type="center"
+    antonqdt3.Ga_type="sinc"
 
-def anton_lamb_shift_plot(fig_width=9.0, fig_height=6.0):
+#def anton_lamb_shift_plot(fig_width=9.0, fig_height=6.0):
     """reproduces coupling/lamb shift plot in Anton's paper"""
-    pl=Plotter(fig_width=fig_width, fig_height=fig_height)
+    pl="anton_couple_plot" #Plotter(fig_width=fig_width, fig_height=fig_height)
     EjdivEc=linspace(0.1, 300, 10000)
     Ej=EjdivEc*antonqdt.Ec
     #E0, E1, E2=antonqdt._get_transmon_energy_levels(Ej=Ej, n_energy=3)
@@ -355,7 +360,7 @@ def anton_lamb_shift_plot(fig_width=9.0, fig_height=6.0):
     #fq= (E1-E0)/h#qdt.call_func("fq", Ej=EjdivEc*qdt.Ec)
     coup=antonqdt._get_coupling(fq)
     ls=antonqdt._get_Lamb_shift(fq)
-    line(fq/antonqdt.f0, 2.0*coup/(2.0*antonqdt.max_coupling), plotter=pl, linewidth=0.5, color="red", label=r"$\Gamma$, $N=10$")
+    pl=line(fq/antonqdt.f0, 2.0*coup/(2.0*antonqdt.max_coupling), plotter=pl, linewidth=0.5, color="red", label=r"$\Gamma$, $N=10$")
     line(fq/antonqdt.f0, ls/(2.0*antonqdt.max_coupling), plotter=pl, color="green", linewidth=0.5, label=r"$\Delta$, $N=10$")
 
     #antonqdt.Np=3
@@ -374,7 +379,8 @@ def anton_lamb_shift_plot(fig_width=9.0, fig_height=6.0):
 
 if __name__=="__main__":
     qdt=QDT()
-    qdt.show()
+    #qdt.show()
+    anton_plots().show()
     anton_anharm_plot()
     #anharm_plot(antonqdt).show()
     anton_lamb_shift_plot().show()

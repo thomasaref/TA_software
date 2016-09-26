@@ -184,7 +184,7 @@ class Qubit(Agent):
     flux_over_flux0=SProperty().tag(expression=r"$\Phi/\Phi_0=$(voltage-offset)fluxfactor", unit="pi")
     @flux_over_flux0.getter
     def _get_flux_over_flux0(self, voltage, offset, flux_factor, flux_factor_beta):
-        return (voltage-offset)*flux_factor/(1.0-flux_factor_beta*(voltage-offset))
+        return (voltage-offset)*flux_factor#/(1.0-flux_factor_beta*(voltage-offset))
         #return (voltage-offset)*flux_factor
 
     @flux_over_flux0.setter

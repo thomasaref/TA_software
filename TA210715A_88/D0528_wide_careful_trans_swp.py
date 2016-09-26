@@ -15,24 +15,29 @@ from taref.plotter.api import LineFitter
 from taref.physics.fundamentals import h#, filt_prep
 from scipy.optimize import fsolve
 from scipy.signal import freqz
-from taref.physics.fitting_functions import lorentzian, rpt_fit, lorentzian2
+
 from time import time
-a=TA88_Lyzer(filt_center=731, filt_halfwidth=300, on_res_ind=333, VNA_name="RS VNA",
+a=TA88_Lyzer(on_res_ind=333, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0528/S1A4_careful_trans_swp.hdf5"),
-            fit_func=lorentzian,  #[0.2,2.3, 3e-7, 7.5e-7],
-            offset=0.07, fit_type="yoko", #indices=range(50, 534),
+            #fit_func=lorentzian,  #[0.2,2.3, 3e-7, 7.5e-7],
+            offset=0.07#, fit_type="yoko", #indices=range(50, 534),
             ) #33, 70
 #print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
+a.filt.center=731
+a.filt.halfwidth=300
+a.end_skip=10
 
 
 a.read_data()
 
 if __name__=="__main__":
+    a.filter_type="FFT"
+    #a.bgsub_type="Complex" #"dB"
 
 
     pl=a.magabs_colormesh()#magabs_colormesh3(s3a4_wg)
-    pl=a.hann_ifft_plot()
-    pl=a.ifft_plot()
+    #pl=a.hann_ifft_plot()
+    pl=a.ifft_plot().show()
     #a.filt_compare(a.on_res_ind)
     #filt=filt_prep(601, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind)
     #line(filt*0.001, plotter=pl)
