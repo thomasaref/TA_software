@@ -12,15 +12,15 @@ import matplotlib.pyplot as plt
 from taref.physics.surface_charge import alpha
 from numpy.linalg import inv
 
-f0=3.000000001e9
+f0=5.000000001e9
 
 frq=linspace(1e9, 9e9, 1000).astype(float64)
 frq_q=linspace(2e9, 8e9, 2000).astype(float64)
-Np=36 #9*3.9#*20 #1.2344
+Np=3 #3 #9*3.9#*20 #1.2344
 W=25.0e-6
 ft="double"
 vf=3488.0
-Dvv=  0.0007/2.0 #0.024/4.5 #
+Dvv=  0.048/2 #0.0007/2.0 #0.024/4.5 #
 epsinf=46.0*eps0
 Ct=sqrt(2)*W*Np*epsinf
 

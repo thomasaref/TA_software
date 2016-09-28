@@ -5,8 +5,8 @@ Created on Fri Oct  9 17:17:26 2015
 @author: thomasaref
 """
 
-from atom.api import Unicode, Typed, List, cached_property, Float, Dict, List
-from taref.tex.tex_backbone import (make_table, mult_fig_start, mult_fig_end, include_image, compile_tex)
+from atom.api import Unicode, Typed, List, cached_property, Float, Dict, List, Enum
+from taref.tex.tex_backbone import (make_table, mult_fig_start, mult_fig_end,  compile_tex)
 
 from collections import OrderedDict
 
@@ -30,6 +30,8 @@ class TEX(Operative):
 
     base_name="tex"
     #initial_size=(800,800)
+    tex_type=Enum("simple", "revtex 2 column", "revtex 1 column")
+
 
     folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data", main_dir="tex_processed", quality="")
     source_folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data", main_dir="", quality="")
@@ -73,9 +75,15 @@ class TEX(Operative):
 
     def _default_tex_start(self):
         """This list specifies the starting preamble for the laTeX document and should contain \begin{document} as well as any packages desired"""
-        return [r"\documentclass[12pt,a4paper]{article}",
-                r"\usepackage[top=1 in,  bottom=1 in, left=1 in, right=1 in]{geometry}",
-                r"\usepackage{amsfonts,amssymb,amsmath}",
+        if self.tex_type=="revtex 1 column":
+            list_start=[r"\documentclass[preprint]{revtex4-1}",]
+        elif self.tex_type=="revtex 2 column":
+            list_start=[r"\documentclass[reprint]{revtex4-1}",]
+        else:
+            list_start=[r"\documentclass[12pt,a4paper]{article}",
+                r"\usepackage[top=1 in,  bottom=1 in, left=1 in, right=1 in]{geometry}"]
+
+        list_start.extend([r"\usepackage{amsfonts,amssymb,amsmath}",
                 r"\usepackage{graphicx}",
                 r"\usepackage{hyperref}",
                 r"\usepackage{color}",
@@ -103,9 +111,10 @@ class TEX(Operative):
                 r"\begin{document}",
                 r"\author{{{0}}}".format(self.user_name),
                 r"%\inst{{3}} {{{0}}}".format(self.department),
-                r"\title{{{0}}}".format(self.tex_title),
-                r"\maketitle",
-                r"\noindent"]
+                r"\title{{{0}}}".format(self.tex_title),])
+        if self.tex_type=="simple":
+                list_start.extend([r"\maketitle", r"\noindent"])
+        return list_start
 
     def _default_tex_end(self):
         """this list specifies the ending postamble of the latex document. could include bibtex for example"""
@@ -215,13 +224,15 @@ class TEX(Operative):
         tex.append(r"\end{figure}")
         #savefig(dir_path+fig_name, bbox_inches='tight')
         #close()
-    def add_mult_image(self, fig_name, label="", caption="",  source_folder=None, include_caption=True):
+    def add_mult_image(self, fig_name, label="", caption="",  source_folder=None, include_caption=True, tex_width_factor=0.23):
         """inserts th image specified by dir_path and fig_name into the list tex"""
         if source_folder is None:
             source_folder=self.source_folder
         relative_path=relpath(source_folder.dir_path, self.save_file.folder.dir_path)+source_folder.divider
-        self.tex_list.extend(["\\begin{{subfigure}}[b]{{{}\\textwidth}}".format(self.fig_width),
-                   "\\includegraphics[width=\\textwidth]{{{}}}".format(relative_path+fig_name)])
+
+        tex_w={"revtex 2 column" : str(tex_width_factor)}.get(self.tex_type, str(self.fig_width))
+        self.tex_list.extend(["\\begin{{subfigure}}[b]{{{}\\textwidth}}".format(tex_w),
+                   r"\includegraphics[width=\textwidth]{{{}}}".format(relative_path+fig_name)])
         if include_caption:
             self.tex_list.append("\\caption{{{}}}".format(caption))
         self.tex_list.extend(["\\label{{{}}}".format(label),
@@ -253,7 +264,7 @@ class TEX(Operative):
         #savefig(dir_path+fig_name, bbox_inches='tight')
         #close()
         self.tex_list.extend(["\\begin{{subfigure}}[b]{{{}\\textwidth}}".format(self.fig_width),
-                   "\\includegraphics[width=\\textwidth]{{{}}}".format(fig_name),
+                   "\\includegraphics{{{}}}".format(fig_name),
                    #"\\cprotect\\caption{{{}}}".format(caption),
                    r"\end{subfigure}"])
         self.caption="Analysis: \\verb;{0};".format(file_name)
@@ -267,7 +278,7 @@ class TEX(Operative):
         mult_fig_end(self.tex_list, self.caption)
         self.caption=""
 
-    def include_image(self, fig_name, label="", caption="", source_folder=None):
+    def include_image(self, fig_name, label="", caption="", source_folder=None, tex_width_factor=0.49):
         if source_folder is None:
             source_folder=self.source_folder
         relative_path=relpath(source_folder.dir_path, self.save_file.folder.dir_path)+source_folder.divider
@@ -275,7 +286,15 @@ class TEX(Operative):
         #           "\\includegraphics[width=\\textwidth]{{{}}}".format(relative_path+fig_name)])
 
         #relative_path=relpath(self.source_folder.dir_path, self.save_file.folder.dir_path)+self.source_folder.divider
-        include_image(self.tex_list, relative_path, fig_name, caption, label)
+
+        tex_w={"revtex 2 column" : str(tex_width_factor)}.get(self.tex_type, "")
+        self.tex_list.extend([r"\begin{figure}[ht!]",
+                              r"\centering",
+                              r"\includegraphics[width={0}\textwidth]{{{1}}}".format(tex_w, relative_path+fig_name),
+                              r"\caption{{{}}}".format(caption),
+                              r"\label{{{}}}".format(label),
+                              r"\end{figure}"])
+        #include_image(self.tex_list, relative_path, fig_name, caption, label)
 
     @cached_property
     def view_window(self):

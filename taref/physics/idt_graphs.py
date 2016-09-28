@@ -220,7 +220,7 @@ def couple_comparison(pl="couple_compare", **kwargs):
     #pl.set_ylim(0.0, 1.3e9)
     pl.legend()
     return pl
-#couple_comparison()#.show()
+couple_comparison()#.show()
 
 def Lamb_shift_comparison(pl="ls_compare", **kwargs):
     idt=IDT.process_kwargs(kwargs)
@@ -250,7 +250,7 @@ def Lamb_shift_comparison(pl="ls_compare", **kwargs):
     pl.ylabel="coupling"
     pl.legend()
     return pl
-#Lamb_shift_comparison()#.show()
+Lamb_shift_comparison()#.show()
 
 def RAM_comparison(pl="RAM_compare", **kwargs):
     idt=IDT.process_kwargs(kwargs)
@@ -301,8 +301,8 @@ def RAM_single_vs_double(pl="RAM_sf_df", **kwargs):
     idt=IDT.process_kwargs(kwargs)
     frq=linspace(0.01e9, 10e9, 10000)
     #idt.material="GaAs"
-    #idt.Np=51
-    idt.fixed_freq_max=20.0*idt.f0
+    idt.Np=51
+    idt.fixed_freq_max=2.0*idt.f0
     idt.S_type="RAM"
     pl=line(frq/idt.f0, idt._get_coupling(frq)/idt.max_coupling_approx, plotter=pl, color="blue", label=idt.S_type, **kwargs)
     line(frq/idt.f0, idt._get_Lamb_shift(frq)/idt.max_coupling_approx, plotter=pl, color="blue", **kwargs)
