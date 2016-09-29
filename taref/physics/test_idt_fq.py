@@ -7,7 +7,7 @@ Created on Fri Sep 16 11:55:30 2016
 
 from scipy.constants import pi, epsilon_0 as eps0
 from scipy.signal import hilbert
-from numpy import linspace, sin, cos, imag, sqrt, absolute, matrix, exp, eye, array, squeeze, float64, ones, log, meshgrid, argmin
+from numpy import linspace, sin, amax, amin, argmin, argmax, cos, imag, sqrt, absolute, matrix, exp, eye, array, squeeze, float64, ones, log, meshgrid, argmin
 import matplotlib.pyplot as plt
 from taref.physics.surface_charge import alpha
 from numpy.linalg import inv
@@ -16,7 +16,7 @@ f0=5.000000001e9
 
 frq=linspace(1e9, 9e9, 1000).astype(float64)
 frq_q=linspace(2e9, 8e9, 2000).astype(float64)
-Np=3 #3 #9*3.9#*20 #1.2344
+Np=9 #3 #9*3.9#*20 #1.2344
 W=25.0e-6
 ft="double"
 vf=3488.0
@@ -64,7 +64,59 @@ jkL=1.0j*k*Np*vf/f0
 P33plusYL=Ga+1.0j*Ba+1.0j*w*Ct-1.0j*Ct/w*wq**2
 
 S11=-Ga/P33plusYL*exp(-jkL)
-plt.pcolormesh(frq, frq_q, absolute(S11)**2)
+
+Cc=10e-15
+ZL=50.0
+
+Zatom=-1.0j/(w*Cc)+1/P33plusYL
+#Zeff=ZL*Zatom/(Zatom+ZL)
+Zeff=Zatom
+S33=(Zeff-ZL)/(Zeff+ZL)
+
+t33=1-absolute(S33)**2
+#t33=(t33.transpose()/amax(t33, axis=1)).transpose()
+t33=t33/amax(t33, axis=0)
+
+s33=absolute(S33)**2
+plt.pcolormesh(frq, frq_q, absolute(S33)**2, cmap="spectral")
+
+
+plt.plot(frq, frq_q[argmin(absolute(S33)**2, axis=0)])
+#plt.plot([frq[600], frq[600]], [frq_q[0], frq_q[-1]])
+#plt.clim(0.0, 0.000003)
+
+plt.clim(0.997, 1.0)
+plt.colorbar()
+
+plt.figure()
+plt.plot(frq, frq+Ba[0,:]/(2*Ct)/(2*pi))
+plt.plot(frq, frq_q[argmin(absolute(S33)**2, axis=0)])
+plt.plot(frq, frq_q[argmax(absolute(S11)**2, axis=0)])
+
+plt.show()
+plt.figure()
+plt.plot( frq, absolute(S33)[1000, :], label="S11")
+plt.plot( frq, absolute(S33)[800, :], label="S11")
+
+#plt.plot( frq_q, absolute(S11)[:, 600], label="S11")
+#plt.plot( frq_q, absolute(S11)[:, 400], label="S11")
+
+ss=1-absolute(S33)[:, 600]
+ss=ss/max(ss)
+ss2=1-absolute(S33)[:, 400]
+ss2=ss2/max(ss2)
+
+#min(absolute(S33)[:, 600]), label="S11")
+#plt.plot( frq_q, ss, label="S33")
+#plt.plot( frq_q, ss2, label="S33")
+
+plt.legend()
+
+#plt.plot( frq_q, absolute(S33)[:, 600]/min(absolute(S33)[:, 600]), label="S11")
+#plt.plot( frq_q, absolute(S33)[:, 400]/min(absolute(S33)[:, 400]), label="S11")
+#plt.show()
+plt.figure()
+plt.pcolormesh(frq, frq_q, absolute(S11)**2, cmap="spectral")
 ls=-Ba[0, :]/(2*Ct)/(2*pi)
 gamma=Ga[0, :]/(2*Ct)/(2*pi)
 fplus=sqrt(frq*(frq-2.0*ls+2.0*gamma))
@@ -72,9 +124,9 @@ fminus=sqrt(frq*(frq-2.0*ls-2.0*gamma))
 FWHM=fplus-fminus
 
 centers=sqrt(frq*(frq-2.0*ls))
-plt.plot(frq, centers)
-plt.plot([frq[0], frq[-1]], [frq_q[1000], frq_q[1000]])
-plt.plot([frq[0], frq[-1]], [frq_q[800], frq_q[800]])
+#plt.plot(frq, centers)
+#plt.plot([frq[0], frq[-1]], [frq_q[1000], frq_q[1000]])
+#plt.plot([frq[0], frq[-1]], [frq_q[800], frq_q[800]])
 plt.ylim(2e9, 8e9)
 plt.xlabel("Frequency (Hz)")
 plt.ylabel("Qubit Frequency (Hz)")
