@@ -7,7 +7,8 @@ Created on Tue Jan  5 01:07:15 2016
 
 from taref.core.log import log_debug
 from taref.physics.fundamentals import pi
-from atom.api import Float, Int, Enum
+from atom.api import Float, Int, Enum, Bool, Typed, List
+from taref.physics.fitting import LorentzianFitter
 from taref.core.api import private_property, log_callable, get_tag, SProperty, log_func, t_property, s_property, sqze, Complex, Array, tag_callable
 from numpy import arange, linspace, sqrt, imag, real, sin, cos, interp, array, matrix, eye, absolute, exp, log, ones, squeeze, log10, fft, float64, int64, cumsum
 from numpy.linalg import inv
@@ -28,6 +29,9 @@ class IDT(Rho):
     Ga_type=Enum("sinc", "giant atom", "full sum")
     Ba_type=Enum("hilbert", "formula")
     rs_type=Enum("formula", "constant")
+    gate_type=Enum("constant", "capacitive", "transmission")
+
+    Cc=Float(1e-15).tag(desc="coupling capacitance", unit="fF")
 
     def _default_Ga_type(self):
         return "giant atom"
@@ -313,7 +317,7 @@ class IDT(Rho):
 
     simple_S=SProperty().tag(sub=True)
     @simple_S.getter
-    def _get_simple_S(self, f, f0, ft_mult, eta, epsinf, W, Dvv, Np, Ct, YL, dL, vf, L_IDT):
+    def _get_simple_S(self, f, f0, ft_mult, eta, epsinf, W, Dvv, Np, Ct, YL, dL, vf, L_IDT, Cc):
         Ga=self._get_Ga(f=f, f0=f0, Np=Np, W=W, Dvv=Dvv, epsinf=epsinf, eta=eta, ft_mult=ft_mult)
         Ba=self._get_Ba(f=f, f0=f0, Np=Np, W=W, Dvv=Dvv, epsinf=epsinf, eta=eta, ft_mult=ft_mult)
         w=2*pi*f
@@ -323,11 +327,82 @@ class IDT(Rho):
         P33plusYL=Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL+YL
         S11=S22=-Ga/P33plusYL*exp(-jkL)
         S12=S21=exp(-jkL)+S11
-        S13=S23=S32=S31=1.0j*sqrt(2.0*Ga*GL)/P33plusYL*exp(-jkL/2.0)
-        S33=(YL-Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL)/P33plusYL
+        if self.gate_type=="capacitive":
+            Zatom=-1.0j/(w*Cc)+1/P33plusYL
+            ZL=1/YL
+            S33=(Zatom-ZL)/(Zatom+ZL)
+            S13=S23=S32=S31=1.0+S33
+        elif self.gate_type=="transmission":
+            Zatom=-1.0j/(w*Cc)+1/P33plusYL
+            ZL=1/YL
+            Zeff=ZL*Zatom/(Zatom+ZL)
+            S33=(Zeff-ZL)/(Zeff+ZL)
+            S13=S23=S32=S31=1.0+S33
+        else:
+            S13=S23=S32=S31=1.0j*sqrt(2.0*Ga*GL)/P33plusYL*exp(-jkL/2.0)
+            S33=(YL-Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL)/P33plusYL
         return (S11, S12, S13,
                 S21, S22, S23,
                 S31, S32, S33)
+
+    @private_property
+    def fixed_fq(self):
+        return linspace(self.fixed_fq_min, self.fixed_fq_max, self.N_fixed_fq).astype(float64)
+
+    N_fixed_fq=Int(10000)
+    fixed_fq_max=Float()
+    fixed_fq_min=Float(0.01)
+
+    def _default_fixed_fq_max(self):
+        return 200.0*self.f0
+
+    def _default_fixed_fq_min(self):
+        return 0.0001#*self.f0
+
+    calc_p_guess=Bool(False)
+    fitter=Typed(LorentzianFitter, ()) #fit.gamma=0.05
+
+    flux_indices=List()
+
+    def _default_flux_indices(self):
+        return [range(len(self.fixed_fq))]
+
+    @private_property
+    def flat_flux_indices(self):
+        return [n for ind in self.flux_indices for n in ind]
+
+    fit_indices=List()#.tag(private=True)
+
+    def _default_fit_indices(self):
+        return [range(len(self.fixed_freq))]
+
+    @private_property
+    def flat_indices(self):
+        return [n for ind in self.fit_indices for n in ind]
+
+    @private_property
+    def MagAbs(self):
+        (S11, S12, S13,
+         S21, S22, S23,
+         S31, S32, S33)
+        if self.bgsub_type=="dB":
+            return 10.0**(self.MagdB/10.0)
+        magabs=absolute(self.Magcom)
+        if self.bgsub_type=="Abs":
+            return self.bgsub(magabs)
+        return magabs
+
+    @private_property
+    def fit_params(self):
+        if self.fitter.fit_params is None:
+            self.fitter.full_fit(x=self.flux_axis[self.flat_flux_indices], y=self.MagAbsFilt_sq, indices=self.flat_indices, gamma=self.fitter.gamma)
+            if self.calc_p_guess:
+                self.fitter.make_p_guess(self.flux_axis[self.flat_flux_indices], y=self.MagAbsFilt_sq, indices=self.flat_indices, gamma=self.fitter.gamma)
+        return self.fitter.fit_params
+
+    @private_property
+    def MagAbsFit(self):
+        return sqrt(self.fitter.reconstruct_fit(self.flux_axis[self.flat_flux_indices], self.fit_params))
 
 
 

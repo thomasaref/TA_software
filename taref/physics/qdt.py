@@ -96,6 +96,7 @@ class QDT(IDT, Qubit):
         return (S11, S12, S13,
                 S21, S22, S23,
                 S31, S32, S33)
+
     lamb_shifted_transmon_energy=SProperty()
     @lamb_shifted_transmon_energy.getter
     def _get_lamb_shifted_transmon_energy(self, Ej, Ec, m, f0, ft_mult, eta, epsinf, W, Dvv, Np, Ct_mult):
