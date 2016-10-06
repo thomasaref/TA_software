@@ -8,7 +8,7 @@ Created on Fri Sep 16 11:55:30 2016
 #from taref.plotter.api import colormesh
 from scipy.constants import pi, epsilon_0 as eps0
 from scipy.signal import hilbert
-from numpy import linspace, sin, amax, amin, argmin, argmax, cos, imag, sqrt, absolute, matrix, exp, eye, array, squeeze, float64, ones, log, meshgrid, argmin
+from numpy import real, imag, linspace, sin, amax, amin, argmin, argmax, cos, imag, sqrt, absolute, matrix, exp, eye, array, squeeze, float64, ones, log, meshgrid, argmin
 import matplotlib.pyplot as plt
 from taref.physics.surface_charge import alpha
 from numpy.linalg import inv
@@ -68,9 +68,19 @@ S11=-Ga/P33plusYL*exp(-jkL)
 s11=absolute(S11)**2
 
 GL=6e-6
-S13=1.0j*sqrt(2.0*Ga*GL)/P33plusYL*exp(-jkL/2.0)
+S13=1.0j*sqrt(2.0*Ga*GL)/(GL+P33plusYL)*exp(-jkL/2.0)
 s13=absolute(S13)**2
 
+S33=-1.0*(GL-1.0j*Ct/w*wq**2-Ga+1.0j*Ba+1.0j*w*Ct)/(GL+P33plusYL)
+
+S13Psq=1-absolute(S33)**2 #(1+S33)/2.0#/2.0
+
+plt.pcolormesh(absolute(S13)**2/amax(absolute(S13)**2))
+plt.colorbar()
+plt.figure()
+plt.pcolormesh(absolute(S13Psq))
+plt.colorbar()
+#plt.show()
 Cc=25e-15
 ZL=50.0
 
@@ -138,18 +148,38 @@ plt.plot(frq, frq+Ba[0,:]/(2*Ct)/(2*pi), label="theory")
 plt.plot(frq, frq_q[argmax(absolute(S11)**2, axis=0)], label="min S11")
 #plt.plot(frq, frq_q[argmax(absolute(S11)**2, axis=0)])
 plt.plot(frq, array([fp[1] for fp in fit2.fit_params])*1e9, label="center S11")
+
+plt.plot(frq, frq*(1+Cc/(2*Ct))+Ba[0,:]/(2*Ct)/(2*pi), label="theory")
+w=2*pi*frq
+
+
+
+wqq=2*pi*frq_q
+
+L=1/Ct*wqq**2
+wo=(w*Ba)/(Ct+Cc)-1.0/(L*(Ct+Cc))-w**2*Ga**2/((Ct+Cc)*Ct*(w*Ba/Ct + w**2 -1.0/(L*Ct)))
+
+plt.plot(frq, wo)
+#plt.plot(frq, (frq+Ba[0,:]/(2*Ct)/(2*pi))*(1+Cc/(2*Ct)), label="theory")
+
+#w_0=(frq+Ba[0,:]/(2*Ct)/(2*pi))*(1+Cc/(2*Ct))
+
+#plt.plot(frq, (frq+Ba[0,:]/(2*Ct)/(2*pi))*(1+Cc/(2*Ct))-(1-Cc/(2*Ct))*1.0/(2.0*w_0*Ct*Cc)*(Ga[0, :]**2)/(2*pi)**4, label="theory")
+
+
 plt.legend()
 plt.xlabel("Frequency (Hz)")
 plt.ylabel("Qubit frequency (Hz)")
 
-plt.figure()
-plt.plot(frq, absolute([fp[0] for fp in fit.fit_params]), label="width S33")
-plt.plot(frq, Ga[0,:]/(2*Ct)/(2*pi)/1e9, label="theory")
-plt.plot(frq, absolute([fp[0] for fp in fit2.fit_params]), label="width S11")
-plt.legend()
+if 0:
+    plt.figure()
+    plt.plot(frq, absolute([fp[0] for fp in fit.fit_params]), label="width S33")
+    plt.plot(frq, Ga[0,:]/(2*Ct)/(2*pi)/1e9, label="theory")
+    plt.plot(frq, absolute([fp[0] for fp in fit2.fit_params]), label="width S11")
+    plt.legend()
 
-plt.xlabel("Frequency (Hz)")
-plt.ylabel("Coupling (Hz)")
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Coupling (Hz)")
 
 
 plt.show()

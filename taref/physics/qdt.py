@@ -5,14 +5,15 @@ Created on Sun Apr 24 13:05:32 2016
 @author: thomasaref
 """
 
-from numpy import pi, linspace, sin, amax, argmin, argmax, cos, append, real, exp
+from numpy import pi, linspace, sin, amax, argmin, argmax, cos, append, real, exp, float64
 from scipy.constants import h
-from taref.plotter.api import Plotter, line
+from taref.plotter.api import Plotter, line, colormesh
 from taref.core.api import SProperty, s_property, private_property
 from taref.physics.idt import IDT
 from taref.physics.qubit import Qubit
 from taref.physics.fundamentals import sqrt, pi, e, h, array, eig, delete, sin, sinc_sq, sinc, linspace, zeros, absolute, cos, arange
-from atom.api import Float
+from atom.api import Float, List, Bool, Int, Typed
+from taref.physics.fitting import LorentzianFitter
 from enaml import imports
 with imports():
     from taref.physics.qdt_e import QDTView
@@ -77,25 +78,118 @@ class QDT(IDT, Qubit):
         fq0=self._get_fq0(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, Dvv=Dvv, Np=Np, W=W)
         return self._get_voltage_from_flux_par_many(fq=fq0, Ct=Ct, Ejmax=Ejmax, offset=offset, flux_factor=flux_factor)
 
-    GL=Float(1.0)
-    simple_S_qdt=SProperty().tag(sub=True)
-    @simple_S_qdt.getter
-    def _get_simple_S_qdt(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, L, dL, vf, L_IDT, GL):
-        Ga=self._get_Ga(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
-        Ba=self._get_Ba(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
-        w=2*pi*f
-        YL=-1.0j/(w*L)
+#    GL=Float(1.0)
+#    simple_S_qdt=SProperty().tag(sub=True)
+#    @simple_S_qdt.getter
+#    def _get_simple_S_qdt(self, f, f0, ft_mult, eta, epsinf, Ct_mult, K2, Np, Ct, L, dL, vf, L_IDT, GL):
+#        Ga=self._get_Ga(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+#        Ba=self._get_Ba(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, K2=K2, Np=Np)
+#        w=2*pi*f
+#        YL=-1.0j/(w*L)
+#
+#        k=2*pi*f/vf
+#        jkL=1.0j*k*L_IDT
+#        P33plusYL=Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL+YL
+#        S11=S22=-Ga/P33plusYL*exp(-jkL)
+#        S12=S21=exp(-jkL)+S11
+#        S13=S23=S32=S31=1.0j*sqrt(2.0*Ga*GL)/P33plusYL*exp(-jkL/2.0)
+#        S33=(YL-Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL)/P33plusYL
+#        return (S11, S12, S13,
+#                S21, S22, S23,
+#                S31, S32, S33)
 
-        k=2*pi*f/vf
-        jkL=1.0j*k*L_IDT
-        P33plusYL=Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL+YL
-        S11=S22=-Ga/P33plusYL*exp(-jkL)
-        S12=S21=exp(-jkL)+S11
-        S13=S23=S32=S31=1.0j*sqrt(2.0*Ga*GL)/P33plusYL*exp(-jkL/2.0)
-        S33=(YL-Ga+1.0j*Ba+1.0j*w*Ct-1.0j/w*dL)/P33plusYL
-        return (S11, S12, S13,
-                S21, S22, S23,
-                S31, S32, S33)
+    @private_property
+    def fixed_fq(self):
+        return linspace(self.fixed_fq_min, self.fixed_fq_max, self.N_fixed_fq).astype(float64)
+
+    N_fixed_fq=Int(500)
+    fixed_fq_max=Float()
+    fixed_fq_min=Float(0.01)
+
+    def _default_fixed_freq_max(self):
+        return 2.0*self.f0
+
+    def _default_fixed_fq_max(self):
+        return 2.0*self.f0
+
+    def _default_fixed_fq_min(self):
+        return 0.0001#*self.f0
+
+    def _default_N_fixed(self):
+        return 400
+
+    calc_p_guess=Bool(False)
+    fitter=Typed(LorentzianFitter, ()) #fit.gamma=0.05
+
+    flux_indices=List()
+
+    def _default_flux_indices(self):
+        return [range(len(self.fixed_fq))]
+
+    @private_property
+    def flat_flux_indices(self):
+        return [n for ind in self.flux_indices for n in ind]
+
+    fit_indices=List()#.tag(private=True)
+
+    def _default_fit_indices(self):
+        return [range(len(self.fixed_freq))]
+
+    @private_property
+    def flat_indices(self):
+        return [n for ind in self.fit_indices for n in ind]
+
+    @private_property
+    def MagAbs(self):
+        #(S11, S12, S13,
+        # S21, S22, S23,
+        # S31, S32, S33)=self.fixed_S
+
+        magind={"S11" : 0, "S12" : 1, "S13" : 2,
+                "S21" : 3, "S22" : 4, "S23" : 5,
+                "S31" : 6, "S32" : 7, "S33" : 8}[self.magabs_type]
+        magcom=self.fixed_S[:, magind, :]
+        #magcom={"S11" : S11, "S12" : S12, "S13" : S13,
+        #        "S21" : S21, "S22" : S22, "S23" : S23,
+        #        "S31" : S31, "S32" : S32, "S33" : S33}[self.magabs_type]
+        return absolute(magcom)
+        #if self.bgsub_type=="dB":
+        #    return 10.0**(self.MagdB/10.0)
+        #magabs=absolute(self.Magcom)
+        #if self.bgsub_type=="Abs":
+        #    return self.bgsub(magabs)
+        #return magabs
+
+    @private_property
+    def fit_params(self):
+        MagAbsSq=(self.MagAbs**2).transpose()
+        if self.fitter.fit_params is None:
+            self.fitter.full_fit(x=self.fixed_fq[self.flat_flux_indices]/1e9, y=MagAbsSq, indices=self.flat_indices, gamma=self.fitter.gamma)
+            if self.calc_p_guess:
+                self.fitter.make_p_guess(self.fixed_fq[self.flat_flux_indices]/1e9, y=MagAbsSq, indices=self.flat_indices, gamma=self.fitter.gamma)
+        return self.fitter.fit_params
+
+    @private_property
+    def MagAbsFit(self):
+        return sqrt(self.fitter.reconstruct_fit(self.fixed_fq[self.flat_flux_indices]/1e9, self.fit_params)).transpose()
+
+#    YL=SProperty()
+#    @YL.getter
+#    def _get_YL(self, w, L):
+#        if self.YL_type=="constant":
+#            return self.YL
+#        elif self.YL_type=="inductor":
+#            return -1.0j/(w*L)
+
+    @private_property
+    def fixed_S(self):
+        w=2*pi*self.fixed_freq
+        L_arr=self._get_L(fq=self.fixed_fq)
+        if self.S_type=="simple":
+            return array([self._get_simple_S(f=self.fixed_freq, YL=-1.0j/(w*L)) for L in L_arr])
+        P=self.fixed_P[0]
+        #return self.PtoS(*P, YL=self.YL)
+        return array([self.PtoS(*P, YL=-1.0j/(w*L)) for L in L_arr])
 
     lamb_shifted_transmon_energy=SProperty()
     @lamb_shifted_transmon_energy.getter
@@ -200,6 +294,28 @@ class QDT(IDT, Qubit):
 #            return 1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*Ct+1.0/(1j*w*L))
 #        except ValueError:
 #            return array([1j*sqrt(2.0*Ga*GL)/(Ga+1j*Ba+1j*w*Ct+1.0/(1j*w*qL)) for qL in L])
+if 0:
+    a=QDT(#Ga_type="sinc", Ba_type="formula",
+          magabs_type="S33",
+          fixed_freq_min=3e9, fixed_freq_max=7e9, fixed_fq_min=1e9, fixed_fq_max=10e9,
+          Cc=30e-15, gate_type="capacitive")
+    #a.K2=0.01
+    #a.Np=3
+    a.fitter.gamma=0.05
+    pl=colormesh(a.fixed_freq, a.fixed_fq, a.MagAbs)
+    colormesh(a.fixed_freq, a.fixed_fq, a.MagAbsFit, pl=pl).show()
+
+    pl=line(a.fixed_freq, array([fp[1] for fp in a.fitter.fit_params])*1e9, label="center S33")
+    line(a.fixed_freq, a.fixed_fq[argmin(a.MagAbs**2, axis=0)], pl=pl, label="min S33", color="red")
+    line(a.fixed_freq, a.fixed_freq-a.fixed_Lamb_shift, pl=pl, label="theory", color="green")#.show()
+    #a.gate_type="constant"
+    line(a.fixed_freq, a.fixed_freq-a._get_Lamb_shift(f=a.fixed_freq), pl=pl, label="theory", color="purple")#.show()
+
+    #-array([fp[1] for fp in a.fitter.fit_params])*1e9+a.fixed_freq=-a._get_Lamb_shift(f=a.fixed_freq)
+    #a.gate_type="capacitive"
+    pl=line(a.fixed_freq, a.fixed_coupling, label="width S33")
+    #a.gate_type="constant"
+    line(a.fixed_freq, a._get_coupling(f=a.fixed_freq), pl=pl, color="red", label="theory").show()
 
 
 def energy_level_plot(qdt, fig_width=9.0, fig_height=6.0):

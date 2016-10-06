@@ -28,12 +28,6 @@ Delta_Al=200.0e-6*e #gap of aluminum
 class Qubit(Agent):
     """Theoretical description of qubit"""
     base_name="qubit"
-    #def _default_main_params(self):
-    #    return ["ft", "f0", "lbda0", "a", "g", "eta", "Np", "ef", "W", "Ct",
-    #            "material", "Dvv", "K2", "vf", "epsinf",
-    #            "Rn", "Ic", "Ejmax", "Ej", "Ec", "EjmaxdivEc", "EjdivEc",
-    #            "fq", "fq_max", "fq_max_full", "flux_over_flux0", "G_f0", "G_f",
-   #             "ng", "Nstates", "EkdivEc"]
 
     dephasing=Float(0.0).tag(unit="GHz")
 

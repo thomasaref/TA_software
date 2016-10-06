@@ -20,7 +20,7 @@ from taref.plotter.fitter import LineFitter2
 from taref.plotter.api import line, colormesh
 from taref.core.api import tag_property
 
-from TA88_fundamental import qdt, TA88_Lyzer
+from TA88_fundamental import qdt, TA88_Lyzer, idt
 
 a=TA88_Lyzer( name="combined",
              desc="combined data",
@@ -64,8 +64,11 @@ def combo_plots():
         pl=d.center_plot(pl=pl, color="red")
     frequency=linspace(3.8e9, 6.05e9, 1000)
     V=qdt._get_fq0(f=frequency)#[1]
-    line(frequency/1e9, V/1e9, pl=pl,  ylabel="Qubit frequency (GHz)", xlabel="Frequency (GHz)")
+    #line(frequency/1e9, V/1e9, pl=pl,  ylabel="Qubit frequency (GHz)", xlabel="Frequency (GHz)")
     line(frequency/1e9, frequency/1e9-qdt._get_Lamb_shift(f=frequency)/1.0/1e9, plotter=pl, color="purple", xlabel="Frequency (GHz)",
+         ylabel="HWFM (GHz)")
+    qdt.gate_type="constant"
+    line(frequency/1e9, frequency/1e9-qdt._get_Lamb_shift(f=frequency)/1.0/1e9, plotter=pl, color="green", xlabel="Frequency (GHz)",
          ylabel="HWFM (GHz)")
 
     pl.set_xlim(3.8, 6.05)
@@ -91,13 +94,24 @@ def combo_plots():
     pl="combined_widths"
     for d in lyzers:
         pl=d.widths_plot(pl=pl, color="red")
-    line(frequency/1e9, qdt._get_fFWHM(f=frequency)[2]/2.0/1e9, plotter=pl, color="blue", xlabel="Frequency (GHz)",
-         ylabel="HWFM (GHz)")
+    #line(frequency/1e9, qdt._get_fFWHM(f=frequency)[2]/2.0/1e9, plotter=pl, color="blue", xlabel="Frequency (GHz)",
+    #     ylabel="HWFM (GHz)")
+    qdt.gate_type="capacitive"
+    co=qdt._get_coupling(f=frequency)/1.0/1e9
     line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl, color="purple", xlabel="Frequency (GHz)",
          ylabel="HWFM (GHz)")
+    qdt.gate_type="constant"
+    line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl, color="green", xlabel="Frequency (GHz)",
+         ylabel="HWFM (GHz)")
+
+    co=(co+(idt.sinc(f=frequency)**2)*qdt._get_coupling(f=frequency)/1.0/1e9)/(1.0+(idt.sinc(f=frequency)**2))
+
+    #line(frequency/1e9, co, plotter=pl, color="blue", xlabel="Frequency (GHz)",
+    #     ylabel="HWFM (GHz)")
+
     dephasing=qdt.dephasing
     qdt.dephasing=0.0
-    line(frequency/1e9, qdt._get_fFWHM(f=frequency)[2]/2.0/1e9, plotter=pl, color="green")
+    #line(frequency/1e9, qdt._get_fFWHM(f=frequency)[2]/2.0/1e9, plotter=pl, color="green")
     pl.set_xlim(3.8, 6.05)
     pl.set_ylim(-0.05, 1.15)
     pl.add_label("c)")
