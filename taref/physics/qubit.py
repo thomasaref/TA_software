@@ -30,6 +30,7 @@ class Qubit(Agent):
     base_name="qubit"
 
     dephasing=Float(0.0).tag(unit="GHz")
+    dephasing_slope=Float(0.0)
 
     @private_property
     def view_window(self):

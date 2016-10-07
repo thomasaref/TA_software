@@ -37,12 +37,12 @@ class QDT(IDT, Qubit):
 
     fFWHM=SProperty().tag(desc="center frequency of oscillator plus half width")
     @fFWHM.getter
-    def _get_fFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, Dvv, Np, W, dephasing):
+    def _get_fFWHM(self, f, f0, ft_mult, eta, epsinf, Ct_mult, Dvv, Np, W, dephasing, dephasing_slope):
         ls=self._get_Lamb_shift(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, W=W, Dvv=Dvv, Np=Np, Ct_mult=Ct_mult)
         gamma=self._get_coupling(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, W=W, Dvv=Dvv, Np=Np, Ct_mult=Ct_mult)
         fplus=sqrt(f*(f-2.0*ls+2.0*gamma))
         fminus=sqrt(f*(f-2.0*ls-2.0*gamma))
-        return fplus, fminus, fplus-fminus+dephasing
+        return fplus, fminus, fplus-fminus+dephasing+dephasing_slope*f
 
     fluxfq0=SProperty().tag(desc="center frequency of oscillator as voltage")
     @fluxfq0.getter

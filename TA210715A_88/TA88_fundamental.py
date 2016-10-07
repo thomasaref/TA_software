@@ -97,7 +97,7 @@ qdt.f0=5.30e9 #5.35e9
 qdt.Np=9.5
 qdt.K2=0.042
 qdt.gate_type="capacitive"
-qdt.Cc=37e-15
+qdt.Cc=35e-15
 qdt.magabs_type="S33"
 qdt.Rn=2800.0
 qdt.fixed_freq_min=3.5e9
@@ -123,7 +123,8 @@ qdt.fixed_fq_max=7.0e9
 #qdt.flux_factor_beta=0.01
 #qdt.Np=9.5
 #qdt.Ec=1e-25
-qdt.dephasing=0.0 #25e6
+#qdt.dephasing=10e6
+#qdt.dephasing_slope=3e-3
 qdt.f=qdt.fq
 
 ideal_idt=IDT(name="idealIDT",

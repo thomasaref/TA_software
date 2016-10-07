@@ -160,7 +160,7 @@ class IDT(Rho):
         else:
             mu=mus*df_corr*cpl_form
 
-        return 2.0*Y0*absolute(mu)**2
+        return 2.0*Y0*absolute(mu)**2#+(2*self.Ct)*(2*pi)*(self.dephasing+self.dephasing_slope*f)/1.0
 
     Ga0=SProperty().tag(desc="Ga (center frequency)")
     @Ga0.getter
@@ -221,7 +221,7 @@ class IDT(Rho):
         if self.gate_type=="constant":
              Ga=self._get_Ga(f=f, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Dvv=Dvv, Np=Np, W=W)
              Ct=self._get_Ct(epsinf=epsinf, Ct_mult=Ct_mult, W=W, Np=Np)
-             return Ga/(2*Ct)/(2*pi)
+             return Ga/(2*Ct)/(2*pi)#+(self.dephasing+self.dephasing_slope*f)/1.0
         return self.get_fix("coupling", f=f)
 
     Lamb_shift=SProperty().tag(desc="""Lamb shift""", unit="GHz", expression=r"$B_a/\omega C$", label="Lamb shift")
