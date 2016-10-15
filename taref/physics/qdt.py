@@ -298,12 +298,14 @@ if 0:
     a=QDT(#Ga_type="sinc", Ba_type="formula",
           magabs_type="S33",
           fixed_freq_min=3e9, fixed_freq_max=7e9, fixed_fq_min=1e9, fixed_fq_max=10e9,
-          Cc=30e-15, gate_type="capacitive")
+          Cc=30e-15, gate_type="capacitive", Cground=100e-12)
+    a._get_simple_S(f=7e9)
     #a.K2=0.01
     #a.Np=3
     a.fitter.gamma=0.05
+if 0:
     pl=colormesh(a.fixed_freq, a.fixed_fq, a.MagAbs)
-    colormesh(a.fixed_freq, a.fixed_fq, a.MagAbsFit, pl=pl).show()
+    colormesh(a.fixed_freq, a.fixed_fq, a.MagAbsFit, pl=pl)#.show()
 
     pl=line(a.fixed_freq, array([fp[1] for fp in a.fitter.fit_params])*1e9, label="center S33")
     line(a.fixed_freq, a.fixed_fq[argmin(a.MagAbs**2, axis=0)], pl=pl, label="min S33", color="red")

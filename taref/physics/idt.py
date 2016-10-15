@@ -319,6 +319,7 @@ class IDT(Rho):
     dL=Float(0.0)
     YL=Complex(1.0/50.0)
     YS=Complex(1.0/50.0)
+    Cground=Float().tag(unit="fF")
 
 
 
@@ -331,7 +332,7 @@ class IDT(Rho):
 
     simple_S=SProperty().tag(sub=True)
     @simple_S.getter
-    def _get_simple_S(self, f, f0, ft_mult, eta, epsinf, W, Dvv, Np, Ct, YL, dL, vf, L_IDT, Cc, YS):
+    def _get_simple_S(self, f, f0, ft_mult, eta, epsinf, W, Dvv, Np, Ct, YL, dL, vf, L_IDT, Cc, YS, Cground):
         Ga=self._get_Ga(f=f, f0=f0, Np=Np, W=W, Dvv=Dvv, epsinf=epsinf, eta=eta, ft_mult=ft_mult)
         Ba=self._get_Ba(f=f, f0=f0, Np=Np, W=W, Dvv=Dvv, epsinf=epsinf, eta=eta, ft_mult=ft_mult)
         w=2*pi*f
@@ -343,6 +344,7 @@ class IDT(Rho):
         S12=S21=exp(-jkL)+S11
         if self.gate_type=="capacitive":
             Zatom=-1.0j/(w*Cc)+1/P33plusYL
+            Zeff=1.0/(1.0j*w*Cground+1.0/Zatom)
             ZS=1/YS
             S33=(Zatom-ZS)/(Zatom+ZS)
             S13=S23=S32=S31=(1.0+S33)/2.0

@@ -11,40 +11,33 @@ from taref.physics.idt import IDT
 from taref.filer.read_file import Read_HDF5, Read_NP
 from taref.filer.filer import Folder
 from taref.filer.save_file import Save_NP
-from taref.core.agent import Agent
-from atom.api import Float, Unicode, Typed, Int, Callable, Enum
-from taref.core.universal import Array
-from numpy import array, log10, sqrt, fft, exp, float64, linspace, shape, reshape, squeeze, mean, angle, absolute, sin, pi
-from h5py import File
-from scipy.optimize import leastsq
-from taref.core.log import log_debug
+from numpy import array, log10, sqrt, linspace, angle, absolute, pi
 from taref.plotter.plotter import line, colormesh, Plotter
-from taref.physics.units import dBm, dB
 from taref.physics.fundamentals import h#Ej, fq, flux_over_flux0
 
-from lyzer import Lyzer
+from taref.analysis.vna_lyzer import VNA_Lyzer
 
-class TA88_Read(Read_HDF5):
-    def _default_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216", quality="", main_dir="Data_0221")
+class TA53_Read(Read_HDF5):
+    def _default_folder(self): #/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Logbook/TA210715A53_cooldown022915
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A53_cooldown022915", quality="", main_dir="Data_0221")
 
-class TA88_Save_NP(Save_NP):
+class TA53_Save_NP(Save_NP):
     def _default_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/TA88_processed")
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A53_cooldown210216/tex_source_files/TA88_processed")
 
-class TA88_Read_NP(Read_NP):
+class TA53_Read_NP(Read_NP):
     def _default_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/TA88_processed")
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A53_cooldown210216/tex_source_files/TA88_processed")
 
 #read_dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216"
 
 ideal_qdt=QDT(name="idealQDT",
         material='LiNbYZ',
         ft="double",
-        a=80.0e-9, #f0=5.35e9,
-        Np=9,
+        a=96.0e-9, #f0=5.35e9,
+        Np=5,
         Rn=(3570.0+4000.0)/2.0,# Ejmax=h*44.0e9,
-        W=25.0e-6,
+        W=7.0e-6,
         eta=0.5,
         flux_factor=0.495, #0.52, #0.2945, #0.52,
         voltage=2.2, #1.21,
@@ -61,29 +54,15 @@ ideal_qdt.Ga_type="sinc" #"giant atom"
 ideal_qdt.Ba_type="formula" #"hilbert"
 ideal_qdt.rs_type="formula"
 ideal_qdt.f=ideal_qdt.fq
-#qdt=QDT(material='LiNbYZ',
-#        ft="double",
-#        a=80.0e-9, #f0=5.35e9,
-#        Np=9,
-#        Rn=3780.0, #(3570.0+4000.0)/2.0, Ejmax=h*44.0e9,
-#        W=25.0e-6,
-#        eta=0.5,
-#        flux_factor=0.515, #0.2945, #0.52,
-#        voltage=1.21,
-#        offset=-0.07)
-#qdt.Ejmax=h*44.0e9 #h*44.0e9
-#qdt.f0=5.38e9 #5.35e9
-#qdt.Ct=1.25e-13
-#qdt.K2=qdt.K2*0.9
 
 qdt=QDT(name="fittedQDT",
         material='LiNbYZ',
         ft="double",
         #S_type="RAM",
-        a=80.0e-9, #f0=5.35e9,
-        Np=9,
+        a=96.0e-9, #f0=5.35e9,
+        Np=5,
         Rn=3780.0, #(3570.0+4000.0)/2.0, Ejmax=h*44.0e9,
-        W=25.0e-6,
+        W=7.0e-6,
         eta=0.5,
         flux_factor=0.495, #0.515, #0.2945, #0.52,
         voltage=2.2, #1.21,
@@ -91,10 +70,10 @@ qdt=QDT(name="fittedQDT",
         loop_width=2.7e-6,
         loop_height=1.5e-6)
 #qdt.Ejmax=2.75e-23 #h*44.0e9 #h*44.0e9
-qdt.f0=5.30e9 #5.35e9
+#qdt.f0=5.30e9 #5.35e9
 #qdt.fixed_freq_max=20.0*qdt.f0
 #qdt.eta=0.55
-qdt.Np=9.5
+#qdt.Np=9.5
 qdt.K2=0.042
 qdt.gate_type="capacitive"
 qdt.Cc=35e-15
@@ -131,25 +110,27 @@ qdt.f=qdt.fq
 ideal_idt=IDT(name="idealIDT",
               material='LiNbYZ',
         ft="double",
-        Np=36,
-        W=25.0e-6,
+        Np=81,
+        W=7.0e-6,
         eta=0.5,
         a=96.0e-9)
 
 idt=IDT(material='LiNbYZ',
         ft="double",
-        Np=36.5,
-        W=25.0e-6,
+        Np=81,
+        W=7.0e-6,
         eta=0.5,
         a=96.0e-9)
 idt.f0=4.452e9
 
 #print qdt.all_params
 #print idt.all_params
-class TA88_Lyzer(Lyzer):
+class TA53_VNA_Lyzer(VNA_Lyzer):
     qdt=qdt
     idt=idt
 
+    def _default_save_folder(self):
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/TA_53", main_dir="overall")
 
     def fft_plots(self):
         self.read_data()
@@ -178,7 +159,7 @@ class TA88_Lyzer(Lyzer):
         pl_list=[pl1, pl2, pl4, pl3]
         return pl_list
 
-a=TA88_Lyzer( name="theory_check",
+a=TA53_VNA_Lyzer( name="theory_check",
          desc="theory check plots",
          )
 a.save_folder.main_dir=a.name
@@ -281,29 +262,30 @@ def S13_phase_theory(qdt, fig_width=9.0, fig_height=6.0):
     return pl
 
 if __name__=="__main__":
-    pl0=qdt.lgf1.lgf_test_plot()
-    from taref.physics.surface_charge import element_factor_plot, metallization_plot, Rho
-    pl1=element_factor_plot()
-    pl2=metallization_plot()
-    rho=Rho()
-    rho.fixed_freq_max=2000.0*rho.f0
-    pl3=rho.plot_alpha() #auto_xlim=False, x_min=0, x_max=20)
-    pl4=rho.plot_surface_charge(auto_xlim=False, x_min=-3, x_max=3, auto_ylim=False, y_min=-3e-12, y_max=3e-12)
-    pl5=rho.plot_surface_voltage(auto_xlim=False, x_min=-3, x_max=3)
-    pl6=line(rho.surface_x[2000:-500], rho.surface_voltage[2000:-500]+rho.surface_voltage[500:-2000]+rho.surface_voltage[2500:],
-         pl="superposition", auto_xlim=False, x_min=-3, x_max=3)
-    pl6.xlabel="x/center wavelength"
-    pl6.ylabel="surface voltage"
-    from taref.physics.idt import metallization_couple, metallization_Lamb, couple_comparison, Lamb_shift_comparison, hilbert_check
-    pl7=metallization_couple()
-    pl8=metallization_Lamb()
-    pl9=couple_comparison()
-    pl10=Lamb_shift_comparison()
-    pl11=hilbert_check()
-    a.save_plots([pl0, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11])
-    pl1.show()
+    if 0:
+        pl0=qdt.lgf1.lgf_test_plot()
+        from taref.physics.surface_charge import element_factor_plot, metallization_plot, Rho
+        pl1=element_factor_plot()
+        pl2=metallization_plot()
+        rho=Rho()
+        rho.fixed_freq_max=2000.0*rho.f0
+        pl3=rho.plot_alpha() #auto_xlim=False, x_min=0, x_max=20)
+        pl4=rho.plot_surface_charge(auto_xlim=False, x_min=-3, x_max=3, auto_ylim=False, y_min=-3e-12, y_max=3e-12)
+        pl5=rho.plot_surface_voltage(auto_xlim=False, x_min=-3, x_max=3)
+        pl6=line(rho.surface_x[2000:-500], rho.surface_voltage[2000:-500]+rho.surface_voltage[500:-2000]+rho.surface_voltage[2500:],
+             pl="superposition", auto_xlim=False, x_min=-3, x_max=3)
+        pl6.xlabel="x/center wavelength"
+        pl6.ylabel="surface voltage"
+        #from taref.physics.idt import metallization_couple, metallization_Lamb, couple_comparison, Lamb_shift_comparison, hilbert_check
+        #pl7=metallization_couple()
+        #pl8=metallization_Lamb()
+        #pl9=couple_comparison()
+        #pl10=Lamb_shift_comparison()
+        #pl11=hilbert_check()
+        #a.save_plots([pl0, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11])
+        #pl1.show()
 
-    from taref.physics.qdt import anharm_plot
+    #from taref.physics.qdt import anharm_plot
     print qdt.max_coupling
     #anharm_plot2(qdt)#.show()
 
