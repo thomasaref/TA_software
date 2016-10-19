@@ -82,7 +82,7 @@ if 1:
 
 
 
-    #tx.ext("theory")
+    tx.ext("theory")
     #tx.ext("supplementary")
     #tx.add(r"\FloatBarrier")
 

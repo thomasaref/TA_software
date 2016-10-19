@@ -22,7 +22,8 @@ from taref.plotter.plotter import line, colormesh, Plotter
 from taref.physics.units import dBm, dB
 from taref.physics.fundamentals import h#Ej, fq, flux_over_flux0
 
-from lyzer import Lyzer
+#from lyzer import Lyzer
+from taref.analysis.api import Lyzer, VNA_Lyzer, VNA_Pwr_Lyzer
 
 class TA88_Read(Read_HDF5):
     def _default_folder(self):
@@ -147,6 +148,14 @@ idt.f0=4.452e9
 #print qdt.all_params
 #print idt.all_params
 class TA88_Lyzer(Lyzer):
+    qdt=qdt
+    idt=idt
+
+class TA88_VNA_Pwr_Lyzer(VNA_Pwr_Lyzer):
+    qdt=qdt
+    idt=idt
+
+class TA88_VNA_Lyzer(VNA_Lyzer):
     qdt=qdt
     idt=idt
 

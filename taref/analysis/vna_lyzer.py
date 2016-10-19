@@ -19,12 +19,12 @@ from taref.physics.fundamentals import bgsub2D
 
 def read_data(self):
     with File(self.rd_hdf.file_path, 'r') as f:
-        Magvec=f["Traces"]["RS VNA - S21"]
+        Magvec=f["Traces"]["{0} - {1}".format(self.VNA_name, self.port_name)]
         data=f["Data"]["Data"]
         self.comment=f.attrs["comment"]
         self.yoko=data[:,0,0].astype(float64)
-        fstart=f["Traces"]['RS VNA - S21_t0dt'][0][0]
-        fstep=f["Traces"]['RS VNA - S21_t0dt'][0][1]
+        fstart=f["Traces"]['{0} - {1}_t0dt'.format(self.VNA_name, self.port_name)][0][0]
+        fstep=f["Traces"]['{0} - {1}_t0dt'.format(self.VNA_name, self.port_name)][0][1]
         sm=shape(Magvec)[0]
         sy=shape(data)
         #print sy
@@ -378,9 +378,9 @@ class VNA_Lyzer(Lyzer):
 
     def ifft_plot(self, **kwargs):
         process_kwargs(self, kwargs, pl="hannifft_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
-        on_res=absolute(self.filt.window_ifft(self.MagcomData[:,self.on_res_ind]))
-        strt=absolute(self.filt.window_ifft(self.MagcomData[:,self.start_ind]))
-        stop=absolute(self.filt.window_ifft(self.MagcomData[:,self.stop_ind]))
+        on_res=absolute(self.filt.window_ifft(self.Magcom[:,self.on_res_ind]))
+        strt=absolute(self.filt.window_ifft(self.Magcom[:,self.start_ind]))
+        stop=absolute(self.filt.window_ifft(self.Magcom[:,self.stop_ind]))
 
         pl=line(self.time_axis, self.filt.fftshift(on_res),  color="red",
                plot_name="onres_{}".format(self.on_res_ind),label="{:.4g}".format(self.flux_axis[self.on_res_ind]), **kwargs)
