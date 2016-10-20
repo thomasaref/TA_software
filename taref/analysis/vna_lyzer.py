@@ -19,8 +19,11 @@ from taref.physics.fundamentals import bgsub2D
 
 def read_data(self):
     with File(self.rd_hdf.file_path, 'r') as f:
+        #print f["Channels"][:]
+        print f["Traces"].keys()
         Magvec=f["Traces"]["{0} - {1}".format(self.VNA_name, self.port_name)]
         data=f["Data"]["Data"]
+        print shape(data)
         self.comment=f.attrs["comment"]
         self.yoko=data[:,0,0].astype(float64)
         fstart=f["Traces"]['{0} - {1}_t0dt'.format(self.VNA_name, self.port_name)][0][0]
@@ -30,6 +33,8 @@ def read_data(self):
         #print sy
         s=(sm, sy[0], 1)#sy[2])
         Magcom=Magvec[:,0, :]+1j*Magvec[:,1, :]
+        print Magcom.shape
+        print s
         Magcom=reshape(Magcom, s, order="F")
         self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
         self.MagcomData=squeeze(Magcom)
