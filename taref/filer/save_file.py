@@ -254,6 +254,7 @@ class Save_NP(Save_TXT):
 
 
 class Save_DXF(Save_File):
+    data_buffer=Unicode()
     def _default_file_suffix(self):
         return ".dxf"
 

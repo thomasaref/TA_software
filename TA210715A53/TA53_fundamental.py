@@ -15,7 +15,7 @@ from numpy import array, log10, sqrt, linspace, angle, absolute, pi
 from taref.plotter.plotter import line, colormesh, Plotter
 from taref.physics.fundamentals import h#Ej, fq, flux_over_flux0
 
-from taref.analysis.api import VNA_Lyzer, VNA_Pwr_Lyzer
+from taref.analysis.api import VNA_Lyzer, VNA_Pwr_Lyzer, VNA_Two_Tone_Lyzer
 
 class TA53_Read(Read_HDF5):
     def _default_folder(self): #/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Logbook/TA210715A53_cooldown022915
@@ -165,6 +165,13 @@ a=TA53_VNA_Lyzer( name="theory_check",
 a.save_folder.main_dir=a.name
 
 class TA53_VNA_Pwr_Lyzer(VNA_Pwr_Lyzer):
+    qdt=qdt
+    idt=idt
+
+    def _default_save_folder(self):
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/TA_53", main_dir="overall")
+
+class TA53_VNA_Two_Tone_Lyzer(VNA_Two_Tone_Lyzer):
     qdt=qdt
     idt=idt
 

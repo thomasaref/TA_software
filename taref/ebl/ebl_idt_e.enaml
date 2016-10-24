@@ -1,0 +1,51 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jan  5 01:08:32 2016
+
+@author: thomasaref
+"""
+
+from enaml.widgets.api import ScrollArea, MainWindow, VGroup, Form, Label, ObjectCombo, Notebook, Page, GroupBox, DockArea, DockItem, Container, PushButton
+from enaml.core.api import Looper, Conditional
+from enaml.layout.api import HSplitLayout, VSplitLayout, TabLayout, DockLayout, InsertItem, hbox, vbox, spacer, RetractItem, DockBarLayout
+
+from taref.core.fundcore_e import UnitIntField, aHGroup, aWindow, UnitFloatField, AgentWindow
+from taref.core.var_e import EnumVar, UnitFloatVar, UnitIntVar, UnitComplexVar
+from taref.core.instrview_e import DynVar, AgentLooper, InstrHolder, AgentVGroup, AgentForm
+from taref.physics.idt_e import IDTDockArea
+
+enamldef EBLIDTDockItem(DockItem):
+    name = 'ebl_idt'
+    title = 'ebl IDT Properties'
+    AgentVGroup:
+        vmodel = agent
+        iterable=("idt_type", "qdt_type", "ft",
+            "add_gate", "add_gnd", "add_teeth", "step_num",
+            "Np", "a", "g", "W", "o","f0", "eta", "ef", "wbox", "hbox", "material",
+            "trconnect_x", "trconnect_y", "trconnect_w", "trc_wbox", "trc_hbox",
+            "conn_h", "gate_distance",  "idt_tooth", "vf", "Dvv", "epsinf", "Ct", "p")
+
+
+
+enamldef EBLIDTDockArea(DockArea):
+    #layout = TabLayout(VSplitLayout(HSplitLayout('plots', 'material', 'finger', "frequency", "alpha"),
+    #                      HSplitLayout("type_controls", "idt", "couple_idt", "mu_idt", "Ga_idt"),
+    #                      HSplitLayout("extra_idt", "numeric")),
+    layout=                      HSplitLayout("ebl_idt")#)
+    EBLIDTDockItem:
+        pass
+
+enamldef EBLIDTView(AgentWindow):
+    VGroup:
+        Notebook:
+            Page:
+                title = "IDT"
+                VGroup:
+                    IDTDockArea:
+                        pass
+            Page:
+                title = "EBL IDT"
+                VGroup:
+                    EBLIDTDockArea:
+                            pass
+

@@ -96,7 +96,7 @@ class EBL_Polygons(Operative):
             a=cls.agent_dict[p.name] #[agent for agent in self.agents if agent.name==p.name][0]
             for chip in xy_off.get(p.name, []):
                 sPoly(a, x_off=chip[0]*1.0e-6, y_off=chip[1]*1.0e-6, vs=verts)
-        save_dxf(verts, color="green", layer="PADS", file_path="marialasertest.dxf", write_mode="w")
+        save_dxf(verts, color="green", layer="PADS", file_path="newtomtest.dxf", write_mode="w")
 
     def add_to_jdf(self):
         self.chief.patterns[self.name_sug]={"shot_mod":self.shot_mod_table}

@@ -10,9 +10,32 @@ from atom.api import Float, Bool, Enum, Int
 from taref.ebl.polygons import EBL_Polygons
 from numpy import  mod
 from taref.core.api import private_property
+from enaml import imports
+with imports():
+    from taref.ebl.ebl_idt_e import EBLIDTView
 
 class EBL_IDT(EBL_Polygons, IDT):
     """handles everything related to drawing a IDT. Units are microns (um)"""
+
+    def _default_Ga_type(self):
+        return "sinc"
+
+    def _default_Ba_type(self):
+        return "formula"
+
+    def _default_Y0_type(self):
+        return "center"
+
+    def _default_df_type(self):
+        return "center"
+
+    def _default_mus_type(self):
+        return "center"
+
+    @private_property
+    def view_window(self):
+        return EBLIDTView(agent=self)
+
     trconnect_x=Float(9.0e-6).tag(desc="connection length of transmon", unit="um")
     trconnect_y=Float(2.0e-6).tag(desc="connection length of transmon", unit="um")
     trconnect_w=Float(0.5e-6).tag(desc="connection length of transmon", unit="um")
@@ -39,7 +62,7 @@ class EBL_IDT(EBL_Polygons, IDT):
         return "blue"
 
     def _default_main_params(self):
-        return self.all_main_params
+        #return self.all_main_params
         mp=["idt_type", "qdt_type", "ft",
             "add_gate", "add_gnd", "add_teeth", "angle_x", "angle_y", "step_num",
             "Np", "a", "g", "W", "o","f0", "eta", "ef", "wbox", "hbox", "material",
