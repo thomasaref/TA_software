@@ -16,7 +16,7 @@ a=TA53_VNA_Pwr_Lyzer(name="d1013", on_res_ind=139,#read_data=read_data, # VNA_na
          offset=-0.3,
          swp_type="yoko_first",
         )
-a.filt.center=53 #139 #106 #  #137
+a.filt.center=145 #0*105 #53 #139 #106 #  #137
 a.filt.halfwidth=20
 a.fitter.fit_type="refl_lorentzian"
 a.fitter.gamma=0.1 #0.035
@@ -35,7 +35,7 @@ print a.yoko.shape
 a.filter_type="None"
 a.magabs_colormesh(fig_width=6.0, fig_height=4.0)#.show()
 
-probe_ind=100 #187
+probe_ind=343 #448 #343 #100 #187
 pl1=scatter(a.pwr, absolute(a.MagcomFilt[probe_ind, 192, :])) #535
 scatter(a.yoko, absolute(a.MagcomFilt[probe_ind, :, 7]))
 

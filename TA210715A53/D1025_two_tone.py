@@ -16,7 +16,7 @@ a=TA53_VNA_Two_Tone_Pwr_Lyzer(name="d1013", on_res_ind=139,#read_data=read_data,
          offset=-0.3,
          swp_type="yoko_first",
         )
-a.filt.center=27 #139 #106 #  #137
+a.filt.center=27*2 #139 #106 #  #137
 a.filt.halfwidth=10
 a.fitter.fit_type="refl_lorentzian"
 a.fitter.gamma=0.1 #0.035
@@ -36,12 +36,12 @@ a.read_data()
 #a.pwr_ind=39
 print a.yoko.shape
 a.filter_type="None"
-a.magabs_colormesh(fig_width=6.0, fig_height=4.0)#.show()
+#a.magabs_colormesh(fig_width=6.0, fig_height=4.0)#.show()
 scatter(absolute(a.MagcomFilt[170, 192, :]))
 scatter(absolute(a.MagcomFilt[170, :, 0]))
 
 colormesh(absolute(a.MagcomFilt[260, :, :]))#.show()
-a.ifft_plot(fig_width=6.0, fig_height=4.0)#.show() #, time_axis_type="time",
+a.ifft_plot(fig_width=6.0, fig_height=4.0).show() #, time_axis_type="time",
 
 a.filter_type="FFT"
 
