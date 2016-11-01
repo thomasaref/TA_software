@@ -37,8 +37,8 @@ a.read_data()
 a.filter_type="None"
 a.magabs_colormesh(fig_width=6.0, fig_height=4.0)
 
-a.filter_type="FFT"
 a.ifft_plot(fig_width=6.0, fig_height=4.0) #, time_axis_type="time",
+a.filter_type="FFT"
 
 a.filter_type="Fit"
 pl, pf=a.magabs_colormesh(fig_width=6.0, fig_height=4.0, pf_too=True)

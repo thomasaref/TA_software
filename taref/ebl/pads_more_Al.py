@@ -8,7 +8,7 @@ Created on Mon Dec  8 10:19:24 2014
 from atom.api import Float, Typed
 from taref.ebl.polygon_backbone import horiz_refl, vert_refl, horizvert_refl, rotate, sP, sT, sCT
 from taref.ebl.polygons import EBL_Polygons
-from taref.core.atom_extension import private_property, reset_property
+from taref.core.api import private_property, reset_property
 from taref.ebl.pads import Test_Pads
 
 class Al_PADS(EBL_Polygons):

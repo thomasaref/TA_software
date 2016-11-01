@@ -18,11 +18,12 @@ def read_data(self):
         print shape(data)
         self.frq2=data[:, 0, 0].astype(float64)
         self.yoko=data[0, 1, :][:141].astype(float64)
-        self.pwr=data[0, 2, ::141][:5].astype(float64)
+        #self.pwr=data[0, 2, ::141][:5].astype(float64)
 
         sm=shape(Magvec)[0]
         sy=shape(data)
-        s=(sm, sy[0], 141, 5)
+        s=(sm, sy[0], sy[2])
+        #s=(sm, sy[0], 141, 5)
         Magcom=Magvec[:,0, :]+1j*Magvec[:,1, :]
         Magcom=reshape(Magcom, s, order="F")
 
@@ -75,7 +76,7 @@ class VNA_Two_Tone_Lyzer(VNA_Pwr_Lyzer):
             Magcom=self.MagcomFilt[self.indices, :, :, :]
         if self.bgsub_type=="Complex":
             return self.bgsub(Magcom)
-        return Magcom[:, :, self.frq2_ind, self.pwr_ind]
+        return Magcom[:, :, self.frq2_ind]#, self.pwr_ind]
 
 #array([[self.fft_filter_full(m, n, Magcom) for n in range(len(self.yoko))] for m in range(len(self.pwr))]).transpose()
 
@@ -83,11 +84,11 @@ class VNA_Two_Tone_Lyzer(VNA_Pwr_Lyzer):
     def MagcomFilt(self):
         if self.filt.filter_type=="FIR":
             return array([[self.filt.fir_filter(self.MagcomData[:,n,o,m]) for n in self.flat_flux_indices] for m in range(len(self.pwr))]).transpose()
-        return array([[[self.filt.fft_filter(self.MagcomData[:,n, o, m]) for n in self.flat_flux_indices] for o in range(len(self.frq2))] for m in range(len(self.pwr))]).transpose()
+        return array([[self.filt.fft_filter(self.MagcomData[:,n, o]) for n in self.flat_flux_indices] for o in range(len(self.frq2))]).transpose()
 
     @tag_property( sub=True)
     def MagAbsFilt_sq(self):
-        return absolute(self.MagcomFilt[:, :, self.pwr_ind])**2
+        return absolute(self.MagcomFilt[:, :, self.frq2_ind])**2
 
     @private_property
     def fit_params(self):
