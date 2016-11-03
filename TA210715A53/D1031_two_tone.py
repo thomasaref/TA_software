@@ -9,15 +9,15 @@ from TA53_fundamental import TA53_VNA_Two_Tone_Lyzer, TA53_Read, qdt
 from numpy import absolute,  trunc, arccos, shape, float64, linspace, reshape
 from taref.plotter.api import colormesh, scatter, line
 
-a=TA53_VNA_Two_Tone_Lyzer(name="d1013", on_res_ind=55,#read_data=read_data, # VNA_name="RS VNA",
-        rd_hdf=TA53_Read(main_file="Data_1101/S1A4_all_close_swap_two_tone2.hdf5"),
+a=TA53_VNA_Two_Tone_Lyzer(name="d1013", on_res_ind=32,#read_data=read_data, # VNA_name="RS VNA",
+        rd_hdf=TA53_Read(main_file="Data_1031/S1A4_all_close_swap_two_tone.hdf5"),
         #fit_indices=[range(48,154+1), range(276, 578+1)],
          desc="Gate to IDT low frequency",
          offset=-0.3,
          #swp_type="yoko_first",
         )
-a.filt.center=29 #139 #106 #  #137
-a.filt.halfwidth=8
+a.filt.center=14 #139 #106 #  #137
+a.filt.halfwidth=6
 a.fitter.fit_type="refl_lorentzian"
 a.fitter.gamma=0.1 #0.035
 a.flux_axis_type="yoko" #"flux" #"fq" #
@@ -42,15 +42,15 @@ colormesh(absolute(a.MagcomFilt[50, :, :]))#.show()
 colormesh(absolute(a.MagcomFilt[100, :, :]))#.show()
 colormesh(absolute(a.MagcomFilt[150, :, :]))#.show()
 colormesh(absolute(a.MagcomFilt[200, :, :]))#.show()
-colormesh(absolute(a.MagcomFilt[250, :, :]))#.show()
-colormesh(absolute(a.MagcomFilt[300, :, :]))#.show()
-colormesh(absolute(a.MagcomFilt[350, :, :]))#.show()
-colormesh(absolute(a.MagcomFilt[400, :, :]))#.show()
-colormesh(absolute(a.MagcomFilt[450, :, :]))#.show()
+#colormesh(absolute(a.MagcomFilt[250, :, :]))#.show()
+#colormesh(absolute(a.MagcomFilt[300, :, :]))#.show()
+#colormesh(absolute(a.MagcomFilt[350, :, :]))#.show()
+#colormesh(absolute(a.MagcomFilt[400, :, :]))#.show()
+#colormesh(absolute(a.MagcomFilt[450, :, :]))#.show()
 
-colormesh(absolute(a.MagcomFilt[235, :, :]))#.show()
+#colormesh(absolute(a.MagcomFilt[235, :, :]))#.show()
 
-colormesh(absolute(a.MagcomFilt[289, :, :]))#.show()
+#colormesh(absolute(a.MagcomFilt[289, :, :]))#.show()
 
 colormesh(absolute(a.MagcomFilt[:, :, 50]))#.show()
 
@@ -88,17 +88,17 @@ def ifft_plot(self, **kwargs):
         colormesh(absolute(a.MagcomData[50, :, :]).transpose())
         pl=colormesh(absolute(a.MagcomFilt[50, endskip:-endskip, :]).transpose())
         colormesh(absolute(double_filt[50, endskip:-endskip, :]).transpose(), pl=pl)#-absolute(double_filt[50, 10:-10, 134]))
-        colormesh(absolute(double_filt[250, endskip:-endskip, :]).transpose())#-absolute(double_filt[250, 10:-10, 134]))
-        colormesh(absolute(double_filt[450, endskip:-endskip, :]).transpose())#-absolute(double_filt[450, 10:-10, 134]))
+        #colormesh(absolute(double_filt[250, endskip:-endskip, :]).transpose())#-absolute(double_filt[250, 10:-10, 134]))
+        #colormesh(absolute(double_filt[450, endskip:-endskip, :]).transpose())#-absolute(double_filt[450, 10:-10, 134]))
 
 
         colormesh(absolute(double_filt[50, endskip:-endskip, :]).transpose()/absolute(double_filt[50, endskip:-endskip, 134]))
-        colormesh(absolute(double_filt[250, endskip:-endskip, :]).transpose()/absolute(double_filt[250, endskip:-endskip, 134]))
-        colormesh(absolute(double_filt[450, endskip:-endskip, :]).transpose()/absolute(double_filt[450, endskip:-endskip, 134]))
+        #colormesh(absolute(double_filt[250, endskip:-endskip, :]).transpose()/absolute(double_filt[250, endskip:-endskip, 134]))
+        #colormesh(absolute(double_filt[450, endskip:-endskip, :]).transpose()/absolute(double_filt[450, endskip:-endskip, 134]))
 
         colormesh(angle(double_filt[50, 10:-10, :]).transpose())#-absolute(double_filt[50, 10:-10, 134]))
-        colormesh(angle(double_filt[250, 10:-10, :]).transpose())#-absolute(double_filt[250, 10:-10, 134]))
-        colormesh(angle(double_filt[450, 10:-10, :]).transpose())#-absolute(double_filt[450, 10:-10, 134]))
+        #colormesh(angle(double_filt[250, 10:-10, :]).transpose())#-absolute(double_filt[250, 10:-10, 134]))
+        #colormesh(angle(double_filt[450, 10:-10, :]).transpose())#-absolute(double_filt[450, 10:-10, 134]))
 
         #colormesh(absolute(double_filt[:, :, 75]))
         #colormesh(absolute(double_filt[:, :, 50]))

@@ -53,7 +53,7 @@ a.filter_type="FFT"
 a.pwr_ind=20
 pl3=a.magabs_colormesh(pl="dB"+str(a.pwr[a.pwr_ind])+"dB.jpg", cmap="nipy_spectral")
 
-offset=-8
+offset=-4
 a.pwr_ind=15+offset
 a.magabs_colormesh(pl=str(a.pwr[a.pwr_ind]))
 a.pwr_ind=14+offset

@@ -24,8 +24,8 @@ a.filt.center=53 #106 #137
 a.filt.halfwidth=20
 a.fitter.fit_type="refl_lorentzian"
 a.fitter.gamma=0.1 #0.035
-a.flux_axis_type="flux" #"fq" #
-a.bgsub_type="Abs" #"Complex" #"Abs" #"dB"
+a.flux_axis_type="yoko" #"flux" #"fq" #
+
 
 a.end_skip=10
 #a.flux_indices=[range(479, 712)] #range(0,41), range(43, 479), range(482, len(a.yoko))]
@@ -35,6 +35,9 @@ a.save_folder.main_dir=a.name
 
 a.read_data()
 a.filter_type="None"
+
+a.magabs_colormesh(fig_width=6.0, fig_height=4.0)
+a.bgsub_type="Abs" #"Complex" #"Abs" #"dB"
 a.magabs_colormesh(fig_width=6.0, fig_height=4.0)
 
 a.ifft_plot(fig_width=6.0, fig_height=4.0).show() #, time_axis_type="time",

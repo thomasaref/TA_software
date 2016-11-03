@@ -50,13 +50,13 @@ colormesh(absolute(a.MagcomFilt[450, :, :]))#.show()
 
 colormesh(absolute(a.MagcomFilt[235, :, :]))#.show()
 
-colormesh(absolute(a.MagcomFilt[289, :, :]))#.show()
+colormesh(a.frq2, a.yoko, absolute(a.MagcomFilt[289, :, :]))#.show()
 
 colormesh(absolute(a.MagcomFilt[:, :, 50]))#.show()
 
 from taref.core.api import process_kwargs
 from taref.physics.filtering import Filter
-from numpy import amax, array, swapaxes, angle
+from numpy import amax, array, swapaxes, angle, log10
 filt=Filter(center=5, halfwidth=15)
 
 
@@ -85,11 +85,22 @@ def ifft_plot(self, **kwargs):
         print double_filt.shape
         double_filt=swapaxes(double_filt, 1, 2)
         endskip=2
+
+        colormesh(absolute(double_filt[a.end_skip:-a.end_skip, 56, :]).transpose()-absolute(double_filt[a.end_skip:-a.end_skip, 56, 134]).transpose())#-absolute(double_filt[50, 10:-10, 134]))
+        colormesh(absolute(double_filt[a.end_skip:-a.end_skip, 58, :]).transpose()-absolute(double_filt[a.end_skip:-a.end_skip, 58, 134]).transpose())#-absolute(double_filt[250, 10:-10, 134]))
+        colormesh(absolute(double_filt[a.end_skip:-a.end_skip, 60, :]).transpose()-absolute(double_filt[a.end_skip:-a.end_skip, 60, 134]).transpose())#-absolute(double_filt[450, 10:-10, 134]))
+        print a.yoko[58]
+        colormesh(absolute(double_filt[a.end_skip:-a.end_skip, 20, :]).transpose()-absolute(double_filt[a.end_skip:-a.end_skip, 20, 134]).transpose())#-absolute(double_filt[50, 10:-10, 134]))
+        colormesh(absolute(double_filt[a.end_skip:-a.end_skip, 45, :]).transpose()-absolute(double_filt[a.end_skip:-a.end_skip, 45, 134]).transpose())#-absolute(double_filt[250, 10:-10, 134]))
+        colormesh(absolute(double_filt[a.end_skip:-a.end_skip, 70, :]).transpose()-absolute(double_filt[a.end_skip:-a.end_skip, 70, 134]).transpose())#-absolute(double_filt[450, 10:-10, 134]))
+
+
         colormesh(absolute(a.MagcomData[50, :, :]).transpose())
         pl=colormesh(absolute(a.MagcomFilt[50, endskip:-endskip, :]).transpose())
         colormesh(absolute(double_filt[50, endskip:-endskip, :]).transpose(), pl=pl)#-absolute(double_filt[50, 10:-10, 134]))
         colormesh(absolute(double_filt[250, endskip:-endskip, :]).transpose())#-absolute(double_filt[250, 10:-10, 134]))
         colormesh(absolute(double_filt[450, endskip:-endskip, :]).transpose())#-absolute(double_filt[450, 10:-10, 134]))
+
 
 
         colormesh(absolute(double_filt[50, endskip:-endskip, :]).transpose()/absolute(double_filt[50, endskip:-endskip, 134]))

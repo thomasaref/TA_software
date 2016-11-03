@@ -11,9 +11,8 @@ from scipy.constants import e, h, hbar, k as kB, epsilon_0 as eps0, pi
 c_eta = 0.8
 
 from numpy import (sin, cos, arccos, sqrt, exp, empty, mean, exp, log10, arange, array, ndarray, delete,
-                   absolute, dtype, angle, amin, amax, linspace, zeros, shape, append, sign)
-
-
+                   absolute, dtype, angle, amin, amax, linspace, zeros, shape, append, sign, )
+from numpy.linalg import eigvalsh, eig
 from taref.core.api import Agent, Array, SProperty, private_property
 from atom.api import Enum, Float, Int
 from taref.plotter.api import Plotter, line
@@ -28,6 +27,8 @@ Delta_Al=200.0e-6*e #gap of aluminum
 class Qubit(Agent):
     """Theoretical description of qubit"""
     base_name="qubit"
+
+    qubit_type=Enum("transmon", "scb")
 
     dephasing=Float(0.0).tag(unit="GHz")
     dephasing_slope=Float(0.0)
@@ -64,9 +65,9 @@ class Qubit(Agent):
     def _get_loop_area(self, loop_width, loop_height):
         return loop_width*loop_height
 
-    Ct=Float(1.0e-13).tag(desc="shunt capacitance", unit="fF", tex_str=r"$C_q$")
+    Ct=Float(1.3e-13).tag(desc="shunt capacitance", unit="fF", tex_str=r"$C_q$")
 
-    Rn=Float(10.0e3).tag(desc="Normal resistance of SQUID", unit="kOhm", label="DC Junction resistance", expression=r"$R_N$")
+    Rn=Float(5.0e3).tag(desc="Normal resistance of SQUID", unit="kOhm", label="DC Junction resistance", expression=r"$R_N$")
 
     Ic=SProperty().tag(desc="critical current of SQUID, Ambegaokar Baratoff formula", unit="nA", label="Critical current",
              expression=r"$I_C=\pi \Delta/(2e R_N)$")
@@ -139,13 +140,13 @@ class Qubit(Agent):
 
     fq_max=SProperty().tag(unit="GHz", label="fq max", expression=r"$f_{qmax}$")
     @fq_max.getter
-    def _get_fq_max(self, Ejmax, Ec):
-        return  self._get_fq(Ej=Ejmax, Ec=Ec)
+    def _get_fq_max(self, Ejmax, Ec, qubit_type, ng, Nstates):
+        return  self._get_fq(Ej=Ejmax, Ec=Ec, qubit_type=qubit_type, ng=ng, Nstates=Nstates)
 
     fq=SProperty().tag(desc="""Operating frequency of qubit""", unit="GHz", expression=r"$f_q$")
     @fq.getter
-    def _get_fq(self, Ej, Ec):
-        E0, E1=self._get_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=2)
+    def _get_fq(self, Ej, Ec, qubit_type, ng, Nstates):
+        E0, E1=self._get_energy_levels(Ej=Ej, Ec=Ec, n_energy=2, qubit_type=qubit_type, ng=ng, Nstates=Nstates)
         return (E1-E0)/h
 
     @fq.setter
@@ -160,14 +161,14 @@ class Qubit(Agent):
 
     anharm=SProperty().tag(desc="absolute anharmonicity", unit="GHz")
     @anharm.getter
-    def _get_anharm(self, Ej, Ec):
-        E0, E1, E2=self._get_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=3)
+    def _get_anharm(self, Ej, Ec, qubit_type, ng, Nstates):
+        E0, E1, E2=self._get_energy_levels(Ej=Ej, Ec=Ec, n_energy=3, qubit_type=qubit_type, ng=ng, Nstates=Nstates)
         return (E2-E1)/h-(E1-E0)/h
 
     fq2=SProperty().tag(desc="""20 over 2 freq""", unit="GHz", expression = r"$f_{20}/2$")
     @fq2.getter
-    def _get_fq2(self, Ej, Ec):
-        E0, E1, E2=self._get_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=3)
+    def _get_fq2(self, Ej, Ec, qubit_type, ng, Nstates):
+        E0, E1, E2=self._get_energy_levels(Ej=Ej, Ec=Ec, n_energy=3, qubit_type=qubit_type, ng=ng, Nstates=Nstates)
         return (E2-E0)/h/2.0
 
     voltage=Float().tag(unit="V", desc="Yoko voltage on coil")
@@ -192,10 +193,10 @@ class Qubit(Agent):
 
     flux_parabola=SProperty()
     @flux_parabola.getter
-    def _get_flux_parabola(self, voltage, offset, flux_factor, Ejmax, Ec):
+    def _get_flux_parabola(self, voltage, offset, flux_factor, Ejmax, Ec, qubit_type, ng, Nstates):
         flx_d_flx0=self._get_flux_over_flux0(voltage=voltage, offset=offset, flux_factor=flux_factor)
         qEj=self._get_Ej(Ejmax=Ejmax, flux_over_flux0=flx_d_flx0)
-        return self._get_fq(Ej=qEj, Ec=Ec)#, fq2(qEj, Ec)
+        return self._get_fq(Ej=qEj, Ec=Ec, qubit_type=qubit_type, ng=ng, Nstates=Nstates)#, fq2(qEj, Ec)
 
     #freq_arr=Array().tag(desc="array of frequencies to evaluate over")
     f=Float(4.4e9).tag(label="Operating frequency", desc="what frequency is being stimulated/measured", unit="GHz")
@@ -239,29 +240,36 @@ class Qubit(Agent):
     transmon_energy_levels=SProperty().tag(sub=True)
     @transmon_energy_levels.getter
     def _get_transmon_energy_levels(self, Ej, Ec, n_energy):
-        #Ej=EjdivEc*Ec
         return [self.transmon_energy(Ej, Ec, m) for m in range(n_energy)]
 
     n_energy=Int(3)
 
-    def indiv_EkdivEc(self, ng, Ec, Ej, Nstates, order):
-        NL=2*Nstates+1
-        A=zeros((NL, NL))
-        for b in range(0,NL):
-            A[b, b]=4.0*Ec*(b-Nstates-a)**2
-            if b!=NL-1:
-                A[b, b+1]= -Ej/2.0
-            if b!=0:
-                A[b, b-1]= -Ej/2.0
-        w,v=eig(A)
-        print w, v
-        #for n in range(order):
-
-    ng=Float(0.5).tag(desc="charge on gate line")
+    ng=Float(0.5).tag(desc="charge on gate line", log=False)
     Nstates=Int(50).tag(desc="number of states to include in mathieu approximation. More states is better approximation")
     order=Int(3)
     EkdivEc=Array().tag(unit2="Ec", sub=True)
 
+    energy_levels=SProperty().tag(sub=True)
+    @energy_levels.getter
+    def _get_energy_levels(self, Ej, Ec, n_energy, qubit_type, ng, Nstates):
+        if qubit_type=="scb":
+            return self._get_scb_energy_levels(Ej=Ej, Ec=Ec, n_energy=n_energy, ng=ng, Nstates=Nstates)
+        return self._get_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=n_energy)
+
+    scb_energy_levels=SProperty().tag(sub=True)
+    @scb_energy_levels.getter
+    def _get_scb_energy_levels(self, Ej, Ec, n_energy, ng, Nstates):
+        NL=2*Nstates+1
+        A=zeros((NL, NL))
+        for b in range(0,NL):
+            A[b, b]=4.0*Ec*(b-Nstates-ng)**2
+            if b!=NL-1:
+                A[b, b+1]= -Ej/2.0
+            if b!=0:
+                A[b, b-1]= -Ej/2.0
+        #w,v=eig(A)
+        w=eigvalsh(A)
+        return w[0:n_energy]
 
     def update_EkdivEc(self, ng, Ec, Ej, Nstates, order):
         """calculates transmon energy level with N states (more states is better approximation)
@@ -363,7 +371,41 @@ def anharm_plot(qbt):
 
 
 if __name__=="__main__":
-    a=Qubit()
+    a=Qubit(Ej=1e-24)
+    print a.EjdivEc
+    a.qubit_type="scb"
+    a.n_energy=5
+    #a.indiv_EkdivEc(0, a.Ec, a.Ej, 50, 5)
+    from time import time
+    tstart=time()
+    energy_levels=array([a._get_energy_levels(ng=ng) for ng in linspace(0.0, 3.0, 1001)])
+    print time()-tstart
+    pl=line(energy_levels[:, 0]) #, auto_xlim=False, auto_ylim=False)
+    line(energy_levels[:, 1], pl=pl) #, auto_xlim=False, auto_ylim=False)
+    line(energy_levels[:, 2], pl=pl)
+    line(energy_levels[:, 3], pl=pl)
+
+    Ec=a.Ec
+    anharm=array([a._get_anharm(Ej=EjdivEc*Ec, ng=0.0) for EjdivEc in linspace(0.1,300, 101)])
+    pl1=line(anharm/Ec*h)
+    anharm=array([a._get_anharm(Ej=EjdivEc*Ec, ng=0.5) for EjdivEc in linspace(0.1,300, 101)])
+    line(anharm/Ec*h, pl=pl1)
+
+
+    a.qubit_type="transmon"
+    energy_levels=array([a._get_energy_levels(ng=ng) for ng in linspace(0.0, 3.0, 1001)])
+    line(energy_levels[:, 0], pl=pl) #, auto_xlim=False, auto_ylim=False)
+    line(energy_levels[:, 1], pl=pl) #, auto_xlim=False, auto_ylim=False)
+    line(energy_levels[:, 2], pl=pl)
+    line(energy_levels[:, 3], pl=pl)
+
+    anharm=array([a._get_anharm(Ej=EjdivEc*Ec, ng=0.0) for EjdivEc in linspace(0.1,100, 101)])
+    line(anharm/Ec*h, pl=pl1)
+    anharm=array([a._get_anharm(Ej=EjdivEc*Ec, ng=0.5) for EjdivEc in linspace(0.1,100, 101)])
+    line(anharm/Ec*h, pl=pl1)
+
+    #a.n_energy=5
+    print a.transmon_energy_levels
     a.show()
     from atom.api import FloatRange
     from taref.core.api import tag_property
