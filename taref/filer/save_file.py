@@ -17,7 +17,7 @@ from numpy import ndarray, size, savetxt
 #from collections import OrderedDict
 from taref.core.api import tag_callable
 
-from taref.filer.HDF5_functions import rewrite_hdf5, group, dataset#, File
+from taref.filer.HDF5_functions import rewrite_hdf5, group, dataset, write_hdf5_file_path#, File
 from taref.core.universal import write_text, CArray
 #from taref.core.TXTNP_functions import  save_txt_data, save_np_data, save_txt
 from taref.ebl.DXF_functions import save_dxf
@@ -166,7 +166,8 @@ class Save_HDF5(Save_File):
         super(Save_HDF5, self).save(data,  name=name, group_name=group_name, append=append, write_mode=write_mode)
 
     def save_to_file(self):
-        rewrite_hdf5(self.save_file, self.data_buffer)
+        write_hdf5_file_path(self.file_path, self.data_buffer, self.write_mode)
+        #rewrite_hdf5(self.save_file, self.data_buffer)
 
 
     def buffer_save(self, data, name="Measurement", group_name="Data", append=True):

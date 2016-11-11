@@ -77,11 +77,11 @@ class VNA_Two_Tone_Pwr_Lyzer(VNA_Pwr_Lyzer):
     @tag_property(sub=True)
     def Magcom(self):
         if self.filter_type=="None":
-            Magcom=self.MagcomData[:, :, self.frq2_ind, :, self.pwr2_ind]
+            return self.MagcomData[:, :, self.frq2_ind, self.pwr2_ind]
         elif self.filter_type=="Fit":
             return self.MagAbsFit
         else:
-            Magcom=self.MagcomFilt[self.indices, :, :]
+            return self.MagcomFilt[self.indices, :, :]
         if self.bgsub_type=="Complex":
             return self.bgsub(Magcom)
         return Magcom[:, :, self.pwr_ind]
@@ -91,8 +91,8 @@ class VNA_Two_Tone_Pwr_Lyzer(VNA_Pwr_Lyzer):
     @private_property
     def MagcomFilt(self):
         if self.filt.filter_type=="FIR":
-            return array([[self.filt.fir_filter(self.MagcomData[:,n, self.frq2_ind, self.pwr2_ind, m]) for n in self.flat_flux_indices] for m in range(len(self.pwr))]).transpose()
-        return array([[self.filt.fft_filter(self.MagcomData[:,n,self.frq2_ind, m, self.pwr2_ind]) for n in self.flat_flux_indices]  for m in range(len(self.pwr))]).transpose()
+            return array([[self.filt.fir_filter(self.MagcomData[:,n, self.frq2_ind, self.pwr2_ind]) for n in self.flat_flux_indices] for m in range(len(self.pwr))]).transpose()
+        return squeeze(array([[[self.filt.fft_filter(self.MagcomData[:,n,m, self.pwr2_ind]) for n in self.flat_flux_indices]] for m in range(len(self.frq2))]).transpose())
 
     @tag_property( sub=True)
     def MagAbsFilt_sq(self):
