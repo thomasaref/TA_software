@@ -498,7 +498,7 @@ def anton_plots(pl="anton_plot", **kwargs):
 
 if __name__=="__main__":
     qdt=QDT()
-    #qdt.show()
+    qdt.show()
     anton_plots().show()
     anton_anharm_plot()
     #anharm_plot(antonqdt).show()

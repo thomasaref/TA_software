@@ -272,10 +272,10 @@ class TEX(Operative):
     def mult_fig_start(self):
         mult_fig_start(self.tex_list)
 
-    def mult_fig_end(self, caption=None):
+    def mult_fig_end(self, caption=None, label=" "):
         if caption is not None:
             self.caption=caption
-        mult_fig_end(self.tex_list, self.caption)
+        mult_fig_end(self.tex_list, self.caption, label)
         self.caption=""
 
     def include_image(self, fig_name, label="", caption="", source_folder=None, tex_width_factor=0.49):

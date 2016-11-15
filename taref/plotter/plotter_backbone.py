@@ -133,10 +133,29 @@ class PlotUpdate(Atom):
     def update_plot(self, update_legend=True):
         self.plotter.update_plot(update_legend=update_legend)
 
+#Spectral, coolwarm Set1 brg_r
+colormap_names=("RdBu_r", "RdBu", "spectral", "spectral_r", "Spectral", "Spectral_r",
+                "coolwarm", "coolwarm_r", "Set1", "Set1_r", "gist_ncar", "gist_ncar_r",
+                "jet", "jet_r", "bwr", "bwr_r",  "brg",  "brg_r",
+                "seismic", "seismic_r", "nipy_spectral", "nipy_spectral_r",
+                "summer",  "Wistia_r", "pink_r",  "Set2", "Set3",  "Dark2", "prism",
+                "PuOr_r", "afmhot_r", "terrain_r", "PuBuGn_r", "RdPu",  "gist_yarg_r", "Dark2_r", "YlGnBu",
+                "RdYlBu", "hot_r", "gist_rainbow_r", "gist_stern", "PuBu_r", "cool_r", "cool", "gray", "copper_r", "Greens_r",
+                "GnBu", "spring_r", "gist_rainbow", "gist_heat_r", "Wistia", "OrRd_r", "CMRmap", "bone", "gist_stern_r",
+                "RdYlGn", "Pastel2_r", "spring", "terrain", "YlOrRd_r", "Set2_r", "winter_r", "PuBu", "RdGy_r",
+                "rainbow", "flag_r",  "RdPu_r", "gist_yarg", "BuGn", "Paired_r", "hsv_r",  "cubehelix", "Greens",
+                "PRGn", "gist_heat",  "Paired", "hsv", "Oranges_r", "prism_r", "Pastel2", "Pastel1_r", "Pastel1",
+                "gray_r",   "gnuplot2_r", "gist_earth", "YlGnBu_r", "copper", "gist_earth_r", "Set3_r",
+                "OrRd", "gnuplot_r", "ocean_r",  "gnuplot2", "PuRd_r", "bone_r", "BuPu", "Oranges", "RdYlGn_r", "PiYG",
+                "CMRmap_r", "YlGn", "binary_r", "gist_gray_r", "Accent", "BuPu_r", "gist_gray", "flag", "BrBG",
+                "Reds", "summer_r", "GnBu_r", "BrBG_r", "Reds_r", "RdGy", "PuRd", "Accent_r", "Blues", "autumn_r",
+                "autumn", "cubehelix_r", "ocean", "PRGn_r", "Greys_r", "pink", "binary", "winter", "gnuplot",
+                "RdYlBu_r", "hot", "YlOrBr", "rainbow_r", "Purples_r", "PiYG_r", "YlGn_r", "Blues_r", "YlOrBr_r"
+                , "Purples",  "Greys", "BuGn_r", "YlOrRd", "PuOr", "PuBuGn", "afmhot")
 
-colormap_names=("jet", "rainbow", "nipy_spectral", u'cool', u'coolwarm', u'copper', 'cubehelix', u'flag', u'gist_earth', u'gist_gray',
+colormap_names2=(u"bwr", "jet", "rainbow", "nipy_spectral", u'cool', u'coolwarm', u'copper', 'cubehelix', u'flag', u'gist_earth', u'gist_gray',
                  u'gist_heat', u'gist_ncar', u'gist_rainbow', u'gist_stern', u'gist_yarg', u'gnuplot', u'gnuplot2', u'gray', u'hot', u'hsv',  u'ocean', u'pink', u'prism',
-                 u'seismic', u'spectral', u'spring', u'summer', u'terrain', u'winter',)
+                 u'seismic', u'spectral', u'spring', u'summer', u'terrain', u'winter', 'viridis', 'inferno', 'plasma', 'magma')
 
 cmaps = {'Perceptually Uniform Sequential' : ['viridis', 'inferno', 'plasma', 'magma'],
          'Sequential' : ['Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd',

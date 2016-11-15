@@ -28,6 +28,8 @@ class Qubit(Agent):
     """Theoretical description of qubit"""
     base_name="qubit"
 
+    Cc=Float(1e-15).tag(desc="coupling capacitance", unit="fF")
+
     qubit_type=Enum("transmon", "scb")
 
     dephasing=Float(0.0).tag(unit="GHz")
@@ -95,14 +97,14 @@ class Qubit(Agent):
 
     Ec=SProperty().tag(desc="Charging Energy", unit="hGHz", label="Charging energy", expression=r"$E_C=e^2/2 C_t$")#, unit_factor=1.0e9*h)
     @Ec.getter
-    def _get_Ec(self, Ct):
+    def _get_Ec(self, Ct, Cc):
         """Charging energy"""
-        return e**2/(2.0*Ct)
+        return e**2/(2.0*(Ct+Cc))
 
     @Ec.setter
-    def _get_Ct(self, Ec):
+    def _get_Ct(self, Ec, Cc):
         """inverse charging energy"""
-        return e**2/(2.0*Ec)
+        return e**2/(2.0*Ec)-Cc
 
     @Ec.setter
     def _get_Ejmax_get_Ec(self, Ec, EjmaxdivEc):

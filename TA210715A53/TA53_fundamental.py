@@ -75,10 +75,10 @@ qdt=QDT(name="fittedQDT",
 #qdt.eta=0.55
 #qdt.Np=9.5
 qdt.K2=0.042
-qdt.gate_type="capacitive"
+#qdt.gate_type="capacitive"
 qdt.Cc=35e-15
 qdt.Cground=5e-15
-qdt.magabs_type="S33"
+#qdt.magabs_type="S33"
 qdt.Rn=2800.0
 qdt.fixed_freq_min=3.5e9
 qdt.fixed_freq_max=7.5e9

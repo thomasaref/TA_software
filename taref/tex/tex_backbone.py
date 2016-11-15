@@ -115,10 +115,10 @@ def mult_fig_start(tex):
                r"\begin{figure}[ht!]",
                r"\centering"])
 
-def mult_fig_end(tex, caption):
+def mult_fig_end(tex, caption, label="fig:setup"):
     """ends a multi figure with many subfigues"""
-    tex.extend([r"\label{fig:setup}",
-               "\\cprotect\\caption{{{}}}".format(caption),
+    tex.extend([r"\label{{{}}}".format(label),
+               "\\caption{{{}}}".format(caption),
                r"\end{figure}"])
 
 def add_mult_fig(graph_gen, tex, dir_path, fig_name, caption="", label="", width=0.49, **kwargs):
