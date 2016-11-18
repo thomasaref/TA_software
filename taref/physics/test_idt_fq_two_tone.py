@@ -64,11 +64,15 @@ Gamma=Ga/(2*Ct)
 def lorentzian(x,p):
     return p[2]*(((x-p[1])**2)/(p[0]**2+(x-p[1])**2))+p[3]
 
-resp=array([lorentzian(frq, (Gamma, f, Gamma/Gamma_0, 0)) for frq in fq]).transpose()
+resp=array([lorentzian(frq, (Gamma, f, 1, 0)) for frq in fq]).transpose()
+
+resp3=array([lorentzian(f0, (Gamma, f, 1, 0)) for frq in fq]).transpose()
 
 resp2=array([lorentzian(frq, (Gamma_0, f0*ones(len(f)), 1, 0)) for frq in fq]).transpose()
 
-plt.pcolormesh((absolute(resp).transpose()-absolute(resp[:, 0])).transpose(), cmap="RdBu_r", vmin=-0.08, vmax=0.02)
+#plt.pcolormesh((absolute(resp).transpose()-absolute(resp[:, 0])).transpose(), cmap="RdBu_r", vmin=-0.08, vmax=0.02)
+plt.pcolormesh(absolute(resp), cmap="RdBu_r") #, vmin=-0.08, vmax=0.02)
+
 plt.colorbar()
 plt.figure()
 plt.pcolormesh(absolute(resp2), cmap="RdBu_r")

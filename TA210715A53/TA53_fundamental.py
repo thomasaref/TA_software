@@ -55,38 +55,40 @@ ideal_qdt.Ba_type="formula" #"hilbert"
 ideal_qdt.rs_type="formula"
 ideal_qdt.f=ideal_qdt.fq
 
+
+
+
 qdt=QDT(name="fittedQDT",
         material='LiNbYZ',
         ft="double",
-        #S_type="RAM",
-        a=96.0e-9, #f0=5.35e9,
+        a=96.0e-9,
         Np=5,
-        Rn=3780.0, #(3570.0+4000.0)/2.0, Ejmax=h*44.0e9,
+        Rn=2950.0,
         W=7.0e-6,
         eta=0.5,
-        flux_factor=0.495, #0.515, #0.2945, #0.52,
-        voltage=2.2, #1.21,
-        offset=-0.07,
+        flux_factor=0.53,
+        voltage=2.7,
+        offset=0.0,
         loop_width=2.7e-6,
         loop_height=1.5e-6)
-#qdt.Ejmax=2.75e-23 #h*44.0e9 #h*44.0e9
-#qdt.f0=5.30e9 #5.35e9
-#qdt.fixed_freq_max=20.0*qdt.f0
-#qdt.eta=0.55
-#qdt.Np=9.5
-qdt.K2=0.042
-#qdt.gate_type="capacitive"
-qdt.Cc=35e-15
-qdt.Cground=5e-15
-#qdt.magabs_type="S33"
-qdt.Rn=2800.0
-qdt.fixed_freq_min=3.5e9
-qdt.fixed_freq_max=7.5e9
-qdt.fixed_fq_min=1e9
-qdt.fixed_fq_max=7.0e9
+qdt.f0=4.47e9
+qdt.Ejmax=4.5e-23
+qdt.Cc=30e-15
+qdt.Ec=2e-25
+qdt.S_type="simple"
+qdt.fixed_freq_max=20.0*qdt.f0
+
+qdt.S_type="simple"
+qdt.Y0_type="center" #"formula"
+qdt.df_type="center" #"formula"
+qdt.mus_type="center" #"formula"
+qdt.Ga_type="sinc" #"giant atom"
+qdt.Ba_type="formula" #"hilbert"
+qdt.rs_type="formula"
+qdt.qubit_type="transmon"  #"scb"
 
 #qdt.Ct=1.25e-13
-#qdt.K2=0.038
+qdt.K2=0.042
 #qdt.Y0_type="center"
 #qdt.df_type="center"
 #qdt.mus_type="center"

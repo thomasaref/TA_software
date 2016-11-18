@@ -40,8 +40,8 @@ def read_data(self):
         self.stop_ind=len(self.yoko)-1
         self.filt.N=len(self.frequency)
 
-a=TA53_VNA_Two_Tone_Pwr_Lyzer(name="d1114", on_res_ind=59,#read_data=read_data, # VNA_name="RS VNA",
-        rd_hdf=TA53_Read(main_file="Data_1114/S3A4_trans_two_tone_pwr_swp_n20dBm.hdf5"), #long_test.hdf5"), #
+a=TA53_VNA_Two_Tone_Pwr_Lyzer(name="d1115", on_res_ind=59,#read_data=read_data, # VNA_name="RS VNA",
+        rd_hdf=TA53_Read(main_file="Data_1115/S3A4_trans_two_tone_pwr_swp_n10dBm.hdf5"), #long_test.hdf5"), #
         #fit_indices=[range(48,154+1), range(276, 578+1)],
          desc="Gate to IDT low frequency",
          offset=-0.3,
@@ -68,6 +68,10 @@ if __name__=="__main__":
     pl1=colormesh(a.yoko, a.frequency/1e9, absolute(a.MagcomData[:, :, 160]),
                   xlabel="Yoko (V)", ylabel="Frequency (GHz)", pl="raw",
                   y_min=4.385, y_max=4.535, auto_ylim=False, auto_xlim=False, x_min=2, x_max=2.9)
+    colormesh(a.yoko, a.frequency/1e9, absolute(a.MagcomData[:, :, 137]),
+                  xlabel="Yoko (V)", ylabel="Frequency (GHz)", pl="raw2",
+                  y_min=4.385, y_max=4.535, auto_ylim=False, auto_xlim=False, x_min=2, x_max=2.9)
+
     a.frq2_ind=80
     def ifft_plot(self, **kwargs):
         process_kwargs(a, kwargs, pl="hannifft_{0}_{1}_{2}".format(a.filter_type, a.bgsub_type, a.name))
@@ -102,17 +106,38 @@ if __name__=="__main__":
     fi=69
     print a.frequency[fi]
     pl3=colormesh(a.yoko, a.frq2/1e9, absolute(double_filt[fi, :, :]).transpose(), xlabel="yoko (V)", ylabel="Freq 2 (GHz)",
-    auto_xlim=False, x_min=2, x_max=2.9, auto_ylim=False, y_min=4, y_max=8)#.show() #.show() #a.frq2, a.yoko,
+    auto_xlim=False, x_min=2, x_max=2.9, auto_ylim=False, y_min=4, y_max=8, auto_zlim=False,  vmax=0.02, vmin=0.006)#.show() #.show() #a.frq2, a.yoko,
     pl4=colormesh(a.yoko, a.frq2/1e9, absolute(double_filt[fi, :, :]).transpose()-absolute(double_filt[fi, :, 200]), xlabel="yoko (V)", ylabel="Freq 2 (GHz)",
-    auto_xlim=False, x_min=2, x_max=2.9, auto_ylim=False, y_min=4, y_max=8, auto_zlim=False,  vmax=0.0005, vmin=-0.0016)#.show() #.show() #a.frq2, a.yoko,
+    auto_xlim=False, x_min=2, x_max=2.9, auto_ylim=False, y_min=4, y_max=8, auto_zlim=False,  vmax=0.001, vmin=-0.005)#.show() #.show() #a.frq2, a.yoko,
 
-    print a.frq2[94], a.frq2[200]
+    #pl5=colormesh(absolute(double_filt[75, :, :]).transpose()-absolute(double_filt[75, :, 200]), xlabel="yoko (V)", ylabel="Freq 2 (GHz)",
+    #auto_xlim=False, x_min=2, x_max=2.9, auto_ylim=False, y_min=4, y_max=8, auto_zlim=False,  vmax=0.001, vmin=-0.005)#.show() #.show() #a.frq2, a.yoko,
+    print a.frq2[137], a.frq2[200]
     pl5=colormesh(a.yoko, a.frequency[a.end_skip:-a.end_skip]/1e9, absolute(double_filt[a.end_skip:-a.end_skip, :, 200]),
                   xlabel="Yoko (V)", ylabel="Frequency (GHz)", pl="filtered",
                   y_min=4.385, y_max=4.535, auto_ylim=False, auto_xlim=False, x_min=2, x_max=2.9)
-    pl6=colormesh(a.yoko, a.frequency[a.end_skip:-a.end_skip]/1e9, absolute(double_filt[a.end_skip:-a.end_skip, :, 94]),
+    pl6=colormesh(a.yoko, a.frequency[a.end_skip:-a.end_skip]/1e9, absolute(double_filt[a.end_skip:-a.end_skip, :, 137]),
                   xlabel="Yoko (V)", ylabel="Frequency (GHz)", pl="filtered2",
                   y_min=4.385, y_max=4.535, auto_ylim=False, auto_xlim=False, x_min=2, x_max=2.9)
+
+    #pl6=colormesh(a.yoko, a.frequency[a.end_skip:-a.end_skip]/1e9, 10*log10(absolute(double_filt[a.end_skip:-a.end_skip, :, 117]).transpose()/absolute(double_filt[a.end_skip:-a.end_skip, 0, 117])).transpose(),
+    #              xlabel="Yoko (V)", ylabel="Frequency (GHz)", pl="filtered3",
+    #              y_min=4.385, y_max=4.535, auto_ylim=False, auto_xlim=False, x_min=2, x_max=2.9) #, auto_zlim=False,  vmax=0.0198, vmin=0.014)
+
+#    pl6=colormesh(a.yoko, a.frequency[a.end_skip:-a.end_skip]/1e9, 10*log10(absolute(double_filt[a.end_skip:-a.end_skip, :, 160]).transpose()/absolute(double_filt[a.end_skip:-a.end_skip, 0, 160])).transpose(),
+#                  xlabel="Yoko (V)", ylabel="Frequency (GHz)", pl="filtered3",
+#                  y_min=4.385, y_max=4.535, auto_ylim=False, auto_xlim=False, x_min=2, x_max=2.9) #, auto_zlim=False,  vmax=0.0198, vmin=0.014)
+#    pl6=colormesh(a.yoko, a.frequency[a.end_skip:-a.end_skip]/1e9, 10*log10(absolute(double_filt[a.end_skip:-a.end_skip, :, 119]).transpose()/absolute(double_filt[a.end_skip:-a.end_skip, 0, 119])).transpose(),
+#                  xlabel="Yoko (V)", ylabel="Frequency (GHz)", pl="filtered3",
+#                  y_min=4.385, y_max=4.535, auto_ylim=False, auto_xlim=False, x_min=2, x_max=2.9) #, auto_zlim=False,  vmax=0.0198, vmin=0.014)
+#    pl6=colormesh(a.yoko, a.frequency[a.end_skip:-a.end_skip]/1e9, 10*log10(absolute(double_filt[a.end_skip:-a.end_skip, :, 92]).transpose()/absolute(double_filt[a.end_skip:-a.end_skip, 0, 92])).transpose(),
+#                  xlabel="Yoko (V)", ylabel="Frequency (GHz)", pl="filtered3",
+#                  y_min=4.385, y_max=4.535, auto_ylim=False, auto_xlim=False, x_min=2, x_max=2.9) #, auto_zlim=False,  vmax=0.0198, vmin=0.014)
+#
+#    data=10*log10(absolute(double_filt[a.end_skip:-a.end_skip, :, 92]).transpose()/absolute(double_filt[a.end_skip:-a.end_skip, 0, 92])).transpose()
+#    pl6=colormesh(a.yoko, a.frequency[a.end_skip:-a.end_skip]/1e9, data-data[0, :] ,
+#                  xlabel="Yoko (V)", ylabel="Frequency (GHz)", pl="filtered4",
+#                  y_min=4.385, y_max=4.535, auto_ylim=False, auto_xlim=False, x_min=2, x_max=2.9) #, auto_zlim=False,  vmax=0.0198, vmin=0.014)
 
     pls=[pl1, pl2, pl5, pl6, pl3, pl4]
     a.save_plots(pls)

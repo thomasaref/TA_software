@@ -44,17 +44,49 @@ if include_text:
     tx.ext("two tone")
     tx.add(r"\FloatBarrier")
 
-if 1:
+
+if include_text:
+    tx.ext("transmission power")
+    tx.add(r"\FloatBarrier")
+
+if include_all:
+    from D1112_trans_pwr import a as d1112
+    file_names=Read_TXT(file_path=d1112.save_file.file_path).read()
+    tx.mult_fig_start()
+    for fn in file_names:
+        if fn!="":
+            tx.add_mult_image(fn, fn, "", d1112.save_folder)
+    tx.mult_fig_end(caption=r"""Transmission power sweep \\a) raw VNA data at -12 dBm b) IFFT showing filter
+    c) FFT filtered data, control at -12 dBm d) FFT filtered power vs flux sweep at 4.45 GHz
+    e) Saturation at Yoko=2.6V and 4.45 GHz
+    f) FFT filtered power vs frequency at 2.6V""",
+                    label="fig:trans_pwr")
+
+if include_all:
     from D1114_two_tone_pwr import a as d1114
     file_names=Read_TXT(file_path=d1114.save_file.file_path).read()
     tx.mult_fig_start()
     for fn in file_names:
         if fn!="":
             tx.add_mult_image(fn, fn, "", d1114.save_folder)
-    tx.mult_fig_end(caption=r"Two tone at -20 dBm \\a) raw VNA data with 2nd tone at 8 GHz b) IFFT showing filter c) FFT filtered data probe at 4.46 GHz d) Data in (c) with background subtraction",
+    tx.mult_fig_end(caption=r"""Two tone at -20 dBm \\a) raw VNA data with 2nd tone at 8 GHz b) IFFT showing filter
+    c) FFT filtered data, control at 8 GHz d) FFT filtered data, control at 5.88 GHz
+    e) FFT filtered data probe at 4.45 GHz
+    f) Data in (e) with background subtraction""",
+                    label="fig:low_pwr_2tone")
+if include_all:
+    from D1115_two_tone_pwr import a as d1115
+    file_names=Read_TXT(file_path=d1115.save_file.file_path).read()
+    tx.mult_fig_start()
+    for fn in file_names:
+        if fn!="":
+            tx.add_mult_image(fn, fn, "", d1115.save_folder)
+    tx.mult_fig_end(caption=r"""Two tone at -10 dBm \\a) raw VNA data with 2nd tone at 8 GHz b) IFFT showing filter
+    c) Filtered data with control tone at 8 GHz d) filtered data, control tone at 6.74 GHz
+    e) FFT filtered data probe at 4.45 GHz f) Data in (e) with background subtraction""",
                     label="fig:low_pwr_2tone")
 
-if 1:
+if include_all:
     from D1113_two_tone_pwr import a as d1113
     file_names=Read_TXT(file_path=d1113.save_file.file_path).read()
     tx.mult_fig_start()

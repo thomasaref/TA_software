@@ -11,7 +11,7 @@ from scipy.constants import e, h, hbar, k as kB, epsilon_0 as eps0, pi
 c_eta = 0.8
 
 from numpy import (sin, cos, arccos, sqrt, exp, empty, mean, exp, log10, arange, array, ndarray, delete,
-                   absolute, dtype, angle, amin, amax, linspace, zeros, shape, append, sign, )
+                   absolute, dtype, angle, amin, amax, linspace, zeros, shape, append, sign, squeeze, split)
 from numpy.linalg import eigvalsh, eig
 from taref.core.api import Agent, Array, SProperty, private_property
 from atom.api import Enum, Float, Int
@@ -258,9 +258,32 @@ class Qubit(Agent):
             return self._get_scb_energy_levels(Ej=Ej, Ec=Ec, n_energy=n_energy, ng=ng, Nstates=Nstates)
         return self._get_transmon_energy_levels(Ej=Ej, Ec=Ec, n_energy=n_energy)
 
+    def indiv_EkdivEc(self, EjdivEc, n_energy, ng, Nstates):
+        """calculates energies assuming float values given"""
+        NL=2*Nstates+1
+        A=zeros((NL, NL))
+        for b in range(0,NL):
+            A[b, b]=4.0*(b-Nstates-ng)**2
+            if b!=NL-1:
+                A[b, b+1]= -EjdivEc/2.0
+            if b!=0:
+                A[b, b-1]= -EjdivEc/2.0
+        #w,v=eig(A)
+        w=eigvalsh(A)
+        return w[0:n_energy]
+
     scb_energy_levels=SProperty().tag(sub=True)
     @scb_energy_levels.getter
     def _get_scb_energy_levels(self, Ej, Ec, n_energy, ng, Nstates):
+        if isinstance(Ej, float):
+            Ej=array([Ej])
+        if isinstance(ng, float):
+            ng=[ng]
+        EjdivEc=Ej/Ec
+        energies=Ec*squeeze([[self.indiv_EkdivEc(EjdivEc=ejc, n_energy=n_energy, ng=ng_s, Nstates=Nstates) for ejc in EjdivEc] for ng_s in ng])
+        return [spl.transpose() for spl in split(energies.transpose(), n_energy)]
+
+        #energies=squeeze(energies)
         NL=2*Nstates+1
         A=zeros((NL, NL))
         for b in range(0,NL):
@@ -272,6 +295,7 @@ class Qubit(Agent):
         #w,v=eig(A)
         w=eigvalsh(A)
         return w[0:n_energy]
+
 
     def update_EkdivEc(self, ng, Ec, Ej, Nstates, order):
         """calculates transmon energy level with N states (more states is better approximation)
