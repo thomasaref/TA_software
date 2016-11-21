@@ -108,12 +108,13 @@ class TEX(Operative):
                 r"\newcommand{\pye}{} % do nothing command for python extraction end",
                 r"",
                 r"",
-                r"\begin{document}",
+                r"\begin{document}"])
+        if self.tex_type=="simple":
+                list_start.extend([
                 r"\author{{{0}}}".format(self.user_name),
                 r"%\inst{{3}} {{{0}}}".format(self.department),
-                r"\title{{{0}}}".format(self.tex_title),])
-        if self.tex_type=="simple":
-                list_start.extend([r"\maketitle", r"\noindent"])
+                r"\title{{{0}}}".format(self.tex_title),
+                r"\maketitle", r"\noindent"])
         return list_start
 
     def _default_tex_end(self):
@@ -274,6 +275,8 @@ class TEX(Operative):
 
     def mult_fig_end(self, caption=None, label=" "):
         if caption is not None:
+            if caption in self.source_dict:
+                caption="\n".join(self.source_dict[caption][1:-2])
             self.caption=caption
         mult_fig_end(self.tex_list, self.caption, label)
         self.caption=""
@@ -284,7 +287,8 @@ class TEX(Operative):
         relative_path=relpath(source_folder.dir_path, self.save_file.folder.dir_path)+source_folder.divider
         #self.tex_list.extend(["\\begin{{subfigure}}[b]{{{}\\textwidth}}".format(self.fig_width),
         #           "\\includegraphics[width=\\textwidth]{{{}}}".format(relative_path+fig_name)])
-
+        if caption in self.source_dict:
+            caption="\n".join(self.source_dict[caption][1:-2])
         #relative_path=relpath(self.source_folder.dir_path, self.save_file.folder.dir_path)+self.source_folder.divider
 
         tex_w={"revtex 2 column" : str(tex_width_factor)}.get(self.tex_type, "")
