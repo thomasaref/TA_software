@@ -17,7 +17,7 @@ f0=5.000000001e9
 
 frq=linspace(3e9, 7e9, 400).astype(float64)
 frq_q=linspace(1e9, 10e9, 500).astype(float64)
-Np=5 #9 #3 #9*3.9#*20 #1.2344
+Np=2 #9 #3 #9*3.9#*20 #1.2344
 W=7.0e-6 #25.0e-6
 ft="double"
 vf=3488.0
@@ -80,7 +80,7 @@ plt.colorbar()
 plt.figure()
 plt.pcolormesh(absolute(S13Psq))
 plt.colorbar()
-#plt.show()
+plt.show()
 Cc=25e-15
 ZL=50.0
 

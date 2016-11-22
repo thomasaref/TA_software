@@ -37,7 +37,7 @@ if 1:
     tx.ext("abstract")
     tx.ext("introduction")
     tx.ext("experiment")
-if 1:
+if 0:
     tx.include_image("sample_images", label="sample_images",
         caption="sample caption")
 
@@ -83,13 +83,22 @@ if 1:
     tx.ext("theory")
     #tx.ext("supplementary")
     tx.add(r"\FloatBarrier")
-if 1:
+if 0:
     from D1112_trans_pwr import a as d1112
     tx.mult_fig_start()
     tx.add_mult_image("plot__10", "pwr_TA53", "", d1112.save_folder)
     tx.add_mult_image("plot__11", "", "", d1112.save_folder)
     tx.mult_fig_end()
+if 1:
+    tx.include_image("testy_circuit_draw.png", "Anharmonicity", "anharm")
+    #tx.add_mult_fig(anton_anharm_plot, "anton_anharm_plot.pdf", fig_width=6.0, fig_height=4.0)
+    #tx.add_mult_image("anton_lamb_shift.png", "Lamb shift", "anharm")
+    #tx.add_mult_fig(anton_lamb_shift_plot, "anton_lamb_shift_plot.pdf", fig_width=6.0, fig_height=4.0)
+    #tx.mult_fig_end(caption="Comparison to Anton's plots")
 
+    #tx.mult_fig_start()
+    #tx.add_mult_fig(energy_level_plot, "energy_levels.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
+    #tx.add_mult_fig(anharm_plot, "theory_anharm.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
 if include_text:
     #tx.add(r"\FloatBarrier")
     tx.ext("switch")
