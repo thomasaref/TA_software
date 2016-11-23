@@ -13,58 +13,65 @@ import matplotlib.pyplot as plt
 #from taref.physics.surface_charge import alpha
 from numpy.linalg import inv
 #from taref.physics.fitting import LorentzianFitter
+from time import time
+f0i=2.320000001e9
 
-f0i=2.400000001e9
 
-
-frq=linspace(2e9, 3e9, 1000).astype(float64)
-frq_q=linspace(2e9, 3e9, 500).astype(float64)
+frq=linspace(2e9, 2.5e9, 2000).astype(float64)
+frq_q=linspace(2e9, 2.5e9, 2000).astype(float64)
 
 ft="double"
 vf=2900 #3488.0
-Dvv= 7000*0.0007/2.0 #0.048/2  #0.024/4.5 # 0.035e-2
 epsinf=1.2e-10 #46.0*eps0
 W=25.0e-6 #25.0e-6
-Npi=14*2
+Npi=14
+
+Dvv= (0.07e-2)/2.0#*Npi**2 #0.048/2  #0.024/4.5 # 0.035e-2
 
 
 Np=2 #9 #3 #9*3.9#*20 #1.2344
 Ct=sqrt(2)*W*Npi*epsinf*Np
 
-f0=vf/10e-6
+f0=vf/55e-6
 print f0/1e9
 f, fq = meshgrid(frq, frq_q, sparse=True)
 
 Xi=Npi*pi*(f-f0i)/f0i
 Ga0_mult={"single" : 2.872, "double" : 3.111}[ft]
-Ga0i=Ga0_mult*2.0*pi*f0i*epsinf*W*Dvv*(Npi**2)
+Ga0i=Ga0_mult*2.0*pi*f0i*epsinf*W*Dvv*Npi**2
+print "gamma", Ga0i/(2*Ct)/1e6/(2*pi)
 
 Gai= Ga0i*(sin(Xi)/Xi)**2
 wq=2*pi*fq
 X=Np*pi*(f-f0)/f0
-Ga0_mult={"single" : 2.872, "double" : 3.111}[ft]
-Ga0=Ga0_mult*2.0*pi*f0*epsinf*W*Dvv*(Np**2)
-print Np
-print 0.55*2*Dvv*Np*f0/1e9
-print Ga0/(2*Ct)/(2*pi)/1e9
-print Ga0/(2*Ct)/(3*f0/Np)
-print 2*pi*0.55*2*Dvv*Np**2
-print 2*Dvv*Np**2
+#Ga0_mult={"single" : 2.872, "double" : 3.111}[ft]
+#Ga0=Ga0_mult*2.0*pi*f0*epsinf*W*Dvv*(Np**2)
+#print Np
+#print 0.55*2*Dvv*Np*f0/1e9
+#print Ga0/(2*Ct)/(2*pi)/1e9
+#print Ga0/(2*Ct)/(3*f0/Np)
+#print 2*pi*0.55*2*Dvv*Np**2
+#print 2*Dvv*Np**2
 #alp_0=alpha(f0, f0, ft_mult=2)
 #print alp_0
 #alp_arr=alpha(frq, f0, ft_mult=2)
 
-def _get_Y0(f, Dvv, epsinf, W):
-    return pi*f*W*epsinf/Dvv
+#def _get_Y0(f, Dvv, epsinf, W):
+#    return pi*f*W*epsinf/Dvv
 
-Y0_arr=_get_Y0(f=frq, W=W, epsinf=epsinf, Dvv=Dvv)
+#Y0_arr=_get_Y0(f=frq, W=W, epsinf=epsinf, Dvv=Dvv)
 
-#Ga= Gai*(1.0/Np*sin(X)/sin(X/Np))**2
+Ga0=Gai*Np**2
+Ga= Ga0*(1.0/Np*sin(X)/sin(X/Np))**2+1e6*2*Ct*2*pi
 
-Ga=Ga0*(1*cos(pi*f/f0))**2
-print Ga0, amax(Ga), amin(Ga)
+#Ga=Ga0*(1*cos(pi*f/f0))**2
+#print Ga0, amax(Ga), amin(Ga)
+tstart=time()
+print Ga.shape
+print f.shape
+print fq.shape
 Ba=-imag(hilbert(Ga))
-
+print "time", time()-tstart
 #Ba=-Ga0*(1.0/Np)**2*2*(Np*sin(2*X/Np)-sin(2*X))/(2*(1-cos(2*X/Np)))
 
 
@@ -100,12 +107,14 @@ print amax(absolute(S11)), amin(absolute(S11))
 #plt.pcolormesh(absolute(S11)**2/amax(absolute(S11)**2))
 #plt.colorbar()
 plt.figure()
-plt.pcolormesh(frq/1e9, frq_q/1e9, s11)
+plt.pcolormesh(frq/1e9, frq_q/1e9, s11, cmap="RdBu_r")
+plt.xlim(2.0, 2.5)
+plt.ylim(2.0, 2.5)
 plt.colorbar()
 plt.xlabel("Frequency (GHz)")
 plt.ylabel("Qubit frequency (GHz)")
 #plt.show()
-Cc=20e-15
+Cc=1e-15
 ZL=50.0
 
 Zatom=-1.0j/(w*Cc)+1/P33plusYL
@@ -121,8 +130,11 @@ s33=absolute(S33)**2
 #pl=
 if 1:
     plt.figure()
-    plt.pcolormesh(frq/1e9, frq_q/1e9, absolute(S33)**2, cmap="jet")
-    #plt.clim(0.999, 1.001)
+    plt.pcolormesh(frq/1e9, frq_q/1e9, absolute(S33)**2, cmap="RdBu_r")
+    plt.xlim(2.0, 2.5)
+    plt.ylim(2.0, 2.5)
+
+    plt.clim(0.995, 1.0)
     plt.colorbar()
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("Qubit frequency (GHz)")

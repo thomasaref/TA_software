@@ -37,7 +37,7 @@ if 1:
     tx.ext("abstract")
     tx.ext("introduction")
     tx.ext("experiment")
-if 0:
+if 1:
     tx.include_image("sample_images", label="sample_images",
         caption="sample caption")
 
