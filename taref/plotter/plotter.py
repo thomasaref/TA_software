@@ -9,7 +9,8 @@ from taref.plotter.fig_format import Fig
 from taref.core.api import process_kwargs, private_property
 from taref.plotter.plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh_plot, multiline_plot, polygon_plot
 from atom.api import Unicode
-from numpy import concatenate
+#from numpy import concatenate
+
 
 class Plotter(Fig):
     fig_name=Unicode()

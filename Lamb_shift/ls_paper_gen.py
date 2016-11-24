@@ -37,7 +37,11 @@ if 1:
     tx.ext("abstract")
     tx.ext("introduction")
     tx.ext("experiment")
+
 if 1:
+    from fig2_characterization import a as fig2
+    tx.include_image("fig2", label="", caption="", source_folder=fig2.save_folder)
+if 0:
     tx.include_image("sample_images", label="sample_images",
         caption="sample caption")
 
@@ -250,8 +254,8 @@ if include_all:
     #tx.add_mult_fig(anharm_plot, "theory_anharm.pdf", qdt=qdt, fig_width=6.0, fig_height=4.0)
     #tx.mult_fig_end(caption="Theory plots based on QDT parameters")
 
-from TA88_fundamental import a as fund
-file_names=Read_TXT(file_path=fund.save_file.file_path).read()
+#from TA88_fundamental import a as fund
+#file_names=Read_TXT(file_path=fund.save_file.file_path).read()
 
 if include_text:
     #tx.ext("qubit model")

@@ -20,32 +20,11 @@ from matplotlib.collections import PolyCollection, LineCollection, QuadMesh, Pat
 from matplotlib.lines import Line2D
 from matplotlib.colorbar import Colorbar
 
-#def defaulter(self, name, kwargs):
-#    if name in kwargs:
-#        return kwargs.pop(name)
-#    default=self.get_member(name).default_value_mode
-#    if default[0]==1:
-#        return default[1]
-#    elif default[0]==8:
-#        return getattr(self, default[1])()
-#    elif default[0]==5:
-#        return default[1]()
-#
-#def name_generator(self, name, indict, suffix="__{0}"):
-#    if name in indict:
-#        name+=suffix.format(len(indict.keys()))
-#    return name
 
 
 class PlotFormat(PlotUpdate):
     """base class corresponding to one graph or collection on axes"""
     plot_name=ReadOnly()
-
-    #def _default_plot_name(self):
-    #    return self.plot_type
-
-    #def _observe_plot_name(self, change):
-    #    check_initialized(self, change)
 
     append=Bool(False)
     remove=Bool(False)
@@ -118,30 +97,9 @@ class PlotFormat(PlotUpdate):
     def __init__(self, **kwargs):
         plot_name=kwargs.pop("plot_name", self.plot_type) #defaulter(self, "plot_name", kwargs)
         plotter=kwargs["plotter"]
-        #if plot_name in plotter.plot_dict:
-        #    if self.remove:
-        #        self.remove_collection()
-        #    else:
         self.plot_name=name_generator(plot_name, plotter.plot_dict, kwargs.get("plot_type", self.plot_type))
         super(PlotFormat, self).__init__(**kwargs)
-        #if plot_name is None:
-        #    plot_name=self.plot_type
-        #if agent_name in Operative.agent_dict:
-        #    agent_name="{name}__{num}".format(name=agent_name, num=len(Operative.agent_dict))
-        #kwargs["name"]=agent_name
-        #Operative.agent_dict[agent_name]=self
-        #        plot_name+="__{0}".format(len(self.plotter.plot_dict.keys()))
-        #self.plot_name=plot_name
-        #set_tag(self, "plot_name", initialized=False)
-        #if self.plot_name=="":
-        #    self.plot_name=self.plot_type
-        #if self.plot_name in self.plotter.plot_dict:
-        #    if self.remove:
-        #        self.remove_collection()
-        #    else:
-        #        self.plot_name+="__{0}".format(len(self.plotter.plot_dict.keys()))
         self.plotter.plot_dict[self.plot_name]=self
-        #set_tag(self, "plot_name", initialized=True)
 
     @cached_property
     def view_window(self):

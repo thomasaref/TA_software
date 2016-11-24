@@ -16,20 +16,20 @@ from enaml import imports
 #from plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh, multiline_plot
 from taref.core.api import private_property
 
-from matplotlib import rcParams
-#print rcParams
-#rcParams["figure.figsize"]=[9.0, 3.0]
-rcParams['axes.labelsize'] = 14
-rcParams['xtick.labelsize'] = 14
-rcParams['ytick.labelsize'] = 14
-rcParams['legend.fontsize'] = 14
-
-rcParams['xtick.major.width']=2
-rcParams['lines.linewidth']=2
-rcParams['xtick.major.size']=4
-rcParams['axes.linewidth']=2
-rcParams['ytick.major.width']=2
-rcParams['ytick.major.size']=4
+#from matplotlib import rcParams
+##print rcParams
+##rcParams["figure.figsize"]=[9.0, 3.0]
+#rcParams['axes.labelsize'] = 10
+#rcParams['xtick.labelsize'] = 10
+#rcParams['ytick.labelsize'] = 10
+#rcParams['legend.fontsize'] = 10
+#
+#rcParams['xtick.major.width']=2
+#rcParams['lines.linewidth']=2
+#rcParams['xtick.major.size']=4
+#rcParams['axes.linewidth']=2
+#rcParams['ytick.major.width']=2
+#rcParams['ytick.major.size']=4
 
 #adjust matplotlib base cursor
 from matplotlib.backend_bases import cursors
@@ -49,9 +49,9 @@ class Fig(PlotMaster, Operative):
         self.figure.text(0,1, txt)
 
     show_cross_cursor=Bool(False)
-    xlabel_size=Float(14.0)
+    xlabel_size=Float(10.0)
 
-    ylabel_size=Float(14.0)
+    ylabel_size=Float(10.0)
 
     x_min=Float()
     x_max=Float()

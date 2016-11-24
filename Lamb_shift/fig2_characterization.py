@@ -6,9 +6,11 @@ Created on Sun Apr 24 18:55:33 2016
 """
 
 from TA88_fundamental import TA88_Lyzer, TA88_Read, qdt, TA88_Read_NP, TA88_Save_NP
+from TA53_fundamental import TA53_VNA_Pwr_Lyzer, TA53_Read
 from numpy import array, absolute, squeeze, append, sqrt, pi, arccos, shape
 from taref.physics.fundamentals import h
-from taref.plotter.api import colormesh, line
+from taref.plotter.api import colormesh, line, scatter
+from taref.physics.filtering import Filter
 
 a=TA88_Lyzer(on_res_ind=201, rd_hdf=TA88_Read(main_file="Data_0628/S4A4_just_gate_overnight_flux_swp.hdf5"))
 
@@ -23,23 +25,66 @@ a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(2
  range(182,184), range(188, 193), range(217, 251+1), range(266, 275+1), range(314, 324+1)]
 #a.flux_indices=[range(400,434), range(436, 610)]
 #a.flux_indices=[range(200, 400)]
-a.read_data()
-#a.ifft_plot()
+a.filter_type="FFT"
 
 a.bgsub_type="dB" #"Complex" #"Abs"
-if __name__=="__main__":
-    a.filter_type="FFT"
-    pl=a.magabs_colormesh(vmin=0.995, vmax=1.002, auto_zlim=False, cmap="afmhot", auto_ylim=False, y_min=3.6, y_max=7.4)#.show()
-    a.qdt.qubit_type="transmon" #scb"
-    line(a.flux_axis, a.qdt._get_flux_parabola(voltage=a.yoko, ng=0.0)/1e9, pl=pl).show()
-    #colormesh(a.flux_axis, a.freq_axis)
-    pl="colormeshy"
-    for inds in a.fit_indices:
-        pl=colormesh(a.yoko, a.frequency[inds], a.MagAbs[inds, :], cmap="afmhot",
-                     #vmin=0.992, vmax=1.000, auto_zlim=False,
-                     pl=pl)
-    pl.show()
+a.save_folder.main_dir="fig2_characterization"
 
+b=TA53_VNA_Pwr_Lyzer(name="d1112", on_res_ind=635,
+        rd_hdf=TA53_Read(main_file="Data_1112/S3A4_trans_pwr_swp.hdf5"),
+         desc="transmission power sweep", offset=-0.3, swp_type="yoko_first",
+        )
+b.filt.center=0 #71 #28*0 #141 #106 #58 #27 #139 #106 #  #137
+b.filt.halfwidth=12 #8 #10
+b.flux_axis_type="flux" #"fq" #
+#b.bgsub_type="Complex" #"Abs" #"dB"
+b.end_skip=10
+b.pwr_ind=22
+
+if __name__=="__main__":
+    a.read_data()
+    b.read_data()
+
+    pl="fig2"
+    pl=a.magabs_colormesh(vmin=0.995, vmax=1.002, auto_zlim=False, cmap="afmhot", auto_ylim=False, y_min=3.6, y_max=7.4,
+                          nrows=2, ncols=1, nplot=1, pl=pl)#.show()
+    line(a.flux_axis, a.qdt._get_flux_parabola(voltage=a.yoko, ng=0.0)/1e9, pl=pl)#.show()
+
+    pl.ncols=2
+    pl.nplot=3
+    #colormesh(a.flux_axis, a.freq_axis)
+    #pl="colormeshy"
+    #colormesh(a.flux_axis, a.frequency[a.end_skip:-a.end_skip]/1e9, a.MagAbs[:, :], vmin=0.995, vmax=1.002, auto_zlim=False, cmap="afmhot", auto_ylim=False, y_min=3.6, y_max=7.4, pl=pl).show()
+    #for inds in a.fit_indices:
+    #    pl=colormesh(a.flux_axis, a.frequency[inds]/1e9, a.MagAbs[inds, :], cmap="afmhot",
+    #                 vmin=0.995, vmax=1.002, auto_zlim=False,
+    #                 pl=pl)
+    #pl.show()
+
+    b.filter_type="None"
+    pl_raw=b.magabs_colormesh()
+    pl_ifft=b.ifft_plot()#.show()
+
+    b.filter_type="FFT"
+    pl_fft=b.magabs_colormesh()#.show()
+    pl_pwr_frq=colormesh(b.pwr, b.freq_axis[b.end_skip:-b.end_skip], absolute(b.MagcomFilt[b.end_skip:-b.end_skip, 635, :]),
+                  ylabel="Frequency (GHz)", xlabel=r"Power (dBm")#.show()
+
+    pl_pwr_color=colormesh(b.flux_axis, b.pwr, absolute(b.MagcomFilt[69, :, :]).transpose(),
+                  ylabel="Power (dBm)", xlabel=b.flux_axis_label, pl=pl,
+                  auto_ylim=False, y_min=-30, y_max=10,
+                  auto_xlim=False, x_min=1.0, x_max=2.5,
+                  auto_zlim=True)
+
+    pl.nplot=4
+    pl_pwr_sat=scatter(b.pwr, absolute(absolute(b.MagcomFilt[69, 635, :])-absolute(b.MagcomFilt[69,0, :])),
+                xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}|$", pl=pl,
+                  auto_ylim=False, y_min=0, y_max=0.015, marker_size=3.0,
+                  auto_xlim=False, x_min=-30, x_max=10)#.show()
+
+    #pls=[pl_raw, pl_ifft, pl_fft, pl1, pl2, pl3]
+    a.save_plots([pl])
+    pl.show()
 
 #a.bgsub_type="Complex"
 if __name__=="__main2__":

@@ -4,12 +4,25 @@ Created on Thu Feb  4 12:48:42 2016
 
 @author: thomasaref
 """
+#from taref.core.log import log_debug
 
+from matplotlib import rcParams
+#print rcParams
+#rcParams["figure.figsize"]=[9.0, 3.0]
+rcParams["font.size"]=8
+#rcParams['axes.labelsize'] = 2
+#rcParams['xtick.labelsize'] = 2
+#rcParams['ytick.labelsize'] = 2
+#rcParams['legend.fontsize'] = 2
 
-from taref.core.log import log_debug
-from taref.core.atom_extension import get_all_tags, get_tag, get_all_params
-from atom.api import observe, Atom, Typed, Bool, cached_property, Float, Unicode, Instance
-#from matplotlib import cm
+rcParams['xtick.major.width']=2
+rcParams['lines.linewidth']=2
+rcParams['xtick.major.size']=4
+rcParams['axes.linewidth']=2
+rcParams['ytick.major.width']=2
+rcParams['ytick.major.size']=4
+
+from atom.api import observe, Atom, Typed, Bool, cached_property, Float, Unicode, Instance, Int
 from collections import OrderedDict
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -43,8 +56,8 @@ def simple_set(clt, mpl, param, set_str="set_"):
 class PlotMaster(Atom):
     """base plot class contains figure, axes, plot_dict"""
     figure=Typed(Figure)
-    fig_height=Float(4.0)
-    fig_width=Float(6.0)
+    fig_height=Float(4.5)
+    fig_width=Float(4.5)
     colorbar=Instance(Colorbar)
 
     axes=Typed(Axes)
@@ -62,11 +75,19 @@ class PlotMaster(Atom):
 
     show_cross_section=Bool(False)
 
+    nrows=Int(1)
+    ncols=Int(1)
+    nplot=Int(1)
+
+    def _observe_nplot(self, change):
+        if change["type"]!="create":
+            self.axes=self.figure.add_subplot(self.nrows, self.ncols, self.nplot)
+
     def _default_figure(self):
         return plt.figure(figsize=(self.fig_height, self.fig_width))
 
     def _default_axes(self):
-         axes=self.figure.add_subplot(111)
+         axes=self.figure.add_subplot(self.nrows, self.ncols, self.nplot)
          #axes.autoscale_view(True)
          return axes
 

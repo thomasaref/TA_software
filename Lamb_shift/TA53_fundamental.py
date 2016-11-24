@@ -132,7 +132,7 @@ class TA53_VNA_Lyzer(VNA_Lyzer):
     idt=idt
 
     def _default_save_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/TA_53", main_dir="overall")
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/Lamb_shift", main_dir="overall")
 
     def fft_plots(self):
         self.read_data()
@@ -171,21 +171,21 @@ class TA53_VNA_Pwr_Lyzer(VNA_Pwr_Lyzer):
     idt=idt
 
     def _default_save_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/TA_53", main_dir="overall")
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/Lamb_shift", main_dir="overall")
 
 class TA53_VNA_Two_Tone_Lyzer(VNA_Two_Tone_Lyzer):
     qdt=qdt
     idt=idt
 
     def _default_save_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/TA_53", main_dir="overall")
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/Lamb_shift", main_dir="overall")
 
 class TA53_VNA_Two_Tone_Pwr_Lyzer(VNA_Two_Tone_Pwr_Lyzer):
     qdt=qdt
     idt=idt
 
     def _default_save_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/TA_53", main_dir="overall")
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/Lamb_shift", main_dir="overall")
 
 def coupling_plot():
     pl=Plotter(fig_width=6.0, fig_height=4.0)
