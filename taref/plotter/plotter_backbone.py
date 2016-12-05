@@ -7,13 +7,13 @@ Created on Thu Feb  4 12:48:42 2016
 #from taref.core.log import log_debug
 
 from matplotlib import rcParams
-#print rcParams
+print rcParams
 #rcParams["figure.figsize"]=[9.0, 3.0]
 rcParams["font.size"]=8
-#rcParams['axes.labelsize'] = 2
-#rcParams['xtick.labelsize'] = 2
-#rcParams['ytick.labelsize'] = 2
-#rcParams['legend.fontsize'] = 2
+rcParams['axes.labelsize'] = 8
+rcParams['xtick.labelsize'] = 8
+rcParams['ytick.labelsize'] = 8
+rcParams['legend.fontsize'] = 8
 
 rcParams['xtick.major.width']=2
 rcParams['lines.linewidth']=2

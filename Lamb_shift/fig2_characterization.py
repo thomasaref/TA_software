@@ -5,6 +5,8 @@ Created on Sun Apr 24 18:55:33 2016
 @author: thomasaref
 """
 
+
+
 from TA88_fundamental import TA88_Lyzer, TA88_Read, qdt, TA88_Read_NP, TA88_Save_NP
 from TA53_fundamental import TA53_VNA_Pwr_Lyzer, TA53_Read
 from numpy import array, absolute, squeeze, append, sqrt, pi, arccos, shape
@@ -41,16 +43,41 @@ b.flux_axis_type="flux" #"fq" #
 b.end_skip=10
 b.pwr_ind=22
 
+c=TA88_Lyzer(name="S4A1_midpeak",
+             desc="S4A1 Main peak",
+                   on_res_ind=260,
+              #VNA_name='RS VNA', port_name='S21',
+              rd_hdf=TA88_Read(main_file="Data_0316/S4A1_TA88_coupling_search_midpeak.hdf5"),
+              fit_indices=[range(65, 984+1)],
+              flux_factor=a.qdt.flux_factor*1000.0/560.0,
+              offset=-0.045
+              )
+c.filt.center=31
+c.filt.halfwidth=22
+c.fitter.fit_type="lorentzian"
+c.fitter.gamma=0.055 #0.01
+c.flux_axis_type="flux" #"fq" #"flux"
+c.end_skip=10
+
+
+
 if __name__=="__main__":
+    from matplotlib.pyplot import colorbar
     a.read_data()
     b.read_data()
 
     pl="fig2"
-    pl=a.magabs_colormesh(vmin=0.995, vmax=1.002, auto_zlim=False, cmap="afmhot", auto_ylim=False, y_min=3.6, y_max=7.4,
-                          nrows=2, ncols=1, nplot=1, pl=pl)#.show()
+    pl, pf=a.magabs_colormesh(vmin=0.995, vmax=1.002, auto_zlim=False, cmap="afmhot", auto_ylim=False, y_min=3.6, y_max=7.4,
+                          nrows=2, ncols=1, nplot=1, pl=pl, pf_too=True)#.show()
     line(a.flux_axis, a.qdt._get_flux_parabola(voltage=a.yoko, ng=0.0)/1e9, pl=pl)#.show()
 
     pl.ncols=2
+    cbr=colorbar(pf.clt, ax=pl.axes, label="$S_{33}$")
+    print cbr
+    cbr.set_label("yo", size=2)
+    cbr.set_ticklabels()
+
+    raise Exception
     pl.nplot=3
     #colormesh(a.flux_axis, a.freq_axis)
     #pl="colormeshy"
@@ -71,7 +98,7 @@ if __name__=="__main__":
                   ylabel="Frequency (GHz)", xlabel=r"Power (dBm")#.show()
 
     pl_pwr_color=colormesh(b.flux_axis, b.pwr, absolute(b.MagcomFilt[69, :, :]).transpose(),
-                  ylabel="Power (dBm)", xlabel=b.flux_axis_label, pl=pl,
+                  ylabel="Power (dBm)", xlabel=b.flux_axis_label, #pl=pl,
                   auto_ylim=False, y_min=-30, y_max=10,
                   auto_xlim=False, x_min=1.0, x_max=2.5,
                   auto_zlim=True)
@@ -82,9 +109,17 @@ if __name__=="__main__":
                   auto_ylim=False, y_min=0, y_max=0.015, marker_size=3.0,
                   auto_xlim=False, x_min=-30, x_max=10)#.show()
 
-    #pls=[pl_raw, pl_ifft, pl_fft, pl1, pl2, pl3]
-    a.save_plots([pl])
+    pl.nplot=3 #5
+    c.read_data()
+    c.filter_type="FFT"
+    pl, pf=c.magabs_colormesh(pl=pl, pf_too=True, auto_zlim=True, auto_xlim=True, auto_ylim=True, vmin=0.0, vmax=0.02)
+    colorbar(pf.clt, ax=pl.axes)
+    #pl3.add_label("c)")
+
+    #a.save_plots([pl])
     pl.show()
+
+
 
 #a.bgsub_type="Complex"
 if __name__=="__main2__":

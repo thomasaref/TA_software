@@ -37,10 +37,22 @@ if 1:
     tx.ext("abstract")
     tx.ext("introduction")
     tx.ext("experiment")
-
+if 1:
+    tx.include_image("fig1.png", "Setup", caption="sample caption")
 if 1:
     from fig2_characterization import a as fig2
-    tx.include_image("fig2", label="", caption="", source_folder=fig2.save_folder)
+    tx.include_image("fig2", label="", caption="fig2 caption", source_folder=fig2.save_folder)
+
+if 1:
+    from fig3_lamb_shift import a as fig3
+    tx.include_image("fig3", label="", caption="fig3 caption", source_folder=fig3.save_folder)
+
+    tx.ext("results")
+    tx.ext("theory")
+    #tx.ext("supplementary")
+    tx.add(r"\FloatBarrier")
+
+
 if 0:
     tx.include_image("sample_images", label="sample_images",
         caption="sample caption")
@@ -93,7 +105,7 @@ if 0:
     tx.add_mult_image("plot__10", "pwr_TA53", "", d1112.save_folder)
     tx.add_mult_image("plot__11", "", "", d1112.save_folder)
     tx.mult_fig_end()
-if 1:
+if 0:
     tx.include_image("testy_circuit_draw.png", "Anharmonicity", "anharm")
     #tx.add_mult_fig(anton_anharm_plot, "anton_anharm_plot.pdf", fig_width=6.0, fig_height=4.0)
     #tx.add_mult_image("anton_lamb_shift.png", "Lamb shift", "anharm")

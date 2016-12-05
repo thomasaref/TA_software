@@ -313,6 +313,7 @@ class ColormeshFormat(PlotFormat):
     zdata=Array()
     expand_XY=Bool(False).tag(desc="expands X and Y array by one so all zdata is plotted")
 
+    include_colorbar=Bool(False)
     cmap=Enum(*colormap_names).tag(former="cmap")
 
     @plot_observe("cmap")
@@ -326,12 +327,14 @@ class ColormeshFormat(PlotFormat):
             self.set_colorbar()
 
     def get_colorbar(self):
-        if self.plotter.colorbar is None:
-            self.plotter.colorbar=self.plotter.figure.colorbar(self.clt)
+        if self.include_colorbar:
+            if self.plotter.colorbar is None:
+                self.plotter.colorbar=self.plotter.figure.colorbar(self.clt)
         return self.plotter.colorbar
 
     def set_colorbar(self):
-        self.get_colorbar().update_bruteforce(self.clt)
+        if self.include_colorbar:
+            self.get_colorbar().update_bruteforce(self.clt)
 
     def set_clim(self, vmin, vmax):
         self.vmin=float(vmin)
