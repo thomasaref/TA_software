@@ -9,7 +9,7 @@ Created on Sun Apr 24 18:55:33 2016
 
 from TA88_fundamental import TA88_Lyzer, TA88_Read, qdt, TA88_Read_NP, TA88_Save_NP
 from TA53_fundamental import TA53_VNA_Pwr_Lyzer, TA53_Read
-from numpy import array, absolute, squeeze, append, sqrt, pi, arccos, shape
+from numpy import array, absolute, squeeze, append, sqrt, pi, arccos, shape, linspace
 from taref.physics.fundamentals import h
 from taref.plotter.api import colormesh, line, scatter
 from taref.physics.filtering import Filter
@@ -62,23 +62,34 @@ c.end_skip=10
 
 
 if __name__=="__main__":
-    from matplotlib.pyplot import colorbar
+    from matplotlib.pyplot import colorbar#, tight_layout
     a.read_data()
     b.read_data()
 
     pl="fig2"
-    pl, pf=a.magabs_colormesh(vmin=0.995, vmax=1.002, auto_zlim=False, cmap="afmhot", auto_ylim=False, y_min=3.6, y_max=7.4,
+    pl, pf=a.magabs_colormesh(vmin=0.995, vmax=1.002, auto_zlim=False, cmap="afmhot",
+                              auto_ylim=False, y_min=3.5, y_max=7.5,
+                              auto_xlim=False, x_min=-3, x_max=3,
                           nrows=2, ncols=1, nplot=1, pl=pl, pf_too=True)#.show()
     line(a.flux_axis, a.qdt._get_flux_parabola(voltage=a.yoko, ng=0.0)/1e9, pl=pl)#.show()
 
+    #pl.axes.yaxis.labelpad=-5
+    #pl.axes.xaxis.labelpad=-5
+
     pl.ncols=2
     cbr=colorbar(pf.clt, ax=pl.axes, label="$S_{33}$")
-    print cbr
-    cbr.set_label("yo", size=2)
-    cbr.set_ticklabels()
+    print dir(cbr)
+    cbr.set_label("$|S_{11}|$", size=8, labelpad=-10)
+    cbr.set_ticks(linspace(0.995, 1.002, 2))
+    pl.axes.set_xticks(linspace(-3, 3, 4))
+    pl.axes.set_yticks(linspace(3.5, 7.5, 5))
 
-    raise Exception
-    pl.nplot=3
+    #cbr.set_ticklabels()
+    #tight_layout()
+
+    #raise Exception
+    #pl.ylabel="Frequency (GHz)"
+    #pl.xlabel="$\Phi/\Phi_0$"
     #colormesh(a.flux_axis, a.freq_axis)
     #pl="colormeshy"
     #colormesh(a.flux_axis, a.frequency[a.end_skip:-a.end_skip]/1e9, a.MagAbs[:, :], vmin=0.995, vmax=1.002, auto_zlim=False, cmap="afmhot", auto_ylim=False, y_min=3.6, y_max=7.4, pl=pl).show()
@@ -103,20 +114,37 @@ if __name__=="__main__":
                   auto_xlim=False, x_min=1.0, x_max=2.5,
                   auto_zlim=True)
 
-    pl.nplot=4
-    pl_pwr_sat=scatter(b.pwr, absolute(absolute(b.MagcomFilt[69, 635, :])-absolute(b.MagcomFilt[69,0, :])),
-                xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}|$", pl=pl,
-                  auto_ylim=False, y_min=0, y_max=0.015, marker_size=3.0,
-                  auto_xlim=False, x_min=-30, x_max=10)#.show()
 
-    pl.nplot=3 #5
+    pl.nplot=4
+    pl_pwr_sat=scatter(b.pwr, 100*absolute(absolute(b.MagcomFilt[69, 635, :])-absolute(b.MagcomFilt[69,0, :])),
+                xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}| \times 100$", pl=pl,
+                  auto_ylim=False, y_min=100*0.0, y_max=100*0.015, marker_size=3.0,
+                  auto_xlim=False, x_min=-30, x_max=10)#.show()
+    ax=pl.figure.add_subplot(pl.nrows, pl.ncols, 4)
+    ax.set_xticks(linspace(-30.0, 10.0, 5))
+    ax.set_yticks(linspace(0.0, 1.5, 4))
+
+    pl.nplot=3
     c.read_data()
     c.filter_type="FFT"
-    pl, pf=c.magabs_colormesh(pl=pl, pf_too=True, auto_zlim=True, auto_xlim=True, auto_ylim=True, vmin=0.0, vmax=0.02)
+    pl, pf=c.magabs_colormesh(pl=pl, pf_too=True, auto_zlim=True,
+                               auto_xlim=False, x_min=0.65, x_max=1.5,
+                               auto_ylim=True, vmin=0.0, vmax=0.02)
     colorbar(pf.clt, ax=pl.axes)
+    pl.axes.set_xticks(linspace(0.7, 1.5, 2))
+
+    #pl.axes.xaxis.labelpad=-5
+    #pl.axes.yaxis.labelpad=-5
+
+
+    #tight_layout()
+
+
     #pl3.add_label("c)")
 
-    #a.save_plots([pl])
+    pl.figure.tight_layout()
+    a.save_plots([pl])
+
     pl.show()
 
 

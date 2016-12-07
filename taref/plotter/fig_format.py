@@ -59,20 +59,32 @@ class Fig(PlotMaster, Operative):
     y_max=Float()
 
     def _default_x_min(self):
-        first_plot=self.plot_dict.values()[0]
-        return float(min(first_plot.xdata))
+        try:
+            first_plot=self.plot_dict.values()[0]
+            return float(min(first_plot.xdata))
+        except IndexError:
+            return -0.01
 
     def _default_x_max(self):
-        first_plot=self.plot_dict.values()[0]
-        return float(max(first_plot.xdata))
+        try:
+            first_plot=self.plot_dict.values()[0]
+            return float(max(first_plot.xdata))
+        except IndexError:
+            return 0.01
 
     def _default_y_min(self):
-        first_plot=self.plot_dict.values()[0]
-        return float(min(first_plot.ydata))
+        try:
+            first_plot=self.plot_dict.values()[0]
+            return float(min(first_plot.ydata))
+        except IndexError:
+            return -0.01
 
     def _default_y_max(self):
-        first_plot=self.plot_dict.values()[0]
-        return float(max(first_plot.ydata))
+        try:
+            first_plot=self.plot_dict.values()[0]
+            return float(max(first_plot.ydata))
+        except IndexError:
+            return 0.01
 
     auto_cs_xlim=Bool(True)
     auto_cs_ylim=Bool(True)
