@@ -17,7 +17,9 @@ from time import time
 
 a=TA53_VNA_Pwr_Lyzer(name="d1118", on_res_ind=301,#read_data=read_data, # VNA_name="RS VNA",
         rd_hdf=TA53_Read(main_file="Data_1118/S3A4_trans_swp_n5n15dBm.hdf5"), #long_test.hdf5"), #
-        #fit_indices=[range(850, 2300)], #range(48,154+1), range(276, 578+1)],
+        fit_indices=[ range(7, 42), range(79, 120), range(171, 209), range(238, 296), range(316, 376),
+                     range(385, 518), range(558, 603), range(629, 681), range(715, 771), range(790, 845),
+                     range(872, 1001)], #range(48,154+1), range(276, 578+1)],
          desc="transmission power sweep",
          offset=-0.1,
         # read_data=read_data,
@@ -34,7 +36,7 @@ a.end_skip=20
 
 a.save_folder.main_dir=a.name
 
-a.pwr_ind=1
+a.pwr_ind=1*0
 if __name__=="__main__":
     a.read_data()
 
@@ -61,7 +63,17 @@ if __name__=="__main__":
     pl_widths=a.widths_plot(auto_xlim=False, x_min=3.9, x_max=5.1, auto_ylim=False, y_min=0.1, y_max=0.6,
                             xlabel="Frequency (GHz)", ylabel="$\Gamma/2\pi$ (GHz)")#.show()
 
+    def widths_plot(self, **kwargs):
+        process_kwargs(self, kwargs, pl="widths2_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
+        pl=scatter(array(self.flat_indices), absolute([fp[0] for fp in self.fit_params]), **kwargs)
+        return pl
 
+    def center_plot(self, **kwargs):
+        process_kwargs(self, kwargs, pl="center2_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
+        pl=scatter(array(self.flat_indices), array([fp[1] for fp in self.fit_params]), **kwargs)
+        return pl
+    widths_plot(a)
+    center_plot(a).show()
     #pl1=colormesh(a.yoko, a.pwr, absolute(a.MagcomData[69, :, :]).transpose(), ylabel="Power (dBm)", xlabel=r"Yoko (V)")#.show()
     #pl3=colormesh(a.pwr, a.freq_axis[a.end_skip:-a.end_skip], absolute(a.MagcomFilt[a.end_skip:-a.end_skip, 335, :]),
     #              ylabel="Frequency (GHz)", xlabel=r"Power (dBm")#.show()
@@ -72,5 +84,5 @@ if __name__=="__main__":
 
     #pls=[pl_raw, pl_ifft, pl_fft, pl1, pl2, pl3]
     pls=[pl_centers, pl_widths]
-    a.save_plots(pls)
+    #a.save_plots(pls)
     pls[-1].show()

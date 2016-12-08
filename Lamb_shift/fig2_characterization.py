@@ -7,14 +7,14 @@ Created on Sun Apr 24 18:55:33 2016
 
 
 
-from TA88_fundamental import TA88_Lyzer, TA88_Read, qdt, TA88_Read_NP, TA88_Save_NP
+from TA88_fundamental import TA88_VNA_Lyzer, TA88_Read, qdt, TA88_Read_NP, TA88_Save_NP
 from TA53_fundamental import TA53_VNA_Pwr_Lyzer, TA53_Read
 from numpy import array, absolute, squeeze, append, sqrt, pi, arccos, shape, linspace
 from taref.physics.fundamentals import h
 from taref.plotter.api import colormesh, line, scatter
 from taref.physics.filtering import Filter
 
-a=TA88_Lyzer(on_res_ind=201, rd_hdf=TA88_Read(main_file="Data_0628/S4A4_just_gate_overnight_flux_swp.hdf5"))
+a=TA88_VNA_Lyzer(on_res_ind=201, rd_hdf=TA88_Read(main_file="Data_0628/S4A4_just_gate_overnight_flux_swp.hdf5"))
 
 a.filt.center=0
 a.filt.halfwidth=200
@@ -43,7 +43,7 @@ b.flux_axis_type="flux" #"fq" #
 b.end_skip=10
 b.pwr_ind=22
 
-c=TA88_Lyzer(name="S4A1_midpeak",
+c=TA88_VNA_Lyzer(name="S4A1_midpeak",
              desc="S4A1 Main peak",
                    on_res_ind=260,
               #VNA_name='RS VNA', port_name='S21',
@@ -60,6 +60,25 @@ c.flux_axis_type="flux" #"fq" #"flux"
 c.end_skip=10
 
 
+d=TA88_VNA_Lyzer(name="S4A1_wide",
+             desc="S4A1 wide",
+                   on_res_ind=260,
+              VNA_name='RS VNA', port_name='S21',
+              rd_hdf=TA88_Read(main_file="Data_0312/S4A1_TA88_coupling_search.hdf5"),
+              #fit_indices=[range(65, 984+1)],
+              #fit_func=lorentzian,
+              flux_factor=qdt.flux_factor*1000.0/560.0,
+              offset=-0.045
+              )#, fit_type="yoko")
+d.filt.center=129
+d.filt.halfwidth=30
+d.fitter.fit_type="lorentzian"
+d.fitter.gamma=0.055 #0.01
+d.flux_axis_type="flux" #"fq" #"flux"
+d.end_skip=10
+d.filter_type="FFT"
+
+
 
 if __name__=="__main__":
     from matplotlib.pyplot import colorbar#, tight_layout
@@ -70,7 +89,9 @@ if __name__=="__main__":
     pl, pf=a.magabs_colormesh(vmin=0.995, vmax=1.002, auto_zlim=False, cmap="afmhot",
                               auto_ylim=False, y_min=3.5, y_max=7.5,
                               auto_xlim=False, x_min=-3, x_max=3,
-                          nrows=2, ncols=1, nplot=1, pl=pl, pf_too=True)#.show()
+                          nrows=2, ncols=1, nplot=1, pl=pl, pf_too=True,
+                          fig_width=5.0, fig_height=4.0,
+                          )#.show()
     line(a.flux_axis, a.qdt._get_flux_parabola(voltage=a.yoko, ng=0.0)/1e9, pl=pl)#.show()
 
     #pl.axes.yaxis.labelpad=-5
@@ -83,6 +104,10 @@ if __name__=="__main__":
     cbr.set_ticks(linspace(0.995, 1.002, 2))
     pl.axes.set_xticks(linspace(-3, 3, 4))
     pl.axes.set_yticks(linspace(3.5, 7.5, 5))
+    pl.figure.text(0.0, 0.95, "a)")
+    #pl.figure.text(0.4, 0.8, "b)")
+    pl.figure.text(0.0, 0.45, "b)")
+    pl.figure.text(0.53, 0.45, "c)")
 
     #cbr.set_ticklabels()
     #tight_layout()
@@ -116,34 +141,41 @@ if __name__=="__main__":
 
 
     pl.nplot=4
-    pl_pwr_sat=scatter(b.pwr, 100*absolute(absolute(b.MagcomFilt[69, 635, :])-absolute(b.MagcomFilt[69,0, :])),
+    print b.comment
+    pl_pwr_sat=scatter(b.pwr-30-60, 100*absolute(absolute(b.MagcomFilt[69, 635, :])-absolute(b.MagcomFilt[69,0, :])),
                 xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}| \times 100$", pl=pl,
                   auto_ylim=False, y_min=100*0.0, y_max=100*0.015, marker_size=3.0,
-                  auto_xlim=False, x_min=-30, x_max=10)#.show()
+                  auto_xlim=False, x_min=-30-90, x_max=10-90)#.show()
     ax=pl.figure.add_subplot(pl.nrows, pl.ncols, 4)
-    ax.set_xticks(linspace(-30.0, 10.0, 5))
+    ax.set_xticks(linspace(-30.0-90, 10.0-90, 5))
     ax.set_yticks(linspace(0.0, 1.5, 4))
 
     pl.nplot=3
-    c.read_data()
-    c.filter_type="FFT"
-    pl, pf=c.magabs_colormesh(pl=pl, pf_too=True, auto_zlim=True,
-                               auto_xlim=False, x_min=0.65, x_max=1.5,
-                               auto_ylim=True, vmin=0.0, vmax=0.02)
-    colorbar(pf.clt, ax=pl.axes)
-    pl.axes.set_xticks(linspace(0.7, 1.5, 2))
+    if 1:
+        c.read_data()
+        c.filter_type="FFT"
+        pl, pf=c.magabs_colormesh(pl=pl, pf_too=True, auto_zlim=False,
+                                   auto_xlim=False, x_min=0.65, x_max=1.5,
+                                   auto_ylim=True, vmin=0.0, vmax=0.02)
+        cbr=colorbar(pf.clt, ax=pl.axes)
+        cbr.set_label("$|S_{21}|$", size=8, labelpad=-10)
+        cbr.set_ticks(linspace(0.0, 0.02, 2))
+        pl.axes.set_xticks(linspace(0.7, 1.5, 5))
 
-    #pl.axes.xaxis.labelpad=-5
-    #pl.axes.yaxis.labelpad=-5
+    if 1:
+        d.read_data()
+        d.bgsub_type="dB"
+        pl1=d.magdB_colormesh(auto_zlim=False, vmin=-3.0, vmax=0.0,
+                              auto_ylim=False, y_min=4.2, y_max=4.9,
+                              auto_xlim=False, x_min=0.7, x_max=1.5,
+                              fig_width=5.0, fig_height=4.0,
+                              )
+        pl1.axes.set_xticks(linspace(0.7, 1.5, 5))
+        pl1.axes.set_yticks(linspace(4.2, 4.8, 4))
 
-
-    #tight_layout()
-
-
-    #pl3.add_label("c)")
 
     pl.figure.tight_layout()
-    a.save_plots([pl])
+    a.save_plots([pl, pl1])
 
     pl.show()
 

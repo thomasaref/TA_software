@@ -165,9 +165,10 @@ class TA88_VNA_Lyzer(VNA_Lyzer):
         self.filter_type="None"
         pl1=self.magabs_colormesh(fig_width=6.0, fig_height=4.0)
         pl1.add_label("a)")
-        self.filter_type="FFT"
-        pl2=self.ifft_plot(fig_width=6.0, fig_height=4.0, time_axis_type="time",
+        pl2=self.ifft_plot(fig_width=6.0, fig_height=4.0, #time_axis_type="time",
                     auto_xlim=False, x_min=-0.05, x_max=1.0, show_legend=True)#, auto_ylim=False, y_min=-0.0001, y_max=0.008)
+        self.filter_type="FFT"
+
         pl2.add_label("b)")
         dif=pl2.y_max*0.1
         pl2.y_min=-dif

@@ -50,25 +50,26 @@ b.pwr_ind=1
 def combo_plots():
     for d in lyzers:
         d.filter_type="FFT"
-        d.bgsub_type="dB"
+        #d.bgsub_type="dB"
         d.show_quick_fit=False
         d.read_data()
     pl="fig3"
     for d in lyzers:
         pl=d.center_plot(pl=pl, color="red", nrows=2, ncols=2, auto_xlim=False, auto_ylim=False)
     frequency=linspace(3.8e9, 6.05e9, 1000)
-    V=qdt._get_fq0(f=frequency)#[1]
+    #V=qdt._get_fq0(f=frequency)#[1]
     #line(frequency/1e9, V/1e9, pl=pl,  ylabel="Qubit frequency (GHz)", xlabel="Frequency (GHz)")
     #line(frequency/1e9, frequency/1e9-qdt._get_Lamb_shift(f=frequency)/1.0/1e9, plotter=pl, color="purple", xlabel="Frequency (GHz)",
     #     ylabel="HWFM (GHz)")
     qdt.gate_type="constant"
-    line(frequency/1e9, frequency/1e9-qdt._get_Lamb_shift(f=frequency)/1.0/1e9, plotter=pl, color="blue", xlabel="Frequency (GHz)",
-         ylabel="HWFM (GHz)")
+    line(frequency/1e9, frequency/1e9-qdt._get_Lamb_shift(f=frequency)/1.0/1e9, plotter=pl, color="blue")
     line(array([3.75, 6.1]), array([3.75, 6.1]), pl=pl, color="green")
 
     pl.set_xlim(3.75, 6.1)
     pl.set_ylim(3.75, 6.1)
     #pl.add_label("a)")
+    pl.axes.set_xlabel("Frequency (GHz)")
+    pl.axes.set_ylabel("Qubit Frequency (GHz)")
 
     pl1="combined_heights"
     for d in lyzers:
@@ -89,13 +90,11 @@ def combo_plots():
         pl1=d.widths_plot(pl=pl1, color="red")
     #line(frequency/1e9, qdt._get_fFWHM(f=frequency)[2]/2.0/1e9, plotter=pl, color="blue", xlabel="Frequency (GHz)",
     #     ylabel="HWFM (GHz)")
-    qdt.gate_type="capacitive"
+    #qdt.gate_type="capacitive"
     #co=qdt._get_coupling(f=frequency)/1.0/1e9
-    line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl1, color="purple", xlabel="Frequency (GHz)",
-         ylabel="HWFM (GHz)")
+    #line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl1, color="purple")
     qdt.gate_type="constant"
-    line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl1, color="green", xlabel="Frequency (GHz)",
-         ylabel="HWFM (GHz)")
+    line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl1, color="green")
 
     #co=(co+(idt.sinc(f=frequency)**2)*qdt._get_coupling(f=frequency)/1.0/1e9)/(1.0+(idt.sinc(f=frequency)**2))
 
@@ -114,14 +113,18 @@ def combo_plots():
     pl.nplot=2
     for d in lyzers:
         pl=d.widths_plot(pl=pl, color="red")
-    qdt.dephasing=dephasing
-    line(frequency/1e9, qdt._get_fFWHM(f=frequency)[2]/2.0/1e9, plotter=pl, color="blue", xlabel="Frequency (GHz)",
-         ylabel="HWFM (GHz)")
+    #qdt.dephasing=dephasing
+    #line(frequency/1e9, qdt._get_fFWHM(f=frequency)[2]/2.0/1e9, plotter=pl, color="blue")
+
     qdt.dephasing=0.0
     line(frequency/1e9, qdt._get_fFWHM(f=frequency)[2]/2.0/1e9, plotter=pl, color="green")
     pl.set_xlim(3.75, 6.1)
     pl.set_ylim(-0.01, 0.1)
     #pl.add_label("d)")
+    pl.axes.set_xlabel("Frequency (GHz)")
+    pl.axes.set_ylabel("$\Gamma/2\pi$ (GHz)")
+
+
     if 0:
         pl="FFT_magabs"
         pl1="Fit_magabs"
@@ -142,9 +145,10 @@ def combo_plots():
     b.read_data()
 
     b.filter_type="None"
+    b.show_quick_fit=False
     pl_raw=b.magabs_colormesh()
-    b.bgsub_type="dB"
-    b.magabs_colormesh()
+    #b.bgsub_type="dB"
+    #b.magabs_colormesh()
     #pl1=colormesh(absolute(a.MagcomData[:, :, 30]))
 
     pl_ifft=b.ifft_plot()#.show()
@@ -159,14 +163,27 @@ def combo_plots():
     b.magabs_colormesh(pl=pl2)
     b.magdB_colormesh(pl=pl1)
     pl.nplot=3
-    pl_centers=b.center_plot(auto_xlim=False, x_min=3.75, x_max=5.1, auto_ylim=False, y_min=3.75, y_max=5.1,
-                             xlabel="Frequency (GHz)", ylabel="Qubit Frequency (GHz)", pl=pl)
+    pl_centers=b.center_plot(color="red", auto_xlim=False, x_min=3.75, x_max=5.1,
+                             auto_ylim=False, y_min=3.75, y_max=5.1, pl=pl)
+    #qdt.gate_type="constant"
+    frequency=linspace(3.5e9, 5.5e9, 1000)
+    line(frequency/1e9, frequency/1e9-b.qdt._get_Lamb_shift(f=frequency)/1.0/1e9, plotter=pl, color="blue")
     line(array([3.5, 5.5]), array([3.5, 5.5]), pl=pl_centers, color="green")
+    pl.axes.set_xlabel("Frequency (GHz)")
+    pl.axes.set_ylabel("Qubit Frequency (GHz)")
     pl.nplot=4
-    pl_widths=b.widths_plot(auto_xlim=False, x_min=3.75, x_max=5.1, auto_ylim=False, y_min=0.1, y_max=0.6,
-                            xlabel="Frequency (GHz)", ylabel="$\Gamma/2\pi$ (GHz)", pl=pl)#.show()
+    pl_widths=b.widths_plot(color="red", auto_xlim=False, x_min=3.75, x_max=5.1, auto_ylim=False, y_min=0.1, y_max=0.6, pl=pl)#.show()
+    #qdt.gate_type="constant"
+    line(frequency/1e9, b.qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl, color="green")
 
+    pl.axes.set_xlabel("Frequency (GHz)")
+    pl.axes.set_ylabel("$\Gamma/2\pi$ (GHz)")
+    pl.figure.text(0.0, 0.95, "a)")
+    pl.figure.text(0.0, 0.45, "b)")
+    pl.figure.text(0.5, 0.95, "c)")
+    pl.figure.text(0.5, 0.45, "d)")
 
+    pl.figure.tight_layout()
     return pl
 
 if __name__=="__main__":
