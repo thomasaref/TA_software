@@ -165,17 +165,21 @@ if __name__=="__main__":
     if 1:
         d.read_data()
         d.bgsub_type="dB"
-        pl1=d.magdB_colormesh(auto_zlim=False, vmin=-3.0, vmax=0.0,
+        pl1, pf1=d.magdB_colormesh(auto_zlim=False, vmin=-3.0, vmax=0.0,
                               auto_ylim=False, y_min=4.2, y_max=4.9,
                               auto_xlim=False, x_min=0.7, x_max=1.5,
-                              fig_width=5.0, fig_height=4.0,
+                              fig_width=5.0, fig_height=4.0, pf_too=True,
                               )
+        cbr=colorbar(pf1.clt, ax=pl1.axes)
+        cbr.set_label("$\Delta S_{21}$ [dB]", size=8, labelpad=-10)
+        cbr.set_ticks(linspace(-3.0, 0.0, 2))
+
         pl1.axes.set_xticks(linspace(0.7, 1.5, 5))
         pl1.axes.set_yticks(linspace(4.2, 4.8, 4))
 
 
     pl.figure.tight_layout()
-    a.save_plots([pl, pl1])
+    #a.save_plots([pl, pl1])
 
     pl.show()
 

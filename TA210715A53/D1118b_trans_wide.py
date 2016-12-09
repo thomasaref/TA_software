@@ -17,9 +17,11 @@ from time import time
 
 a=TA53_VNA_Pwr_Lyzer(name="d1118", on_res_ind=301,#read_data=read_data, # VNA_name="RS VNA",
         rd_hdf=TA53_Read(main_file="Data_1118/S3A4_trans_swp_n5n15dBm.hdf5"), #long_test.hdf5"), #
-        fit_indices=[ range(7, 42), range(79, 120), range(171, 209), range(238, 296), range(316, 376),
-                     range(385, 518), range(558, 603), range(629, 681), range(715, 771), range(790, 845),
-                     range(872, 1001)], #range(48,154+1), range(276, 578+1)],
+        fit_indices=[ #range(7, 42), range(79, 120), range(171, 209), range(238, 296),
+                     range(316, 358),range(391, 518), range(558, 603),
+                    # range(629, 681), range(715, 771), range(790, 845),
+                    # range(872, 921), range(953, 960), range(963, 985)
+                     ],
          desc="transmission power sweep",
          offset=-0.1,
         # read_data=read_data,
@@ -33,10 +35,10 @@ a.flux_axis_type="fq" #
 #a.bgsub_type="Complex" #"Abs" #"dB"
 a.end_skip=20
 #a.flux_indices=[range(len(a.yoko)-1)]
-
+a.show_quick_fit=True
 a.save_folder.main_dir=a.name
 
-a.pwr_ind=1*0
+a.pwr_ind=1
 if __name__=="__main__":
     a.read_data()
 
@@ -72,8 +74,27 @@ if __name__=="__main__":
         process_kwargs(self, kwargs, pl="center2_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
         pl=scatter(array(self.flat_indices), array([fp[1] for fp in self.fit_params]), **kwargs)
         return pl
-    widths_plot(a)
-    center_plot(a).show()
+    plw=widths_plot(a)
+    plc=center_plot(a)
+    a.pwr_ind=0
+    a.fit_indices=[ range(7, 42), range(79, 120), range(171, 209), range(238, 291), #range(558, 603),
+                   range(629, 681),
+                   range(715, 764), range(803, 835),
+                     range(879, 915), range(953, 960), range(963, 985)]
+
+    a.get_member("fit_params").reset(a)
+    a.get_member("MagcomFilt").reset(a)
+    a.fitter.fit_params=None
+    widths_plot(a, pl=plw, color="blue")
+    center_plot(a, pl=plc, color="blue")
+
+    pl_centers=a.center_plot(auto_xlim=False, x_min=3.9, x_max=5.1, auto_ylim=False, y_min=3.9, y_max=5.1,
+                             xlabel="Frequency (GHz)", ylabel="Qubit Frequency (GHz)", pl=pl_centers)
+    line(array([3.5, 5.5]), array([3.5, 5.5]), pl=pl_centers, color="green")
+    pl_widths=a.widths_plot(auto_xlim=False, x_min=3.9, x_max=5.1, auto_ylim=False, y_min=0.1, y_max=0.6,
+                            xlabel="Frequency (GHz)", ylabel="$\Gamma/2\pi$ (GHz)", pl=pl_widths)#.show()
+
+    plc.show()
     #pl1=colormesh(a.yoko, a.pwr, absolute(a.MagcomData[69, :, :]).transpose(), ylabel="Power (dBm)", xlabel=r"Yoko (V)")#.show()
     #pl3=colormesh(a.pwr, a.freq_axis[a.end_skip:-a.end_skip], absolute(a.MagcomFilt[a.end_skip:-a.end_skip, 335, :]),
     #              ylabel="Frequency (GHz)", xlabel=r"Power (dBm")#.show()
