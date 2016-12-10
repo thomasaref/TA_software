@@ -44,20 +44,21 @@ phi_arr=linspace(0.2, 0.3, 101)
 value_grid=array(meshgrid(phi_arr, Omega_sim_vec))
 
 a = destroy(N)
+print a
 adag=a.dag()
+print adag
+#tdiag = Qobj(diag(range(0, N))) # Diagonal matrix for the transmon.
+#print tdiag
+#It= qeye(N)
+#tdiag_l = kron(It,tdiag) # tdiag operator multiplying rho from the left.
 
-tdiag = Qobj(diag(range(0, N))) # Diagonal matrix for the transmon.
+#tm_l = kron(It, a) # tm operator multiplying rho from the left.
 
-It= qeye(N)
-tdiag_l = kron(It,tdiag) # tdiag operator multiplying rho from the left.
-
-tm_l = kron(It, a) # tm operator multiplying rho from the left.
-
-kappa = 0.1  # coupling to oscillator
+#kappa = 0.1  # coupling to oscillator
 
 c_op_list = []
 
-n_th_a = 2  # temperature with average of 2 excitations
+#n_th_a = 2  # temperature with average of 2 excitations
 
 rate = gamma * (1 + N_gamma)
 

@@ -5,16 +5,17 @@ Created on Mon Dec  5 10:36:14 2016
 @author: thomasaref
 """
 
-from qutip import destroy, basis, steadystate, mesolve, expect, Qobj, qeye, spectrum
+from qutip import destroy, basis, steadystate, mesolve, expect, Qobj, qeye, spectrum, correlation_ss, correlation_2op_1t
 from matplotlib.pyplot import figure, plot, axhline, ylim, xlabel, ylabel, show, pcolormesh, colorbar
-from numpy import array, sqrt, linspace, cos, pi, arange, diag, absolute, kron, exp, conj, transpose, full, real, imag, shape
-from numpy.linalg import eig
+from numpy import matrix, sin, interp, array, sqrt, linspace, cos, pi, arange, diag, absolute, kron, exp, conj, transpose, full, real, imag, shape
+from numpy.linalg import eig, inv
 from scipy.constants import h
+from scipy.ndimage.interpolation import rotate
 from time import time
 
-wlist2 = linspace(0.1, 1000.0, 200)
+wlist2 = linspace(-500.0, 500.0, 201)
 Omega_sim_points = 10
-sample_power_sim_dBm=linspace(-100.0, -70, 3)
+sample_power_sim_dBm=-80.0 #linspace(-100.0, -70, 3)
 spk_external_att = 0.0
 Omega_el_squared_coeff = 1.2*3.9666e+21  # Omega^2 in angular frequency = omega_el_square_coeff * gate_power_at_fridgetop
 #sample_power_sim_dBm = linspace(spk_sample_power_dBm(1), spk_sample_power_dBm(end), Omega_sim_points)
@@ -39,7 +40,9 @@ N_gamma = 1/(exp(wd/T)-1)# % Thermal population of the transmon phonon bath arou
 print N_gamma
 N = 5  # number of basis states to consider
 
-phi_arr=linspace(0.25, 0.35, 101)
+phi_arr=linspace(0.2, 0.35, 51)
+Ej_arr=linspace(10078, 17960, 51)
+w0_arr=linspace(4211, 5622, 301)
 
 a = destroy(N)
 adag=a.dag()
@@ -76,53 +79,91 @@ p = -1.0j*(adag - a) # "P" operator.
 
 p_l = kron(It,p) # % "P" operator multiplying rho from the left.
 p_r = kron(transpose(p),It) # "P" operator multiplying rho from the right.
-
+print p_r
 
 nvec=arange(N)
 wdvec=nvec*wd
 Ecvec=-Ec*(6.0*nvec**2+6.0*nvec+3.0)/12.0
-def find_expect(phi=0.1, Omega_vec=3.0):
+def find_expect(phi=0.1, Omega_vec=3.0, wd=wd):
 
-    Ej = Ejmax*absolute(cos(pi*phi)) #; % Josephson energy as function of Phi.
+    Ej = (phi**2)/(8*Ec) #Ejmax*absolute(cos(pi*phi)) #; % Josephson energy as function of Phi.
 
     wTvec = -Ej + sqrt(8.0*Ej*Ec)*(nvec+0.5)+Ecvec
+
+    #wdvec=nvec*sqrt(8.0*Ej*Ec)
+    #wdvec=nvec*wd
 
     wT = wTvec-wdvec
     transmon_levels = Qobj(diag(wT[range(N)]))
     H=transmon_levels +Omega_vec #- 0.5j*(Omega_true*adag - conj(Omega_true)*a)
     #final_state = steadystate(H, c_op_list)
-
-    #U,D = eig(full(L))
-
-    #Uinv = inv(U)
-
+    #print H.shape
+    #print dir(H)
+    #U,D = eig(H.full())
+    #print D
+    #Uinv = Qobj(inv(D))
+    #U=Qobj(D)
     # Doing the chi integral (gives the susceptibility)
 
     #Dint = 1.0/(1.0j*(wp-wd)) #Qobj(1.0/(1.0j*(wp-wd)*diag(qeye(N**2))))# + diag(D))))
 
-    #Lint = U*Dint*Uinv
+    #Hint = H.expm() #U*H*Uinv
 
     #Chi_temp(i,j) += (1.0/theta_steps)*1j*trace(reshape(tm_l*Lint*(p_l - p_r)*rho_ss_c,dim,dim))
+    #exp1=correlation_2op_1t(H, None, wlist2, c_op_list, a, p, solver="es")
+    #exp2=correlation_2op_1t(H, None, wlist2, c_op_list, p, a, solver="es", reverse=True)
+    #exp1=correlation_2op_1t(H, None, wlist2, c_op_list, a, p_l-p_r, solver="es")
 
-    return spectrum(H, wlist2, c_op_list, tm_l, p)
+    #exp1=correlation_ss(H, wlist2, c_op_list, a, p)
+    #exp2=correlation_ss(H, wlist2, c_op_list, p, a, reverse=True)
+    exp1=spectrum(H, wlist2, c_op_list, a, p, solver="pi", use_pinv=False)
+    exp2=spectrum(H, wlist2, c_op_list, p, a, solver="pi", use_pinv=False)
+    return exp1-exp2
     return expect( a, final_state) #tm_l
 
-def expect_update(phi_arr, Omega):
+def expect_update(phi_arr, Omega, wd):
     tstart=time()
     Omega_vec=- 0.5j*(Omega*adag - conj(Omega)*a)
-    fexp=[find_expect(phi, Omega_vec) for phi in phi_arr]
+    fexp=[find_expect(phi, Omega_vec, wd) for phi in phi_arr]
     print time()-tstart
     return fexp
-#Omega=Omega_sim_vec[20]
-fexpt=array([expect_update(phi_arr, Omega) for Omega in Omega_sim_vec])
+Omega=Omega_sim_vec#[1]
+fexpt=array(expect_update(w0_arr, Omega, wd))# for wd in wp+wlist2])
+# for Omega in Omega_sim_vec])
 
 #fexpt=[[find_expect(phi, Omega) for phi in phi_arr] for Omega in Omega_sim_vec]
 #print fexpt
-for i in range(len(Omega_sim_vec)):
+#for i in range(len(Omega_sim_vec)):
+
+Ej = Ejmax*absolute(cos(pi*phi_arr)) #; % Josephson energy as function of Phi.
+wTvec = sqrt(8.0*Ej*Ec)#*(nvec+0.5)
+print Ej
+#raise Exception
+if 1:
     figure()
-    Z=fexpt[i, :, :]
-    pcolormesh(Z) #(Z-50.0)/(Z+50.0))
+    #Z=fexpt[i, :, :]
+    pcolormesh(wlist2, w0_arr, absolute(fexpt), cmap="RdBu_r") #(Z-50.0)/(Z+50.0))
     colorbar()
+    figure()
+    pcolormesh(wlist2, w0_arr, fexpt, cmap="RdBu_r")
+    colorbar()
+
+    figure()
+    #Z=fexpt[i, :, :]
+    pcolormesh(absolute(fexpt), cmap="RdBu_r") #(Z-50.0)/(Z+50.0))
+    colorbar()
+    figure()
+    pcolormesh(fexpt, cmap="RdBu_r")
+    colorbar()
+
+    frot=rotate(fexpt, -45-90-3, reshape=False)
+    figure()
+    pcolormesh(wlist2[::-1], w0_arr, frot, cmap="RdBu_r")
+    colorbar()
+    #figure()
+    #pcolormesh(imag(fexpt))
+    #colorbar()
+
 show()
 if 0:
     print "yo"
