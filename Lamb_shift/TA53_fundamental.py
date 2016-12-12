@@ -23,11 +23,11 @@ class TA53_Read(Read_HDF5):
 
 class TA53_Save_NP(Save_NP):
     def _default_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A53_cooldown210216/tex_source_files/TA88_processed")
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A53_cooldown210216/tex_source_files/TA53_processed")
 
 class TA53_Read_NP(Read_NP):
     def _default_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A53_cooldown210216/tex_source_files/TA88_processed")
+        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A53_cooldown210216/tex_source_files/TA53_processed")
 
 #read_dir_path="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216"
 

@@ -20,7 +20,7 @@ from time import time
 a=TA88_VNA_Lyzer(on_res_ind=440, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0523/S1A4_trans_mainlobe.hdf5"),
             #fit_func=lorentzian,  #[0.2,2.3, 3e-7, 7.5e-7],
-            offset=0.0,  #indices=range(50, 534),
+            offset=-0.08,  #indices=range(50, 534),
             fit_indices=[range(200, 1901)],
             ) #33, 70
 a.filt.center=51

@@ -5,7 +5,7 @@ Created on Sun Apr 24 18:55:33 2016
 @author: thomasaref
 """
 
-from TA53_fundamental import TA53_VNA_Lyzer, TA53_Read#, qdt
+from TA53_fundamental import TA53_VNA_Lyzer, TA53_Read, TA53_Save_NP, TA53_Read_NP#, qdt
 #from taref.plotter.api import colormesh, line
 from numpy import array, amax, absolute, real, imag, nan_to_num, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape, float64, linspace, reshape
 #from taref.physics.fitting import refl_lorent
@@ -37,15 +37,46 @@ a.end_skip=10
 
 a.save_folder.main_dir=a.name
 
-a.read_data()
-a.filter_type="None"
+if __name__=="__main__":
+    a.read_data()
+    a.filter_type="None"
 
-a.magabs_colormesh(fig_width=6.0, fig_height=4.0)
-a.bgsub_type="Abs" #"Complex" #"Abs" #"dB"
-pl, pf=a.magabs_colormesh(fig_width=6.0, fig_height=4.0, pf_too=True)
-print pf.xdata.shape
-print pf.ydata.shape
-print pf.zdata.shape
+    a.magabs_colormesh(fig_width=6.0, fig_height=4.0)
+    a.bgsub_type="Abs" #"Complex" #"Abs" #"dB"
+    pl, pf=a.magabs_colormesh(fig_width=6.0, fig_height=4.0, pf_too=True)
+    print pf.xdata.shape
+    print pf.ydata.shape
+    print pf.zdata.shape
+
+
+def savedata(pf):
+    print "saving figure data"
+    xdata=[x for x in pf.xdata]
+    ydata=[y for y in pf.ydata]
+    zdata=list(pf.zdata)
+    return xdata, ydata, zdata
+
+if __name__=="__main2__":
+    nps=TA53_Save_NP()
+    nps.folder.main_dir="fig3_ls"
+    xdata, ydata, zdata=savedata(pf)
+
+    names={"TA53_flux_par_yoko" :xdata,
+           "TA53_flux_par_frq"  :ydata,
+           "TA53_flux_par_S" : zdata}
+    for name in names:
+        nps.file_name=name
+        nps.save(names[name])
+
+if __name__=="__main__":
+    nps=TA53_Save_NP()
+    nps.folder.main_dir="fig3_ls"
+    nps.file_name="TA53_flux_par_S"
+
+    npr=TA53_Read_NP(file_path=nps.file_path, show_data_str=True)
+    data=npr.read()
+    colormesh(data).show()
+        #scatter(data[:, 0], data[:, 1])
 #pl.show()
 if 0:
     V=linspace(min(a.yoko), max(a.yoko), 101)
