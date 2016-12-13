@@ -18,7 +18,9 @@ from D0503_lowfrq1sidelobe import a as d0503
 from D0518_highfrq3sidelobe import a as d0518
 
 from numpy import array, linspace, absolute
-from taref.plotter.api import line, colormesh
+from taref.plotter.api import line, colormesh, scatter
+
+from taref.core.api import process_kwargs
 
 from TA88_fundamental import qdt, TA88_Lyzer
 from TA53_fundamental import TA53_VNA_Pwr_Lyzer, TA53_Read
@@ -45,11 +47,31 @@ b=TA53_VNA_Pwr_Lyzer(name="d1118", on_res_ind=301,
         )
 b.filt.center=0 #71 #28*0 #141 #106 #58 #27 #139 #106 #  #137
 b.filt.halfwidth=100 #8 #10
-b.fitter.gamma=0.3 #0.035
-b.flux_axis_type="fq" #
+b.fitter.gamma=0.3/10 #0.035
+b.flux_axis_type="flux"#"fq" #
 b.end_skip=10
 #a.flux_indices=[range(len(a.yoko)-1)]
 b.pwr_ind=1
+
+def center_plot(self, **kwargs):
+    process_kwargs(self, kwargs, pl="center_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
+    #    line(frequency/1e9, frequency/1e9-qdt._get_Lamb_shift(f=frequency)/1.0/1e9, plotter=pl, color="blue")
+
+    #pl=scatter(self.freq_axis[self.flat_indices], array([fp[1] for fp in self.fit_params])-self.freq_axis[self.flat_indices], **kwargs)
+
+    pl=scatter(array([fp[1] for fp in self.fit_params]), self.freq_axis[self.flat_indices], **kwargs)
+
+    #    if self.show_quick_fit:
+
+    #        if self.flux_axis_type=="fq":
+    #            line(self.freq_axis[self.indices], self.ls_f[self.indices]/1e9, plotter=pl, color="red", linewidth=1.0)
+    #        elif self.flux_axis_type=="yoko":
+    #            line(self.freq_axis[self.indices], self.qdt._get_Vfq0(f=self.frequency[self.indices]), plotter=pl, color="red", linewidth=1.0)
+    #        else:
+    #            line(self.freq_axis, self.qdt._get_fluxfq0(f=self.frequency), plotter=pl, color="red", linewidth=1.0)
+    #        if self.fitter.p_guess is not None:
+    #            line(self.freq_axis[self.indices], array([pg[1] for pg in self.fitter.p_guess]), pl=pl, color="green", linewidth=1.0) #self.voltage_from_frequency(self.qdt._get_coupling(self.frequency)), plotter=pl, color="red")
+    return pl
 
 def combo_plots():
     pl="fig3"
@@ -59,17 +81,23 @@ def combo_plots():
             d.filter_type="FFT"
             #d.bgsub_type="dB"
             d.show_quick_fit=False
+            d.flux_axis_type="flux"
+            d.fitter.gamma=d.fitter.gamma/10
             d.read_data()
         for d in lyzers:
-            pl=d.center_plot(pl=pl, color="red", nrows=2, ncols=2, auto_xlim=False, auto_ylim=False)
+            pl=center_plot(d, pl=pl, color="red", nrows=2, ncols=2, auto_xlim=False, auto_ylim=False)
+
+            #pl=d.center_plot(pl=pl, color="red", nrows=2, ncols=2, auto_xlim=False, auto_ylim=False)
         frequency=linspace(3.8e9, 6.05e9, 1000)
         #V=qdt._get_fq0(f=frequency)#[1]
         #line(frequency/1e9, V/1e9, pl=pl,  ylabel="Qubit frequency (GHz)", xlabel="Frequency (GHz)")
         #line(frequency/1e9, frequency/1e9-qdt._get_Lamb_shift(f=frequency)/1.0/1e9, plotter=pl, color="purple", xlabel="Frequency (GHz)",
         #     ylabel="HWFM (GHz)")
         qdt.gate_type="constant"
-        line(frequency/1e9, frequency/1e9-qdt._get_Lamb_shift(f=frequency)/1.0/1e9, plotter=pl, color="blue")
-        line(array([3.75, 6.1]), array([3.75, 6.1]), pl=pl, color="green")
+        line(qdt._get_fluxfq0(f=frequency), frequency/1e9, plotter=pl, color="red")
+
+        #line(frequency/1e9, frequency/1e9-qdt._get_Lamb_shift(f=frequency)/1.0/1e9, plotter=pl, color="blue")
+        #line(array([3.75, 6.1]), array([3.75, 6.1]), pl=pl, color="green")
 
         pl.set_xlim(3.75, 6.1)
         pl.set_ylim(3.75, 6.1)
@@ -174,8 +202,11 @@ def combo_plots():
     #b.magabs_colormesh(pl=pl2)
     #b.magdB_colormesh(pl=pl1)
     #pl.nplot=3
-    pl=b.center_plot(color="red", auto_xlim=False, x_min=3.75, x_max=5.1,
+    pl=center_plot(b, color="red", auto_xlim=False, x_min=3.75, x_max=5.1,
                              auto_ylim=False, y_min=3.75, y_max=5.1, pl=pl, nrows=2, ncols=2, nplot=3)
+
+    #pl=b.center_plot(color="red", auto_xlim=False, x_min=3.75, x_max=5.1,
+    #                         auto_ylim=False, y_min=3.75, y_max=5.1, pl=pl, nrows=2, ncols=2, nplot=3)
 
     pl.nplot=4
     pl_widths=b.widths_plot(color="red", auto_xlim=False, x_min=3.75, x_max=5.1, auto_ylim=False, y_min=0.1, y_max=0.6, pl=pl)#.show()
@@ -191,8 +222,11 @@ def combo_plots():
     b.get_member("fit_params").reset(b)
     b.get_member("MagcomFilt").reset(b)
     b.fitter.fit_params=None
-    pl_centers=b.center_plot(color="red", auto_xlim=False, x_min=3.75, x_max=5.1,
+    pl_centers=center_plot(b, color="red", auto_xlim=False, x_min=3.75, x_max=5.1,
                              auto_ylim=False, y_min=3.75, y_max=5.1, pl=pl)
+
+    #pl_centers=b.center_plot(color="red", auto_xlim=False, x_min=3.75, x_max=5.1,
+    #                         auto_ylim=False, y_min=3.75, y_max=5.1, pl=pl)
 
     b.qdt.gate_type="constant"
     frequency=linspace(3.5e9, 5.5e9, 1000)
