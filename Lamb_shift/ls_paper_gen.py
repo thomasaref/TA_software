@@ -51,6 +51,13 @@ if 1:
     tx.ext("theory")
     #tx.ext("supplementary")
     tx.add(r"\FloatBarrier")
+    tx.ext("discussion")
+    
+    tx.ext("conclusion")
+    
+    tx.add(r"\bibliographystyle{unsrt}")
+    tx.add(r"\bibliography{lamb_shift_bib}")
+
 
 
 if 0:
