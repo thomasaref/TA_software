@@ -4,12 +4,12 @@ Created on Mon Jul 25 21:15:11 2016
 
 @author: thomasaref
 """
-
+#from __future__ import print_function
 class Value(object):
     """a Value is quite similar to a property and is defined using a descriptor. The value has
     a default value, metadata and overwritable set and get functions"""
 
-    __slots__=["value", "name", "metadata", "uninitialized", "creation_counter", "creation_order", "default_value", "parent"]
+    __slots__=["value", "name", "metadata", "uninitialized", "creation_order", "default_value", "parent"]
     creation_counter = 0
 
     #default_value=None
@@ -85,20 +85,24 @@ if __name__=="__main__":
         b=Value(3)
 
         def notify(self, obj, value):
-            print self, obj, value
+            print(self, obj, value)
 
     b=test()
     c=test()
-    print b.c
+    #print(b.c)
     b.a=2
-    print b.__dict__
-    print zip(*sorted([(n, t) for n, t in type(b).__dict__.iteritems() if hasattr(t, "creation_order")],
-                  key = lambda order: order[1].creation_order ))[0]
-
-    print [(t.name, t.creation_order) for t in type(b).__dict__.values() if hasattr(t, "creation_order")]
-    print type(b).__dict__
-    print type(b).__dict__["a"].metadata
-    print b.a, c.a
-    b.a=2
-    b.b=8
-    print b.a, b.b, c.a
+    print(b.__dict__)
+    type(b).__dict__["a"].name="a"
+    print(type(b).__dict__)
+    print(b.a)
+    if 0:
+        print (zip(*sorted([(n, t) for n, t in type(b).__dict__.iteritems() if hasattr(t, "creation_order")],
+                      key = lambda order: order[1].creation_order ))[0])
+    
+        print([(t.name, t.creation_order) for t in type(b).__dict__.values() if hasattr(t, "creation_order")])
+        print(type(b).__dict__)
+        print(type(b).__dict__["a"].metadata)
+        print(b.a, c.a)
+        b.a=2
+        b.b=8
+        print(b.a, b.b, c.a)
