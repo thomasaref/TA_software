@@ -23,6 +23,8 @@ a=TA53_VNA_Pwr_Lyzer(name="d1118", on_res_ind=301,#read_data=read_data, # VNA_na
         # read_data=read_data,
          swp_type="yoko_first",
         )
+
+print a.rd_hdf.file_path        
 a.filt.center=0 #71 #28*0 #141 #106 #58 #27 #139 #106 #  #137
 a.filt.halfwidth=100 #8 #10
 #a.fitter.fit_type="refl_lorentzian"
@@ -48,7 +50,7 @@ if __name__=="__main__":
     #a.pwr_ind=22
 
     a.filter_type="FFT"
-    pl_fft=a.magabs_colormesh()#.show()
+    pl_fft=a.magabs_colormesh().show()
     a.bgsub_type="None"
     pl1=a.magdB_colormesh()
     pl2=a.magabs_colormesh()
