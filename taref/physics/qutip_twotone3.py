@@ -72,11 +72,17 @@ Lindblad_tp = gamma*N_gamma*(kron(adag.conj(), adag) -
 
 p = -1.0j*(adag - a) # "P" operator.
 
-#p_l = kron(It,p) # % "P" operator multiplying rho from the left.
-#p_r = kron(transpose(p),It) # "P" operator multiplying rho from the right.
+p_l = kron(It,p) # % "P" operator multiplying rho from the left.
+p_r = kron(transpose(p),It) # "P" operator multiplying rho from the right.
+
+print p_l
 
 p_l=spre(p).full()
 p_r=spost(p).full()
+
+print p_l
+raise Exception
+
 p_l_m_p_r=p_l-p_r
 tm_l=spre(a).full()
 
