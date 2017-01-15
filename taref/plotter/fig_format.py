@@ -32,8 +32,8 @@ from taref.core.api import private_property
 #rcParams['ytick.major.size']=4
 
 #adjust matplotlib base cursor
-from matplotlib.backend_bases import cursors
-from matplotlib.backends import backend_qt4
+#from matplotlib.backend_bases import cursors
+#from matplotlib.backends import backend_qt4
 #from PySide.QtCore import Qt
 #backend_qt4.cursord[cursors.POINTER] = Qt.CursorShape.CrossCursor
 from matplotlib import pyplot as plt
