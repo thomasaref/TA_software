@@ -1,0 +1,180 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taref.analysis.vna_pwr_lyzer &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for taref.analysis.vna_pwr_lyzer</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Wed Oct 19 15:24:54 2016</span>
+
+<span class="sd">@author: thomasaref</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">taref.core.api</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">private_property</span><span class="p">,</span> <span class="n">tag_property</span><span class="p">,</span> <span class="n">reset_property</span>
+<span class="kn">from</span> <span class="nn">taref.analysis.vna_lyzer</span> <span class="kn">import</span> <span class="n">VNA_Lyzer</span>
+<span class="kn">from</span> <span class="nn">h5py</span> <span class="kn">import</span> <span class="n">File</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">float64</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">reshape</span><span class="p">,</span> <span class="n">linspace</span><span class="p">,</span> <span class="n">squeeze</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">absolute</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">swapaxes</span>
+<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">Int</span>
+
+<div class="viewcode-block" id="read_data"><a class="viewcode-back" href="../../../analysis_doc/vna_pwr_lyzer.html#taref.analysis.vna_pwr_lyzer.read_data">[docs]</a><span class="k">def</span> <span class="nf">read_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">File</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rd_hdf</span><span class="o">.</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">Magvec</span><span class="o">=</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;Traces&quot;</span><span class="p">][</span><span class="s2">&quot;{0} - {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">VNA_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port_name</span><span class="p">)]</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;Data&quot;</span><span class="p">][</span><span class="s2">&quot;Data&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">swp_type</span><span class="o">==</span><span class="s2">&quot;pwr_first&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pwr</span><span class="o">=</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">float64</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">yoko</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">swp_type</span><span class="o">==</span><span class="s2">&quot;yoko_first&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pwr</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">float64</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">yoko</span><span class="o">=</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">float64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comment</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;comment&quot;</span><span class="p">]</span>
+        <span class="n">fstart</span><span class="o">=</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;Traces&quot;</span><span class="p">][</span><span class="s1">&#39;{0} - {1}_t0dt&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">VNA_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port_name</span><span class="p">)][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">fstep</span><span class="o">=</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;Traces&quot;</span><span class="p">][</span><span class="s1">&#39;{0} - {1}_t0dt&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">VNA_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port_name</span><span class="p">)][</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">sm</span><span class="o">=</span><span class="n">shape</span><span class="p">(</span><span class="n">Magvec</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">sy</span><span class="o">=</span><span class="n">shape</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">=</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">sy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">Magcom</span><span class="o">=</span><span class="n">Magvec</span><span class="p">[:,</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span><span class="o">+</span><span class="mi">1j</span><span class="o">*</span><span class="n">Magvec</span><span class="p">[:,</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">Magcom</span><span class="o">=</span><span class="n">reshape</span><span class="p">(</span><span class="n">Magcom</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="o">=</span><span class="n">linspace</span><span class="p">(</span><span class="n">fstart</span><span class="p">,</span> <span class="n">fstart</span><span class="o">+</span><span class="n">fstep</span><span class="o">*</span><span class="p">(</span><span class="n">sm</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">sm</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">swp_type</span><span class="o">==</span><span class="s2">&quot;pwr_first&quot;</span><span class="p">:</span>
+            <span class="n">Magcom</span><span class="o">=</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">Magcom</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">MagcomData</span><span class="o">=</span><span class="n">squeeze</span><span class="p">(</span><span class="n">Magcom</span><span class="p">)</span><span class="c1">#[:, 2, :]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_ind</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yoko</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filt</span><span class="o">.</span><span class="n">N</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VNA_Pwr_Lyzer"><a class="viewcode-back" href="../../../analysis_doc/vna_pwr_lyzer.html#taref.analysis.vna_pwr_lyzer.VNA_Pwr_Lyzer">[docs]</a><span class="k">class</span> <span class="nc">VNA_Pwr_Lyzer</span><span class="p">(</span><span class="n">VNA_Lyzer</span><span class="p">):</span>
+    <span class="n">base_name</span><span class="o">=</span><span class="s2">&quot;vna_pwr_lyzer&quot;</span>
+
+    <span class="n">pwr</span><span class="o">=</span><span class="n">Array</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dBm&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Power&quot;</span><span class="p">,</span> <span class="n">sub</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">pwr_ind</span><span class="o">=</span><span class="n">Int</span><span class="p">()</span>
+
+    <span class="n">frq_ind</span><span class="o">=</span><span class="n">Int</span><span class="p">()</span>
+
+    <span class="n">yok_ind</span><span class="o">=</span><span class="n">Int</span><span class="p">()</span>
+
+    <span class="n">swp_type</span><span class="o">=</span><span class="n">Enum</span><span class="p">(</span><span class="s2">&quot;pwr_first&quot;</span><span class="p">,</span> <span class="s2">&quot;yoko_first&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_default_read_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">read_data</span>
+
+    <span class="c1">#def _observe_pwr_ind(self, change):</span>
+    <span class="c1">#    reset_property(self, &quot;Magcom&quot;)</span>
+
+    <span class="nd">@tag_property</span><span class="p">(</span><span class="n">sub</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">Magcom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_type</span><span class="o">==</span><span class="s2">&quot;None&quot;</span><span class="p">:</span>
+            <span class="n">Magcom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MagcomData</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_type</span><span class="o">==</span><span class="s2">&quot;Fit&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">MagAbsFit</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Magcom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MagcomFilt</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bgsub_type</span><span class="o">==</span><span class="s2">&quot;Complex&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bgsub</span><span class="p">(</span><span class="n">Magcom</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Magcom</span><span class="p">[:,</span> <span class="p">:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pwr_ind</span><span class="p">]</span>
+
+<span class="c1">#array([[self.fft_filter_full(m, n, Magcom) for n in range(len(self.yoko))] for m in range(len(self.pwr))]).transpose()</span>
+
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">MagcomFilt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filt</span><span class="o">.</span><span class="n">filter_type</span><span class="o">==</span><span class="s2">&quot;FIR&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">array</span><span class="p">([[</span><span class="bp">self</span><span class="o">.</span><span class="n">filt</span><span class="o">.</span><span class="n">fir_filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MagcomData</span><span class="p">[:,</span><span class="n">n</span><span class="p">,</span><span class="n">m</span><span class="p">])</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flat_flux_indices</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pwr</span><span class="p">))])</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">array</span><span class="p">([[</span><span class="bp">self</span><span class="o">.</span><span class="n">filt</span><span class="o">.</span><span class="n">fft_filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MagcomData</span><span class="p">[:,</span><span class="n">n</span><span class="p">,</span><span class="n">m</span><span class="p">])</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flat_flux_indices</span><span class="p">]</span>  <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pwr</span><span class="p">))])</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+    <span class="nd">@tag_property</span><span class="p">(</span> <span class="n">sub</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">MagAbsFilt_sq</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">absolute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MagcomFilt</span><span class="p">[:,</span> <span class="p">:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pwr_ind</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">fit_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_params</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fitter</span><span class="o">.</span><span class="n">full_fit</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">flux_axis</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">flat_flux_indices</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MagAbsFilt_sq</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">flat_indices</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fitter</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_p_guess</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fitter</span><span class="o">.</span><span class="n">make_p_guess</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flux_axis</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">flat_flux_indices</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MagAbsFilt_sq</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">flat_indices</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fitter</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_params</span>
+
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">MagAbsFit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fitter</span><span class="o">.</span><span class="n">reconstruct_fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flux_axis</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">flat_flux_indices</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_params</span><span class="p">))</span></div>
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

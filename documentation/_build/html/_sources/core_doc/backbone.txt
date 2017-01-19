@@ -3,10 +3,5 @@ backbone
 *******************
 
 .. automodule:: taref.core.backbone
-   :members:
-   :undoc-members:
-
-
-
-
-
+    :members:
+    :undoc-members:

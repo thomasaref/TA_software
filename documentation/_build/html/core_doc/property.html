@@ -1,0 +1,256 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>property &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../index.html" />
+    <link rel="up" title="core" href="core.html" />
+    <link rel="next" title="shower" href="shower.html" />
+    <link rel="prev" title="log" href="log.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-taref.core.property">
+<span id="property"></span><h1>property<a class="headerlink" href="#module-taref.core.property" title="Permalink to this headline">¶</a></h1>
+<p>Created on Fri May  6 11:31:56 2016</p>
+<p>&#64;author: thomasaref
+Collection of Property related utilities</p>
+<dl class="class">
+<dt id="taref.core.property.SProperty">
+<em class="property">class </em><code class="descclassname">taref.core.property.</code><code class="descname">SProperty</code><span class="sig-paren">(</span><em>fget=None</em>, <em>fset=None</em>, <em>fdel=None</em>, <em>cached=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#SProperty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.SProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>a Property that accepts multiple set functions, defaults to cached.
+it automatically makes</p>
+<dl class="method">
+<dt id="taref.core.property.SProperty.fset_maker">
+<code class="descname">fset_maker</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#SProperty.fset_maker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.SProperty.fset_maker" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a fset that calls functions in fset_list</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.property.SProperty.getify">
+<code class="descname">getify</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#SProperty.getify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.SProperty.getify" title="Permalink to this definition">¶</a></dt>
+<dd><p>additional getter operation just returns function by default</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.property.SProperty.getter">
+<code class="descname">getter</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#SProperty.getter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.SProperty.getter" title="Permalink to this definition">¶</a></dt>
+<dd><p>extended getter makes function into log_func and applies getify to it</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.property.SProperty.initify">
+<code class="descname">initify</code><span class="sig-paren">(</span><em>fset</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#SProperty.initify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.SProperty.initify" title="Permalink to this definition">¶</a></dt>
+<dd><p>additional initialization. applies setter to fset if it is not None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.property.SProperty.logify">
+<code class="descname">logify</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#SProperty.logify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.SProperty.logify" title="Permalink to this definition">¶</a></dt>
+<dd><p>applies log_func to function and returns it</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.property.SProperty.setify">
+<code class="descname">setify</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#SProperty.setify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.SProperty.setify" title="Permalink to this definition">¶</a></dt>
+<dd><p>splits set function name using _get_ delimiter and creates auto set function</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.property.SProperty.setter">
+<code class="descname">setter</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#SProperty.setter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.SProperty.setter" title="Permalink to this definition">¶</a></dt>
+<dd><p>setter makes function into log_func, applies setify, adds it to fset_list and creates fset function if it does not exist</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.core.property.TProperty">
+<em class="property">class </em><code class="descclassname">taref.core.property.</code><code class="descname">TProperty</code><span class="sig-paren">(</span><em>fget=None</em>, <em>fset=None</em>, <em>fdel=None</em>, <em>cached=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#TProperty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.TProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>a property that autostores a value to a private value. returns private value unless
+private value is None</p>
+<dl class="classmethod">
+<dt id="taref.core.property.TProperty.extra_setup">
+<em class="property">classmethod </em><code class="descname">extra_setup</code><span class="sig-paren">(</span><em>param</em>, <em>itm</em>, <em>update_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#TProperty.extra_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.TProperty.extra_setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.core.property.TProperty.getify">
+<code class="descname">getify</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#TProperty.getify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.TProperty.getify" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.core.property.TProperty.initify">
+<code class="descname">initify</code><span class="sig-paren">(</span><em>fset</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#TProperty.initify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.TProperty.initify" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.core.property.TProperty.passify_fset">
+<code class="descname">passify_fset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#TProperty.passify_fset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.TProperty.passify_fset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.property.get_property_names">
+<code class="descclassname">taref.core.property.</code><code class="descname">get_property_names</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#get_property_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.get_property_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns property names that are in all_params</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.property.get_property_values">
+<code class="descclassname">taref.core.property.</code><code class="descname">get_property_values</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#get_property_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.get_property_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns property values that are in all_params</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.property.private_property">
+<code class="descclassname">taref.core.property.</code><code class="descname">private_property</code><span class="sig-paren">(</span><em>fget</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#private_property"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.private_property" title="Permalink to this definition">¶</a></dt>
+<dd><p>A decorator which converts a function into a cached Property tagged as private.
+Improves performance greatly over property!</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.property.reset_properties">
+<code class="descclassname">taref.core.property.</code><code class="descname">reset_properties</code><span class="sig-paren">(</span><em>obj</em>, <em>property_list=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#reset_properties"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.reset_properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>resets all  properties that are in all_params</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.core.property.reset_property">
+<code class="descclassname">taref.core.property.</code><code class="descname">reset_property</code><span class="sig-paren">(</span><em>obj</em>, <em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#reset_property"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.reset_property" title="Permalink to this definition">¶</a></dt>
+<dd><p>resets all  properties in args. resets all properties in  all_params if no args passed</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.core.property.s_property">
+<em class="property">class </em><code class="descclassname">taref.core.property.</code><code class="descname">s_property</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#s_property"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.s_property" title="Permalink to this definition">¶</a></dt>
+<dd><p>disposable decorator class that returns a SetProperty tagged with kwargs, defaults to cached</p>
+<dl class="attribute">
+<dt id="taref.core.property.s_property.prop_class">
+<code class="descname">prop_class</code><a class="headerlink" href="#taref.core.property.s_property.prop_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#taref.core.property.SProperty" title="taref.core.property.SProperty"><code class="xref py py-class docutils literal"><span class="pre">SProperty</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.core.property.t_property">
+<em class="property">class </em><code class="descclassname">taref.core.property.</code><code class="descname">t_property</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#t_property"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.t_property" title="Permalink to this definition">¶</a></dt>
+<dd><p>disposable decorator class that returns a SetProperty tagged with kwargs, defaults to cached</p>
+<dl class="attribute">
+<dt id="taref.core.property.t_property.prop_class">
+<code class="descname">prop_class</code><a class="headerlink" href="#taref.core.property.t_property.prop_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#taref.core.property.TProperty" title="taref.core.property.TProperty"><code class="xref py py-class docutils literal"><span class="pre">TProperty</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.core.property.tag_property">
+<em class="property">class </em><code class="descclassname">taref.core.property.</code><code class="descname">tag_property</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/property.html#tag_property"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.property.tag_property" title="Permalink to this definition">¶</a></dt>
+<dd><p>disposable decorator class that returns a Property tagged with kwargs.
+cached keyword in kwargs defaults to True</p>
+<dl class="attribute">
+<dt id="taref.core.property.tag_property.default_kwargs">
+<code class="descname">default_kwargs</code><em class="property"> = {}</em><a class="headerlink" href="#taref.core.property.tag_property.default_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.property.tag_property.prop_class">
+<code class="descname">prop_class</code><a class="headerlink" href="#taref.core.property.tag_property.prop_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal"><span class="pre">Property</span></code></p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../taref.html">taref</a><ul>
+  <li><a href="core.html">core</a><ul>
+      <li>Previous: <a href="log.html" title="previous chapter">log</a></li>
+      <li>Next: <a href="shower.html" title="next chapter">shower</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/core_doc/property.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="../_sources/core_doc/property.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

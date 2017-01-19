@@ -27,11 +27,13 @@
     <link rel="top" title="taref_docs 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" />
    
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -141,34 +143,27 @@
     <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Called to retrieve the default value.</span>
 
-<span class="sd">        This will resolve and instantiate the type. It will then update</span>
-<span class="sd">        the internal default and validate handlers to behave like a</span>
-<span class="sd">        normal instance member.</span>
+<span class="sd">        This is called the first time the default value is retrieved</span>
+<span class="sd">        for the member. It resolves the type and updates the internal</span>
+<span class="sd">        default handler to behave like a normal Instance member.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">kind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
         <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="ow">or</span> <span class="p">()</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">kind</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">factory</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">kind</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_default_value_mode</span><span class="p">(</span><span class="n">DefaultValue</span><span class="o">.</span><span class="n">CallObject</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Instance</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">kind</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Called to validate the value.</span>
 
-<span class="sd">        This will resolve the type and validate the new value. It will</span>
-<span class="sd">        then update the internal default and validate handlers to behave</span>
-<span class="sd">        like a normal instance member.</span>
+<span class="sd">        This is called the first time a value is validated for the</span>
+<span class="sd">        member. It resolves the type and updates the internal validate</span>
+<span class="sd">        handler to behave like a normal Instance member.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">kind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_value_mode</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">DefaultValue</span><span class="o">.</span><span class="n">MemberMethod_Object</span><span class="p">:</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="ow">or</span> <span class="p">()</span>
-            <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
-            <span class="n">factory</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">kind</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_default_value_mode</span><span class="p">(</span><span class="n">DefaultValue</span><span class="o">.</span><span class="n">CallObject</span><span class="p">,</span> <span class="n">factory</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_validate_mode</span><span class="p">(</span><span class="n">Validate</span><span class="o">.</span><span class="n">Instance</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_validate</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
 
@@ -204,9 +199,6 @@
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -217,8 +209,8 @@
       &copy;2016, Thomas Aref.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
       
     </div>
 

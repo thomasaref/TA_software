@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>interact &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../index.html" />
+    <link rel="up" title="core" href="core.html" />
+    <link rel="next" title="log" href="log.html" />
+    <link rel="prev" title="extra_setup" href="extra_setup.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-taref.core.interact">
+<span id="interact"></span><h1>interact<a class="headerlink" href="#module-taref.core.interact" title="Permalink to this headline">¶</a></h1>
+<p>Created on Sat Apr  9 19:14:03 2016</p>
+<p>&#64;author: thomasaref</p>
+<dl class="class">
+<dt id="taref.core.interact.File_Parser">
+<em class="property">class </em><code class="descclassname">taref.core.interact.</code><code class="descname">File_Parser</code><a class="reference internal" href="../_modules/taref/core/interact.html#File_Parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.interact.File_Parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>a callable object for extracting the strings in a list between starter and stopper. For use when parsing text files</p>
+<dl class="attribute">
+<dt id="taref.core.interact.File_Parser.inblock">
+<code class="descname">inblock</code><a class="headerlink" href="#taref.core.interact.File_Parser.inblock" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.File_Parser.local_name">
+<code class="descname">local_name</code><a class="headerlink" href="#taref.core.interact.File_Parser.local_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.File_Parser.postamble">
+<code class="descname">postamble</code><a class="headerlink" href="#taref.core.interact.File_Parser.postamble" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member which allows list values.</p>
+<p>Assigning to a list creates a copy. The orginal list will remain
+unmodified. This is similar to the semantics of the assignment
+operator on the C++ STL container classes.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.File_Parser.preamble">
+<code class="descname">preamble</code><a class="headerlink" href="#taref.core.interact.File_Parser.preamble" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member which allows list values.</p>
+<p>Assigning to a list creates a copy. The orginal list will remain
+unmodified. This is similar to the semantics of the assignment
+operator on the C++ STL container classes.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.File_Parser.starter">
+<code class="descname">starter</code><a class="headerlink" href="#taref.core.interact.File_Parser.starter" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.File_Parser.stopper">
+<code class="descname">stopper</code><a class="headerlink" href="#taref.core.interact.File_Parser.stopper" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.core.interact.Interact">
+<em class="property">class </em><code class="descclassname">taref.core.interact.</code><code class="descname">Interact</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/interact.html#Interact"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.interact.Interact" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="taref.core.interact.Interact.code_pane_visible">
+<code class="descname">code_pane_visible</code><a class="headerlink" href="#taref.core.interact.Interact.code_pane_visible" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.Interact.code_str">
+<code class="descname">code_str</code><a class="headerlink" href="#taref.core.interact.Interact.code_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.Interact.code_window">
+<code class="descname">code_window</code><a class="headerlink" href="#taref.core.interact.Interact.code_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.interact.Interact.exec_code">
+<code class="descname">exec_code</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/interact.html#Interact.exec_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.interact.Interact.exec_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>simulates the python code producing the output texlist</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.Interact.exec_on_enter">
+<code class="descname">exec_on_enter</code><a class="headerlink" href="#taref.core.interact.Interact.exec_on_enter" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.Interact.file_read">
+<code class="descname">file_read</code><em class="property"> = False</em><a class="headerlink" href="#taref.core.interact.Interact.file_read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.Interact.file_reader">
+<code class="descname">file_reader</code><a class="headerlink" href="#taref.core.interact.Interact.file_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.Interact.initial_position">
+<code class="descname">initial_position</code><a class="headerlink" href="#taref.core.interact.Interact.initial_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.Interact.initial_size">
+<code class="descname">initial_size</code><a class="headerlink" href="#taref.core.interact.Interact.initial_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.Interact.input_code">
+<code class="descname">input_code</code><a class="headerlink" href="#taref.core.interact.Interact.input_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.Interact.interactive_window">
+<code class="descname">interactive_window</code><a class="headerlink" href="#taref.core.interact.Interact.interactive_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.Interact.locals_dict">
+<code class="descname">locals_dict</code><a class="headerlink" href="#taref.core.interact.Interact.locals_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>dict</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.Interact.log_pane_visible">
+<code class="descname">log_pane_visible</code><a class="headerlink" href="#taref.core.interact.Interact.log_pane_visible" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.core.interact.Interact.log_window">
+<code class="descname">log_window</code><a class="headerlink" href="#taref.core.interact.Interact.log_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.core.interact.Interact.make_input_code">
+<code class="descname">make_input_code</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/interact.html#Interact.make_input_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.interact.Interact.make_input_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>process the topmost called code to allow access in the GUI and allow saving of a copy of the code</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../taref.html">taref</a><ul>
+  <li><a href="core.html">core</a><ul>
+      <li>Previous: <a href="extra_setup.html" title="previous chapter">extra_setup</a></li>
+      <li>Next: <a href="log.html" title="next chapter">log</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/core_doc/interact.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="../_sources/core_doc/interact.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

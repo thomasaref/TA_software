@@ -1,0 +1,279 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taref.plotter.events &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for taref.plotter.events</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Thu Feb  4 12:53:43 2016</span>
+
+<span class="sd">@author: thomasaref</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">#from plotter_backbone import PlotUpdate</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">argmin</span><span class="p">,</span> <span class="n">absolute</span><span class="p">,</span> <span class="n">amin</span><span class="p">,</span> <span class="n">amax</span><span class="c1">#, arange</span>
+<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">observe</span><span class="c1">#, cache_property</span>
+<span class="kn">from</span> <span class="nn">taref.core.property</span> <span class="kn">import</span> <span class="n">tag_property</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">sqrt</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+
+<div class="viewcode-block" id="MPLEventHandler"><a class="viewcode-back" href="../../../plotter_doc/events.html#taref.plotter.events.MPLEventHandler">[docs]</a><span class="k">class</span> <span class="nc">MPLEventHandler</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
+    <span class="n">drawline</span><span class="o">=</span><span class="n">Bool</span><span class="p">()</span>
+
+    <span class="n">xstart</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+    <span class="n">xend</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+
+    <span class="nd">@tag_property</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">xdist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xend</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">xstart</span>
+
+    <span class="n">ystart</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+    <span class="n">yend</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+
+    <span class="nd">@tag_property</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">ydist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">yend</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">ystart</span>
+
+    <span class="nd">@tag_property</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">total_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s2">&quot;xdist&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s2">&quot;ydist&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xdist</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">ydist</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="nd">@observe</span><span class="p">(</span><span class="s2">&quot;xend&quot;</span><span class="p">,</span> <span class="s2">&quot;yend&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="MPLEventHandler.total_dist_calc"><a class="viewcode-back" href="../../../plotter_doc/events.html#taref.plotter.events.MPLEventHandler.total_dist_calc">[docs]</a>    <span class="k">def</span> <span class="nf">total_dist_calc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;update&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s2">&quot;total_dist&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="mpl_event"><a class="viewcode-back" href="../../../plotter_doc/events.html#taref.plotter.events.mpl_event">[docs]</a><span class="k">class</span> <span class="nc">mpl_event</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pltr</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">=</span><span class="n">pltr</span></div>
+
+<div class="viewcode-block" id="mpl_scroll"><a class="viewcode-back" href="../../../plotter_doc/events.html#taref.plotter.events.mpl_scroll">[docs]</a><span class="k">class</span> <span class="nc">mpl_scroll</span><span class="p">(</span><span class="n">mpl_event</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()</span>
+        <span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()</span>
+
+        <span class="n">x</span><span class="o">=</span><span class="p">(</span><span class="n">xmax</span><span class="o">+</span><span class="n">xmin</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span>
+        <span class="n">y</span><span class="o">=</span><span class="p">(</span><span class="n">ymax</span><span class="o">+</span><span class="n">ymin</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span>
+        <span class="n">xdist</span><span class="o">=</span><span class="p">(</span><span class="n">xmax</span><span class="o">-</span><span class="n">xmin</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mf">1.0</span><span class="o">-</span><span class="n">event</span><span class="o">.</span><span class="n">step</span><span class="o">/</span><span class="mf">5.0</span><span class="p">)</span>
+        <span class="n">ydist</span><span class="o">=</span><span class="p">(</span><span class="n">ymax</span><span class="o">-</span><span class="n">ymin</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mf">1.0</span><span class="o">-</span><span class="n">event</span><span class="o">.</span><span class="n">step</span><span class="o">/</span><span class="mf">5.0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">xdist</span><span class="o">/</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">x</span><span class="o">+</span><span class="n">xdist</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">ydist</span><span class="o">/</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">y</span><span class="o">+</span><span class="n">ydist</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="mpl_dblclick_move"><a class="viewcode-back" href="../../../plotter_doc/events.html#taref.plotter.events.mpl_dblclick_move">[docs]</a><span class="k">class</span> <span class="nc">mpl_dblclick_move</span><span class="p">(</span><span class="n">mpl_event</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">inaxes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">dblclick</span><span class="p">:</span>
+                <span class="n">x</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">xdata</span>
+                <span class="n">y</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">ydata</span>
+                <span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()</span>
+                <span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()</span>
+                <span class="n">xdist</span><span class="o">=</span><span class="p">(</span><span class="n">xmax</span><span class="o">-</span><span class="n">xmin</span><span class="p">)</span>
+                <span class="n">ydist</span><span class="o">=</span><span class="p">(</span><span class="n">ymax</span><span class="o">-</span><span class="n">ymin</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">xdist</span><span class="o">/</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">x</span><span class="o">+</span><span class="n">xdist</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span><span class="c1">#self.pltr.x_max-1.0*event.step*self.pltr.x_zoom_step)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">ydist</span><span class="o">/</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">y</span><span class="o">+</span><span class="n">ydist</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span><span class="c1">#self.pltr.y_min+event.step*self.pltr.y_zoom_step, self.pltr.y_max-1.0*event.step*self.pltr.y_zoom_step)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="mpl_drag"><a class="viewcode-back" href="../../../plotter_doc/events.html#taref.plotter.events.mpl_drag">[docs]</a><span class="k">class</span> <span class="nc">mpl_drag</span><span class="p">(</span><span class="n">mpl_event</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">inaxes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()</span>
+            <span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">xmin</span><span class="o">!=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">x_min</span> <span class="ow">or</span> <span class="n">xmax</span><span class="o">!=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">x_max</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ymin</span><span class="o">!=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">y_min</span> <span class="ow">or</span> <span class="n">ymax</span><span class="o">!=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">y_max</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">drawline</span><span class="o">==</span><span class="bp">True</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">line_plot</span><span class="p">(</span><span class="s2">&quot;dist&quot;</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">xstart</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">xdata</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">ystart</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">ydata</span><span class="p">],</span> <span class="n">append</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                    <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">),</span> <span class="n">ylim</span><span class="o">=</span><span class="p">(</span><span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="mpl_cross_section"><a class="viewcode-back" href="../../../plotter_doc/events.html#taref.plotter.events.mpl_cross_section">[docs]</a><span class="k">class</span> <span class="nc">mpl_cross_section</span><span class="p">(</span><span class="n">mpl_event</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot_format</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">=</span><span class="n">plot_format</span><span class="o">.</span><span class="n">plotter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pfs</span><span class="o">=</span><span class="p">[</span><span class="n">pf</span> <span class="k">for</span> <span class="n">pf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">pf</span><span class="o">.</span><span class="n">plot_type</span><span class="o">==</span><span class="s2">&quot;colormap&quot;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">inaxes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c1">#xmin, xmax, ymin, ymax=None, None, None, None</span>
+            <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">pf</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pfs</span><span class="p">):</span>
+                <span class="n">xpos</span><span class="o">=</span><span class="n">argmin</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">xdata</span><span class="o">-</span><span class="n">pf</span><span class="o">.</span><span class="n">xdata</span><span class="p">))</span>
+                <span class="n">ypos</span><span class="o">=</span><span class="n">argmin</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">ydata</span><span class="o">-</span><span class="n">pf</span><span class="o">.</span><span class="n">ydata</span><span class="p">))</span>
+                <span class="n">pf</span><span class="o">.</span><span class="n">xcoord</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">xdata</span>
+                <span class="n">pf</span><span class="o">.</span><span class="n">ycoord</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">ydata</span>
+                <span class="n">pf</span><span class="o">.</span><span class="n">xind</span><span class="o">=</span><span class="n">xpos</span>
+                <span class="n">pf</span><span class="o">.</span><span class="n">yind</span><span class="o">=</span><span class="n">ypos</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">show_cross_section</span><span class="p">:</span> <span class="c1">#self.pf.plot_type==&quot;colormap&quot; and</span>
+                    <span class="n">h_data</span><span class="o">=</span><span class="n">pf</span><span class="o">.</span><span class="n">zdata</span><span class="p">[</span><span class="n">ypos</span><span class="p">,</span> <span class="p">:]</span>
+                    <span class="n">v_data</span><span class="o">=</span><span class="n">pf</span><span class="o">.</span><span class="n">zdata</span><span class="p">[:,</span> <span class="n">xpos</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">pf</span><span class="o">.</span><span class="n">h_line</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="n">pf</span><span class="o">.</span><span class="n">h_line</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">horiz_axe</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pf</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="n">h_data</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">pf</span><span class="o">.</span><span class="n">v_line</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">vert_axe</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">v_data</span><span class="p">,</span> <span class="n">pf</span><span class="o">.</span><span class="n">ydata</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">pf</span><span class="o">.</span><span class="n">h_line</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">h_data</span><span class="p">)</span>
+                        <span class="n">pf</span><span class="o">.</span><span class="n">v_line</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">(</span><span class="n">v_data</span><span class="p">)</span>
+                        <span class="c1">#self.pltr.vert_axe.set_xlim(min(v_data), max(v_data))</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">auto_cs_ylim</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">n</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                            <span class="n">ymin</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">h_data</span><span class="p">)</span>
+                            <span class="n">ymax</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">h_data</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">ymin</span><span class="o">=</span><span class="nb">min</span><span class="p">((</span><span class="nb">min</span><span class="p">(</span><span class="n">h_data</span><span class="p">),</span> <span class="n">ymin</span><span class="p">))</span>
+                            <span class="n">ymax</span><span class="o">=</span><span class="nb">max</span><span class="p">((</span><span class="nb">max</span><span class="p">(</span><span class="n">h_data</span><span class="p">),</span> <span class="n">ymax</span><span class="p">))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">cs_y_min</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">ymin</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">cs_y_max</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">ymax</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">auto_cs_xlim</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">n</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                            <span class="n">xmin</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">v_data</span><span class="p">)</span>
+                            <span class="n">xmax</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">v_data</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">xmin</span><span class="o">=</span><span class="nb">min</span><span class="p">((</span><span class="nb">min</span><span class="p">(</span><span class="n">v_data</span><span class="p">),</span> <span class="n">xmin</span><span class="p">))</span>
+                            <span class="n">xmax</span><span class="o">=</span><span class="nb">max</span><span class="p">((</span><span class="nb">max</span><span class="p">(</span><span class="n">v_data</span><span class="p">),</span> <span class="n">xmax</span><span class="p">))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">cs_x_min</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">xmin</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">cs_x_max</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">xmax</span><span class="p">)</span>
+
+                        <span class="c1">#self.pltr.cs_x_min=float(min((self.pltr.cs_x_min, min(v_data))))</span>
+                        <span class="c1">#self.pltr.cs_x_max=float(max((self.pltr.cs_x_max, max(v_data))))</span>
+
+                        <span class="c1">#self.pltr.horiz_axe.set_xlim(min(pf.xdata), max(pf.xdata))</span>
+                    <span class="c1">#if self.pltr.auto_cs_ylim:</span>
+                        <span class="c1">#self.pltr.horiz_axe.set_ylim(min(pf.ydata), max(pf.ydata))</span>
+                    <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">pf</span><span class="o">.</span><span class="n">xdata</span><span class="p">)</span><span class="o">&lt;=</span><span class="n">event</span><span class="o">.</span><span class="n">xdata</span><span class="o">&lt;=</span><span class="nb">max</span><span class="p">(</span><span class="n">pf</span><span class="o">.</span><span class="n">xdata</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">min</span><span class="p">(</span><span class="n">pf</span><span class="o">.</span><span class="n">ydata</span><span class="p">)</span><span class="o">&lt;=</span><span class="n">event</span><span class="o">.</span><span class="n">ydata</span><span class="o">&lt;=</span><span class="nb">max</span><span class="p">(</span><span class="n">pf</span><span class="o">.</span><span class="n">ydata</span><span class="p">):</span>
+                        <span class="n">pf</span><span class="o">.</span><span class="n">h_line</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">pf</span><span class="o">.</span><span class="n">h_line</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">horiz_fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">!=</span><span class="bp">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">horiz_fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">vert_fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">!=</span><span class="bp">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">vert_fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+            <span class="n">cc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cross_cursor&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">show_cross_cursor</span><span class="p">:</span>
+                <span class="n">cc</span><span class="o">.</span><span class="n">move_cursor</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">ydata</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
+            <span class="c1">#xmin, xmax=self.pltr.axe.get_xlim()</span>
+            <span class="c1">#ymin, ymax=self.pltr.axe.get_ylim()</span>
+
+            <span class="c1">#self.pltr.line_plot(&quot;horiz&quot;, [xmin, xmax], [event.ydata, event.ydata], append=False,</span>
+                                <span class="c1">#xlim=(xmin, xmax), ylim=(ymin, ymax))</span>
+            <span class="c1">#self.pltr.draw()</span>
+
+<div class="viewcode-block" id="mpl_click_event"><a class="viewcode-back" href="../../../plotter_doc/events.html#taref.plotter.events.mpl_click_event">[docs]</a><span class="k">class</span> <span class="nc">mpl_click_event</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pltr</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">=</span><span class="n">pltr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">=</span><span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">=</span><span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">inaxes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">dblclick</span><span class="p">:</span>
+                <span class="n">x</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">xdata</span>
+                <span class="n">y</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">ydata</span>
+                <span class="n">xdist</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">x_max</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">x_min</span><span class="p">)</span>
+                <span class="n">ydist</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">y_max</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">y_min</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">xdist</span><span class="o">/</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">x</span><span class="o">+</span><span class="n">xdist</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span><span class="c1">#self.pltr.x_max-1.0*event.step*self.pltr.x_zoom_step)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">ydist</span><span class="o">/</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">y</span><span class="o">+</span><span class="n">ydist</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span><span class="c1">#self.pltr.y_min+event.step*self.pltr.y_zoom_step, self.pltr.y_max-1.0*event.step*self.pltr.y_zoom_step)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">xdata</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">ydata</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">xstart</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">ystart</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">drawline</span><span class="o">=</span><span class="bp">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">xend</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">xdata</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">yend</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">ydata</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">xdist</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">xdata</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">ydist</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">ydata</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">=</span><span class="bp">None</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">=</span><span class="bp">None</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pltr</span><span class="o">.</span><span class="n">drawline</span><span class="o">=</span><span class="bp">False</span></div>
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

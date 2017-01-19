@@ -27,11 +27,13 @@
     <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -62,7 +64,7 @@
 
 <div class="viewcode-block" id="AgentError"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.AgentError">[docs]</a><span class="k">class</span> <span class="nc">AgentError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;An Error for use by Operatives, Agents and Spies&quot;&quot;&quot;</span>
-    <span class="k">pass</span>
+    <span class="k">pass</span></div>
 
 
 
@@ -71,7 +73,7 @@
 <span class="c1">#    if name in indict:</span>
 <span class="c1">#        name=&quot;{name}__{num}&quot;.format(name=name, num=len(indict))</span>
 <span class="c1">#    return name</span>
-</div>
+
 <div class="viewcode-block" id="Operative"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative">[docs]</a><span class="k">class</span> <span class="nc">Operative</span><span class="p">(</span><span class="n">Backbone</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Adds functionality for auto showing to Backbone&quot;&quot;&quot;</span>
     <span class="n">name</span><span class="o">=</span><span class="n">ReadOnly</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Name of agent. This name will be modified to be unique, if necessary&quot;</span><span class="p">,</span> <span class="n">initialized</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
@@ -93,8 +95,8 @@
         <span class="n">agent</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">base_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">agent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">cls</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">agent</span>
-</div>
+        <span class="k">return</span> <span class="n">agent</span></div>
+
     <span class="n">timeout</span><span class="o">=</span><span class="n">Float</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">sub</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Timeout in seconds&quot;</span><span class="p">)</span>
 
     <span class="nd">@private_property</span>
@@ -122,8 +124,8 @@
                 <span class="k">break</span>
             <span class="n">safe_setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;progress&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="n">n</span><span class="o">-</span><span class="n">start</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">stop</span><span class="o">-</span><span class="n">start</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="p">))</span>
             <span class="k">yield</span> <span class="n">n</span>
-        <span class="k">yield</span> <span class="n">n</span>
-</div>
+        <span class="k">yield</span> <span class="n">n</span></div>
+
 <div class="viewcode-block" id="Operative.loop"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.loop">[docs]</a>    <span class="k">def</span> <span class="nf">loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;a utility generator for looping with abort and progress. Use like range&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">stop</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -135,14 +137,14 @@
                 <span class="k">break</span>
             <span class="n">safe_setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;progress&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="n">n</span><span class="o">+</span><span class="mf">1.0</span><span class="p">)</span><span class="o">*</span><span class="n">step</span><span class="o">/</span><span class="p">(</span><span class="n">stop</span><span class="o">-</span><span class="n">start</span><span class="p">)</span><span class="o">*</span><span class="mf">100.0</span><span class="p">))</span>
             <span class="k">yield</span> <span class="n">n</span>
-        <span class="k">yield</span> <span class="n">n</span>
-</div>
+        <span class="k">yield</span> <span class="n">n</span></div>
+
 <div class="viewcode-block" id="Operative.queue_put"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.queue_put">[docs]</a>    <span class="k">def</span> <span class="nf">queue_put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;adds result to queue if thread is active and returns result. blocks for self.timeout seconds&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thread</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">abort_timeout</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">result</span>
-</div>
+        <span class="k">return</span> <span class="n">result</span></div>
+
 <div class="viewcode-block" id="Operative.thread_run"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.thread_run">[docs]</a>    <span class="k">def</span> <span class="nf">thread_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;assisting function for running threads that passes exceptions and activates done event when finished&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
@@ -150,8 +152,8 @@
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">queue_put</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
         <span class="k">finally</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
-</div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">()</span></div>
+
     <span class="k">def</span> <span class="nf">_observe_done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stop_thread</span><span class="p">()</span>
 
@@ -176,23 +178,23 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">busy</span><span class="o">=</span><span class="bp">False</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">thread</span><span class="o">=</span><span class="bp">None</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="o">=</span><span class="bp">False</span>
-            <span class="k">return</span> <span class="n">value</span>
-</div>
+            <span class="k">return</span> <span class="n">value</span></div>
+
 <div class="viewcode-block" id="Operative.start_thread"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.start_thread">[docs]</a>    <span class="k">def</span> <span class="nf">start_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;starts first thread in thread_list and sets busy to true&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">busy</span><span class="o">=</span><span class="bp">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">thread</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">thread_list</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">print</span> <span class="s2">&quot;starting thread: &quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">thread</span><span class="o">.</span><span class="n">name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-</div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
+
 <div class="viewcode-block" id="Operative.add_thread"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.add_thread">[docs]</a>    <span class="k">def</span> <span class="nf">add_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">code</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;adds a thread to thread_list and starts it if none are running&quot;&quot;&quot;</span>
         <span class="n">thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">thread_run</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">code</span><span class="p">,)</span><span class="o">+</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span><span class="c1">#, args=(self.loop_step, 10))</span>
         <span class="n">thread</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">thread_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thread</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thread</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">start_thread</span><span class="p">()</span>
-</div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_thread</span><span class="p">()</span></div>
+
     <span class="k">def</span> <span class="nf">_observe_abort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;observer for abort, logs abort&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">:</span>
@@ -205,27 +207,27 @@
 <div class="viewcode-block" id="Operative.abort_all"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.abort_all">[docs]</a>    <span class="k">def</span> <span class="nf">abort_all</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;attempts to abort all instruments&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">instr</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">agent_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">instr</span><span class="o">.</span><span class="n">abort</span><span class="o">=</span><span class="bp">True</span>
-</div>
+            <span class="n">instr</span><span class="o">.</span><span class="n">abort</span><span class="o">=</span><span class="bp">True</span></div>
+
 <div class="viewcode-block" id="Operative.show"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.show">[docs]</a>    <span class="k">def</span> <span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;shortcut to shower which defaults to shower(self)&quot;&quot;&quot;</span>
-        <span class="n">shower</span><span class="p">(</span><span class="o">*</span><span class="p">((</span><span class="bp">self</span><span class="p">,)</span><span class="o">+</span><span class="n">args</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-</div>
+        <span class="n">shower</span><span class="p">(</span><span class="o">*</span><span class="p">((</span><span class="bp">self</span><span class="p">,)</span><span class="o">+</span><span class="n">args</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Operative.clean_up"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.clean_up">[docs]</a>    <span class="k">def</span> <span class="nf">clean_up</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Default class clean up aborts all processes and flushes class file buffer if saving&quot;&quot;&quot;</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">abort_all</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">saving</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="s2">&quot;save_file&quot;</span><span class="p">):</span>
-                <span class="n">cls</span><span class="o">.</span><span class="n">save_file</span><span class="o">.</span><span class="n">flush_buffers</span><span class="p">()</span>
-</div>
+                <span class="n">cls</span><span class="o">.</span><span class="n">save_file</span><span class="o">.</span><span class="n">flush_buffers</span><span class="p">()</span></div>
+
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Operative.run_all"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.run_all">[docs]</a>    <span class="k">def</span> <span class="nf">run_all</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Runs all functions added in run_func_dict&quot;. Can be included in cls_run_funcs&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">run_func_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">func</span><span class="o">!=</span><span class="n">cls</span><span class="o">.</span><span class="n">run_all</span><span class="p">:</span>
-                <span class="n">func</span><span class="p">()</span>
-</div>
+                <span class="n">func</span><span class="p">()</span></div>
+
     <span class="nd">@private_property</span>
     <span class="k">def</span> <span class="nf">plots</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Dictionary of plots determined by base_name of agent being &#39;plot&#39;&quot;&quot;&quot;</span>
@@ -238,8 +240,8 @@
         <span class="k">if</span> <span class="n">AgentTypes</span> <span class="ow">is</span> <span class="p">():</span>
             <span class="n">AgentTypes</span><span class="o">=</span><span class="p">(</span><span class="n">cls</span><span class="p">,)</span> <span class="c1">#(type(cls),)</span>
         <span class="k">return</span> <span class="n">OrderedDict</span><span class="p">([(</span><span class="n">name</span><span class="p">,</span> <span class="n">agent</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">agent</span><span class="p">)</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">agent_dict</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
-                              <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">AgentTypes</span><span class="p">)])</span>
-</div>
+                              <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">AgentTypes</span><span class="p">)])</span></div>
+
     <span class="n">agent_dict</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">()</span>
 
     <span class="n">run_func_dict</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">()</span>
@@ -251,8 +253,8 @@
         <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">funcs</span><span class="p">:</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">run_func_dict</span><span class="p">[</span><span class="n">func</span><span class="o">.</span><span class="n">func_name</span><span class="p">]</span><span class="o">=</span><span class="n">func</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">funcs</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">funcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</div>
+            <span class="k">return</span> <span class="n">funcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
     <span class="nd">@private_property</span>
     <span class="k">def</span> <span class="nf">cls_run_funcs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;class or static methods to include in run_func_dict on initialization. Can be overwritten in child classes&quot;&quot;&quot;</span>
@@ -261,8 +263,8 @@
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Operative.activated"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Operative.activated">[docs]</a>    <span class="k">def</span> <span class="nf">activated</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Function that runs when window is activated.&quot;&quot;&quot;</span>
-        <span class="k">pass</span>
-</div>
+        <span class="k">pass</span></div>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;extends Backbone __init__ to add agent to boss&#39;s agent list</span>
 <span class="sd">        and give unique default name.&quot;&quot;&quot;</span>
@@ -275,9 +277,9 @@
         <span class="c1">#set_tag(self, &quot;name&quot;, initialized=False)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Operative</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1">#set_tag(self, &quot;name&quot;, initialized=True)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">add_func</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">cls_run_funcs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_func</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">cls_run_funcs</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="Spy"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Spy">[docs]</a><span class="k">class</span> <span class="nc">Spy</span><span class="p">(</span><span class="n">Operative</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Spies uses observers to log all changes to params&quot;&quot;&quot;</span>
     <span class="n">base_name</span><span class="o">=</span><span class="s2">&quot;spy&quot;</span>
@@ -287,13 +289,13 @@
         <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="o">!=</span><span class="s2">&quot;create&quot;</span><span class="p">:</span>
             <span class="n">set_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;update&quot;</span><span class="p">:</span>
-            <span class="n">reset_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</div>
+            <span class="n">reset_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Spy.extra_setup"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Spy.extra_setup">[docs]</a>    <span class="k">def</span> <span class="nf">extra_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;adds log_changes observer to all params&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Spy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">extra_setup</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_changes</span><span class="p">)</span>
-</div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_changes</span><span class="p">)</span></div></div>
+
 <div class="viewcode-block" id="Agent"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Agent">[docs]</a><span class="k">class</span> <span class="nc">Agent</span><span class="p">(</span><span class="n">Operative</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Agents uses primarily setattr to log changes to params&quot;&quot;&quot;</span>
     <span class="n">base_name</span><span class="o">=</span><span class="s2">&quot;agent&quot;</span>
@@ -309,14 +311,14 @@
         <span class="sd">&quot;&quot;&quot;Adds observer for ContainerLists to catch changes not covered by setattr.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Agent</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">extra_setup</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">typer</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ContainerList</span><span class="p">,):</span> <span class="c1">#Dict update does not generate event so not included</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_changes</span><span class="p">)</span>
-</div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_changes</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Agent.log_changes"><a class="viewcode-back" href="../../../core_doc/agent.html#taref.core.agent.Agent.log_changes">[docs]</a>    <span class="k">def</span> <span class="nf">log_changes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;A simple logger for changes not of type create or update that also resets properties&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;create&quot;</span><span class="p">,</span> <span class="s2">&quot;update&quot;</span><span class="p">):</span>
             <span class="n">set_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span>
-            <span class="n">reset_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</div></div>
+            <span class="n">reset_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div></div>
+
 <span class="k">if</span> <span class="n">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">a</span><span class="o">=</span><span class="n">Agent</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;bob&quot;</span><span class="p">)</span>
     <span class="n">b</span><span class="o">=</span><span class="n">Agent</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;bob&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;blah&quot;</span><span class="p">)</span>
@@ -349,9 +351,6 @@
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -362,8 +361,8 @@
       &copy;2016, Thomas Aref.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
       
     </div>
 

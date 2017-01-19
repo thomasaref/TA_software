@@ -1,0 +1,396 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taref.filer.save_file &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for taref.filer.save_file</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Thu Mar  5 20:50:49 2015</span>
+
+<span class="sd">@author: thomasaref</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">taref.core.log</span> <span class="kn">import</span>  <span class="n">log_info</span><span class="p">,</span> <span class="n">make_log_file</span><span class="p">,</span> <span class="n">remove_log_file</span><span class="p">,</span> <span class="n">log_debug</span>
+<span class="kn">from</span> <span class="nn">taref.filer.filer</span> <span class="kn">import</span> <span class="n">Filer</span><span class="p">,</span> <span class="n">Folder</span>
+<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">cached_property</span><span class="p">,</span> <span class="n">Unicode</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">Typed</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Bool</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">exists</span> <span class="k">as</span> <span class="n">os_path_exists</span><span class="c1">#, splitext as os_path_splitext, split as os_path_split</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">makedirs</span> <span class="k">as</span> <span class="n">os_makedirs</span>
+<span class="kn">from</span> <span class="nn">shutil</span> <span class="kn">import</span> <span class="n">move</span><span class="c1">#, copyfile</span>
+<span class="c1">#from inspect import getfile</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">savetxt</span>
+<span class="c1">#from taref.core.read_file import Read_HDF5, Read_NP, Read_TXT, Read_DXF</span>
+<span class="c1">#from collections import OrderedDict</span>
+<span class="kn">from</span> <span class="nn">taref.core.api</span> <span class="kn">import</span> <span class="n">tag_callable</span>
+
+<span class="kn">from</span> <span class="nn">taref.filer.HDF5_functions</span> <span class="kn">import</span> <span class="n">rewrite_hdf5</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">write_hdf5_file_path</span><span class="c1">#, File</span>
+<span class="kn">from</span> <span class="nn">taref.core.universal</span> <span class="kn">import</span> <span class="n">write_text</span><span class="p">,</span> <span class="n">CArray</span>
+<span class="c1">#from taref.core.TXTNP_functions import  save_txt_data, save_np_data, save_txt</span>
+<span class="kn">from</span> <span class="nn">taref.ebl.DXF_functions</span> <span class="kn">import</span> <span class="n">save_dxf</span>
+
+<span class="kn">from</span> <span class="nn">enaml</span> <span class="kn">import</span> <span class="n">imports</span>
+<span class="k">with</span> <span class="n">imports</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">taref.filer.read_file_e</span> <span class="kn">import</span> <span class="n">ReadFileExt</span><span class="p">,</span> <span class="n">ReadFileMain</span>
+
+<div class="viewcode-block" id="Save_File"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_File">[docs]</a><span class="k">class</span> <span class="nc">Save_File</span><span class="p">(</span><span class="n">Filer</span><span class="p">):</span>
+    <span class="n">buffer_size</span><span class="o">=</span><span class="n">Int</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s2">&quot;size of buffer as number of elements in a list/array&quot;</span><span class="p">)</span>
+    <span class="n">save_event</span><span class="o">=</span><span class="n">Event</span><span class="p">()</span>
+    <span class="n">file_created</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">write_mode</span><span class="o">=</span><span class="n">Enum</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span>
+    <span class="n">flush_buffer</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">fixed_mode</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">comment</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_default_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Folder</span><span class="p">(</span><span class="n">show_details</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">show_simple</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_default_show_data_str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="nd">@tag_callable</span><span class="p">(</span><span class="n">button_label</span><span class="o">=</span><span class="s2">&quot;Save&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">file_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">data_str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">unicode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Save_File.log_save"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_File.log_save">[docs]</a>    <span class="k">def</span> <span class="nf">log_save</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;save not implemented! file not saved: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Save_File.log_create"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_File.log_create">[docs]</a>    <span class="k">def</span> <span class="nf">log_create</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;save not implemented! file not created at {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">))</span></div>
+
+<span class="c1">#    def browse_clicked(self):</span>
+<span class="c1">#        super(Save_File, self).browse_clicked()</span>
+<span class="c1">#        self.save()</span>
+
+<div class="viewcode-block" id="Save_File.save"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_File.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_event</span><span class="p">()</span>
+        <span class="n">write_mode</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;write_mode&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">write_mode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_mode</span><span class="o">=</span><span class="n">write_mode</span>
+        <span class="n">flush_buffer</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;flush_buffer&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">flush_buffer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">flush_buffer</span><span class="o">=</span><span class="n">flush_buffer</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;buffer_save&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">flush_buffer</span><span class="o">=</span><span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buffer_save</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s2">&quot;data_str&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flush_buffer</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">makedir</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_created</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_create</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">file_created</span><span class="o">=</span><span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_to_file</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_data_buffer</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">flush_buffer</span><span class="o">=</span><span class="bp">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_mode</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_mode</span><span class="o">=</span><span class="s2">&quot;a&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_save</span><span class="p">()</span></div>
+
+    <span class="c1">#@cached_property</span>
+    <span class="c1">#def view(self):</span>
+    <span class="c1">#    return ReadFileExt</span>
+
+    <span class="c1">#@cached_property</span>
+    <span class="c1">#def view_window(self):</span>
+    <span class="c1">#    &quot;&quot;&quot;stand alone for showing save file.&quot;&quot;&quot;</span>
+    <span class="c1">#    return ReadFileMain(agent=self, title=&quot;Save file&quot;)</span>
+
+<div class="viewcode-block" id="Save_File.close"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_File.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;flushes the butter using save&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_observe_dir_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;if the file path exists and the file location is changed, this function moves the</span>
+<span class="sd">        entire directory to the new location and sets up the log file for appended logging&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">!=</span><span class="s1">&#39;create&#39;</span><span class="p">:</span>
+            <span class="n">old_dir_path</span><span class="o">=</span><span class="n">change</span><span class="p">[</span><span class="s1">&#39;oldvalue&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">old_dir_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">old_dir_path</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os_path_exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">os_path_exists</span><span class="p">(</span><span class="n">old_dir_path</span><span class="p">):</span>
+                    <span class="n">remove_log_file</span><span class="p">()</span>
+                    <span class="n">move</span><span class="p">(</span><span class="n">old_dir_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dir_path</span><span class="p">)</span>
+                    <span class="n">make_log_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_path</span><span class="p">)</span>
+                    <span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;Moved files to: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir_path</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Save_File.makedir"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_File.makedir">[docs]</a>    <span class="k">def</span> <span class="nf">makedir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;creates the directory and data file and log file&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os_path_exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">folder</span><span class="o">.</span><span class="n">dir_path</span><span class="p">):</span>
+            <span class="n">os_makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">folder</span><span class="o">.</span><span class="n">dir_path</span><span class="p">)</span>
+            <span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;Made directory at: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">folder</span><span class="o">.</span><span class="n">dir_path</span><span class="p">))</span></div></div>
+        <span class="c1">#if not os_path_exists(self.file_path):</span>
+            <span class="c1">#if hasattr(self, &quot;save_file&quot;):</span>
+            <span class="c1">#    self.save_file=self._default_save_file() #self.create_file()</span>
+            <span class="c1">#make_log_file(self.log_path, mode=&quot;w&quot;)</span>
+
+<span class="c1">#    def save_code(self, obj):</span>
+<span class="c1">#        &quot;&quot;&quot;saves the code containing the passed in object&quot;&quot;&quot;</span>
+<span class="c1">#        if obj is not None:</span>
+<span class="c1">#            module_path, ext = os_path_splitext(getfile(obj))</span>
+<span class="c1">#            code_file_path = module_path + &#39;.py&#39;   # Should get the py file, not the pyc, if compiled.</span>
+<span class="c1">#            code_file_copy_path = self.dir_path+self.divider+os_path_split(module_path)[1]+&quot;.pyb&quot;</span>
+<span class="c1">#            if not os_path_exists(code_file_copy_path):</span>
+<span class="c1">#                copyfile(code_file_path, code_file_copy_path)</span>
+<span class="c1">#                log_info(&quot;Saved code to: {0}&quot;.format(code_file_copy_path))</span>
+
+<span class="c1">#    def full_save(self, obj=None):</span>
+<span class="c1">#        &quot;&quot;&quot;does a full save, making files and directories, flushing the buffers, and saving the code&quot;&quot;&quot;</span>
+<span class="c1">#        self.makedir()</span>
+<span class="c1">#        self.save()</span>
+<span class="c1">#        self.flush_buffers()</span>
+<span class="c1">#        #self.save_code(obj)</span>
+
+    <span class="c1">#def flush_buffers(self):</span>
+    <span class="c1">#    pass</span>
+
+    <span class="c1">#    self.do_data_save()</span>
+    <span class="c1">#    self.data_buffer=self._default_data_buffer()</span>
+
+    <span class="c1">#def do_data_save(self):</span>
+    <span class="c1">#    log_warning(&quot;do_data_save not overwritten&quot;)</span>
+
+<div class="viewcode-block" id="Save_HDF5"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_HDF5">[docs]</a><span class="k">class</span> <span class="nc">Save_HDF5</span><span class="p">(</span><span class="n">Save_File</span><span class="p">):</span>
+    <span class="n">data_buffer</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Save_HDF5.log_create"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_HDF5.log_create">[docs]</a>    <span class="k">def</span> <span class="nf">log_create</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;Created hdf5 file at: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Save_HDF5.log_save"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_HDF5.log_save">[docs]</a>    <span class="k">def</span> <span class="nf">log_save</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;Data saved to hdf5 file at: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_default_data_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">group</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">comment</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_default_file_suffix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;hdf5&quot;</span>
+
+<div class="viewcode-block" id="Save_HDF5.save"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_HDF5.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>  <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Measurement&quot;</span><span class="p">,</span> <span class="n">group_name</span><span class="o">=</span><span class="s2">&quot;Data&quot;</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">write_mode</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Save_HDF5</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">data</span><span class="p">,</span>  <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">group_name</span><span class="o">=</span><span class="n">group_name</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="n">append</span><span class="p">,</span> <span class="n">write_mode</span><span class="o">=</span><span class="n">write_mode</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Save_HDF5.save_to_file"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_HDF5.save_to_file">[docs]</a>    <span class="k">def</span> <span class="nf">save_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">write_hdf5_file_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_mode</span><span class="p">)</span></div>
+        <span class="c1">#rewrite_hdf5(self.save_file, self.data_buffer)</span>
+
+
+<div class="viewcode-block" id="Save_HDF5.buffer_save"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_HDF5.buffer_save">[docs]</a>    <span class="k">def</span> <span class="nf">buffer_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Measurement&quot;</span><span class="p">,</span> <span class="n">group_name</span><span class="o">=</span><span class="s2">&quot;Data&quot;</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;grows data_buffer using name and group_name and flushes when length exceeds buffer_size&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">group_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">[</span><span class="n">group_name</span><span class="p">]</span><span class="o">=</span><span class="n">group</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">[</span><span class="n">group_name</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">[</span><span class="n">group_name</span><span class="p">][</span><span class="n">name</span><span class="p">]</span><span class="o">=</span><span class="n">group</span><span class="p">()</span> <span class="c1">#attrs=dict(append=append))</span>
+            <span class="n">append</span><span class="o">=</span><span class="bp">False</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">]:</span>
+            <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">data</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">append</span><span class="o">==</span><span class="bp">False</span><span class="p">:</span>
+            <span class="n">namestr</span><span class="o">=</span><span class="s2">&quot;{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">[</span><span class="n">group_name</span><span class="p">][</span><span class="n">name</span><span class="p">]))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">[</span><span class="n">group_name</span><span class="p">][</span><span class="n">name</span><span class="p">][</span><span class="n">namestr</span><span class="p">]</span><span class="o">=</span><span class="n">dataset</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="n">append</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">namestr</span><span class="o">=</span><span class="s2">&quot;{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">[</span><span class="n">group_name</span><span class="p">][</span><span class="n">name</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">[</span><span class="n">group_name</span><span class="p">][</span><span class="n">name</span><span class="p">][</span><span class="n">namestr</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">[</span><span class="n">group_name</span><span class="p">][</span><span class="n">name</span><span class="p">][</span><span class="n">namestr</span><span class="p">])</span><span class="o">&gt;</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span> <span class="ow">or</span> <span class="n">size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">[</span><span class="n">group_name</span><span class="p">][</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">&gt;</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">flush_buffer</span><span class="o">=</span><span class="bp">True</span> <span class="c1">#() #self.do_data_save(data, name, group_name, append)</span></div></div>
+
+    <span class="c1">#@cached_property</span>
+    <span class="c1">#def view_window(self):</span>
+    <span class="c1">#    return SaveMain(save_file=self, read_file=Read_HDF5(file_path=self.file_path))</span>
+
+<div class="viewcode-block" id="Save_TXT"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_TXT">[docs]</a><span class="k">class</span> <span class="nc">Save_TXT</span><span class="p">(</span><span class="n">Save_File</span><span class="p">):</span>
+    <span class="n">data_buffer</span><span class="o">=</span><span class="n">List</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_default_data_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="Save_TXT.default_file_suffix"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_TXT.default_file_suffix">[docs]</a>    <span class="k">def</span> <span class="nf">default_file_suffix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;.txt&quot;</span></div>
+
+<div class="viewcode-block" id="Save_TXT.log_create"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_TXT.log_create">[docs]</a>    <span class="k">def</span> <span class="nf">log_create</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;Created text file at: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Save_TXT.log_save"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_TXT.log_save">[docs]</a>    <span class="k">def</span> <span class="nf">log_save</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">log_debug</span><span class="p">(</span><span class="s2">&quot;Data saved to text file at: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Save_TXT.buffer_save"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_TXT.buffer_save">[docs]</a>    <span class="k">def</span> <span class="nf">buffer_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_list</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">text_list</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">)</span><span class="o">&gt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">flush_buffer</span><span class="o">=</span><span class="bp">True</span></div>
+
+<div class="viewcode-block" id="Save_TXT.save_to_file"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_TXT.save_to_file">[docs]</a>    <span class="k">def</span> <span class="nf">save_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">write_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">write_mode</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Save_TXT.save"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_TXT.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">write_mode</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">flush_buffer</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="nb">unicode</span><span class="p">(</span><span class="n">data</span><span class="p">)]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Save_TXT</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">write_mode</span><span class="o">=</span><span class="n">write_mode</span><span class="p">,</span> <span class="n">flush_buffer</span><span class="o">=</span><span class="n">flush_buffer</span><span class="p">)</span></div></div>
+
+    <span class="c1">#@cached_property</span>
+    <span class="c1">#def view_window(self):</span>
+    <span class="c1">#    with imports():</span>
+    <span class="c1">#        from taref.core.filer_e import SaveMain</span>
+    <span class="c1">#    return SaveMain(save_file=self, read_file=Read_TXT(file_path=self.file_path))</span>
+
+<div class="viewcode-block" id="Save_NP"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_NP">[docs]</a><span class="k">class</span> <span class="nc">Save_NP</span><span class="p">(</span><span class="n">Save_TXT</span><span class="p">):</span>
+    <span class="n">data_buffer</span><span class="o">=</span><span class="n">CArray</span><span class="p">()</span>
+    <span class="n">fmt</span><span class="o">=</span><span class="n">Unicode</span><span class="p">(</span><span class="s1">&#39;.18e&#39;</span><span class="p">)</span>
+    <span class="n">delimiter</span><span class="o">=</span><span class="n">Unicode</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+    <span class="n">newline</span><span class="o">=</span><span class="n">Unicode</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">header</span><span class="o">=</span><span class="n">Unicode</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">footer</span><span class="o">=</span><span class="n">Unicode</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">comment</span><span class="o">=</span><span class="n">Unicode</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_default_file_suffix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;.txt&quot;</span>
+
+<div class="viewcode-block" id="Save_NP.buffer_save"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_NP.buffer_save">[docs]</a>    <span class="k">def</span> <span class="nf">buffer_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="o">=</span><span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flush_buffer</span><span class="o">=</span><span class="bp">True</span></div>
+
+<div class="viewcode-block" id="Save_NP.save_to_file"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_NP.save_to_file">[docs]</a>    <span class="k">def</span> <span class="nf">save_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">savetxt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_buffer</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">delimiter</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">newline</span><span class="p">,</span>
+                 <span class="n">header</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">footer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">footer</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="s1">&#39;# &#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">comment</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Save_NP.save"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_NP.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Save_NP</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div></div>
+
+    <span class="c1">#def save(self)</span>
+    <span class="c1">#def do_data_save(self, data, name, group_name, append):</span>
+    <span class="c1">#    save_np_data(self.dir_path+self.divider, data, name)</span>
+
+
+<div class="viewcode-block" id="Save_DXF"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_DXF">[docs]</a><span class="k">class</span> <span class="nc">Save_DXF</span><span class="p">(</span><span class="n">Save_File</span><span class="p">):</span>
+    <span class="n">data_buffer</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">_default_file_suffix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;.dxf&quot;</span>
+
+    <span class="c1">#def _default_base_dir(self):</span>
+    <span class="c1">#    return self.base_dir+self.divider+&quot;OutputPatterns&quot;</span>
+
+<div class="viewcode-block" id="Save_DXF.direct_save"><a class="viewcode-back" href="../../../filer_doc/save_file.html#taref.filer.save_file.Save_DXF.direct_save">[docs]</a>    <span class="k">def</span> <span class="nf">direct_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verts</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">file_path</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">write_mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">file_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">file_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span>
+        <span class="n">save_dxf</span><span class="p">(</span><span class="n">verts</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">write_mode</span><span class="p">)</span>
+        <span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;Direct save of data to: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span></div></div>
+
+
+<span class="k">if</span> <span class="n">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">taref.core.shower</span> <span class="kn">import</span> <span class="n">shower</span>
+    <span class="kn">from</span> <span class="nn">taref.filer.read_file</span> <span class="kn">import</span> <span class="n">Read_NP</span>
+
+    <span class="c1">#a=Save_TXT()</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">Save_NP</span><span class="p">()</span>
+    <span class="n">b</span><span class="o">=</span><span class="n">Read_NP</span><span class="p">(</span><span class="n">show_data_str</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">file_path</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">save</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">7</span><span class="p">]])</span>
+    <span class="n">b</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">shower</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span><span class="o">==</span><span class="s2">&quot;__main__2&quot;</span><span class="p">:</span>
+
+    <span class="n">a</span><span class="o">=</span><span class="n">Save_HDF5</span><span class="p">(</span><span class="n">buffer_save</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">print</span> <span class="n">a</span><span class="o">.</span><span class="n">log_name</span>
+    <span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;prowdy&quot;</span><span class="p">)</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">full_save</span><span class="p">()</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">data_save</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;a&quot;</span><span class="p">)</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">data_save</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">array</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">data_save</span><span class="p">(</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">data_save</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">data_save</span><span class="p">([</span><span class="s2">&quot;blah&quot;</span><span class="p">,</span> <span class="s2">&quot;bob&quot;</span><span class="p">,</span> <span class="bp">True</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;c&quot;</span><span class="p">)</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">data_save</span><span class="p">(</span><span class="nb">unicode</span><span class="p">(</span><span class="s2">&quot;bob&quot;</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;c&quot;</span><span class="p">)</span>
+
+    <span class="c1">#a.makedir()</span>
+    <span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;yo&quot;</span><span class="p">)</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">quality</span><span class="o">=</span><span class="s2">&quot;less interesting&quot;</span>
+    <span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;bro&quot;</span><span class="p">)</span>
+
+    <span class="c1">#b=Read_HDF5(file_path=a.file_path)</span>
+    <span class="c1">#print b.read()</span>
+    <span class="k">print</span> <span class="n">a</span><span class="o">.</span><span class="n">data_buffer</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">flush_buffers</span><span class="p">()</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">show</span><span class="p">()</span> <span class="c1">#show_saver(a, b)</span>
+
+    <span class="c1">#a.move_log_file()</span>
+    <span class="c1">#a.update_log(&quot;yowdy&quot;)</span>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

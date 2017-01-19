@@ -3,8 +3,5 @@ shower
 *******************
 
 .. automodule:: taref.core.shower
-   :members:
-
-
-
-
+    :members:
+    :undoc-members:

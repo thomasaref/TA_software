@@ -1,0 +1,406 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>save_file &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-taref.filer.save_file">
+<span id="save-file"></span><h1>save_file<a class="headerlink" href="#module-taref.filer.save_file" title="Permalink to this headline">¶</a></h1>
+<p>Created on Thu Mar  5 20:50:49 2015</p>
+<p>&#64;author: thomasaref</p>
+<dl class="class">
+<dt id="taref.filer.save_file.Save_DXF">
+<em class="property">class </em><code class="descclassname">taref.filer.save_file.</code><code class="descname">Save_DXF</code><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_DXF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_DXF" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="taref.filer.save_file.Save_DXF.data_buffer">
+<code class="descname">data_buffer</code><a class="headerlink" href="#taref.filer.save_file.Save_DXF.data_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_DXF.direct_save">
+<code class="descname">direct_save</code><span class="sig-paren">(</span><em>verts</em>, <em>color</em>, <em>layer</em>, <em>file_path=None</em>, <em>write_mode='w'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_DXF.direct_save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_DXF.direct_save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_DXF.file_suffix">
+<code class="descname">file_suffix</code><a class="headerlink" href="#taref.filer.save_file.Save_DXF.file_suffix" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.filer.save_file.Save_File">
+<em class="property">class </em><code class="descclassname">taref.filer.save_file.</code><code class="descname">Save_File</code><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_File"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_File" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="taref.filer.save_file.Save_File.buffer_size">
+<code class="descname">buffer_size</code><a class="headerlink" href="#taref.filer.save_file.Save_File.buffer_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>size of buffer as number of elements in a list/array</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_File.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_File.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_File.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>flushes the butter using save</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_File.comment">
+<code class="descname">comment</code><a class="headerlink" href="#taref.filer.save_file.Save_File.comment" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_File.data_str">
+<code class="descname">data_str</code><a class="headerlink" href="#taref.filer.save_file.Save_File.data_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_File.file_action">
+<code class="descname">file_action</code><a class="headerlink" href="#taref.filer.save_file.Save_File.file_action" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which is callable.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_File.file_created">
+<code class="descname">file_created</code><a class="headerlink" href="#taref.filer.save_file.Save_File.file_created" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_File.fixed_mode">
+<code class="descname">fixed_mode</code><a class="headerlink" href="#taref.filer.save_file.Save_File.fixed_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_File.flush_buffer">
+<code class="descname">flush_buffer</code><a class="headerlink" href="#taref.filer.save_file.Save_File.flush_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_File.folder">
+<code class="descname">folder</code><a class="headerlink" href="#taref.filer.save_file.Save_File.folder" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_File.log_create">
+<code class="descname">log_create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_File.log_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_File.log_create" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_File.log_save">
+<code class="descname">log_save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_File.log_save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_File.log_save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_File.makedir">
+<code class="descname">makedir</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_File.makedir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_File.makedir" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates the directory and data file and log file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_File.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>data=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_File.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_File.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_File.save_event">
+<code class="descname">save_event</code><a class="headerlink" href="#taref.filer.save_file.Save_File.save_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member which acts like a stateless event.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_File.show_data_str">
+<code class="descname">show_data_str</code><a class="headerlink" href="#taref.filer.save_file.Save_File.show_data_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_File.write_mode">
+<code class="descname">write_mode</code><a class="headerlink" href="#taref.filer.save_file.Save_File.write_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.filer.save_file.Save_HDF5">
+<em class="property">class </em><code class="descclassname">taref.filer.save_file.</code><code class="descname">Save_HDF5</code><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_HDF5"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_HDF5" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="taref.filer.save_file.Save_HDF5.buffer_save">
+<code class="descname">buffer_save</code><span class="sig-paren">(</span><em>data</em>, <em>name='Measurement'</em>, <em>group_name='Data'</em>, <em>append=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_HDF5.buffer_save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_HDF5.buffer_save" title="Permalink to this definition">¶</a></dt>
+<dd><p>grows data_buffer using name and group_name and flushes when length exceeds buffer_size</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_HDF5.data_buffer">
+<code class="descname">data_buffer</code><a class="headerlink" href="#taref.filer.save_file.Save_HDF5.data_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_HDF5.file_suffix">
+<code class="descname">file_suffix</code><a class="headerlink" href="#taref.filer.save_file.Save_HDF5.file_suffix" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_HDF5.log_create">
+<code class="descname">log_create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_HDF5.log_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_HDF5.log_create" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_HDF5.log_save">
+<code class="descname">log_save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_HDF5.log_save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_HDF5.log_save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_HDF5.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>data=None</em>, <em>name='Measurement'</em>, <em>group_name='Data'</em>, <em>append=True</em>, <em>write_mode=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_HDF5.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_HDF5.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_HDF5.save_to_file">
+<code class="descname">save_to_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_HDF5.save_to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_HDF5.save_to_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.filer.save_file.Save_NP">
+<em class="property">class </em><code class="descclassname">taref.filer.save_file.</code><code class="descname">Save_NP</code><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_NP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_NP" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="taref.filer.save_file.Save_NP.buffer_save">
+<code class="descname">buffer_save</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_NP.buffer_save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_NP.buffer_save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_NP.comment">
+<code class="descname">comment</code><a class="headerlink" href="#taref.filer.save_file.Save_NP.comment" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_NP.data_buffer">
+<code class="descname">data_buffer</code><a class="headerlink" href="#taref.filer.save_file.Save_NP.data_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member which will coerce a value to a given instance type.</p>
+<p>Unlike Typed or Instance, a Coerced value is not intended to be
+set to None.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_NP.delimiter">
+<code class="descname">delimiter</code><a class="headerlink" href="#taref.filer.save_file.Save_NP.delimiter" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_NP.file_suffix">
+<code class="descname">file_suffix</code><a class="headerlink" href="#taref.filer.save_file.Save_NP.file_suffix" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_NP.fmt">
+<code class="descname">fmt</code><a class="headerlink" href="#taref.filer.save_file.Save_NP.fmt" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_NP.footer">
+<code class="descname">footer</code><a class="headerlink" href="#taref.filer.save_file.Save_NP.footer" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_NP.header">
+<code class="descname">header</code><a class="headerlink" href="#taref.filer.save_file.Save_NP.header" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_NP.newline">
+<code class="descname">newline</code><a class="headerlink" href="#taref.filer.save_file.Save_NP.newline" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_NP.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>data=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_NP.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_NP.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_NP.save_to_file">
+<code class="descname">save_to_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_NP.save_to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_NP.save_to_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.filer.save_file.Save_TXT">
+<em class="property">class </em><code class="descclassname">taref.filer.save_file.</code><code class="descname">Save_TXT</code><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_TXT"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_TXT" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="taref.filer.save_file.Save_TXT.buffer_save">
+<code class="descname">buffer_save</code><span class="sig-paren">(</span><em>text_list</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_TXT.buffer_save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_TXT.buffer_save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.filer.save_file.Save_TXT.data_buffer">
+<code class="descname">data_buffer</code><a class="headerlink" href="#taref.filer.save_file.Save_TXT.data_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member which allows list values.</p>
+<p>Assigning to a list creates a copy. The orginal list will remain
+unmodified. This is similar to the semantics of the assignment
+operator on the C++ STL container classes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_TXT.default_file_suffix">
+<code class="descname">default_file_suffix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_TXT.default_file_suffix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_TXT.default_file_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_TXT.log_create">
+<code class="descname">log_create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_TXT.log_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_TXT.log_create" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_TXT.log_save">
+<code class="descname">log_save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_TXT.log_save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_TXT.log_save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_TXT.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>data=None</em>, <em>write_mode=None</em>, <em>flush_buffer=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_TXT.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_TXT.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.filer.save_file.Save_TXT.save_to_file">
+<code class="descname">save_to_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/filer/save_file.html#Save_TXT.save_to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.filer.save_file.Save_TXT.save_to_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/filer_doc/save_file.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="../_sources/filer_doc/save_file.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

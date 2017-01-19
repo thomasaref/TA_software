@@ -10,7 +10,6 @@ from numpy import prod, transpose, identity, kron, zeros, dot, real
 from numpy.linalg import pinv, solve
 from qutip import issuper, liouvillian, qeye, tensor, spre, mat2vec, steadystate
 
-
 def _spectrum_pi(H, wlist, c_ops, a_op, b_op, use_pinv=False):
     """
     Internal function for calculating the spectrum of the correlation function

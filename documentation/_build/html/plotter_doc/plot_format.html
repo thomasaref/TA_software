@@ -1,0 +1,867 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>plot_format &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-taref.plotter.plot_format">
+<span id="plot-format"></span><h1>plot_format<a class="headerlink" href="#module-taref.plotter.plot_format" title="Permalink to this headline">¶</a></h1>
+<p>Created on Thu Feb  4 12:51:21 2016</p>
+<p>&#64;author: thomasaref</p>
+<dl class="class">
+<dt id="taref.plotter.plot_format.ColormeshFormat">
+<em class="property">class </em><code class="descclassname">taref.plotter.plot_format.</code><code class="descname">ColormeshFormat</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ColormeshFormat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.append_xy">
+<code class="descname">append_xy</code><span class="sig-paren">(</span><em>z</em>, <em>index=None</em>, <em>axis=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ColormeshFormat.append_xy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.append_xy" title="Permalink to this definition">¶</a></dt>
+<dd><p>appends points x and y if 2 args are passed and just y and len of xdata if one args is passed</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.clim_update">
+<code class="descname">clim_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.clim_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.clt">
+<code class="descname">clt</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.clt" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.cmap">
+<code class="descname">cmap</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.cmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.colorbar_update">
+<code class="descname">colorbar_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.colorbar_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.colormap2horizlines">
+<code class="descname">colormap2horizlines</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ColormeshFormat.colormap2horizlines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.colormap2horizlines" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.colormap2vertlines">
+<code class="descname">colormap2vertlines</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ColormeshFormat.colormap2vertlines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.colormap2vertlines" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.colormap_update">
+<code class="descname">colormap_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.colormap_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.count">
+<code class="descname">count</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>int</cite>.</p>
+<p>By default, ints are strictly typed.  Pass strict=False to the
+constructor to enable int casting for longs and floats.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.cs_alpha">
+<code class="descname">cs_alpha</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.cs_alpha" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.cs_color">
+<code class="descname">cs_color</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.cs_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.cs_linestyle">
+<code class="descname">cs_linestyle</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.cs_linestyle" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.cs_linewidth">
+<code class="descname">cs_linewidth</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.cs_linewidth" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.cs_set">
+<code class="descname">cs_set</code><span class="sig-paren">(</span><em>param</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ColormeshFormat.cs_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.cs_set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.cs_update">
+<code class="descname">cs_update</code><span class="sig-paren">(</span><em>change</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ColormeshFormat.cs_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.cs_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.do_autolim">
+<code class="descname">do_autolim</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ColormeshFormat.do_autolim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.do_autolim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.expand_XY">
+<code class="descname">expand_XY</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.expand_XY" title="Permalink to this definition">¶</a></dt>
+<dd><p>expands X and Y array by one so all zdata is plotted</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.get_colorbar">
+<code class="descname">get_colorbar</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ColormeshFormat.get_colorbar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.get_colorbar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.h_line">
+<code class="descname">h_line</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.h_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.include_colorbar">
+<code class="descname">include_colorbar</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.include_colorbar" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.pcolormesh">
+<code class="descname">pcolormesh</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ColormeshFormat.pcolormesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.pcolormesh" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.plot_type">
+<code class="descname">plot_type</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.plot_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.plotter">
+<code class="descname">plotter</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.plotter" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.set_clim">
+<code class="descname">set_clim</code><span class="sig-paren">(</span><em>vmin</em>, <em>vmax</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ColormeshFormat.set_clim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.set_clim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ColormeshFormat.set_colorbar">
+<code class="descname">set_colorbar</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ColormeshFormat.set_colorbar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.set_colorbar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.v_line">
+<code class="descname">v_line</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.v_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.vmax">
+<code class="descname">vmax</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.vmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.vmin">
+<code class="descname">vmin</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.vmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ColormeshFormat.zdata">
+<code class="descname">zdata</code><a class="headerlink" href="#taref.plotter.plot_format.ColormeshFormat.zdata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.plotter.plot_format.CrossCursor">
+<em class="property">class </em><code class="descclassname">taref.plotter.plot_format.</code><code class="descname">CrossCursor</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#CrossCursor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.CrossCursor" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="taref.plotter.plot_format.CrossCursor.add_cursor">
+<code class="descname">add_cursor</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#CrossCursor.add_cursor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.CrossCursor.add_cursor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.CrossCursor.alpha">
+<code class="descname">alpha</code><a class="headerlink" href="#taref.plotter.plot_format.CrossCursor.alpha" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.CrossCursor.clt">
+<code class="descname">clt</code><a class="headerlink" href="#taref.plotter.plot_format.CrossCursor.clt" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>dict</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.CrossCursor.color">
+<code class="descname">color</code><a class="headerlink" href="#taref.plotter.plot_format.CrossCursor.color" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.CrossCursor.linestyle">
+<code class="descname">linestyle</code><a class="headerlink" href="#taref.plotter.plot_format.CrossCursor.linestyle" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.CrossCursor.linewidth">
+<code class="descname">linewidth</code><a class="headerlink" href="#taref.plotter.plot_format.CrossCursor.linewidth" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.CrossCursor.move_cursor">
+<code class="descname">move_cursor</code><span class="sig-paren">(</span><em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#CrossCursor.move_cursor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.CrossCursor.move_cursor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.CrossCursor.plot_type">
+<code class="descname">plot_type</code><a class="headerlink" href="#taref.plotter.plot_format.CrossCursor.plot_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.CrossCursor.remove_collection">
+<code class="descname">remove_collection</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#CrossCursor.remove_collection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.CrossCursor.remove_collection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.plotter.plot_format.HaxisLine">
+<em class="property">class </em><code class="descclassname">taref.plotter.plot_format.</code><code class="descname">HaxisLine</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#HaxisLine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.HaxisLine" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="taref.plotter.plot_format.HaxisLine.axhline">
+<code class="descname">axhline</code><span class="sig-paren">(</span><em>y</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#HaxisLine.axhline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.HaxisLine.axhline" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.HaxisLine.plot_type">
+<code class="descname">plot_type</code><a class="headerlink" href="#taref.plotter.plot_format.HaxisLine.plot_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.plotter.plot_format.Line2DFormat">
+<em class="property">class </em><code class="descclassname">taref.plotter.plot_format.</code><code class="descname">Line2DFormat</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#Line2DFormat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.Line2DFormat" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="taref.plotter.plot_format.Line2DFormat.alter_xy">
+<code class="descname">alter_xy</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#Line2DFormat.alter_xy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.Line2DFormat.alter_xy" title="Permalink to this definition">¶</a></dt>
+<dd><p>appends points x and y if 2 args are passed and just y and len of xdata if one args is passed</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.Line2DFormat.line2scatter">
+<code class="descname">line2scatter</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#Line2DFormat.line2scatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.Line2DFormat.line2scatter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.Line2DFormat.line_plot">
+<code class="descname">line_plot</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#Line2DFormat.line_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.Line2DFormat.line_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.plotter.plot_format.LineFormat">
+<em class="property">class </em><code class="descclassname">taref.plotter.plot_format.</code><code class="descname">LineFormat</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#LineFormat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.LineFormat" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="taref.plotter.plot_format.LineFormat.alpha">
+<code class="descname">alpha</code><a class="headerlink" href="#taref.plotter.plot_format.LineFormat.alpha" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.LineFormat.color">
+<code class="descname">color</code><a class="headerlink" href="#taref.plotter.plot_format.LineFormat.color" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.LineFormat.custom_color">
+<code class="descname">custom_color</code><a class="headerlink" href="#taref.plotter.plot_format.LineFormat.custom_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>A List member which supports container notifications.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.LineFormat.label">
+<code class="descname">label</code><a class="headerlink" href="#taref.plotter.plot_format.LineFormat.label" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.LineFormat.line_update">
+<code class="descname">line_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.plot_format.LineFormat.line_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.LineFormat.linestyle">
+<code class="descname">linestyle</code><a class="headerlink" href="#taref.plotter.plot_format.LineFormat.linestyle" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.LineFormat.linewidth">
+<code class="descname">linewidth</code><a class="headerlink" href="#taref.plotter.plot_format.LineFormat.linewidth" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.LineFormat.plot_type">
+<code class="descname">plot_type</code><a class="headerlink" href="#taref.plotter.plot_format.LineFormat.plot_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.plotter.plot_format.MultiLineFormat">
+<em class="property">class </em><code class="descclassname">taref.plotter.plot_format.</code><code class="descname">MultiLineFormat</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#MultiLineFormat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="taref.plotter.plot_format.MultiLineFormat.alpha">
+<code class="descname">alpha</code><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.alpha" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.MultiLineFormat.autocolor_set">
+<code class="descname">autocolor_set</code><span class="sig-paren">(</span><em>param</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#MultiLineFormat.autocolor_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.autocolor_set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.MultiLineFormat.clt">
+<code class="descname">clt</code><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.clt" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.MultiLineFormat.color">
+<code class="descname">color</code><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.color" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.MultiLineFormat.color_update">
+<code class="descname">color_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.color_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.MultiLineFormat.colormap_update">
+<code class="descname">colormap_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.colormap_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.MultiLineFormat.cs_color">
+<code class="descname">cs_color</code><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.cs_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.MultiLineFormat.cs_linestyle">
+<code class="descname">cs_linestyle</code><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.cs_linestyle" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.MultiLineFormat.h_line">
+<code class="descname">h_line</code><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.h_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.MultiLineFormat.horizlines2colormap">
+<code class="descname">horizlines2colormap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#MultiLineFormat.horizlines2colormap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.horizlines2colormap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.MultiLineFormat.include_colorbar">
+<code class="descname">include_colorbar</code><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.include_colorbar" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.MultiLineFormat.multiline_plot">
+<code class="descname">multiline_plot</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#MultiLineFormat.multiline_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.multiline_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.MultiLineFormat.plot_type">
+<code class="descname">plot_type</code><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.plot_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.MultiLineFormat.vertlines2colormap">
+<code class="descname">vertlines2colormap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#MultiLineFormat.vertlines2colormap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.vertlines2colormap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.MultiLineFormat.vmax">
+<code class="descname">vmax</code><a class="headerlink" href="#taref.plotter.plot_format.MultiLineFormat.vmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.plotter.plot_format.PlotFormat">
+<em class="property">class </em><code class="descclassname">taref.plotter.plot_format.</code><code class="descname">PlotFormat</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#PlotFormat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat" title="Permalink to this definition">¶</a></dt>
+<dd><p>base class corresponding to one graph or collection on axes</p>
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.append">
+<code class="descname">append</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.clt">
+<code class="descname">clt</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.clt" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.PlotFormat.clt_values">
+<code class="descname">clt_values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#PlotFormat.clt_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.clt_values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.PlotFormat.do_autolim">
+<code class="descname">do_autolim</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#PlotFormat.do_autolim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.do_autolim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.plot_name">
+<code class="descname">plot_name</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.plot_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which can be assigned once and is then read-only.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.PlotFormat.plot_set">
+<code class="descname">plot_set</code><span class="sig-paren">(</span><em>param</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#PlotFormat.plot_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.plot_set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.plot_type">
+<code class="descname">plot_type</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.plot_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.PlotFormat.plot_update">
+<code class="descname">plot_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.plot_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.remove">
+<code class="descname">remove</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.PlotFormat.remove_collection">
+<code class="descname">remove_collection</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#PlotFormat.remove_collection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.remove_collection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.view_window">
+<code class="descname">view_window</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.view_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.visible">
+<code class="descname">visible</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.visible" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.xcoord">
+<code class="descname">xcoord</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.xcoord" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.xdata">
+<code class="descname">xdata</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.xdata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.xind">
+<code class="descname">xind</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.xind" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>int</cite>.</p>
+<p>By default, ints are strictly typed.  Pass strict=False to the
+constructor to enable int casting for longs and floats.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.ycoord">
+<code class="descname">ycoord</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.ycoord" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.ydata">
+<code class="descname">ydata</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.ydata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PlotFormat.yind">
+<code class="descname">yind</code><a class="headerlink" href="#taref.plotter.plot_format.PlotFormat.yind" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>int</cite>.</p>
+<p>By default, ints are strictly typed.  Pass strict=False to the
+constructor to enable int casting for longs and floats.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.plotter.plot_format.PolygonFormat">
+<em class="property">class </em><code class="descclassname">taref.plotter.plot_format.</code><code class="descname">PolygonFormat</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#PolygonFormat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.PolygonFormat" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="taref.plotter.plot_format.PolygonFormat.alter_xy">
+<code class="descname">alter_xy</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#PolygonFormat.alter_xy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.PolygonFormat.alter_xy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PolygonFormat.antialiased">
+<code class="descname">antialiased</code><a class="headerlink" href="#taref.plotter.plot_format.PolygonFormat.antialiased" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.PolygonFormat.clt">
+<code class="descname">clt</code><a class="headerlink" href="#taref.plotter.plot_format.PolygonFormat.clt" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.PolygonFormat.polygon_plot">
+<code class="descname">polygon_plot</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#PolygonFormat.polygon_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.PolygonFormat.polygon_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.plotter.plot_format.ScatterFormat">
+<em class="property">class </em><code class="descclassname">taref.plotter.plot_format.</code><code class="descname">ScatterFormat</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ScatterFormat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ScatterFormat" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="taref.plotter.plot_format.ScatterFormat.clt">
+<code class="descname">clt</code><a class="headerlink" href="#taref.plotter.plot_format.ScatterFormat.clt" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ScatterFormat.edgecolor">
+<code class="descname">edgecolor</code><a class="headerlink" href="#taref.plotter.plot_format.ScatterFormat.edgecolor" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ScatterFormat.facecolor">
+<code class="descname">facecolor</code><a class="headerlink" href="#taref.plotter.plot_format.ScatterFormat.facecolor" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ScatterFormat.marker">
+<code class="descname">marker</code><a class="headerlink" href="#taref.plotter.plot_format.ScatterFormat.marker" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ScatterFormat.marker_size">
+<code class="descname">marker_size</code><a class="headerlink" href="#taref.plotter.plot_format.ScatterFormat.marker_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ScatterFormat.marker_size_update">
+<code class="descname">marker_size_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.plot_format.ScatterFormat.marker_size_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ScatterFormat.marker_update">
+<code class="descname">marker_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.plot_format.ScatterFormat.marker_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.ScatterFormat.plot_type">
+<code class="descname">plot_type</code><a class="headerlink" href="#taref.plotter.plot_format.ScatterFormat.plot_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ScatterFormat.scatter2line">
+<code class="descname">scatter2line</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ScatterFormat.scatter2line"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ScatterFormat.scatter2line" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ScatterFormat.scatter_plot">
+<code class="descname">scatter_plot</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#ScatterFormat.scatter_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.ScatterFormat.scatter_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.ScatterFormat.scatter_update">
+<code class="descname">scatter_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.plot_format.ScatterFormat.scatter_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.plotter.plot_format.TextFormat">
+<em class="property">class </em><code class="descclassname">taref.plotter.plot_format.</code><code class="descname">TextFormat</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#TextFormat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.TextFormat" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="taref.plotter.plot_format.TextFormat.plot_type">
+<code class="descname">plot_type</code><a class="headerlink" href="#taref.plotter.plot_format.TextFormat.plot_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.plot_format.TextFormat.text_plot">
+<code class="descname">text_plot</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#TextFormat.text_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.TextFormat.text_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taref.plotter.plot_format.VaxisLine">
+<em class="property">class </em><code class="descclassname">taref.plotter.plot_format.</code><code class="descname">VaxisLine</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#VaxisLine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.VaxisLine" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="taref.plotter.plot_format.VaxisLine.axvline">
+<code class="descname">axvline</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#VaxisLine.axvline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.VaxisLine.axvline" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.plot_format.VaxisLine.plot_type">
+<code class="descname">plot_type</code><a class="headerlink" href="#taref.plotter.plot_format.VaxisLine.plot_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.plotter.plot_format.colormesh_plot">
+<code class="descclassname">taref.plotter.plot_format.</code><code class="descname">colormesh_plot</code><span class="sig-paren">(</span><em>plotter</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#colormesh_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.colormesh_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="taref.plotter.plot_format.hline_plot">
+<code class="descclassname">taref.plotter.plot_format.</code><code class="descname">hline_plot</code><span class="sig-paren">(</span><em>plotter</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#hline_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.hline_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="taref.plotter.plot_format.line_plot">
+<code class="descclassname">taref.plotter.plot_format.</code><code class="descname">line_plot</code><span class="sig-paren">(</span><em>plotter</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#line_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.line_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="taref.plotter.plot_format.multiline_plot">
+<code class="descclassname">taref.plotter.plot_format.</code><code class="descname">multiline_plot</code><span class="sig-paren">(</span><em>plotter</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#multiline_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.multiline_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="taref.plotter.plot_format.polygon_plot">
+<code class="descclassname">taref.plotter.plot_format.</code><code class="descname">polygon_plot</code><span class="sig-paren">(</span><em>plotter</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#polygon_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.polygon_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="taref.plotter.plot_format.scatter_plot">
+<code class="descclassname">taref.plotter.plot_format.</code><code class="descname">scatter_plot</code><span class="sig-paren">(</span><em>plotter</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#scatter_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.scatter_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="taref.plotter.plot_format.transformation">
+<code class="descclassname">taref.plotter.plot_format.</code><code class="descname">transformation</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#transformation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.transformation" title="Permalink to this definition">¶</a></dt>
+<dd><p>decorator that assists with transfroming from one format to another</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.plotter.plot_format.vline_plot">
+<code class="descclassname">taref.plotter.plot_format.</code><code class="descname">vline_plot</code><span class="sig-paren">(</span><em>plotter</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/plot_format.html#vline_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.plot_format.vline_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/plotter_doc/plot_format.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="../_sources/plotter_doc/plot_format.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

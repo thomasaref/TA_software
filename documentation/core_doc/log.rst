@@ -3,10 +3,5 @@ log
 *******************
 
 .. automodule:: taref.core.log
-   :members:
-   :undoc-members:
-
-
-
-
-
+    :members:
+    :undoc-members:

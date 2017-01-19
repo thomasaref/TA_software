@@ -116,7 +116,7 @@ def find_expect(phi=0.1, Omega_vec=3.0, wd=wd):
 
     #exp1=correlation_ss(H, wlist2, c_op_list, a, p)
     #exp2=correlation_ss(H, wlist2, c_op_list, p, a, reverse=True)
-    exp1=spectrum(H, wlist2, c_op_list, a, p, solver="pi", use_pinv=True)
+    exp1=spectrum(H, wlist2, c_op_list, a, p, solver="pi", use_pinv=False)
     exp2=spectrum(H, wlist2, c_op_list, p, a, solver="pi", use_pinv=False)
     return exp1-exp2
     return expect( a, final_state) #tm_l

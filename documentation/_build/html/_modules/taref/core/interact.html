@@ -27,11 +27,13 @@
     <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -55,7 +57,7 @@
     <span class="kn">from</span> <span class="nn">taref.core.interactive_e</span> <span class="kn">import</span> <span class="n">InteractiveWindow</span><span class="p">,</span> <span class="n">CodeWindow</span>
     <span class="kn">from</span> <span class="nn">taref.core.log_e</span> <span class="kn">import</span> <span class="n">LogWindow</span>
 
-<span class="k">class</span> <span class="nc">File_Parser</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
+<div class="viewcode-block" id="File_Parser"><a class="viewcode-back" href="../../../core_doc/interact.html#taref.core.backbone.File_Parser">[docs]</a><span class="k">class</span> <span class="nc">File_Parser</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;a callable object for extracting the strings in a list between starter and stopper. For use when parsing text files&quot;&quot;&quot;</span>
     <span class="n">starter</span><span class="o">=</span><span class="n">Unicode</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
     <span class="n">stopper</span><span class="o">=</span><span class="n">Unicode</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
@@ -84,9 +86,9 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">preamble</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">postamble</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inblock</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inblock</span></div>
 
-<span class="k">class</span> <span class="nc">Interact</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
+<div class="viewcode-block" id="Interact"><a class="viewcode-back" href="../../../core_doc/interact.html#taref.core.backbone.Interact">[docs]</a><span class="k">class</span> <span class="nc">Interact</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
     <span class="n">input_code</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
     <span class="n">file_reader</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">File_Parser</span><span class="p">)</span>
     <span class="n">locals_dict</span><span class="o">=</span><span class="n">Dict</span><span class="p">()</span>
@@ -126,7 +128,7 @@
         <span class="nb">super</span><span class="p">(</span><span class="n">Interact</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">file_reader</span><span class="o">=</span><span class="n">File_Parser</span><span class="p">(</span><span class="n">starter</span><span class="o">=</span><span class="n">starter</span><span class="p">,</span> <span class="n">stopper</span><span class="o">=</span><span class="n">stopper</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">make_input_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Interact.make_input_code"><a class="viewcode-back" href="../../../core_doc/interact.html#taref.core.backbone.Interact.make_input_code">[docs]</a>    <span class="k">def</span> <span class="nf">make_input_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;process the topmost called code to allow access in the GUI and allow saving of a copy of the code&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_read</span><span class="p">:</span>
             <span class="n">Interact</span><span class="o">.</span><span class="n">file_read</span><span class="o">=</span><span class="bp">True</span>
@@ -135,7 +137,7 @@
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fb</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_filename</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                 <span class="n">file_text</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">input_code</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">file_text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_reader</span><span class="p">(</span><span class="n">line</span><span class="p">)])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s2">&quot;code_str&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s2">&quot;code_str&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_observe_input_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;update&quot;</span><span class="p">:</span>
@@ -143,11 +145,12 @@
             <span class="k">if</span> <span class="n">nn</span><span class="o">!=</span><span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">exec_on_enter</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">exec_code</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">exec_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Interact.exec_code"><a class="viewcode-back" href="../../../core_doc/interact.html#taref.core.backbone.Interact.exec_code">[docs]</a>    <span class="k">def</span> <span class="nf">exec_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;simulates the python code producing the output texlist&quot;&quot;&quot;</span>
         <span class="k">exec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_code</span><span class="p">,</span> <span class="p">{},</span> <span class="bp">self</span><span class="o">.</span><span class="n">locals_dict</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">locals_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">locals</span><span class="p">())</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s2">&quot;code_str&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s2">&quot;code_str&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div></div>
+
 </pre></div>
 
           </div>
@@ -171,9 +174,6 @@
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -184,8 +184,8 @@
       &copy;2016, Thomas Aref.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
       
     </div>
 

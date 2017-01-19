@@ -1,0 +1,438 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taref.plotter.fig_format &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for taref.plotter.fig_format</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Thu Feb  4 12:54:58 2016</span>
+
+<span class="sd">@author: thomasaref</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">taref.core.log</span> <span class="kn">import</span> <span class="n">log_debug</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">use</span><span class="c1">#(&#39;Agg&#39;)</span>
+<span class="n">use</span><span class="p">(</span><span class="s1">&#39;Agg&#39;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">taref.plotter.plotter_backbone</span> <span class="kn">import</span> <span class="n">plot_observe</span><span class="p">,</span> <span class="n">PlotMaster</span><span class="p">,</span> <span class="n">simple_set</span>
+<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">Unicode</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">observe</span><span class="p">,</span> <span class="n">cached_property</span><span class="c1">#, Typed</span>
+
+<span class="kn">from</span> <span class="nn">taref.core.agent</span> <span class="kn">import</span> <span class="n">Operative</span>
+<span class="kn">from</span> <span class="nn">enaml</span> <span class="kn">import</span> <span class="n">imports</span>
+<span class="c1">#from plot_format import line_plot, vline_plot, hline_plot, scatter_plot, colormesh, multiline_plot</span>
+<span class="kn">from</span> <span class="nn">taref.core.api</span> <span class="kn">import</span> <span class="n">private_property</span>
+
+<span class="c1">#from matplotlib import rcParams</span>
+<span class="c1">##print rcParams</span>
+<span class="c1">##rcParams[&quot;figure.figsize&quot;]=[9.0, 3.0]</span>
+<span class="c1">#rcParams[&#39;axes.labelsize&#39;] = 10</span>
+<span class="c1">#rcParams[&#39;xtick.labelsize&#39;] = 10</span>
+<span class="c1">#rcParams[&#39;ytick.labelsize&#39;] = 10</span>
+<span class="c1">#rcParams[&#39;legend.fontsize&#39;] = 10</span>
+<span class="c1">#</span>
+<span class="c1">#rcParams[&#39;xtick.major.width&#39;]=2</span>
+<span class="c1">#rcParams[&#39;lines.linewidth&#39;]=2</span>
+<span class="c1">#rcParams[&#39;xtick.major.size&#39;]=4</span>
+<span class="c1">#rcParams[&#39;axes.linewidth&#39;]=2</span>
+<span class="c1">#rcParams[&#39;ytick.major.width&#39;]=2</span>
+<span class="c1">#rcParams[&#39;ytick.major.size&#39;]=4</span>
+
+<span class="c1">#adjust matplotlib base cursor</span>
+<span class="c1">#from matplotlib.backend_bases import cursors</span>
+<span class="c1">#from matplotlib.backends import backend_qt4</span>
+<span class="c1">#from PySide.QtCore import Qt</span>
+<span class="c1">#backend_qt4.cursord[cursors.POINTER] = Qt.CursorShape.CrossCursor</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<div class="viewcode-block" id="Fig"><a class="viewcode-back" href="../../../plotter_doc/fig_format.html#taref.plotter.fig_format.Fig">[docs]</a><span class="k">class</span> <span class="nc">Fig</span><span class="p">(</span><span class="n">PlotMaster</span><span class="p">,</span> <span class="n">Operative</span><span class="p">):</span>
+    <span class="n">cid</span><span class="o">=</span><span class="n">Int</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">base_name</span><span class="o">=</span><span class="s2">&quot;plot&quot;</span>
+
+    <span class="n">corner_label</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Fig.add_label"><a class="viewcode-back" href="../../../plotter_doc/fig_format.html#taref.plotter.fig_format.Fig.add_label">[docs]</a>    <span class="k">def</span> <span class="nf">add_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">txt</span><span class="p">)</span></div>
+
+    <span class="n">show_cross_cursor</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">xlabel_size</span><span class="o">=</span><span class="n">Float</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+
+    <span class="n">ylabel_size</span><span class="o">=</span><span class="n">Float</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+
+    <span class="n">x_min</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+    <span class="n">x_max</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+    <span class="n">y_min</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+    <span class="n">y_max</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_default_x_min</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">first_plot</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">first_plot</span><span class="o">.</span><span class="n">xdata</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mf">0.01</span>
+
+    <span class="k">def</span> <span class="nf">_default_x_max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">first_plot</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">first_plot</span><span class="o">.</span><span class="n">xdata</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.01</span>
+
+    <span class="k">def</span> <span class="nf">_default_y_min</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">first_plot</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">first_plot</span><span class="o">.</span><span class="n">ydata</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mf">0.01</span>
+
+    <span class="k">def</span> <span class="nf">_default_y_max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">first_plot</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">first_plot</span><span class="o">.</span><span class="n">ydata</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.01</span>
+
+    <span class="n">auto_cs_xlim</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">auto_cs_ylim</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">cs_x_min</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+    <span class="n">cs_x_max</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+    <span class="n">cs_y_min</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+    <span class="n">cs_y_max</span><span class="o">=</span><span class="n">Float</span><span class="p">()</span>
+
+<span class="c1">#    def _default_cs_x_min(self):</span>
+<span class="c1">#        first_plot=self.plot_dict.values()[0]</span>
+<span class="c1">#        return float(min(first_plot.xdata))</span>
+<span class="c1">#</span>
+<span class="c1">#    def _default_x_max(self):</span>
+<span class="c1">#        first_plot=self.plot_dict.values()[0]</span>
+<span class="c1">#        return float(max(first_plot.xdata))</span>
+<span class="c1">#</span>
+<span class="c1">#    def _default_y_min(self):</span>
+<span class="c1">#        first_plot=self.plot_dict.values()[0]</span>
+<span class="c1">#        return float(min(first_plot.ydata))</span>
+<span class="c1">#</span>
+<span class="c1">#    def _default_y_max(self):</span>
+<span class="c1">#        first_plot=self.plot_dict.values()[0]</span>
+<span class="c1">#        return float(max(first_plot.ydata))</span>
+
+    <span class="k">def</span> <span class="nf">_default_cs_x_min</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_min</span>
+
+    <span class="k">def</span> <span class="nf">_default_cs_x_max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_max</span>
+
+    <span class="k">def</span> <span class="nf">_default_cs_y_min</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_min</span>
+
+    <span class="k">def</span> <span class="nf">_default_cs_y_max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_max</span>
+
+    <span class="nd">@observe</span><span class="p">(</span><span class="s2">&quot;cs_x_min&quot;</span><span class="p">,</span> <span class="s2">&quot;cs_x_max&quot;</span><span class="p">,</span> <span class="s2">&quot;cs_y_min&quot;</span><span class="p">,</span> <span class="s2">&quot;cs_y_max&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="Fig.cs_lim_update"><a class="viewcode-back" href="../../../plotter_doc/fig_format.html#taref.plotter.fig_format.Fig.cs_lim_update">[docs]</a>    <span class="k">def</span> <span class="nf">cs_lim_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">horiz_axe</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cs_y_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cs_y_max</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vert_axe</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cs_x_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cs_x_max</span><span class="p">)</span></div>
+        <span class="c1">#if self.horiz_fig.canvas!=None:</span>
+        <span class="c1">#    self.horiz_fig.canvas.draw()</span>
+        <span class="c1">#if self.vert_fig.canvas!=None:</span>
+        <span class="c1">#    self.vert_fig.canvas.draw()</span>
+
+    <span class="n">transparent</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">save_type</span><span class="o">=</span><span class="n">Enum</span><span class="p">(</span><span class="s2">&quot;png&quot;</span><span class="p">,</span> <span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="s2">&quot;ps&quot;</span><span class="p">,</span> <span class="s2">&quot;eps&quot;</span><span class="p">,</span><span class="s2">&quot;svg&quot;</span><span class="p">)</span>
+
+    <span class="n">auto_xlim</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">auto_ylim</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">auto_zlim</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">selected</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+
+    <span class="n">xlabel</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+    <span class="n">ylabel</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+    <span class="n">title</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+    <span class="n">xscale</span><span class="o">=</span><span class="n">Enum</span><span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="s1">&#39;log&#39;</span><span class="p">)</span>
+    <span class="n">yscale</span><span class="o">=</span><span class="n">Enum</span><span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="s1">&#39;log&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Fig.axes_set"><a class="viewcode-back" href="../../../plotter_doc/fig_format.html#taref.plotter.fig_format.Fig.axes_set">[docs]</a>    <span class="k">def</span> <span class="nf">axes_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+        <span class="n">simple_set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span></div>
+
+    <span class="nd">@plot_observe</span><span class="p">(</span><span class="s2">&quot;xscale&quot;</span><span class="p">,</span> <span class="s2">&quot;yscale&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;xlabel&quot;</span><span class="p">,</span> <span class="s2">&quot;ylabel&quot;</span><span class="p">,</span> <span class="n">immediate_update</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">axes_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">axes_set</span><span class="p">(</span><span class="n">change</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+
+    <span class="n">tight_layout</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">dpi</span><span class="o">=</span><span class="n">Int</span><span class="p">(</span><span class="mi">300</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Fig.figure_set"><a class="viewcode-back" href="../../../plotter_doc/fig_format.html#taref.plotter.fig_format.Fig.figure_set">[docs]</a>    <span class="k">def</span> <span class="nf">figure_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simple_set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span></div>
+
+    <span class="c1">#@plot_observe(&quot;tight_layout&quot;, &quot;dpi&quot;)</span>
+<div class="viewcode-block" id="Fig.figure_update"><a class="viewcode-back" href="../../../plotter_doc/fig_format.html#taref.plotter.fig_format.Fig.figure_update">[docs]</a>    <span class="k">def</span> <span class="nf">figure_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">figure_set</span><span class="p">(</span><span class="n">change</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span></div>
+
+    <span class="k">def</span> <span class="nf">_default_figure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fig_width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig_height</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span>
+        <span class="n">tight_layout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Fig.set_xlim"><a class="viewcode-back" href="../../../plotter_doc/fig_format.html#taref.plotter.fig_format.Fig.set_xlim">[docs]</a>    <span class="k">def</span> <span class="nf">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_min</span><span class="o">=</span><span class="n">xmin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_max</span><span class="o">=</span><span class="n">xmax</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Fig.set_ylim"><a class="viewcode-back" href="../../../plotter_doc/fig_format.html#taref.plotter.fig_format.Fig.set_ylim">[docs]</a>    <span class="k">def</span> <span class="nf">set_ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_min</span><span class="o">=</span><span class="n">ymin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_max</span><span class="o">=</span><span class="n">ymax</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span><span class="p">)</span></div>
+
+    <span class="nd">@private_property</span>
+    <span class="k">def</span> <span class="nf">view_window</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">imports</span><span class="p">():</span>
+            <span class="kn">from</span> <span class="nn">fig_format_e</span> <span class="kn">import</span> <span class="n">Main</span>
+        <span class="n">view</span><span class="o">=</span><span class="n">Main</span><span class="p">(</span><span class="n">pltr</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">view</span>
+
+    <span class="nd">@plot_observe</span><span class="p">(</span><span class="s2">&quot;xlabel_size&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">xlabel_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlabel_size</span><span class="p">)</span>
+
+    <span class="nd">@plot_observe</span><span class="p">(</span><span class="s2">&quot;ylabel_size&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">ylabel_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylabel_size</span><span class="p">)</span>
+
+    <span class="nd">@plot_observe</span><span class="p">(</span><span class="s2">&quot;x_min&quot;</span><span class="p">,</span> <span class="s2">&quot;x_max&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">x_lim_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_max</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_cross_section</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">horiz_axe</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_max</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">horiz_fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">!=</span><span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">horiz_fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+
+    <span class="nd">@plot_observe</span><span class="p">(</span><span class="s2">&quot;y_min&quot;</span><span class="p">,</span> <span class="s2">&quot;y_max&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">y_lim_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_max</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_cross_section</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vert_axe</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_max</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vert_fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">!=</span><span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">vert_fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+
+
+    <span class="nd">@plot_observe</span><span class="p">(</span><span class="s2">&quot;show_legend&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">legend_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_legend</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">legend_remove</span><span class="p">()</span></div>
+
+
+
+
+<span class="k">if</span> <span class="n">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+
+    <span class="c1">#pm=PlotMaster()</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">Plotter</span><span class="p">(</span><span class="n">fig_width</span><span class="o">=</span><span class="mf">9.0</span><span class="p">,</span> <span class="n">fig_height</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">meshgrid</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">linspace</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">300</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">n</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">meshgrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">X</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">Y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1">#a.figure=plt.figure(figsize=(8.5,4))</span>
+
+    <span class="n">a</span><span class="o">.</span><span class="n">colormesh</span><span class="p">(</span><span class="s2">&quot;colormesh&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">Z</span><span class="p">)</span>
+    <span class="k">print</span> <span class="n">a</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">get_size_inches</span><span class="p">()</span>
+    <span class="k">print</span> <span class="n">a</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">get_dpi</span><span class="p">()</span>
+    <span class="c1">#a.figure.set_size_inches((9.5, 3.0))</span>
+    <span class="c1">#print plt.plot(x)#,y,Z)</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="c1">#a.savefig() #figure.savefig(&quot;/Users/thomasaref/Documents/TA_software/test_colorm.pdf&quot;)#, format=&quot;eps&quot;)</span>
+
+    <span class="c1">#shower(a)</span>
+    <span class="c1">#b=Plotter()</span>
+    <span class="c1">#a.scatter_plot(&quot;scatter&quot;, [100,200,300], [100,200,300], marker=&quot;&lt;&quot;, marker_size=300)</span>
+    <span class="c1">#a.savefig(dir_path=&quot;/Users/thomasaref/Dropbox/Current stuff/Linneaus180416/&quot;, fig_name=&quot;test_colormap&quot;)</span>
+    <span class="c1">#d=CrossCursor(plotter=a)</span>
+    <span class="c1">#d.add_cursor()</span>
+    <span class="c1">#shower(a)</span>
+
+<span class="c1">#    def line_plot(self, zname, zdata, *args, **kwargs):</span>
+<span class="c1">#        &quot;&quot;&quot;Uses LineCollection for efficient plotting of lines.</span>
+<span class="c1">#           In kwargs, if raw=True, expects zdata is a list of lists of (x,y) tuples.</span>
+<span class="c1">#           else if no args are sent, auto calculates x data.</span>
+<span class="c1">#           otherwise assumes zdata is x data and args[0] is y data.</span>
+<span class="c1">#           In kwargs, if append=False, data overwrites existing data in self.clts</span>
+<span class="c1">#           If tuples, xlim or ylim are passed in kwargs, will use those for setting limits&quot;&quot;&quot;</span>
+<span class="c1">#</span>
+<span class="c1">#        xyf=self.xyfs.get(zname, None)</span>
+<span class="c1">#        if xyf is None:</span>
+<span class="c1">#            xyf=XYFormat(plotter=self, name=zname, plot_type=&quot;line&quot;)</span>
+<span class="c1">#        clt=xyf.clt</span>
+<span class="c1">#</span>
+<span class="c1">#        xlim=kwargs.pop(&quot;xlim&quot;, None)</span>
+<span class="c1">#        ylim=kwargs.pop(&quot;ylim&quot;, None)</span>
+<span class="c1">#</span>
+<span class="c1">#        if &quot;color&quot; in kwargs:</span>
+<span class="c1">#            if kwargs[&quot;color&quot;]==&quot;auto&quot;:</span>
+<span class="c1">#                kwargs.pop(&quot;color&quot;)</span>
+<span class="c1">#                self.autocolor=True</span>
+<span class="c1">#            else:</span>
+<span class="c1">#                self.autocolor=False</span>
+<span class="c1">#        data=[]</span>
+<span class="c1">#        self.append=kwargs.pop(&quot;append&quot;, self.append)</span>
+<span class="c1">#        if self.append:</span>
+<span class="c1">#            if clt is not None:</span>
+<span class="c1">#                data=clt.get_segments()</span>
+<span class="c1">#        data_shape=len(shape(zdata))</span>
+<span class="c1">#        if data_shape&gt;2:</span>
+<span class="c1">#            data.extend(zdata)</span>
+<span class="c1">#        else:</span>
+<span class="c1">#            if data_shape==2:</span>
+<span class="c1">#                x=zdata[0]</span>
+<span class="c1">#                y=zdata[1]</span>
+<span class="c1">#                data.append(list(zip(x,y)))</span>
+<span class="c1">#            elif args==():</span>
+<span class="c1">#                x=arange(len(zdata))</span>
+<span class="c1">#                y=zdata</span>
+<span class="c1">#                data.append(list(zip(x,y)))</span>
+<span class="c1">#            else:</span>
+<span class="c1">#                x=zdata</span>
+<span class="c1">#                data.extend([list(zip(x,y)) for y in args])</span>
+<span class="c1">#        if clt is None:</span>
+<span class="c1">#            clt=LineCollection(data, **kwargs)</span>
+<span class="c1">#            self.axe.add_collection(clt)</span>
+<span class="c1">#        else:</span>
+<span class="c1">#            clt.set_verts(data)</span>
+<span class="c1">#            if kwargs!={}:</span>
+<span class="c1">#                clt.set(**kwargs)</span>
+<span class="c1">#        if self.autocolor:</span>
+<span class="c1">#            clt.set_array(arange(len(data)))</span>
+<span class="c1">#        if &quot;color&quot; in kwargs:</span>
+<span class="c1">#            clt.set_array(None)</span>
+<span class="c1">##        if xlim is None or ylim is None: #try autosetting limits if xlim or ylim not specified</span>
+<span class="c1">##            data=sqze(sqze([item.get_segments() for item in self.clts.values() if isinstance(item, LineCollection)]))</span>
+<span class="c1">##            if xlim is None:</span>
+<span class="c1">##                xlim=(min(data, key = lambda t: t[0])[0], max(data, key = lambda t: t[0])[0])</span>
+<span class="c1">##            if ylim is None:</span>
+<span class="c1">##                ylim=(min(data, key = lambda t: t[1])[1], max(data, key = lambda t: t[1])[1])</span>
+<span class="c1">##        self.set_xlim(*xlim)</span>
+<span class="c1">##        self.set_ylim(*ylim)</span>
+<span class="c1">#        xyf.clt=clt</span>
+<span class="c1">#        self.xyfs[zname]=xyf #XYFormat(plotter=self, name=zname, plot_type=&quot;line&quot;, label=kwargs.get(&quot;label&quot;, &quot;&quot;), edgecolor=kwargs.get(&quot;color&quot;, &quot;blue&quot;))</span>
+<span class="c1">#</span>
+<span class="c1">#    def scatter_plot(self, zname, *args, **kwargs):</span>
+<span class="c1">#        self.append=kwargs.pop(&quot;append&quot;, self.append)</span>
+<span class="c1">#        if not self.append:</span>
+<span class="c1">#            self.remove_collection(zname)</span>
+<span class="c1">#        self.clts[zname]=self.axe.scatter(*args, **kwargs)</span>
+<span class="c1">#        self.xyfs[zname]=XYFormat(plotter=self, name=zname, plot_type=&quot;scatter&quot;, label=kwargs.get(&quot;label&quot;, &quot;&quot;), edgecolor=kwargs.get(&quot;color&quot;, &quot;blue&quot;))</span>
+<span class="c1">#</span>
+<span class="c1">#    def colormesh(self, zname, *args, **kwargs):</span>
+<span class="c1">#        self.remove_collection(zname)</span>
+<span class="c1">#        clt=self.axe.pcolormesh(*args, **kwargs)</span>
+<span class="c1">#        self.xyfs[zname]=XYFormat(plotter=self, name=zname, clt=clt)</span>
+<span class="c1">#        self.alldata=args[0]</span>
+<span class="c1">#        #self.line_plot(zname+&quot;lines&quot;, arange(len(args[0][0])), *args[0])</span>
+<span class="c1">#        #self.xyfs[zname+&quot;lines&quot;]=XYFormat(plotter=self, name=zname+&quot;lines&quot;)</span>
+<span class="c1">#        #log_debug(args[0])</span>
+<span class="c1">#    def axvline(self, zname, x, **kwargs):</span>
+<span class="c1">#        self.remove_collection(zname)</span>
+<span class="c1">#        self.axe.axvline(x, **kwargs)</span>
+<span class="c1">#</span>
+<span class="c1">#    def poly_plot(self, zname, zdata, zcolor=None):</span>
+<span class="c1">#        if zname not in self.clts:</span>
+<span class="c1">#            clt=PolyCollection(zdata, alpha=0.5, antialiased=True)</span>
+<span class="c1">#            if zcolor is not None:</span>
+<span class="c1">#                clt.set_color(zcolor) #colorConverter.to_rgba(zcolor))</span>
+<span class="c1">#            self.clts[zname]=clt</span>
+<span class="c1">#            self.axe.add_collection(self.clts[zname])</span>
+<span class="c1">#        else:</span>
+<span class="c1">#            self.clts[zname].set_verts(zdata)</span>
+<span class="c1">#</span>
+<span class="c1">#    def add_text(self, text, x, y, **kwargs):</span>
+<span class="c1">#         &quot;&quot;&quot;adds text at data location x,y&quot;&quot;&quot;</span>
+<span class="c1">#         self.axe.text(x, y, text, **kwargs)</span>
+<span class="c1">#</span>
+<span class="c1">#    def remove_texts(self):</span>
+<span class="c1">#        &quot;&quot;&quot;removes all texts from axes&quot;&quot;&quot;</span>
+<span class="c1">#        self.axe.texts=[]</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

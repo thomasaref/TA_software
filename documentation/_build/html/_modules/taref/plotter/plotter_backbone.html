@@ -1,0 +1,269 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taref.plotter.plotter_backbone &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for taref.plotter.plotter_backbone</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Thu Feb  4 12:48:42 2016</span>
+
+<span class="sd">@author: thomasaref</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1">#from taref.core.log import log_debug</span>
+
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">rcParams</span>
+<span class="k">print</span> <span class="n">rcParams</span>
+<span class="c1">#rcParams[&quot;figure.figsize&quot;]=[9.0, 3.0]</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;font.size&quot;</span><span class="p">]</span><span class="o">=</span><span class="mi">8</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;axes.labelsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;xtick.labelsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;ytick.labelsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;legend.fontsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span>
+
+<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;xtick.major.width&#39;</span><span class="p">]</span><span class="o">=</span><span class="mi">2</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;lines.linewidth&#39;</span><span class="p">]</span><span class="o">=</span><span class="mi">2</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;xtick.major.size&#39;</span><span class="p">]</span><span class="o">=</span><span class="mi">4</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;axes.linewidth&#39;</span><span class="p">]</span><span class="o">=</span><span class="mi">2</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;ytick.major.width&#39;</span><span class="p">]</span><span class="o">=</span><span class="mi">2</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;ytick.major.size&#39;</span><span class="p">]</span><span class="o">=</span><span class="mi">4</span>
+
+<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">observe</span><span class="p">,</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">Typed</span><span class="p">,</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">cached_property</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Unicode</span><span class="p">,</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">Int</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">matplotlib.axes</span> <span class="kn">import</span> <span class="n">Axes</span>
+<span class="kn">from</span> <span class="nn">matplotlib.figure</span> <span class="kn">import</span> <span class="n">Figure</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib.colorbar</span> <span class="kn">import</span> <span class="n">Colorbar</span>
+
+
+<div class="viewcode-block" id="plot_observe"><a class="viewcode-back" href="../../../plotter_doc/plotter_backbone.html#taref.plotter.fig_format.plot_observe">[docs]</a><span class="k">class</span> <span class="nc">plot_observe</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;decorator object that adds auto drawing of plot to observe decorator&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;if kwarg update_legend is true, will update legend,</span>
+<span class="sd">            if kwarg immediate_update is true, will perform on create&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">=</span><span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_legend</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;update_legend&quot;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">immediate_update</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;immediate_update&quot;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">new_func</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;update&quot;</span><span class="p">:</span>
+                <span class="n">func</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">change</span><span class="p">)</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">update_plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update_legend</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;create&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">immediate_update</span><span class="p">:</span>
+                    <span class="n">func</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">change</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">observe</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)(</span><span class="n">new_func</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="simple_set"><a class="viewcode-back" href="../../../plotter_doc/plotter_backbone.html#taref.plotter.fig_format.simple_set">[docs]</a><span class="k">def</span> <span class="nf">simple_set</span><span class="p">(</span><span class="n">clt</span><span class="p">,</span> <span class="n">mpl</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">set_str</span><span class="o">=</span><span class="s2">&quot;set_&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;utility function that uses clt set_ function to set param&quot;&quot;&quot;</span>
+    <span class="nb">getattr</span><span class="p">(</span><span class="n">clt</span><span class="p">,</span> <span class="n">set_str</span><span class="o">+</span><span class="n">param</span><span class="p">)(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">mpl</span><span class="p">,</span> <span class="n">param</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="PlotMaster"><a class="viewcode-back" href="../../../plotter_doc/plotter_backbone.html#taref.plotter.fig_format.PlotMaster">[docs]</a><span class="k">class</span> <span class="nc">PlotMaster</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;base plot class contains figure, axes, plot_dict&quot;&quot;&quot;</span>
+    <span class="n">figure</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">Figure</span><span class="p">)</span>
+    <span class="n">fig_height</span><span class="o">=</span><span class="n">Float</span><span class="p">(</span><span class="mf">4.5</span><span class="p">)</span>
+    <span class="n">fig_width</span><span class="o">=</span><span class="n">Float</span><span class="p">(</span><span class="mf">4.5</span><span class="p">)</span>
+    <span class="n">colorbar</span><span class="o">=</span><span class="n">Instance</span><span class="p">(</span><span class="n">Colorbar</span><span class="p">)</span>
+
+    <span class="n">axes</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">Axes</span><span class="p">)</span>
+    <span class="n">auto_draw</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">show_legend</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">plot_dict</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">,</span> <span class="p">())</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s2">&quot;dict of plots contained in figure&quot;</span><span class="p">)</span>
+
+    <span class="n">horiz_fig</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">Figure</span><span class="p">)</span>
+    <span class="n">horiz_axe</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">Axes</span><span class="p">)</span>
+    <span class="n">vert_fig</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">Figure</span><span class="p">)</span>
+    <span class="n">vert_axe</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">Axes</span><span class="p">)</span>
+
+    <span class="n">selected</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span>
+
+    <span class="n">show_cross_section</span><span class="o">=</span><span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">nrows</span><span class="o">=</span><span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ncols</span><span class="o">=</span><span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">nplot</span><span class="o">=</span><span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_observe_nplot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="o">!=</span><span class="s2">&quot;create&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nrows</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncols</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nplot</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_default_figure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fig_height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig_width</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_default_axes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+         <span class="n">axes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nrows</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncols</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nplot</span><span class="p">)</span>
+         <span class="c1">#axes.autoscale_view(True)</span>
+         <span class="k">return</span> <span class="n">axes</span>
+
+    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">canvas</span><span class="o">!=</span><span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s2">&quot;plot_names&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PlotMaster.legend"><a class="viewcode-back" href="../../../plotter_doc/plotter_backbone.html#taref.plotter.fig_format.PlotMaster.legend">[docs]</a>    <span class="k">def</span> <span class="nf">legend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;adds the legend and makes it draggable if it does not exist&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">legend_remove</span><span class="p">()</span>
+        <span class="n">lgnd</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">lgnd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">lgnd</span><span class="o">.</span><span class="n">draggable</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PlotMaster.legend_remove"><a class="viewcode-back" href="../../../plotter_doc/plotter_backbone.html#taref.plotter.fig_format.PlotMaster.legend_remove">[docs]</a>    <span class="k">def</span> <span class="nf">legend_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;removes the legend if it exists&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">legend_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">legend_</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span></div>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">plot_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_default_horiz_fig</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fig_width</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_default_horiz_axe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">h_axe</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">horiz_fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span><span class="c1">#, sharex=self.axes)</span>
+        <span class="k">return</span> <span class="n">h_axe</span>
+
+    <span class="k">def</span> <span class="nf">_default_vert_fig</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig_height</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_default_vert_axe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">v_axe</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">vert_fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span><span class="c1">#, sharey=self.axes)</span>
+        <span class="k">return</span> <span class="n">v_axe</span>
+
+    <span class="k">def</span> <span class="nf">update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">update_legend</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_draw</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">update_legend</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_legend</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="PlotUpdate"><a class="viewcode-back" href="../../../plotter_doc/plotter_backbone.html#taref.plotter.fig_format.PlotUpdate">[docs]</a><span class="k">class</span> <span class="nc">PlotUpdate</span><span class="p">(</span><span class="n">Atom</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;a base clase that contains a plotter object and defines the update plot method (shortcut to plotter method)&quot;&quot;&quot;</span>
+    <span class="n">plotter</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">PlotMaster</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">update_legend</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plotter</span><span class="o">.</span><span class="n">update_plot</span><span class="p">(</span><span class="n">update_legend</span><span class="o">=</span><span class="n">update_legend</span><span class="p">)</span></div>
+
+<span class="c1">#Spectral, coolwarm Set1 brg_r</span>
+<span class="n">colormap_names</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;RdBu_r&quot;</span><span class="p">,</span> <span class="s2">&quot;RdBu&quot;</span><span class="p">,</span> <span class="s2">&quot;spectral&quot;</span><span class="p">,</span> <span class="s2">&quot;spectral_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Spectral&quot;</span><span class="p">,</span> <span class="s2">&quot;Spectral_r&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;coolwarm&quot;</span><span class="p">,</span> <span class="s2">&quot;coolwarm_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Set1&quot;</span><span class="p">,</span> <span class="s2">&quot;Set1_r&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_ncar&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_ncar_r&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;jet&quot;</span><span class="p">,</span> <span class="s2">&quot;jet_r&quot;</span><span class="p">,</span> <span class="s2">&quot;bwr&quot;</span><span class="p">,</span> <span class="s2">&quot;bwr_r&quot;</span><span class="p">,</span>  <span class="s2">&quot;brg&quot;</span><span class="p">,</span>  <span class="s2">&quot;brg_r&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;seismic&quot;</span><span class="p">,</span> <span class="s2">&quot;seismic_r&quot;</span><span class="p">,</span> <span class="s2">&quot;nipy_spectral&quot;</span><span class="p">,</span> <span class="s2">&quot;nipy_spectral_r&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;summer&quot;</span><span class="p">,</span>  <span class="s2">&quot;Wistia_r&quot;</span><span class="p">,</span> <span class="s2">&quot;pink_r&quot;</span><span class="p">,</span>  <span class="s2">&quot;Set2&quot;</span><span class="p">,</span> <span class="s2">&quot;Set3&quot;</span><span class="p">,</span>  <span class="s2">&quot;Dark2&quot;</span><span class="p">,</span> <span class="s2">&quot;prism&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;PuOr_r&quot;</span><span class="p">,</span> <span class="s2">&quot;afmhot_r&quot;</span><span class="p">,</span> <span class="s2">&quot;terrain_r&quot;</span><span class="p">,</span> <span class="s2">&quot;PuBuGn_r&quot;</span><span class="p">,</span> <span class="s2">&quot;RdPu&quot;</span><span class="p">,</span>  <span class="s2">&quot;gist_yarg_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Dark2_r&quot;</span><span class="p">,</span> <span class="s2">&quot;YlGnBu&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;RdYlBu&quot;</span><span class="p">,</span> <span class="s2">&quot;hot_r&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_rainbow_r&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_stern&quot;</span><span class="p">,</span> <span class="s2">&quot;PuBu_r&quot;</span><span class="p">,</span> <span class="s2">&quot;cool_r&quot;</span><span class="p">,</span> <span class="s2">&quot;cool&quot;</span><span class="p">,</span> <span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="s2">&quot;copper_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Greens_r&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;GnBu&quot;</span><span class="p">,</span> <span class="s2">&quot;spring_r&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_rainbow&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_heat_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Wistia&quot;</span><span class="p">,</span> <span class="s2">&quot;OrRd_r&quot;</span><span class="p">,</span> <span class="s2">&quot;CMRmap&quot;</span><span class="p">,</span> <span class="s2">&quot;bone&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_stern_r&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;RdYlGn&quot;</span><span class="p">,</span> <span class="s2">&quot;Pastel2_r&quot;</span><span class="p">,</span> <span class="s2">&quot;spring&quot;</span><span class="p">,</span> <span class="s2">&quot;terrain&quot;</span><span class="p">,</span> <span class="s2">&quot;YlOrRd_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Set2_r&quot;</span><span class="p">,</span> <span class="s2">&quot;winter_r&quot;</span><span class="p">,</span> <span class="s2">&quot;PuBu&quot;</span><span class="p">,</span> <span class="s2">&quot;RdGy_r&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;rainbow&quot;</span><span class="p">,</span> <span class="s2">&quot;flag_r&quot;</span><span class="p">,</span>  <span class="s2">&quot;RdPu_r&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_yarg&quot;</span><span class="p">,</span> <span class="s2">&quot;BuGn&quot;</span><span class="p">,</span> <span class="s2">&quot;Paired_r&quot;</span><span class="p">,</span> <span class="s2">&quot;hsv_r&quot;</span><span class="p">,</span>  <span class="s2">&quot;cubehelix&quot;</span><span class="p">,</span> <span class="s2">&quot;Greens&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;PRGn&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_heat&quot;</span><span class="p">,</span>  <span class="s2">&quot;Paired&quot;</span><span class="p">,</span> <span class="s2">&quot;hsv&quot;</span><span class="p">,</span> <span class="s2">&quot;Oranges_r&quot;</span><span class="p">,</span> <span class="s2">&quot;prism_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Pastel2&quot;</span><span class="p">,</span> <span class="s2">&quot;Pastel1_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Pastel1&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gray_r&quot;</span><span class="p">,</span>   <span class="s2">&quot;gnuplot2_r&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_earth&quot;</span><span class="p">,</span> <span class="s2">&quot;YlGnBu_r&quot;</span><span class="p">,</span> <span class="s2">&quot;copper&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_earth_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Set3_r&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;OrRd&quot;</span><span class="p">,</span> <span class="s2">&quot;gnuplot_r&quot;</span><span class="p">,</span> <span class="s2">&quot;ocean_r&quot;</span><span class="p">,</span>  <span class="s2">&quot;gnuplot2&quot;</span><span class="p">,</span> <span class="s2">&quot;PuRd_r&quot;</span><span class="p">,</span> <span class="s2">&quot;bone_r&quot;</span><span class="p">,</span> <span class="s2">&quot;BuPu&quot;</span><span class="p">,</span> <span class="s2">&quot;Oranges&quot;</span><span class="p">,</span> <span class="s2">&quot;RdYlGn_r&quot;</span><span class="p">,</span> <span class="s2">&quot;PiYG&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;CMRmap_r&quot;</span><span class="p">,</span> <span class="s2">&quot;YlGn&quot;</span><span class="p">,</span> <span class="s2">&quot;binary_r&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_gray_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Accent&quot;</span><span class="p">,</span> <span class="s2">&quot;BuPu_r&quot;</span><span class="p">,</span> <span class="s2">&quot;gist_gray&quot;</span><span class="p">,</span> <span class="s2">&quot;flag&quot;</span><span class="p">,</span> <span class="s2">&quot;BrBG&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Reds&quot;</span><span class="p">,</span> <span class="s2">&quot;summer_r&quot;</span><span class="p">,</span> <span class="s2">&quot;GnBu_r&quot;</span><span class="p">,</span> <span class="s2">&quot;BrBG_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Reds_r&quot;</span><span class="p">,</span> <span class="s2">&quot;RdGy&quot;</span><span class="p">,</span> <span class="s2">&quot;PuRd&quot;</span><span class="p">,</span> <span class="s2">&quot;Accent_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Blues&quot;</span><span class="p">,</span> <span class="s2">&quot;autumn_r&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;autumn&quot;</span><span class="p">,</span> <span class="s2">&quot;cubehelix_r&quot;</span><span class="p">,</span> <span class="s2">&quot;ocean&quot;</span><span class="p">,</span> <span class="s2">&quot;PRGn_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Greys_r&quot;</span><span class="p">,</span> <span class="s2">&quot;pink&quot;</span><span class="p">,</span> <span class="s2">&quot;binary&quot;</span><span class="p">,</span> <span class="s2">&quot;winter&quot;</span><span class="p">,</span> <span class="s2">&quot;gnuplot&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;RdYlBu_r&quot;</span><span class="p">,</span> <span class="s2">&quot;hot&quot;</span><span class="p">,</span> <span class="s2">&quot;YlOrBr&quot;</span><span class="p">,</span> <span class="s2">&quot;rainbow_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Purples_r&quot;</span><span class="p">,</span> <span class="s2">&quot;PiYG_r&quot;</span><span class="p">,</span> <span class="s2">&quot;YlGn_r&quot;</span><span class="p">,</span> <span class="s2">&quot;Blues_r&quot;</span><span class="p">,</span> <span class="s2">&quot;YlOrBr_r&quot;</span>
+                <span class="p">,</span> <span class="s2">&quot;Purples&quot;</span><span class="p">,</span>  <span class="s2">&quot;Greys&quot;</span><span class="p">,</span> <span class="s2">&quot;BuGn_r&quot;</span><span class="p">,</span> <span class="s2">&quot;YlOrRd&quot;</span><span class="p">,</span> <span class="s2">&quot;PuOr&quot;</span><span class="p">,</span> <span class="s2">&quot;PuBuGn&quot;</span><span class="p">,</span> <span class="s2">&quot;afmhot&quot;</span><span class="p">)</span>
+
+<span class="n">colormap_names2</span><span class="o">=</span><span class="p">(</span><span class="s2">u&quot;bwr&quot;</span><span class="p">,</span> <span class="s2">&quot;jet&quot;</span><span class="p">,</span> <span class="s2">&quot;rainbow&quot;</span><span class="p">,</span> <span class="s2">&quot;nipy_spectral&quot;</span><span class="p">,</span> <span class="s1">u&#39;cool&#39;</span><span class="p">,</span> <span class="s1">u&#39;coolwarm&#39;</span><span class="p">,</span> <span class="s1">u&#39;copper&#39;</span><span class="p">,</span> <span class="s1">&#39;cubehelix&#39;</span><span class="p">,</span> <span class="s1">u&#39;flag&#39;</span><span class="p">,</span> <span class="s1">u&#39;gist_earth&#39;</span><span class="p">,</span> <span class="s1">u&#39;gist_gray&#39;</span><span class="p">,</span>
+                 <span class="s1">u&#39;gist_heat&#39;</span><span class="p">,</span> <span class="s1">u&#39;gist_ncar&#39;</span><span class="p">,</span> <span class="s1">u&#39;gist_rainbow&#39;</span><span class="p">,</span> <span class="s1">u&#39;gist_stern&#39;</span><span class="p">,</span> <span class="s1">u&#39;gist_yarg&#39;</span><span class="p">,</span> <span class="s1">u&#39;gnuplot&#39;</span><span class="p">,</span> <span class="s1">u&#39;gnuplot2&#39;</span><span class="p">,</span> <span class="s1">u&#39;gray&#39;</span><span class="p">,</span> <span class="s1">u&#39;hot&#39;</span><span class="p">,</span> <span class="s1">u&#39;hsv&#39;</span><span class="p">,</span>  <span class="s1">u&#39;ocean&#39;</span><span class="p">,</span> <span class="s1">u&#39;pink&#39;</span><span class="p">,</span> <span class="s1">u&#39;prism&#39;</span><span class="p">,</span>
+                 <span class="s1">u&#39;seismic&#39;</span><span class="p">,</span> <span class="s1">u&#39;spectral&#39;</span><span class="p">,</span> <span class="s1">u&#39;spring&#39;</span><span class="p">,</span> <span class="s1">u&#39;summer&#39;</span><span class="p">,</span> <span class="s1">u&#39;terrain&#39;</span><span class="p">,</span> <span class="s1">u&#39;winter&#39;</span><span class="p">,</span> <span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="s1">&#39;inferno&#39;</span><span class="p">,</span> <span class="s1">&#39;plasma&#39;</span><span class="p">,</span> <span class="s1">&#39;magma&#39;</span><span class="p">)</span>
+
+<span class="n">cmaps</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Perceptually Uniform Sequential&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="s1">&#39;inferno&#39;</span><span class="p">,</span> <span class="s1">&#39;plasma&#39;</span><span class="p">,</span> <span class="s1">&#39;magma&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;Sequential&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Blues&#39;</span><span class="p">,</span> <span class="s1">&#39;BuGn&#39;</span><span class="p">,</span> <span class="s1">&#39;BuPu&#39;</span><span class="p">,</span> <span class="s1">&#39;GnBu&#39;</span><span class="p">,</span> <span class="s1">&#39;Greens&#39;</span><span class="p">,</span> <span class="s1">&#39;Greys&#39;</span><span class="p">,</span> <span class="s1">&#39;Oranges&#39;</span><span class="p">,</span> <span class="s1">&#39;OrRd&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;PuBu&#39;</span><span class="p">,</span> <span class="s1">&#39;PuBuGn&#39;</span><span class="p">,</span> <span class="s1">&#39;PuRd&#39;</span><span class="p">,</span> <span class="s1">&#39;Purples&#39;</span><span class="p">,</span> <span class="s1">&#39;RdPu&#39;</span><span class="p">,</span> <span class="s1">&#39;Reds&#39;</span><span class="p">,</span> <span class="s1">&#39;YlGn&#39;</span><span class="p">,</span> <span class="s1">&#39;YlGnBu&#39;</span><span class="p">,</span> <span class="s1">&#39;YlOrBr&#39;</span><span class="p">,</span> <span class="s1">&#39;YlOrRd&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;Sequential (2)&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;afmhot&#39;</span><span class="p">,</span> <span class="s1">&#39;autumn&#39;</span><span class="p">,</span> <span class="s1">&#39;bone&#39;</span><span class="p">,</span> <span class="s1">&#39;cool&#39;</span><span class="p">,</span> <span class="s1">&#39;copper&#39;</span><span class="p">,</span> <span class="s1">&#39;gist_heat&#39;</span><span class="p">,</span> <span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="s1">&#39;hot&#39;</span><span class="p">,</span> <span class="s1">&#39;pink&#39;</span><span class="p">,</span> <span class="s1">&#39;spring&#39;</span><span class="p">,</span> <span class="s1">&#39;summer&#39;</span><span class="p">,</span> <span class="s1">&#39;winter&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;Diverging&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;BrBG&#39;</span><span class="p">,</span> <span class="s1">&#39;bwr&#39;</span><span class="p">,</span> <span class="s1">&#39;coolwarm&#39;</span><span class="p">,</span> <span class="s1">&#39;PiYG&#39;</span><span class="p">,</span> <span class="s1">&#39;PRGn&#39;</span><span class="p">,</span> <span class="s1">&#39;PuOr&#39;</span><span class="p">,</span> <span class="s1">&#39;RdBu&#39;</span><span class="p">,</span> <span class="s1">&#39;RdGy&#39;</span><span class="p">,</span> <span class="s1">&#39;RdYlBu&#39;</span><span class="p">,</span> <span class="s1">&#39;RdYlGn&#39;</span><span class="p">,</span> <span class="s1">&#39;Spectral&#39;</span><span class="p">,</span><span class="s1">&#39;seismic&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;Qualitative&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Accent&#39;</span><span class="p">,</span> <span class="s1">&#39;Dark2&#39;</span><span class="p">,</span> <span class="s1">&#39;Paired&#39;</span><span class="p">,</span> <span class="s1">&#39;Pastel1&#39;</span><span class="p">,</span><span class="s1">&#39;Pastel2&#39;</span><span class="p">,</span> <span class="s1">&#39;Set1&#39;</span><span class="p">,</span> <span class="s1">&#39;Set2&#39;</span><span class="p">,</span> <span class="s1">&#39;Set3&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;Miscellaneous&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;gist_earth&#39;</span><span class="p">,</span> <span class="s1">&#39;terrain&#39;</span><span class="p">,</span> <span class="s1">&#39;ocean&#39;</span><span class="p">,</span> <span class="s1">&#39;gist_stern&#39;</span><span class="p">,</span> <span class="s1">&#39;brg&#39;</span><span class="p">,</span> <span class="s1">&#39;CMRmap&#39;</span><span class="p">,</span> <span class="s1">&#39;cubehelix&#39;</span><span class="p">,</span><span class="s1">&#39;gnuplot&#39;</span><span class="p">,</span> <span class="s1">&#39;gnuplot2&#39;</span><span class="p">,</span> <span class="s1">&#39;gist_ncar&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;nipy_spectral&#39;</span><span class="p">,</span> <span class="s1">&#39;jet&#39;</span><span class="p">,</span> <span class="s1">&#39;rainbow&#39;</span><span class="p">,</span><span class="s1">&#39;gist_rainbow&#39;</span><span class="p">,</span> <span class="s1">&#39;hsv&#39;</span><span class="p">,</span> <span class="s1">&#39;flag&#39;</span><span class="p">,</span> <span class="s1">&#39;prism&#39;</span><span class="p">]}</span>
+
+<span class="n">colors_tuple</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;purple&#39;</span><span class="p">,</span>  <span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="s1">&#39;darkgray&#39;</span><span class="p">,</span> <span class="s1">&#39;cyan&#39;</span><span class="p">,</span> <span class="s1">&#39;magenta&#39;</span><span class="p">,</span> <span class="s1">&#39;orange&#39;</span><span class="p">,</span> <span class="s1">&#39;darkblue&#39;</span><span class="p">,</span> <span class="s1">&#39;darkred&#39;</span><span class="p">)</span>
+
+<span class="n">markers_tuple</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span><span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;8&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="s2">&quot;h&quot;</span><span class="p">,</span> <span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;|&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot;$2/3$&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">plot_observe</span><span class="p">(</span><span class="s2">&quot;blah&quot;</span><span class="p">,</span> <span class="s2">&quot;upd&quot;</span><span class="p">)</span>
+    <span class="k">print</span> <span class="n">a</span><span class="o">.</span><span class="n">args</span>
+    <span class="k">print</span> <span class="n">a</span><span class="o">.</span><span class="n">update_legend</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

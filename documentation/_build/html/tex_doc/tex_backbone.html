@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tex_backbone &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-taref.tex.tex_backbone">
+<span id="tex-backbone"></span><h1>tex_backbone<a class="headerlink" href="#module-taref.tex.tex_backbone" title="Permalink to this headline">¶</a></h1>
+<p>Created on Mon Jan  4 05:20:56 2016</p>
+<p>&#64;author: thomasaref</p>
+<p>functions for creating latex documents</p>
+<dl class="function">
+<dt id="taref.tex.tex_backbone.add_mult_fig">
+<code class="descclassname">taref.tex.tex_backbone.</code><code class="descname">add_mult_fig</code><span class="sig-paren">(</span><em>graph_gen</em>, <em>tex</em>, <em>dir_path</em>, <em>fig_name</em>, <em>caption=''</em>, <em>label=''</em>, <em>width=0.49</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/tex/tex_backbone.html#add_mult_fig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.tex.tex_backbone.add_mult_fig" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds a graph to a multi figure using the function graph_gen and given kwargs</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.tex.tex_backbone.cd">
+<code class="descclassname">taref.tex.tex_backbone.</code><code class="descname">cd</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/tex/tex_backbone.html#cd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.tex.tex_backbone.cd" title="Permalink to this definition">¶</a></dt>
+<dd><p>a context manager that changes directory to newdir during it&#8217;s context and switches back to the starting directory when done</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.tex.tex_backbone.compile_tex">
+<code class="descclassname">taref.tex.tex_backbone.</code><code class="descname">compile_tex</code><span class="sig-paren">(</span><em>dir_path</em>, <em>file_name</em>, <em>cmd='/usr/texbin/pdflatex'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/tex/tex_backbone.html#compile_tex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.tex.tex_backbone.compile_tex" title="Permalink to this definition">¶</a></dt>
+<dd><p>uses subprocess call to compile and show pdf using pdflatex.
+Might need to check path of pdflatex command with which command in terminal</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.tex.tex_backbone.extract_block">
+<code class="descclassname">taref.tex.tex_backbone.</code><code class="descname">extract_block</code><span class="sig-paren">(</span><em>name</em>, <em>str_list</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/tex/tex_backbone.html#extract_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.tex.tex_backbone.extract_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>reads a block in a latex document marked with the commands pyb and pye</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.tex.tex_backbone.include_figure">
+<code class="descclassname">taref.tex.tex_backbone.</code><code class="descname">include_figure</code><span class="sig-paren">(</span><em>graph_gen</em>, <em>tex</em>, <em>dir_path</em>, <em>fig_name</em>, <em>caption=''</em>, <em>label=''</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/tex/tex_backbone.html#include_figure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.tex.tex_backbone.include_figure" title="Permalink to this definition">¶</a></dt>
+<dd><p>uses the passed function graph_gen and kwargs to generate a figure and save it to the given file path</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.tex.tex_backbone.include_image">
+<code class="descclassname">taref.tex.tex_backbone.</code><code class="descname">include_image</code><span class="sig-paren">(</span><em>tex</em>, <em>relative_path</em>, <em>fig_name</em>, <em>caption=''</em>, <em>label=''</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/tex/tex_backbone.html#include_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.tex.tex_backbone.include_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>inserts th image specified by dir_path and fig_name into the list tex</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.tex.tex_backbone.make_table">
+<code class="descclassname">taref.tex.tex_backbone.</code><code class="descname">make_table</code><span class="sig-paren">(</span><em>tex</em>, <em>table_values</em>, <em>table_format=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/tex/tex_backbone.html#make_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.tex.tex_backbone.make_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>makes a latex table from table values</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.tex.tex_backbone.mult_fig_end">
+<code class="descclassname">taref.tex.tex_backbone.</code><code class="descname">mult_fig_end</code><span class="sig-paren">(</span><em>tex</em>, <em>caption</em>, <em>label='fig:setup'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/tex/tex_backbone.html#mult_fig_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.tex.tex_backbone.mult_fig_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>ends a multi figure with many subfigues</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.tex.tex_backbone.mult_fig_start">
+<code class="descclassname">taref.tex.tex_backbone.</code><code class="descname">mult_fig_start</code><span class="sig-paren">(</span><em>tex</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/tex/tex_backbone.html#mult_fig_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.tex.tex_backbone.mult_fig_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>starts a multi figure with many subfigures</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="taref.tex.tex_backbone.texwrap">
+<code class="descclassname">taref.tex.tex_backbone.</code><code class="descname">texwrap</code><span class="sig-paren">(</span><em>dir_path</em>, <em>file_name</em>, <em>intex</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/tex/tex_backbone.html#texwrap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.tex.tex_backbone.texwrap" title="Permalink to this definition">¶</a></dt>
+<dd><p>wraps the tex list with the necessary beginning and end and write it to file</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/tex_doc/tex_backbone.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="../_sources/tex_doc/tex_backbone.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

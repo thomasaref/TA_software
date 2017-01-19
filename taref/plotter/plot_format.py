@@ -8,7 +8,7 @@ from taref.core.log import log_debug
 from taref.plotter.plotter_backbone import PlotUpdate, plot_observe, colors_tuple, markers_tuple, colormap_names, simple_set
 from taref.core.universal import Array, name_generator
 from atom.api import Unicode, Enum, Bool, Float, Typed, cached_property, ContainerList, Int, Dict, observe, ReadOnly
-from numpy import linspace, arange, asanyarray, amax, amin, ndarray, nanmax, nanmin
+from numpy import array, linspace, arange, asanyarray, amax, amin, ndarray, nanmax, nanmin
 from taref.core.shower import shower
 from taref.core.atom_extension import get_all_tags, get_tag, set_tag, check_initialized, defaulter, process_kwargs
 
@@ -118,6 +118,13 @@ def transformation(func):
         del self
     return transform_func
 
+class TextFormat(PlotFormat):
+    def _default_plot_type(self):
+        return "text"
+
+    def text_plot(self, *args, **kwargs):
+        pass
+        
 class LineFormat(PlotFormat):
     custom_color=ContainerList(default=[0.0, 1.0, 0.0, 1.0])
 
@@ -145,8 +152,8 @@ class Line2DFormat(LineFormat):
         elif len(args)==2:
             x=args[0]
             y=args[1]
-        self.xdata=x
-        self.ydata=y
+        self.xdata=array(x)
+        self.ydata=array(y)
         self.clt=self.plotter.axes.plot(*args, **kwargs)[0]
         self.do_autolim()
 

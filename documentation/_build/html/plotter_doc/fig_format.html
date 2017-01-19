@@ -1,0 +1,516 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fig_format &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-taref.plotter.fig_format">
+<span id="fig-format"></span><h1>fig_format<a class="headerlink" href="#module-taref.plotter.fig_format" title="Permalink to this headline">¶</a></h1>
+<p>Created on Thu Feb  4 12:54:58 2016</p>
+<p>&#64;author: thomasaref</p>
+<dl class="class">
+<dt id="taref.plotter.fig_format.Fig">
+<em class="property">class </em><code class="descclassname">taref.plotter.fig_format.</code><code class="descname">Fig</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/fig_format.html#Fig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.fig_format.Fig" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.abort">
+<code class="descname">abort</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.abort" title="Permalink to this definition">¶</a></dt>
+<dd><p>A private Bool that signifies the agent wants to abort</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.abort_timeout">
+<code class="descname">abort_timeout</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.abort_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.add_label">
+<code class="descname">add_label</code><span class="sig-paren">(</span><em>txt</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/fig_format.html#Fig.add_label"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.fig_format.Fig.add_label" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.all_main_params">
+<code class="descname">all_main_params</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.all_main_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.all_params">
+<code class="descname">all_params</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.all_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.auto_cs_xlim">
+<code class="descname">auto_cs_xlim</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.auto_cs_xlim" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.auto_cs_ylim">
+<code class="descname">auto_cs_ylim</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.auto_cs_ylim" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.auto_xlim">
+<code class="descname">auto_xlim</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.auto_xlim" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.auto_ylim">
+<code class="descname">auto_ylim</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.auto_ylim" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.auto_zlim">
+<code class="descname">auto_zlim</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.auto_zlim" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.axes_set">
+<code class="descname">axes_set</code><span class="sig-paren">(</span><em>param</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/fig_format.html#Fig.axes_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.fig_format.Fig.axes_set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.axes_update">
+<code class="descname">axes_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.fig_format.Fig.axes_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.base_name">
+<code class="descname">base_name</code><em class="property"> = 'plot'</em><a class="headerlink" href="#taref.plotter.fig_format.Fig.base_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.busy">
+<code class="descname">busy</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.busy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A private Bool that represents if the agent is busy</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.cid">
+<code class="descname">cid</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.cid" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>int</cite>.</p>
+<p>By default, ints are strictly typed.  Pass strict=False to the
+constructor to enable int casting for longs and floats.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.cls_run_funcs">
+<code class="descname">cls_run_funcs</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.cls_run_funcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>class or static methods to include in run_func_dict on initialization. Can be overwritten in child classes</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.colorbar">
+<code class="descname">colorbar</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.colorbar" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_IsInstance</cite> C API call.
+This call is equivalent to <cite>isinstance(value, kind)</cite> and all the
+same rules apply.</p>
+<p>The value of an Instance may be set to None.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.corner_label">
+<code class="descname">corner_label</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.corner_label" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.cs_lim_update">
+<code class="descname">cs_lim_update</code><span class="sig-paren">(</span><em>change</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/fig_format.html#Fig.cs_lim_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.fig_format.Fig.cs_lim_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.cs_x_max">
+<code class="descname">cs_x_max</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.cs_x_max" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.cs_x_min">
+<code class="descname">cs_x_min</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.cs_x_min" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.cs_y_max">
+<code class="descname">cs_y_max</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.cs_y_max" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.cs_y_min">
+<code class="descname">cs_y_min</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.cs_y_min" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.dpi">
+<code class="descname">dpi</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.dpi" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>int</cite>.</p>
+<p>By default, ints are strictly typed.  Pass strict=False to the
+constructor to enable int casting for longs and floats.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.fig_height">
+<code class="descname">fig_height</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.fig_height" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.figure">
+<code class="descname">figure</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.figure" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.figure_set">
+<code class="descname">figure_set</code><span class="sig-paren">(</span><em>param</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/fig_format.html#Fig.figure_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.fig_format.Fig.figure_set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.figure_update">
+<code class="descname">figure_update</code><span class="sig-paren">(</span><em>change</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/fig_format.html#Fig.figure_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.fig_format.Fig.figure_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.horiz_axe">
+<code class="descname">horiz_axe</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.horiz_axe" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.legend_update">
+<code class="descname">legend_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.fig_format.Fig.legend_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.nplot">
+<code class="descname">nplot</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.nplot" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>int</cite>.</p>
+<p>By default, ints are strictly typed.  Pass strict=False to the
+constructor to enable int casting for longs and floats.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.progress">
+<code class="descname">progress</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.progress" title="Permalink to this definition">¶</a></dt>
+<dd><p>A private Int that represents progress from 0 to 100</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.property_dict">
+<code class="descname">property_dict</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.property_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a dict mapping property_names to Property items</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.property_names">
+<code class="descname">property_names</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.property_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns property_dict.keys() (cached)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.property_values">
+<code class="descname">property_values</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.property_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns property dict.values() (cached)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.save_type">
+<code class="descname">save_type</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.save_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.selected">
+<code class="descname">selected</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.selected" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.set_xlim">
+<code class="descname">set_xlim</code><span class="sig-paren">(</span><em>xmin</em>, <em>xmax</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/fig_format.html#Fig.set_xlim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.fig_format.Fig.set_xlim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.set_ylim">
+<code class="descname">set_ylim</code><span class="sig-paren">(</span><em>ymin</em>, <em>ymax</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/plotter/fig_format.html#Fig.set_ylim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.plotter.fig_format.Fig.set_ylim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.show_cross_cursor">
+<code class="descname">show_cross_cursor</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.show_cross_cursor" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.show_legend">
+<code class="descname">show_legend</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.show_legend" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.tight_layout">
+<code class="descname">tight_layout</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.tight_layout" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.title">
+<code class="descname">title</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.title" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.transparent">
+<code class="descname">transparent</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.transparent" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>bool</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.vert_axe">
+<code class="descname">vert_axe</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.vert_axe" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.vert_fig">
+<code class="descname">vert_fig</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.vert_fig" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value which allows objects of a given type or types.</p>
+<p>Values will be tested using the <cite>PyObject_TypeCheck</cite> C API call.
+This call is equivalent to <cite>type(obj) in cls.mro()</cite>. It is less
+flexible but faster than Instance. Use Instance when allowing
+heterogenous values and Typed when the value type is explicit.</p>
+<p>The value of a Typed may be set to None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.view_window">
+<code class="descname">view_window</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.view_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Member which behaves similar to a Python property.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.x_lim_update">
+<code class="descname">x_lim_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.fig_format.Fig.x_lim_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.x_max">
+<code class="descname">x_max</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.x_max" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.x_min">
+<code class="descname">x_min</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.x_min" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.xlabel">
+<code class="descname">xlabel</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.xlabel" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.xlabel_size">
+<code class="descname">xlabel_size</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.xlabel_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.xlabel_update">
+<code class="descname">xlabel_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.fig_format.Fig.xlabel_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.xscale">
+<code class="descname">xscale</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.xscale" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.y_lim_update">
+<code class="descname">y_lim_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.fig_format.Fig.y_lim_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.y_max">
+<code class="descname">y_max</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.y_max" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.y_min">
+<code class="descname">y_min</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.y_min" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.ylabel">
+<code class="descname">ylabel</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.ylabel" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>unicode</cite>.</p>
+<p>By default, plain strings will be promoted to unicode strings. Pass
+strict=True to the constructor to enable strict unicode checking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.ylabel_size">
+<code class="descname">ylabel_size</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.ylabel_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>A value of type <cite>float</cite>.</p>
+<p>By default, ints and longs will be promoted to floats. Pass
+strict=True to the constructor to enable strict float checking.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taref.plotter.fig_format.Fig.ylabel_update">
+<code class="descname">ylabel_update</code><span class="sig-paren">(</span><em>obj</em>, <em>change</em><span class="sig-paren">)</span><a class="headerlink" href="#taref.plotter.fig_format.Fig.ylabel_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="taref.plotter.fig_format.Fig.yscale">
+<code class="descname">yscale</code><a class="headerlink" href="#taref.plotter.fig_format.Fig.yscale" title="Permalink to this definition">¶</a></dt>
+<dd><p>A member where the value can be one in a sequence of items.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/plotter_doc/fig_format.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="../_sources/plotter_doc/fig_format.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

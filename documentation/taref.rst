@@ -7,7 +7,4 @@ Contents:
     :maxdepth: 2
 
     core_doc/core.rst
-    physics_doc/physics.rst
-
-
-
+    analysis_doc/analysis.rst

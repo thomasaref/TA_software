@@ -27,11 +27,13 @@
     <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -56,9 +58,11 @@
 
 <span class="n">_MAPPING_SUFFIX_</span><span class="o">=</span><span class="s2">&quot;_mapping&quot;</span>
 
-<div class="viewcode-block" id="process_kwargs"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.process_kwargs">[docs]</a><span class="k">def</span> <span class="nf">process_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="process_kwargs"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.process_kwargs">[docs]</a><span class="k">def</span> <span class="nf">process_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">exkwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Goes through all_params and sets the attribute if it is included in kwargs, also popping it out of kwargs.</span>
 <span class="sd">    if the param is tagged with &quot;former&quot;, the kwarg is added back using the value of the param. Returns the processed kwargs&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">kw</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">exkwargs</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="n">kw</span><span class="p">]</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kw</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">get_all_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="c1">#get_all_tags(self, &quot;former&quot;):</span>
         <span class="k">if</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">arg</span><span class="p">])</span>
@@ -68,8 +72,8 @@
             <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">val</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">=</span><span class="n">val</span>
-    <span class="k">return</span> <span class="n">kwargs</span>
-</div>
+    <span class="k">return</span> <span class="n">kwargs</span></div>
+
 <div class="viewcode-block" id="defaulter"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.defaulter">[docs]</a><span class="k">def</span> <span class="nf">defaulter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;returns the start value of a member, popping it out of kwargs&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
@@ -80,24 +84,24 @@
     <span class="k">elif</span> <span class="n">default</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">8</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="p">[</span><span class="mi">1</span><span class="p">])()</span>
     <span class="k">elif</span> <span class="n">default</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">5</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">default</span><span class="p">[</span><span class="mi">1</span><span class="p">]()</span>
-</div>
+        <span class="k">return</span> <span class="n">default</span><span class="p">[</span><span class="mi">1</span><span class="p">]()</span></div>
+
 <div class="viewcode-block" id="get_value_check"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.get_value_check">[docs]</a><span class="k">def</span> <span class="nf">get_value_check</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Coerces value when getting. For Enum, this allows the inverse mapping.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">get_type</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Enum</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">get_inv</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">))(</span><span class="n">value</span><span class="p">)</span>
-</div>
+            <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">))(</span><span class="n">value</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="set_tag"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.set_tag">[docs]</a><span class="k">def</span> <span class="nf">set_tag</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;sets the tag of a member using Atom&#39;s built in tag functionality&quot;&quot;&quot;</span>
-    <span class="n">obj</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-</div>
+    <span class="n">obj</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="set_all_tags"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.set_all_tags">[docs]</a><span class="k">def</span> <span class="nf">set_all_tags</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Shortcut to use Atom&#39;s tag functionality to set metadata on members not marked private, i.e. all_params. This is an easy way to set the same tag on all params&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">get_all_params</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-        <span class="n">set_tag</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-</div>
+        <span class="n">set_tag</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="get_tag"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.get_tag">[docs]</a><span class="k">def</span> <span class="nf">get_tag</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">none_value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Shortcut to retrieve metadata from an Atom member which also returns a none_value if the metadata does not exist.</span>
 <span class="sd">       This is an easy way to get a tag on a particular member and provide a default if it isn&#39;t there.&quot;&quot;&quot;</span>
@@ -107,8 +111,8 @@
     <span class="n">metadata</span><span class="o">=</span><span class="n">member</span><span class="o">.</span><span class="n">metadata</span>
     <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">none_value</span>
-    <span class="k">return</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">none_value</span><span class="p">)</span>
-</div>
+    <span class="k">return</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">none_value</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="get_all_tags"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.get_all_tags">[docs]</a><span class="k">def</span> <span class="nf">get_all_tags</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">key_value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">none_value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">search_list</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;returns a list of names of parameters with a certain key_value</span>
 <span class="sd">       Shortcut retrieve members with particular metadata. There are several variants based on inputs.</span>
@@ -121,14 +125,14 @@
         <span class="n">search_list</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">members</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">key_value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">search_list</span> <span class="k">if</span> <span class="n">none_value</span><span class="o">!=</span><span class="n">get_tag</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">none_value</span><span class="p">)]</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">search_list</span> <span class="k">if</span> <span class="n">key_value</span><span class="o">==</span><span class="n">get_tag</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">none_value</span><span class="p">)]</span>
-</div>
+    <span class="k">return</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">search_list</span> <span class="k">if</span> <span class="n">key_value</span><span class="o">==</span><span class="n">get_tag</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">none_value</span><span class="p">)]</span></div>
+
 <div class="viewcode-block" id="get_type"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.get_type">[docs]</a><span class="k">def</span> <span class="nf">get_type</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;returns type of member with given name, with possible override via tag typer&quot;&quot;&quot;</span>
     <span class="n">typer</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">get_tag</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;typer&quot;</span><span class="p">,</span> <span class="n">typer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">get_tag</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;typer&quot;</span><span class="p">,</span> <span class="n">typer</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="lowhigh_check"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.lowhigh_check">[docs]</a><span class="k">def</span> <span class="nf">lowhigh_check</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;can specify low and high tags to keep float or int within a range.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
@@ -140,16 +144,16 @@
         <span class="k">if</span> <span class="n">high</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">value</span><span class="o">&gt;</span><span class="n">high</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">high</span>
-    <span class="k">return</span> <span class="n">value</span>
-</div>
+    <span class="k">return</span> <span class="n">value</span></div>
+
 <div class="viewcode-block" id="set_value_map"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.set_value_map">[docs]</a><span class="k">def</span> <span class="nf">set_value_map</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;checks floats and ints for low/high limits and automaps an Enum when setting. Not working for List?&quot;&quot;&quot;</span>
     <span class="n">value</span><span class="o">=</span><span class="n">lowhigh_check</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">get_type</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">==</span><span class="n">Enum</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">get_map</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">value</span></div>
 
-</div>
+
 <div class="viewcode-block" id="get_map"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.get_map">[docs]</a><span class="k">def</span> <span class="nf">get_map</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;gets the mapped value specified by the property mapping and returns the attribute value if it doesn&#39;t exist</span>
 <span class="sd">        gets the map of an Enum defined in the property name_mapping or tag mapping.</span>
@@ -165,8 +169,8 @@
             <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">mapping_name</span><span class="p">)[</span><span class="n">value</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">mapping</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">value</span>
-</div>
+    <span class="k">return</span> <span class="n">value</span></div>
+
 <div class="viewcode-block" id="get_inv"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.get_inv">[docs]</a><span class="k">def</span> <span class="nf">get_inv</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;returns the inverse mapped value (meant for an Enum)&quot;&quot;&quot;</span>
     <span class="n">mapping</span><span class="o">=</span><span class="n">get_tag</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;mapping&quot;</span><span class="p">)</span>
@@ -175,41 +179,41 @@
             <span class="k">return</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="o">+</span><span class="n">_MAPPING_SUFFIX_</span><span class="p">)</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()}[</span><span class="n">value</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">mapping</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()}[</span><span class="n">value</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">value</span>
-</div>
+    <span class="k">return</span> <span class="n">value</span></div>
+
 <div class="viewcode-block" id="get_reserved_names"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.get_reserved_names">[docs]</a><span class="k">def</span> <span class="nf">get_reserved_names</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;reserved names not to perform standard logging and display operations on,</span>
 <span class="sd">           i.e. members that are tagged as private and will behave as usual Atom members&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;reserved_names&quot;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">all_params</span>
-    <span class="k">return</span> <span class="n">get_all_tags</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s2">&quot;private&quot;</span><span class="p">,</span> <span class="n">key_value</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-</div>
+    <span class="k">return</span> <span class="n">get_all_tags</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s2">&quot;private&quot;</span><span class="p">,</span> <span class="n">key_value</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="get_all_params"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.get_all_params">[docs]</a><span class="k">def</span> <span class="nf">get_all_params</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;all members that are not tagged as private, i.e. not in reserved_names and will behave as agents.</span>
 <span class="sd">        order of magnitude faster when combine with private_property&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;all_params&quot;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">all_params</span>
-    <span class="k">return</span> <span class="n">get_all_tags</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s2">&quot;private&quot;</span><span class="p">,</span> <span class="n">key_value</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">none_value</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-</div>
+    <span class="k">return</span> <span class="n">get_all_tags</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s2">&quot;private&quot;</span><span class="p">,</span> <span class="n">key_value</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">none_value</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="get_all_main_params"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.get_all_main_params">[docs]</a><span class="k">def</span> <span class="nf">get_all_main_params</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;all members in all_params that are not tagged as sub.</span>
 <span class="sd">     Convenience function for more easily custom defining main_params in child classes&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;all_main_params&quot;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">all_main_params</span>
-    <span class="k">return</span> <span class="n">get_all_tags</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;sub&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="n">get_all_params</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
-</div>
+    <span class="k">return</span> <span class="n">get_all_tags</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;sub&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="n">get_all_params</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span></div>
+
 <div class="viewcode-block" id="get_main_params"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.get_main_params">[docs]</a><span class="k">def</span> <span class="nf">get_main_params</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;returns main_params if it exists and all possible main params if it does not&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;main_params&quot;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">main_params</span>
-    <span class="k">return</span> <span class="n">get_all_main_params</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-</div>
+    <span class="k">return</span> <span class="n">get_all_main_params</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="set_attr"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.set_attr">[docs]</a><span class="k">def</span> <span class="nf">set_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;utility function for setting tags while setting value&quot;&quot;&quot;</span>
     <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">kwargs</span><span class="o">!=</span><span class="p">{}:</span>
-        <span class="n">set_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-</div>
+        <span class="n">set_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="set_log"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.set_log">[docs]</a><span class="k">def</span> <span class="nf">set_log</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
    <span class="sd">&quot;&quot;&quot;called when parameter of given name is set to value i.e. instr.parameter=value. Customized messages for different types. Also saves data&quot;&quot;&quot;</span>
    <span class="k">if</span> <span class="n">get_tag</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s1">&#39;log&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">get_tag</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;tracking&quot;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
@@ -241,13 +245,14 @@
                              <span class="n">instr</span><span class="o">=</span><span class="n">obj_name</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="n">unit</span><span class="p">))</span>
        <span class="k">else</span><span class="p">:</span>
            <span class="n">log_info</span><span class="p">(</span><span class="s2">&quot;Set {instr} {label} to {value} {unit}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                             <span class="n">instr</span><span class="o">=</span><span class="n">obj_name</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">unit</span><span class="p">))</span>
+                             <span class="n">instr</span><span class="o">=</span><span class="n">obj_name</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">unit</span><span class="p">))</span></div>
 
-</div>
-<span class="k">def</span> <span class="nf">check_initialized</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+
+<div class="viewcode-block" id="check_initialized"><a class="viewcode-back" href="../../../core_doc/atom_extension.html#taref.core.atom_extension.check_initialized">[docs]</a><span class="k">def</span> <span class="nf">check_initialized</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;update&quot;</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">get_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span> <span class="s2">&quot;initialized&quot;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;{0} already initialized&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">change</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]))</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;{0} already initialized&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">change</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]))</span></div>
+
 </pre></div>
 
           </div>
@@ -271,9 +276,6 @@
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -284,8 +286,8 @@
       &copy;2016, Thomas Aref.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
       
     </div>
 

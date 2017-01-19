@@ -173,7 +173,7 @@ cmaps = {'Perceptually Uniform Sequential' : ['viridis', 'inferno', 'plasma', 'm
          'Miscellaneous' : ['gist_earth', 'terrain', 'ocean', 'gist_stern', 'brg', 'CMRmap', 'cubehelix','gnuplot', 'gnuplot2', 'gist_ncar',
                          'nipy_spectral', 'jet', 'rainbow','gist_rainbow', 'hsv', 'flag', 'prism']}
 
-colors_tuple=('auto', 'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan', 'magenta', 'orange', 'darkblue', 'darkred')
+colors_tuple=('auto', 'blue', 'red', 'green', 'purple',  'black', 'darkgray', 'cyan', 'magenta', 'orange', 'darkblue', 'darkred', "white")
 
 markers_tuple=(".", ",", "o", "v", "^", "<",">", "1", "2", "3", "4", "8", "s", "p", "*", "h", "H", "+", "x", "D", "d", "|", "_", "$2/3$")
 

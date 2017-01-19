@@ -26,14 +26,16 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="taref_docs 1.0 documentation" href="../index.html" />
     <link rel="up" title="core" href="core.html" />
-    <link rel="next" title="agent" href="agent.html" />
-    <link rel="prev" title="shower" href="shower.html" />
+    <link rel="next" title="callable" href="callable.html" />
+    <link rel="prev" title="atom_extension" href="atom_extension.html" />
    
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -93,7 +95,7 @@ Can be customized in child classes. default extra setup handles units, auto tags
 
 <dl class="method">
 <dt id="taref.core.backbone.Backbone.latex_table">
-<code class="descname">latex_table</code><span class="sig-paren">(</span><em>param_list=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#Backbone.latex_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.Backbone.latex_table" title="Permalink to this definition">¶</a></dt>
+<code class="descname">latex_table</code><span class="sig-paren">(</span><em>param_list=None</em>, <em>design=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#Backbone.latex_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.Backbone.latex_table" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -103,7 +105,7 @@ Can be customized in child classes. default extra setup handles units, auto tags
 
 <dl class="method">
 <dt id="taref.core.backbone.Backbone.latex_table_entry">
-<code class="descname">latex_table_entry</code><span class="sig-paren">(</span><em>param=None</em>, <em>value=None</em>, <em>expression=None</em>, <em>comment=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#Backbone.latex_table_entry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.Backbone.latex_table_entry" title="Permalink to this definition">¶</a></dt>
+<code class="descname">latex_table_entry</code><span class="sig-paren">(</span><em>param=None</em>, <em>value=None</em>, <em>expression=None</em>, <em>comment=None</em>, <em>design=None</em>, <em>label=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#Backbone.latex_table_entry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.Backbone.latex_table_entry" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -141,7 +143,7 @@ Can be customized in child classes. default extra setup handles units, auto tags
 
 <dl class="attribute">
 <dt id="taref.core.backbone.Backbone.unit_dict">
-<code class="descname">unit_dict</code><em class="property"> = {'pW': &lt;taref.physics.units.mult_unit object at 0x10562a610&gt;, 'cm': &lt;taref.physics.units.mult_unit object at 0x10562a390&gt;, 'm/s': &lt;taref.physics.units.unit_func object at 0x10562a990&gt;, 'm': &lt;taref.physics.units.unit_func object at 0x10562a3d0&gt;, 'GHz': &lt;taref.physics.units.mult_unit object at 0x10562aa90&gt;, 'nW': &lt;taref.physics.units.mult_unit object at 0x10562a650&gt;, 'Hz': &lt;taref.physics.units.unit_func object at 0x10562a9d0&gt;, 'dBm': &lt;taref.physics.units.dBm_unit object at 0x10562a550&gt;, 'nm': &lt;taref.physics.units.mult_unit object at 0x10562a2d0&gt;, 'hHz': &lt;taref.physics.units.unit_func object at 0x10562ab50&gt;, 'um^2': &lt;taref.physics.units.mult_unit object at 0x10562a450&gt;, 'nA': &lt;taref.physics.units.mult_unit object at 0x10562a890&gt;, 'dB_pwr': &lt;taref.physics.units.dB_pwr_unit object at 0x10562a510&gt;, 'eV': &lt;taref.physics.units.mult_unit object at 0x10562a790&gt;, 'K': &lt;taref.physics.units.unit_func object at 0x10562ac50&gt;, 'pm': &lt;taref.physics.units.mult_unit object at 0x10562a290&gt;, 'A': &lt;taref.physics.units.unit_func object at 0x10562a8d0&gt;, 'F': &lt;taref.physics.units.unit_func object at 0x10562a850&gt;, 'uW': &lt;taref.physics.units.mult_unit object at 0x10562a690&gt;, 'mW': &lt;taref.physics.units.mult_unit object at 0x10562a6d0&gt;, 'W': &lt;taref.physics.units.unit_func object at 0x10562a710&gt;, 'V': &lt;taref.physics.units.unit_func object at 0x10562a750&gt;, '%': &lt;taref.physics.units.mult_unit object at 0x10562ac90&gt;, 'Ohm': &lt;taref.physics.units.unit_func object at 0x10562a910&gt;, 'fm': &lt;taref.physics.units.mult_unit object at 0x105650ed0&gt;, 'hGHz': &lt;taref.physics.units.mult_unit object at 0x10562ab10&gt;, 'kHz': &lt;taref.physics.units.mult_unit object at 0x10562aa10&gt;, 'ueV': &lt;taref.physics.units.mult_unit object at 0x10562a7d0&gt;, 'THz': &lt;taref.physics.units.mult_unit object at 0x10562aad0&gt;, 'fW': &lt;taref.physics.units.mult_unit object at 0x10562a5d0&gt;, 'mm': &lt;taref.physics.units.mult_unit object at 0x10562a350&gt;, 'dB': &lt;taref.physics.units.dB_unit object at 0x10562a490&gt;, 'km': &lt;taref.physics.units.mult_unit object at 0x10562a410&gt;, 'kOhm': &lt;taref.physics.units.mult_unit object at 0x10562a950&gt;, 'um': &lt;taref.physics.units.mult_unit object at 0x10562a310&gt;, 'MHz': &lt;taref.physics.units.mult_unit object at 0x10562aa50&gt;, 'fF': &lt;taref.physics.units.mult_unit object at 0x10562a810&gt;, 'dBm/mW': &lt;taref.physics.units.new_unit object at 0x10562abd0&gt;}</em><a class="headerlink" href="#taref.core.backbone.Backbone.unit_dict" title="Permalink to this definition">¶</a></dt>
+<code class="descname">unit_dict</code><em class="property"> = {'pW': &lt;taref.physics.units.mult_unit object at 0x1066bd650&gt;, 'cm': &lt;taref.physics.units.mult_unit object at 0x1066f7d90&gt;, 'm/s': &lt;taref.physics.units.unit_func object at 0x106705390&gt;, 'm': &lt;taref.physics.units.unit_func object at 0x1066f7dd0&gt;, 'GHz': &lt;taref.physics.units.mult_unit object at 0x106705490&gt;, 'pi': &lt;taref.physics.units.mult_unit object at 0x1066f7950&gt;, 'nW': &lt;taref.physics.units.mult_unit object at 0x106705050&gt;, 'Hz': &lt;taref.physics.units.unit_func object at 0x1067053d0&gt;, 'dBm': &lt;taref.physics.units.dBm_unit object at 0x1066f7f50&gt;, 'nm': &lt;taref.physics.units.mult_unit object at 0x1066f7cd0&gt;, 'hHz': &lt;taref.physics.units.unit_func object at 0x106705550&gt;, 'um^2': &lt;taref.physics.units.mult_unit object at 0x1066f7e50&gt;, 'nA': &lt;taref.physics.units.mult_unit object at 0x106705290&gt;, 'dB_pwr': &lt;taref.physics.units.dB_pwr_unit object at 0x1066f7f10&gt;, 'eV': &lt;taref.physics.units.mult_unit object at 0x106705190&gt;, 'K': &lt;taref.physics.units.unit_func object at 0x106705650&gt;, 'pm': &lt;taref.physics.units.mult_unit object at 0x1066f7c90&gt;, 'A': &lt;taref.physics.units.unit_func object at 0x1067052d0&gt;, 'F': &lt;taref.physics.units.unit_func object at 0x106705250&gt;, 'uW': &lt;taref.physics.units.mult_unit object at 0x106705090&gt;, 'mW': &lt;taref.physics.units.mult_unit object at 0x1067050d0&gt;, 'W': &lt;taref.physics.units.unit_func object at 0x106705110&gt;, 'V': &lt;taref.physics.units.unit_func object at 0x106705150&gt;, '%': &lt;taref.physics.units.mult_unit object at 0x106705690&gt;, 'Ohm': &lt;taref.physics.units.unit_func object at 0x106705310&gt;, 'fm': &lt;taref.physics.units.mult_unit object at 0x1066f7c50&gt;, 'hGHz': &lt;taref.physics.units.mult_unit object at 0x106705510&gt;, 'kHz': &lt;taref.physics.units.mult_unit object at 0x106705410&gt;, 'ueV': &lt;taref.physics.units.mult_unit object at 0x1067051d0&gt;, 'THz': &lt;taref.physics.units.mult_unit object at 0x1067054d0&gt;, 'fW': &lt;taref.physics.units.mult_unit object at 0x1066f7fd0&gt;, 'mm': &lt;taref.physics.units.mult_unit object at 0x1066f7d50&gt;, 'dB': &lt;taref.physics.units.dB_unit object at 0x1066f7e90&gt;, 'km': &lt;taref.physics.units.mult_unit object at 0x1066f7e10&gt;, 'kOhm': &lt;taref.physics.units.mult_unit object at 0x106705350&gt;, 'um': &lt;taref.physics.units.mult_unit object at 0x1066f7d10&gt;, 'MHz': &lt;taref.physics.units.mult_unit object at 0x106705450&gt;, 'fF': &lt;taref.physics.units.mult_unit object at 0x106705210&gt;, 'dBm/mW': &lt;taref.physics.units.new_unit object at 0x1067055d0&gt;}</em><a class="headerlink" href="#taref.core.backbone.Backbone.unit_dict" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -161,6 +163,11 @@ Can be customized in child classes. default extra setup handles units, auto tags
 <dd></dd></dl>
 
 </dd></dl>
+
+<dl class="function">
+<dt id="taref.core.backbone.latex_value">
+<code class="descclassname">taref.core.backbone.</code><code class="descname">latex_value</code><span class="sig-paren">(</span><em>self</em>, <em>param</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/taref/core/backbone.html#latex_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taref.core.backbone.latex_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="function">
 <dt id="taref.core.backbone.setup_ranges">
@@ -187,8 +194,8 @@ Can be customized in child classes. default extra setup handles units, auto tags
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="../taref.html">taref</a><ul>
   <li><a href="core.html">core</a><ul>
-      <li>Previous: <a href="shower.html" title="previous chapter">shower</a></li>
-      <li>Next: <a href="agent.html" title="next chapter">agent</a></li>
+      <li>Previous: <a href="atom_extension.html" title="previous chapter">atom_extension</a></li>
+      <li>Next: <a href="callable.html" title="next chapter">callable</a></li>
   </ul></li>
   </ul></li>
   </ul></li>
@@ -209,9 +216,6 @@ Can be customized in child classes. default extra setup handles units, auto tags
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -222,8 +226,8 @@ Can be customized in child classes. default extra setup handles units, auto tags
       &copy;2016, Thomas Aref.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
       
       |
       <a href="../_sources/core_doc/backbone.txt"

@@ -6,10 +6,10 @@ Created on Thu Dec 15 14:13:38 2016
 """
 
 from numpy import conj, array, meshgrid, trace, reshape, linspace, exp, pi, transpose, diag, eye, kron, sqrt, arange, identity, absolute, cos, dot, real
-from numpy.linalg import pinv, inv, eig
-from qutip import to_super, destroy, tensor, liouvillian, spre, spost, mat2vec, Qobj, steadystate, qeye, parallel_map
+from numpy.linalg import pinv, inv, eig, solve
+from qutip import spectrum, to_super, destroy, tensor, liouvillian, spre, spost, mat2vec, Qobj, steadystate, qeye, parallel_map
 from matplotlib.pyplot import pcolormesh, colorbar, show
-
+from scipy import sparse
 wd_vec = linspace(4.3e9, 5.3e9, 91)/1e6
 phi_arr=linspace(0.23, 0.33, 51)
 
@@ -38,12 +38,23 @@ adag=a.dag()
 
 It= qeye(N)
 
+tm = diag(sqrt(range(1, N)),1) # Lowering operator for the transmon.
+
+print tm
+print a
+
 #tdiag = sparse(diag(0:2:2*(Nt-1))); % Operator for dephasing.
 #tdiag = Qobj(diag(range(0, N))) # Diagonal matrix for the transmon.
 #tdiag_l = kron(It,tdiag) # tdiag operator multiplying rho from the left.
 
-#tm_l = kron(It, a) # tm operator multiplying rho from the left.
+tm_l = spre(a) #kron(It, a) # tm operator multiplying rho from the left.
 
+#print
+#print tm_l[1]
+#print 
+#print kron(eye(N), tm)[1]
+
+#raise Exception
 c_op_list = []
 
 rate = gamma * (1 + N_gamma)
@@ -72,19 +83,19 @@ Lindblad_tp = gamma*N_gamma*(kron(adag.conj(), adag) -
 
 p = -1.0j*(adag - a) # "P" operator.
 
-p_l = kron(It,p) # % "P" operator multiplying rho from the left.
-p_r = kron(transpose(p),It) # "P" operator multiplying rho from the right.
+#p_l = kron(It,p) # % "P" operator multiplying rho from the left.
+#p_r = kron(transpose(p),It) # "P" operator multiplying rho from the right.
 
-print p_l
+#print p_l.shape
 
-p_l=spre(p).full()
-p_r=spost(p).full()
+p_l=spre(p)#.full()
+p_r=spost(p)#.full()
 
-print p_l
-raise Exception
+print p_l.shape
+#raise Exception
 
 p_l_m_p_r=p_l-p_r
-tm_l=spre(a).full()
+#tm_l=spre(a).full()
 
 nvec=arange(N)
 Ecvec=-Ec*(6.0*nvec**2+6.0*nvec+3.0)/12.0
@@ -95,8 +106,8 @@ tr_mat = tensor(qeye(N))
 #N = np.prod(L.dims[0][0])
 tr_vec = transpose(mat2vec(tr_mat.full()))
 
-p_sup = spre(p).full()
-a_sup = spre(a).full()
+p_sup = spre(p)#.full()
+a_sup = spre(a)#.full()
 
 I=identity(N*N)
 Idiag=diag(I)
@@ -108,11 +119,11 @@ Idiag=diag(I)
 #                                    0.5*kron(transpose(tdiag)*conj(tdiag),Itot));
 print "yo"
 
-print eye(N).shape
+#print eye(N).shape
 
-eye(5).shape(25)
-print reshape(eye(N),0,N**2)
-raise Exception
+#eye(5).shape(25)
+#print reshape(eye(N),0,N**2)
+#raise Exception
 
 def two_tone(vg):
     phi, wd=vg
@@ -123,15 +134,20 @@ def two_tone(vg):
     wT = wTvec-wdvec
 
     transmon_levels = Qobj(diag(wT[range(N)]))
+    
 
     for Om in Omega_op:
         H = transmon_levels + Om
+        exp1=spectrum(H, wlist2, c_op_list, a, p, solver="pi", use_pinv=False)
+        exp2=spectrum(H, wlist2, c_op_list, p, a, solver="pi", use_pinv=False)
+        return exp1-exp2
 
-        H_comm = -1j*(kron(It,H) - kron(transpose(H),It));
 
-        L = H_comm + Lindblad_tm + Lindblad_tp #+ Lindblad_deph;
+        #H_comm = -1j*(kron(It,H) - kron(transpose(H),It));
 
-        print L
+        #L = H_comm + Lindblad_tm + Lindblad_tp #+ Lindblad_deph;
+
+        #print L
 
         #L2 = [reshape(eye(N),1,N**2); L]; %Add the condition trace(rho) = 1
 
@@ -150,11 +166,16 @@ def two_tone(vg):
 
         rho_ss = steadystate(L)
         rho = transpose(mat2vec(rho_ss.full()))
+        P = kron(transpose(rho), tr_vec)
+        Q = I - P
+
         if 1:
             w=wp-wd
-            MMR = pinv(-1.0j * w * I + A)
-            Lexp=L.expm()
-            MMR=Lexp*MMR*Lexp.dag()
+            #MMR = pinv(-1.0j * w * I + A)
+            MMR = dot(Q, solve(-1.0j * w * I + A, Q))
+
+            #Lexp=L.expm()
+            #MMR=Lexp*MMR*Lexp.dag()
             #    MMR = np.dot(Q, np.linalg.solve(-1.0j * w * I + A, Q))
 
             #print p_l.shape
@@ -196,6 +217,7 @@ def two_tone(vg):
         #print "Lint", Lint.shape
         #print "pl", p_l.full().shape
         #print "pr", p_r.full().shape
+        #print rho.shape, to_super(rho_ss).full().shape
         #print "rho", to_super(rho_ss) #rho_ss.full().shape #rho.shape
         #print (tm_l.full()*Lint*(p_l.full() - p_r.full())*rho).shape
         #raise Exception
@@ -209,7 +231,7 @@ print "2"
 
 fexpt=parallel_map(two_tone, vg,  progress_bar=True)
 fexpt=reshape(fexpt, (len(wd_vec), len(phi_arr)))
-pcolormesh(fexpt, cmap="RdBu_r")
+pcolormesh(absolute(fexpt), cmap="RdBu_r")
 colorbar()
 show()
 #arange(1,7).reshape(-1,2).transpose()

@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taref.analysis.lyzer &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for taref.analysis.lyzer</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Sun Apr 24 12:42:53 2016</span>
+
+<span class="sd">@author: thomasaref</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">taref.core.api</span> <span class="kn">import</span> <span class="n">Agent</span><span class="p">,</span> <span class="n">tag_property</span><span class="c1">#, log_debug</span>
+<span class="kn">from</span> <span class="nn">taref.filer.read_file</span> <span class="kn">import</span> <span class="n">Read_HDF5</span>
+<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Typed</span><span class="p">,</span> <span class="n">Unicode</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">taref.filer.filer</span> <span class="kn">import</span> <span class="n">Folder</span>
+<span class="kn">from</span> <span class="nn">taref.filer.save_file</span> <span class="kn">import</span> <span class="n">Save_TXT</span>
+
+<div class="viewcode-block" id="Lyzer"><a class="viewcode-back" href="../../../analysis_doc/lyzer.html#taref.analysis.lyzer.Lyzer">[docs]</a><span class="k">class</span> <span class="nc">Lyzer</span><span class="p">(</span><span class="n">Agent</span><span class="p">):</span>
+    <span class="n">base_name</span><span class="o">=</span><span class="s2">&quot;lyzer&quot;</span>
+    <span class="n">fridge_atten</span><span class="o">=</span><span class="n">Float</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
+    <span class="n">fridge_gain</span><span class="o">=</span><span class="n">Float</span><span class="p">(</span><span class="mi">45</span><span class="p">)</span>
+
+    <span class="nd">@tag_property</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">net_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fridge_gain</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">fridge_atten</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">rt_gain</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">rt_atten</span>
+
+
+    <span class="n">rd_hdf</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">Read_HDF5</span><span class="p">)</span>
+    <span class="n">save_folder</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">Folder</span><span class="p">)</span>
+
+    <span class="n">save_file</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">Save_TXT</span><span class="p">)</span>
+    <span class="n">save_code</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">Save_TXT</span><span class="p">)</span>
+
+    <span class="n">read_data</span><span class="o">=</span><span class="n">Callable</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">sub</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_default_save_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Folder</span><span class="p">(</span><span class="n">base_dir</span><span class="o">=</span><span class="s2">&quot;/Users/thomasaref/Dropbox/Current stuff/test_data/tex_processed&quot;</span><span class="p">,</span> <span class="n">main_dir</span><span class="o">=</span><span class="s2">&quot;overall&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_default_save_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Save_TXT</span><span class="p">(</span><span class="n">folder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">save_folder</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;file_names&quot;</span><span class="p">,</span> <span class="n">file_suffix</span><span class="o">=</span><span class="s2">&quot;.txt&quot;</span><span class="p">,</span> <span class="n">fixed_mode</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">write_mode</span><span class="o">=</span><span class="s2">&quot;a&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_default_save_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Save_TXT</span><span class="p">(</span><span class="n">folder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">save_file</span><span class="o">.</span><span class="n">folder</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">save_file</span><span class="o">.</span><span class="n">file_name</span><span class="o">+</span><span class="s2">&quot;_code&quot;</span><span class="p">,</span> <span class="n">file_suffix</span><span class="o">=</span><span class="s2">&quot;.py&quot;</span><span class="p">,</span> <span class="n">fixed_mode</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Lyzer.save_plots"><a class="viewcode-back" href="../../../analysis_doc/lyzer.html#taref.analysis.lyzer.Lyzer.save_plots">[docs]</a>    <span class="k">def</span> <span class="nf">save_plots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pl_list</span><span class="p">):</span>
+        <span class="n">names</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">pl</span><span class="o">.</span><span class="n">fig_name</span> <span class="k">for</span> <span class="n">pl</span> <span class="ow">in</span> <span class="n">pl_list</span><span class="p">])</span>
+        <span class="c1">#self.save_file.file_name=self.name+&quot;_file_names&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_file</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">write_mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">flush_buffer</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pl</span> <span class="ow">in</span> <span class="n">pl_list</span><span class="p">:</span>
+            <span class="n">pl</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_folder</span><span class="o">.</span><span class="n">dir_path_d</span><span class="p">,</span> <span class="n">pl</span><span class="o">.</span><span class="n">fig_name</span><span class="p">)</span></div>
+
+    <span class="n">rt_atten</span><span class="o">=</span><span class="n">Float</span><span class="p">(</span><span class="mi">40</span><span class="p">)</span>
+    <span class="n">rt_gain</span><span class="o">=</span><span class="n">Float</span><span class="p">(</span><span class="mi">23</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">offset</span><span class="o">=</span><span class="n">Float</span><span class="p">(</span><span class="o">-</span><span class="mf">0.035</span><span class="p">)</span>
+    <span class="n">flux_factor</span><span class="o">=</span><span class="n">Float</span><span class="p">(</span><span class="mf">0.2925</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_default_offset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">qdt</span><span class="o">.</span><span class="n">offset</span>
+
+    <span class="k">def</span> <span class="nf">_default_flux_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">qdt</span><span class="o">.</span><span class="n">flux_factor</span>
+
+    <span class="n">comment</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="s2">&quot;multiline&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

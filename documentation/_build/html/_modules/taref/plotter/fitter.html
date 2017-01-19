@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taref.plotter.fitter &mdash; taref_docs 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="taref_docs 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for taref.plotter.fitter</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Sat Apr 23 14:04:56 2016</span>
+
+<span class="sd">@author: thomasaref</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">taref.core.agent</span> <span class="kn">import</span> <span class="n">Operative</span>
+<span class="kn">from</span> <span class="nn">taref.core.api</span> <span class="kn">import</span> <span class="n">get_all_tags</span><span class="p">,</span> <span class="n">get_tag</span>
+<span class="c1">#from taref.core.atom_extension import tag_property</span>
+<span class="kn">from</span> <span class="nn">taref.plotter.plotter</span> <span class="kn">import</span> <span class="n">line</span><span class="p">,</span> <span class="n">Plotter</span>
+<span class="kn">from</span> <span class="nn">atom.api</span> <span class="kn">import</span> <span class="n">Typed</span><span class="p">,</span> <span class="n">Unicode</span>
+<span class="kn">from</span> <span class="nn">taref.core.universal</span> <span class="kn">import</span> <span class="n">ODict</span>
+
+<div class="viewcode-block" id="LineFitter2"><a class="viewcode-back" href="../../../plotter_doc/fitter.html#taref.plotter.fitter.LineFitter2">[docs]</a><span class="k">class</span> <span class="nc">LineFitter2</span><span class="p">(</span><span class="n">Operative</span><span class="p">):</span>
+    <span class="n">base_name</span><span class="o">=</span><span class="s2">&quot;line_fitter&quot;</span>
+
+    <span class="n">plotter</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">Plotter</span><span class="p">)</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">plot_name</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">data_dict</span><span class="o">=</span><span class="n">ODict</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LineFitter2.extra_setup"><a class="viewcode-back" href="../../../plotter_doc/fitter.html#taref.plotter.fitter.LineFitter2.extra_setup">[docs]</a>    <span class="k">def</span> <span class="nf">extra_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;adds log_changes observer to all params&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LineFitter2</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">extra_setup</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_plot</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_default_plotter2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_name</span><span class="o">==</span><span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plot_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">pl</span><span class="o">=</span><span class="n">Plotter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">get_all_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;plot&quot;</span><span class="p">):</span>
+            <span class="k">print</span> <span class="n">param</span>
+            <span class="n">pl</span><span class="p">,</span> <span class="n">pf</span><span class="o">=</span><span class="n">line</span><span class="p">(</span><span class="o">*</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">),</span> <span class="n">plot_name</span><span class="o">=</span><span class="n">get_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="s2">&quot;plot&quot;</span><span class="p">),</span> <span class="n">plotter</span><span class="o">=</span><span class="n">pl</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_dict</span><span class="p">[</span><span class="n">param</span><span class="p">]</span><span class="o">=</span><span class="n">pf</span><span class="o">.</span><span class="n">plot_name</span>
+        <span class="k">return</span> <span class="n">pl</span>
+
+<div class="viewcode-block" id="LineFitter2.update_plot"><a class="viewcode-back" href="../../../plotter_doc/fitter.html#taref.plotter.fitter.LineFitter2.update_plot">[docs]</a>    <span class="k">def</span> <span class="nf">update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;update&quot;</span><span class="p">:</span>
+            <span class="c1">#for param, plot_name in self.data_dict.iteritems():</span>
+            <span class="c1">#    print param, plot_name</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="c1">#self.plotter.plot_dict[plot_name].clt.set_xdata(getattr(self, param)[0])</span>
+                <span class="c1">#self.plotter.plot_dict[plot_name].clt.set_ydata(getattr(self, param)[1])</span>
+                <span class="c1">#self.plotter.draw()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">plotter</span><span class="o">.</span><span class="n">plot_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_name</span><span class="p">]</span><span class="o">.</span><span class="n">alter_xy</span><span class="p">(</span><span class="o">*</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="s2">&quot;data&quot;</span><span class="p">))</span></div></div>
+
+<div class="viewcode-block" id="LineFitter"><a class="viewcode-back" href="../../../plotter_doc/fitter.html#taref.plotter.fitter.LineFitter">[docs]</a><span class="k">class</span> <span class="nc">LineFitter</span><span class="p">(</span><span class="n">Operative</span><span class="p">):</span>
+    <span class="n">base_name</span><span class="o">=</span><span class="s2">&quot;line_fitter&quot;</span>
+
+    <span class="n">plotter</span><span class="o">=</span><span class="n">Typed</span><span class="p">(</span><span class="n">Plotter</span><span class="p">)</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">plot_name</span><span class="o">=</span><span class="n">Unicode</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">data_dict</span><span class="o">=</span><span class="n">ODict</span><span class="p">()</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">private</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LineFitter.extra_setup"><a class="viewcode-back" href="../../../plotter_doc/fitter.html#taref.plotter.fitter.LineFitter.extra_setup">[docs]</a>    <span class="k">def</span> <span class="nf">extra_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;adds log_changes observer to all params&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LineFitter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">extra_setup</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">typer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_plot</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_default_plotter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_name</span><span class="o">==</span><span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plot_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">pl</span><span class="o">=</span><span class="n">Plotter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">get_all_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;plot&quot;</span><span class="p">):</span>
+            <span class="k">print</span> <span class="n">param</span>
+            <span class="n">pl</span><span class="p">,</span> <span class="n">pf</span><span class="o">=</span><span class="n">line</span><span class="p">(</span><span class="o">*</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">),</span> <span class="n">plot_name</span><span class="o">=</span><span class="n">get_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="s2">&quot;plot&quot;</span><span class="p">),</span> <span class="n">plotter</span><span class="o">=</span><span class="n">pl</span><span class="p">,</span> <span class="n">pf_too</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_dict</span><span class="p">[</span><span class="n">param</span><span class="p">]</span><span class="o">=</span><span class="n">pf</span><span class="o">.</span><span class="n">plot_name</span>
+        <span class="k">return</span> <span class="n">pl</span>
+
+<div class="viewcode-block" id="LineFitter.update_plot"><a class="viewcode-back" href="../../../plotter_doc/fitter.html#taref.plotter.fitter.LineFitter.update_plot">[docs]</a>    <span class="k">def</span> <span class="nf">update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;update&quot;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">plot_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_dict</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="c1">#print param, plot_name</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_member</span><span class="p">(</span><span class="n">param</span><span class="p">)</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="c1">#self.plotter.plot_dict[plot_name].clt.set_xdata(getattr(self, param)[0])</span>
+                <span class="c1">#self.plotter.plot_dict[plot_name].clt.set_ydata(getattr(self, param)[1])</span>
+                <span class="c1">#self.plotter.draw()</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">plotter</span><span class="o">.</span><span class="n">plot_dict</span><span class="p">[</span><span class="n">plot_name</span><span class="p">]</span><span class="o">.</span><span class="n">alter_xy</span><span class="p">(</span><span class="o">*</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">param</span><span class="p">))</span></div></div>
+
+
+<span class="k">if</span> <span class="n">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">LineFitter</span><span class="p">()</span>
+    <span class="k">print</span> <span class="n">get_tag</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s2">&quot;plotter&quot;</span><span class="p">,</span> <span class="s2">&quot;private&quot;</span><span class="p">)</span>
+<span class="c1">#    class Fitter(LineFitter):</span>
+<span class="c1">#        Ejmax=FloatRange(0.001, 100.0, 40.0).tag(tracking=True)</span>
+<span class="c1">#        offset=FloatRange(0.0, 100.0, 18.0).tag(tracking=True)</span>
+<span class="c1">#</span>
+<span class="c1">#        @tag_Property(private=True)</span>
+<span class="c1">#        def data(self):</span>
+<span class="c1">#            return a.flux_parabola(linspace(-1,1,100), self.offset, a.flux_factor, self.Ejmax*h, a.Ec)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Thomas Aref.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
