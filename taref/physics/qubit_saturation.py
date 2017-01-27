@@ -6,10 +6,76 @@ Created on Mon Dec  5 10:36:14 2016
 """
 
 from qutip import destroy, basis, steadystate, mesolve, expect, Qobj, qeye, parallel_map, parfor
-from matplotlib.pyplot import figure, plot, axhline, ylim, xlabel, ylabel, show, pcolormesh
+#from matplotlib.pyplot import figure, plot, axhline, ylim, xlabel, ylabel, show, pcolormesh
 from numpy import log10, sqrt, linspace, cos, pi, arange, diag, absolute, kron, exp, conj, meshgrid, shape, array, reshape
-from scipy.constants import h
+from scipy.constants import h, k
 from time import time
+from taref.plotter.api import line, colormesh
+from taref.physics.qubit import Qubit
+from taref.core.api import SProperty, private_property
+from atom.api import Float, Int
+
+class Sat_Qubit(Qubit):
+    sample_power_dBm=Float(-30.0)
+    
+    gamma=Float(38.0e6)
+    gamma_phi=Float(0.0)
+    
+    T=Float(0.03)
+    N_dim=Int(5)    
+    
+    fd=Float(4.5e9)
+    N_gamma=SProperty()
+    @N_gamma.getter
+    def _get_N_gamma(self, fd, T):
+        return 1.0/(exp(h*fd/(k*T))-1.0)
+        
+    #value_grid=array(meshgrid(phi_arr, Omega_sim_vec))
+    
+    @private_property
+    def a_op(self):
+        return destroy(self.N_dim)
+        
+    @private_property
+    def adag(self):
+        return self.a_op.dag()
+        
+    c_ops=SProperty().tag(sub=True)
+    @c_ops.getter
+    def _get_c_ops(self, gamma, N_gamma, a, adag):
+        rate1 = gamma * (1 + N_gamma)
+        rate2=gamma*N_gamma
+        return [sqrt(rate1)*a, sqrt(rate2) * adag]
+
+    @private_property
+    def nvec(self):
+        return arange(self.N_dim)
+
+    @private_property
+    def fdvec(self):
+        return self.nvec*self.fd
+
+    @private_property
+    def Ecvec(self):
+        return -self.Ec*(6.0*self.nvec**2+6.0*self.nvec+3.0)/12.0
+
+    def find_expect(vg): #phi=0.1, Omega_vec=3.0):
+        phi, Omega=vg#.shape
+        Omega_vec=- 0.5j*(Omega*adag - conj(Omega)*a)
+    
+        Ej = Ejmax*absolute(cos(pi*phi)) #Josephson energy as function of Phi.
+    
+        wTvec = -Ej + sqrt(8.0*Ej*Ec)*(nvec+0.5)+Ecvec #\omega_m
+    
+        wT = wTvec-wdvec #rotating frame of gate drive \omega_m-m*\omega_\gate
+        transmon_levels = Qobj(diag(wT[range(N)]))
+        H=transmon_levels +Omega_vec #- 0.5j*(Omega_true*adag - conj(Omega_true)*a)
+        final_state = steadystate(H, c_op_list) #solve master equation
+    
+        return expect( a, final_state) #expectation value of relaxation operator
+        #Omega=\alpha\sqrt{2\Gamma_10} where |\alpha|^2=phonon flux=number of phonons per second
+        #Omega=2\alpha\sqrt{\gamma} where |\alpha|^2=phonon flux=number of phonons per second
+        
 
 Omega_sim_points = 10
 sample_power_sim_dBm=linspace(-100.0, -50, 31)
@@ -32,7 +98,7 @@ wd = 4.8066e9/1e6 # Drive frequency.
 
 T = 21000* 0.03  # Temperature of the transmon bath in units of MHz (1K = 21 GHz).
 
-N_gamma = 1/(exp(wd/T)-1)# % Thermal population of the transmon phonon bath around wd.
+N_gamma = 1.0/(exp(wd/T)-1.0)# % Thermal population of the transmon phonon bath around wd.
 
 print N_gamma
 N = 5  # number of basis states to consider
@@ -108,13 +174,13 @@ fexpt=reshape(fexpt, (31, 101))
 
 #fexpt=[[find_expect(phi, Omega) for phi in phi_arr] for Omega in Omega_sim_vec]
 #print fexpt
-pcolormesh(phi_arr, sample_power_sim_dBm, absolute(fexpt), cmap="RdBu_r")
-figure()
-pcolormesh(absolute(fexpt), cmap="RdBu_r")
-figure()
-plot(sample_power_sim_dBm, 20*log10(absolute(fexpt)[:, 77])-sample_power_sim_dBm)
-figure()
-plot(sample_power_sim_dBm, 10**((20*log10(absolute(fexpt)[:, 77])-sample_power_sim_dBm)/10.0))
+colormesh(phi_arr, sample_power_sim_dBm, absolute(fexpt), cmap="RdBu_r")
+#figure()
+colormesh(absolute(fexpt), cmap="RdBu_r")
+#figure()
+line(sample_power_sim_dBm, 20*log10(absolute(fexpt)[:, 77])-sample_power_sim_dBm)
+#figure()
+line(sample_power_sim_dBm, 10**((20*log10(absolute(fexpt)[:, 77])-sample_power_sim_dBm)/10.0)).show()
 
 #plot(phi_arr, absolute(fexpt))
 show()

@@ -19,7 +19,7 @@ from taref.analysis.api import VNA_Lyzer, VNA_Pwr_Lyzer, VNA_Two_Tone_Lyzer, VNA
 
 class TA53_Read(Read_HDF5):
     def _default_folder(self): #/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Logbook/TA210715A53_cooldown022915
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A53_cooldown022915", quality="", main_dir="Data_0221")
+        return Folder(base_dir="/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Logbook/TA210715A53_cooldown022915", quality="", main_dir="Data_0221")
 
 class TA53_Save_NP(Save_NP):
     def _default_folder(self):
@@ -123,7 +123,11 @@ idt=IDT(material='LiNbYZ',
         W=7.0e-6,
         eta=0.5,
         a=96.0e-9)
-idt.f0=4.452e9
+idt.Np=56
+idt.f0=4.46e9
+idt.K2=0.032
+#14 dB loss
+
 
 #print qdt.all_params
 #print idt.all_params

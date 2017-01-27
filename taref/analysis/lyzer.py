@@ -14,7 +14,7 @@ from taref.filer.save_file import Save_TXT
 class Lyzer(Agent):
     base_name="lyzer"
     fridge_atten=Float(60)
-    fridge_gain=Float(45)
+    fridge_gain=Float(40)
 
     @tag_property()
     def net_loss(self):
