@@ -5,40 +5,132 @@ Created on Sun Apr 24 18:55:33 2016
 @author: thomasaref
 """
 
-from TA88_fundamental import TA88_Lyzer, TA88_Read#, idt#, qdt
+from TA88_fundamental import TA88_VNA_Lyzer, TA88_Read, idt#, qdt
 from taref.plotter.api import colormesh, line, Plotter, scatter
 from taref.core.api import set_tag, set_all_tags, get_all_tags, get_tag
-from numpy import exp, array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape, linspace, interp, absolute, fft, log10, angle, unwrap
+from numpy import reshape, amax, exp, array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape, linspace, interp, absolute, fft, log10, angle, unwrap
 from atom.api import FloatRange, Int, Float, Typed, Unicode
-from taref.core.api import tag_property
-from taref.core.universal import ODict
-
+from taref.core.api import tag_property, process_kwargs
+#from taref.core.universal import ODict
+from h5py import File
 from taref.plotter.api import LineFitter
 from taref.physics.fundamentals import h#, filt_prep
 from taref.physics.idt import IDT
 from time import time
 
-a=TA88_Lyzer( on_res_ind=0, VNA_name="RS VNA",
+def read_data(self):
+    with File(self.rd_hdf.file_path, 'r') as f:
+        Magvec=f["Traces"]["{0} - {1}".format(self.VNA_name, self.port_name)]
+        data=f["Data"]["Data"]
+        print data.shape
+        print Magvec.shape
+        #if self.swp_type=="pwr_first":
+        #    self.pwr=data[:, 0, 0].astype(float64)
+        #    self.yoko=data[0,1,:].astype(float64)
+        #elif self.swp_type=="yoko_first":
+        #    self.pwr=data[0, 1, :].astype(float64)
+        #    self.yoko=data[:, 0, 0].astype(float64)
+        self.comment=f.attrs["comment"]
+        fstart=f["Traces"]['{0} - {1}_t0dt'.format(self.VNA_name, self.port_name)][0][0]
+        fstep=f["Traces"]['{0} - {1}_t0dt'.format(self.VNA_name, self.port_name)][0][1]
+
+        sm=shape(Magvec)[0]
+        sy=shape(data)
+        s=(sm, sy[0], sy[2])
+        Magcom=Magvec[:,0, :]+1j*Magvec[:,1, :]
+        Magcom=reshape(Magcom, s, order="F")
+        self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
+        #if self.swp_type=="pwr_first":
+        #    Magcom=swapaxes(Magcom, 1, 2)
+        self.MagcomData=squeeze(Magcom)#[:, 2, :]
+        print self.MagcomData.shape
+        #self.stop_ind=len(self.yoko)-1
+        self.filt.N=len(self.frequency)
+
+a=TA88_VNA_Lyzer( name="d0527", on_res_ind=0, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0527/S1A4_careful_trans.hdf5"),
             offset=0.07,
             #fit_type="yoko",
             rt_atten=30.0,#indices=range(50, 534),
+            read_data=read_data,
             ) #33, 70
 #print s3a4_wg.filt_center, s3a4_wg.filt_halfwidth, s3a4_wg.filt_start_ind, s3a4_wg.filt_end_ind
 
 a.filt.center=731
 a.filt.halfwidth=200
 a.read_data()
-
-b=TA88_Lyzer(on_res_ind=0, VNA_name="RS VNA",
+a.save_folder.main_dir=a.name
+b=TA88_VNA_Lyzer(on_res_ind=0, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0531/S4A4_careful_unswitched.hdf5"),
             offset=0.07,
             #fit_type="yoko",
             rt_atten=30.0,#indices=range(50, 534),
+            read_data=read_data,
             ) #33, 70
 b.filt.center=731
 b.filt.halfwidth=200
 b.read_data()
+
+def ifft_plot(self, **kwargs):
+    process_kwargs(self, kwargs, pl="hannifft_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
+    on_res=absolute(self.filt.window_ifft(self.MagcomData[:,0]))
+
+    pl=line(self.time_axis, self.filt.fftshift(on_res),  color="red",
+           plot_name="onres_{}".format(self.on_res_ind),label="blah", **kwargs)
+
+    self.filt.N=len(on_res)
+    filt=self.filt.freqz
+    #filt=filt_prep(len(on_res), self.filt_start_ind, self.filt_end_ind)
+    top=amax(on_res)
+    line(self.time_axis, filt*top, plotter=pl, color="green", label="wdw")
+    pl.xlabel=kwargs.pop("xlabel", self.time_axis_label)
+    pl.ylabel=kwargs.pop("ylabel", "Mag abs")
+    return pl
+
+def MagcomFilt(self):
+    if self.filt.filter_type=="FIR":
+        return self.filt.fir_filter(self.MagcomData[:, 0])
+    return self.filt.fft_filter(self.MagcomData[:, 0])
+
+if __name__=="__main__":
+    a.filter_type="None"
+    print a.MagAbs.shape
+    pl=line(a.frequency, 10*log10(absolute(a.MagcomData[:, 0])))#.show()
+    #pl=line(a.frequency, 10*log10(absolute(a.MagcomData[:, 1])))#.show()
+
+    #pl=line(a.frequency, a.MagdB)#.show()
+
+    magfilt=MagcomFilt(a)
+    magabs=absolute(magfilt)
+    line(a.frequency, magabs)
+    pl=line(a.frequency, 10.0*log10(magabs), color="red", pl=pl)
+    #idt.Np=56
+    #idt.f0=4.46e9 #4.452
+    #idt.K2=0.032
+    idt.Np=36.5
+    #idt.f0=4.452e9
+
+
+
+    (S11, S12, S13,
+     S21, S22, S23,
+     S31, S32, S33)=idt._get_simple_S(f=a.frequency)
+    print idt.Np, idt.K2
+    print idt.f0
+    print a.comment
+    print -a.fridge_atten+a.fridge_gain-a.rt_atten+a.rt_gain-10
+
+    line(a.frequency, 10*log10(absolute(S13*S31))-11, color="green", pl=pl,
+         auto_ylim=False, y_min=-40, y_max=-10,
+         auto_xlim=False, x_min=4e9, x_max=5e9, xlabel="Frequency (Hz)", ylabel="Transmission (dB)",
+        title="Pickup IDT (37 fingers)")#.show()
+
+    line(a.frequency, angle(magfilt))
+
+
+    ifft_plot(a)#.show()
+    a.save_plots([pl,])
+    pl.show()
 
 if __name__=="__main__":
 

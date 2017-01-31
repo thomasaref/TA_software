@@ -12,40 +12,50 @@ from scipy.constants import h, k
 from time import time
 from taref.plotter.api import line, colormesh
 from taref.physics.qubit import Qubit
-from taref.core.api import SProperty, private_property
+from taref.core.api import SProperty, private_property, Array
 from atom.api import Float, Int
 
 class Sat_Qubit(Qubit):
     sample_power_dBm=Float(-30.0)
-    
+
+    phi_arr=Array()
+    pwr_arr=Array()
+
+    def _default_phi_arr(self):
+        return linspace(0.2, 0.3, 101)
+
+    def _default_pwr_arr(self):
+        return linspace(-100.0, -50, 31)-100#+70
+
     gamma=Float(38.0e6)
     gamma_phi=Float(0.0)
-    
+
     T=Float(0.03)
-    N_dim=Int(5)    
-    
+    N_dim=Int(5)
+
     fd=Float(4.5e9)
+
     N_gamma=SProperty()
     @N_gamma.getter
     def _get_N_gamma(self, fd, T):
         return 1.0/(exp(h*fd/(k*T))-1.0)
-        
+
     #value_grid=array(meshgrid(phi_arr, Omega_sim_vec))
-    
+
     @private_property
     def a_op(self):
         return destroy(self.N_dim)
-        
+
     @private_property
-    def adag(self):
+    def a_dag(self):
         return self.a_op.dag()
-        
+
     c_ops=SProperty().tag(sub=True)
     @c_ops.getter
-    def _get_c_ops(self, gamma, N_gamma, a, adag):
+    def _get_c_ops(self, gamma, N_gamma, a_op, a_dag):
         rate1 = gamma * (1 + N_gamma)
         rate2=gamma*N_gamma
-        return [sqrt(rate1)*a, sqrt(rate2) * adag]
+        return [sqrt(rate1)*a_op, sqrt(rate2) * a_dag]
 
     @private_property
     def nvec(self):
@@ -59,23 +69,87 @@ class Sat_Qubit(Qubit):
     def Ecvec(self):
         return -self.Ec*(6.0*self.nvec**2+6.0*self.nvec+3.0)/12.0
 
+
+    @private_property
+    def Omega_arr(self):
+        pwr_fridge=self.pwr_arr-83.0
+        return sqrt(0.001*10**(pwr_fridge/10.0)/(h*a.fd))*sqrt(2*self.gamma)
+
+
+    @private_property
+    def value_grid(self):
+        value_grid=array(meshgrid(self.phi_arr, self.Omega_arr))
+        return zip(value_grid[0, :, :].flatten(), value_grid[1, :, :].flatten())
+
+    #@private_property
+    #def find_expect(self):
+
+
+    @private_property
+    def fexpt(self):
+        vg=self.value_grid
+        fexpt=parallel_map(find_expect, vg,  progress_bar=True)
+        #return reshape(fexpt, (31, 101))
+        return reshape(fexpt, (len(self.pwr_arr), len(self.phi_arr)))
+
+if __name__=="__main__":
+    a=Sat_Qubit()
+    #print a.Ec/h
+    #raise Exception
+
+    a.Ec = 0.22e9*h # Charging energy.
+    a.Ejmax = 22.2e9*h # Maximum Josephson energy.
+
+    a.gamma = 38.2059e6 # Relaxation rate of the transmon.
+    a.gamma_phi = 0*2*pi/(1e6*2*pi) # Dephasing rate of the transmon.
+    a.fd = 4.8066e9#/1e6 # Drive frequency.
+
+
+
+    Omega_el_squared_coeff = 1.2*3.9666e+21  # Omega^2 in angular frequency = omega_el_square_coeff * gate_power_at_fridgetop
+    #sample_power_sim_dBm = linspace(spk_sample_power_dBm(1), spk_sample_power_dBm(end), Omega_sim_points)
+    gate_fridge_att = -83.0
+    power_fridgetop_sim = 1e-3*10**(0.1*(a.pwr_arr  + gate_fridge_att))
+    #print power_fridgetop_sim
+    Omega_sim_vec = sqrt((power_fridgetop_sim)*Omega_el_squared_coeff)
+    print Omega_sim_vec
+    print a.Omega_arr
+
+    Ec=a.Ec/h/1e6
+    Ejmax=a.Ejmax/h/1e6
+    gamma=a.gamma/1e6
+    fd=a.fd/1e6
+    print Ec, Ejmax, gamma, fd
+    N_dim=a.N_dim
+    nvec=arange(N_dim)
+    Ecvec= -Ec*(6.0*nvec**2+6.0*nvec+3.0)/12.0
+    fdvec=nvec*fd
+
+
     def find_expect(vg): #phi=0.1, Omega_vec=3.0):
-        phi, Omega=vg#.shape
-        Omega_vec=- 0.5j*(Omega*adag - conj(Omega)*a)
-    
-        Ej = Ejmax*absolute(cos(pi*phi)) #Josephson energy as function of Phi.
-    
-        wTvec = -Ej + sqrt(8.0*Ej*Ec)*(nvec+0.5)+Ecvec #\omega_m
-    
-        wT = wTvec-wdvec #rotating frame of gate drive \omega_m-m*\omega_\gate
-        transmon_levels = Qobj(diag(wT[range(N)]))
-        H=transmon_levels +Omega_vec #- 0.5j*(Omega_true*adag - conj(Omega_true)*a)
-        final_state = steadystate(H, c_op_list) #solve master equation
-    
-        return expect( a, final_state) #expectation value of relaxation operator
-        #Omega=\alpha\sqrt{2\Gamma_10} where |\alpha|^2=phonon flux=number of phonons per second
-        #Omega=2\alpha\sqrt{\gamma} where |\alpha|^2=phonon flux=number of phonons per second
-        
+            phi, Omega=vg#.shape
+            Omega_vec=- 0.5j*(Omega*a.a_dag - conj(Omega)*a.a_op)
+
+            Ej = Ejmax*absolute(cos(pi*phi)) #Josephson energy as function of Phi.
+
+            wTvec = -Ej + sqrt(8.0*Ej*Ec)*(nvec+0.5)+Ecvec #\omega_m
+
+            wT = wTvec-fdvec #rotating frame of gate drive \omega_m-m*\omega_\gate
+            transmon_levels = Qobj(diag(wT[range(N_dim)]))
+            H=transmon_levels +Omega_vec #- 0.5j*(Omega_true*adag - conj(Omega_true)*a)
+            final_state = steadystate(H, a.c_ops) #solve master equation
+
+            return expect( a.a_op, final_state) #expectation value of relaxation operator
+            #Omega=\alpha\sqrt{2\Gamma_10} where |\alpha|^2=phonon flux=number of phonons per second
+            #Omega=2\alpha\sqrt{\gamma} where |\alpha|^2=phonon flux=number of phonons per second
+        #return find_expec
+
+    #find_expect=setup_expt(a)
+    colormesh(a.phi_arr, a.pwr_arr, absolute(a.fexpt), cmap="RdBu_r")
+    colormesh(absolute(a.fexpt), cmap="RdBu_r")
+    line(a.pwr_arr, 20*log10(absolute(a.fexpt)[:, 77])-a.pwr_arr)
+    line(a.pwr_arr, 10**((20*log10(absolute(a.fexpt)[:, 77])-a.pwr_arr)/10.0)).show()
+
 
 Omega_sim_points = 10
 sample_power_sim_dBm=linspace(-100.0, -50, 31)

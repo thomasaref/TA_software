@@ -79,7 +79,7 @@ def ifft_plot(self, **kwargs):
     pl.xlabel=kwargs.pop("xlabel", self.time_axis_label)
     pl.ylabel=kwargs.pop("ylabel", "Mag abs")
     return pl
-    
+
 def MagcomFilt(self):
     if self.filt.filter_type=="FIR":
         return self.filt.fir_filter(self.MagcomData)
@@ -106,12 +106,16 @@ if __name__=="__main__":
     print a.comment
     print -a.fridge_atten+a.fridge_gain-a.rt_atten+a.rt_gain-10
 
-    line(a.frequency, 10*log10(absolute(S13*S31))-14, color="green", pl=pl).show()    
+    line(a.frequency, 10*log10(absolute(S13*S31))-13.8, color="green", pl=pl,
+         auto_ylim=False, y_min=-50, y_max=-10, xlabel="Frequency (Hz)", ylabel="Transmission (dB)",
+        title="Pickup IDT (81 fingers)")#.show()
 
     line(a.frequency, angle(magfilt))
 
 
-    ifft_plot(a).show()
+    ifft_plot(a)#.show()
+    a.save_plots([pl,])
+    pl.show()
     #pl_raw=a.magabs_colormesh()
     #a.bgsub_type="dB"
     #a.magabs_colormesh()

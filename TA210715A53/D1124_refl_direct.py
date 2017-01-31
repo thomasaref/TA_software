@@ -43,7 +43,7 @@ def read_data(self):
         self.filt.N=len(self.frequency)
 
 
-a=TA53_VNA_Lyzer(name="d1122", on_res_ind=301,#read_data=read_data, # VNA_name="RS VNA",
+a=TA53_VNA_Lyzer(name="d1124", on_res_ind=301,#read_data=read_data, # VNA_name="RS VNA",
         rd_hdf=TA53_Read(main_file="Data_1124/S4A4_refl_careful.hdf5"), #long_test.hdf5"), #
         fit_indices=[range(850, 2300)], #range(48,154+1), range(276, 578+1)],
          desc="transmission power sweep",
@@ -79,7 +79,7 @@ def ifft_plot(self, **kwargs):
     pl.xlabel=kwargs.pop("xlabel", self.time_axis_label)
     pl.ylabel=kwargs.pop("ylabel", "Mag abs")
     return pl
-    
+
 def MagcomFilt(self):
     if self.filt.filter_type=="FIR":
         return self.filt.fir_filter(self.MagcomData)
@@ -107,13 +107,17 @@ if __name__=="__main__":
     print a.comment
     print -a.fridge_atten+a.fridge_gain-a.rt_atten+a.rt_gain-10
 
-    line(a.frequency, 10*log10(absolute(S33))-10, color="green", pl=pl)#.show()    
-    line(a.frequency, 10.0**((10*log10(absolute(S33))-10)/10.0), color="green", pl=pl1).show()    
+    line(a.frequency, 10*log10(absolute(S33))-10, color="green", pl=pl,
+         auto_ylim=False, y_min=-18, y_max=-8, xlabel="Frequency (Hz)", ylabel="Reflection (dB)",
+        title="Pickup IDT (81 fingers)")#.show()
+    line(a.frequency, 10.0**((10*log10(absolute(S33))-10)/10.0), color="green", pl=pl1)#.show()
 
     line(a.frequency, angle(magfilt))
 
 
-    ifft_plot(a).show()
+    ifft_plot(a)#.show()
+    a.save_plots([pl,])
+    pl.show()
     #pl_raw=a.magabs_colormesh()
     #a.bgsub_type="dB"
     #a.magabs_colormesh()
