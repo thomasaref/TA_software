@@ -48,7 +48,7 @@ b=TA53_VNA_Pwr_Lyzer(name="d1118", on_res_ind=301,
 b.filt.center=0 #71 #28*0 #141 #106 #58 #27 #139 #106 #  #137
 b.filt.halfwidth=100 #8 #10
 b.fitter.gamma=0.3/10 #0.035
-b.flux_axis_type="flux"#"fq" #
+b.flux_axis_type="fq" #"flux"#"fq" #
 b.end_skip=10
 #a.flux_indices=[range(len(a.yoko)-1)]
 b.pwr_ind=1
@@ -164,22 +164,22 @@ def combo_plots():
         pl.axes.set_ylabel("$\Gamma/2\pi$ (GHz)")
 
 
-        if 0:
-            pl="FFT_magabs"
+        if 1:
+            pl2="FFT_magabs"
             pl1="Fit_magabs"
             for d in lyzers:
                 d.filter_type="Fit"
                 pl1, pf=d.magabs_colormesh(pl=pl1, pf_too=True)#, cmap="nipy_spectral")
                 d.filter_type="FFT"
-                pl=d.magabs_colormesh(pl=pl, auto_zlim=False, vmin=pf.vmin, vmax=pf.vmax)#, cmap="nipy_spectral")
-            pl.set_xlim(3.8, 6.05)
-            pl.set_ylim(3.8, 6.05)
-            pl.add_label("a)")
+                pl2=d.magabs_colormesh(pl=pl2, auto_zlim=False, vmin=pf.vmin, vmax=pf.vmax)#, cmap="nipy_spectral")
+            pl2.set_xlim(3.8, 6.05)
+            pl2.set_ylim(3.8, 6.05)
+            pl2.add_label("a)")
             pl1.set_xlim(3.8, 6.05)
             pl1.set_ylim(3.8, 6.05)
             pl1.add_label("b)")
-            pls.append(pl)
-            pls.append(pl1)
+            #pls.append(pl)
+            #pls.append(pl1)
 
     b.read_data()
 

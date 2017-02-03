@@ -27,7 +27,7 @@ from taref.analysis.api import Lyzer, VNA_Lyzer, VNA_Pwr_Lyzer
 
 class TA88_Read(Read_HDF5):
     def _default_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216", quality="", main_dir="Data_0221")
+        return Folder(base_dir="/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Logbook/TA210715A88_cooldown210216", quality="", main_dir="Data_0221")
 
 class TA88_Save_NP(Save_NP):
     def _default_folder(self):

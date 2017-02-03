@@ -20,7 +20,7 @@ from scipy.signal import savgol_filter
 from scipy.interpolate import interp1d
 
 a=TA88_VNA_Lyzer(on_res_ind=201,# VNA_name="RS VNA", filt_center=15, filt_halfwidth=15,
-        rd_hdf=TA88_Read(main_file="Data_0628/S4A4_just_gate_overnight_flux_swp.hdf5"))
+        rd_hdf=TA88_Read(main_file="Data_0705/reflection_S4A4_widecoilsweep.hdf5"))
 
 a.filt.center=0
 a.filt.halfwidth=200

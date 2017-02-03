@@ -19,11 +19,11 @@ from scipy.signal import savgol_filter
 #savgol_filter(x, 5, 2)
 from scipy.interpolate import interp1d
 
-a=TA88_VNA_Lyzer(on_res_ind=201,# VNA_name="RS VNA", filt_center=15, filt_halfwidth=15,
-        rd_hdf=TA88_Read(main_file="Data_0628/S4A4_just_gate_overnight_flux_swp.hdf5"))
+a=TA88_VNA_Lyzer(on_res_ind=215,# VNA_name="RS VNA", filt_center=15, filt_halfwidth=15,
+        rd_hdf=TA88_Read(main_file="Data_0704/S4A4_gate_flux_swp.hdf5"))
 
-a.filt.center=0
-a.filt.halfwidth=200
+a.filt.center=40#0 #107
+a.filt.halfwidth=90
 a.fitter.fit_type="lorentzian"
 a.fitter.gamma=0.01
 a.flux_axis_type="yoko"#"flux"
@@ -31,7 +31,7 @@ a.end_skip=10
 a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(29, 37), range(38, 39), range(44, 46), range(48, 52),
                range(54, 66), range(67, 69), range(70, 85), range(105, 107), range(108, 116), range(122, 129), [130], range(132, 134), [138],
  range(182,184), range(188, 193), range(217, 251+1), range(266, 275+1), range(314, 324+1)]
-a.flux_indices=[range(400,434), range(436, 610)]
+#a.flux_indices=[range(400,434), range(436, 610)]
 #a.flux_indices=[range(200, 400)]
 a.read_data()
 a.ifft_plot()
@@ -73,7 +73,9 @@ if __name__=="__main2__":
 
 
 if __name__=="__main__":
-    a.magabs_colormesh(vmin=0.995, vmax=1.005, cmap="nipy_spectral", auto_zlim=False, pl="mag").show()
+    a.magabs_colormesh(vmin=0.987, vmax=1.00, cmap="afmhot", auto_zlim=False, pl="mag")#.show()
+    a.filter_type="FFT"
+    a.magabs_colormesh(vmin=0.995, vmax=1.005, cmap="afmhot", auto_zlim=False).show()
 
     #pl=colormesh(a.MagAbs.transpose())
     #colormesh(savgol_filter(a.MagAbs, 11, 3, axis=1).transpose(), pl=pl).show()
