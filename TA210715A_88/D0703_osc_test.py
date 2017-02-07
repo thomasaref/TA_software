@@ -5,10 +5,10 @@ Created on Sun Apr 24 18:55:33 2016
 @author: thomasaref
 """
 
-from TA88_fundamental import TA88_Lyzer, TA88_Read, qdt
+from TA88_fundamental import TA88_VNA_Lyzer, TA88_Read, qdt
 from taref.plotter.api import colormesh, line, Plotter
-from taref.core.api import set_tag, set_all_tags
-from numpy import array, absolute, real, imag, nan_to_num, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape, float64, linspace, reshape
+from taref.core.api import set_tag, set_all_tags, process_kwargs
+from numpy import cos, amax, array, absolute, real, imag, nan_to_num, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape, float64, linspace, reshape
 from atom.api import FloatRange
 from taref.core.api import tag_property
 from taref.plotter.api import LineFitter
@@ -16,6 +16,229 @@ from taref.physics.fundamentals import h
 from scipy.optimize import fsolve
 from h5py import File
 
+
+from numpy import exp, sin, pi, linspace, array, log10, absolute, sqrt
+from taref.plotter.api import colormesh
+
+#import matplotlib.pyplot as plt
+
+f0=4.5e9
+f02=4.52e9
+
+f=linspace(4.0e9, 5.0e9, 100)
+
+dlist=[]
+
+GL=1/50.0
+
+K2=0.048
+Cs=4.07e-10
+W=25.0e-6
+fc=4.5e9
+wc=2*pi*fc
+Y0=wc*W*Cs/K2
+mu=0.8*K2
+#Np=37
+C=sqrt(2)*37*Cs*W
+#
+#Ga    Ga    Ga
+#
+#Ga exp Ga exp Ga 1+exp
+#
+#Ga exp Ga exp2 Ga exp2+exp+1
+#
+#Ga exp Ga exp2 Ga exp3+exp2+exp+1
+#######
+#
+#exp3+exp2+exp exp2+exp exp+1 1  Ga  Ga  Ga  = Ga exp 
+#exp3+exp2+exp exp2+exp exp   Ga  Ga  Ga  = Ga(1+exp)+Ga exp
+#
+#exp3+exp2+exp exp2+exp exp   Ga  Ga  Ga  = Ga(1+exp+exp2) + Gaexp(1+exp)+Ga exp2 1
+#
+#exp3+exp2+exp exp2+exp exp   Ga  Ga  Ga  = Ga(1+exp+exp2+exp3) + Gaexp(1+exp+exp2)+Gaexp2(1+exp)
+#exp+2exp2+3exp3+2exp4
+#+exp5
+#exp3+exp2+exp exp2+exp exp   Ga  Ga  Ga  = Ga(1+exp+exp2+exp3) + Gaexp(1+exp+exp2+exp3)+Gaexp2(1+exp+exp2)
+#
+
+#0(0)
+#0(0,1)+1(0)
+#0(0,1,2)+1(0,1)+2(0)
+#0(0,1,2,3)+1(0,1,2)+2(0,1)+3(0)
+#0(0,1,2,3)+1(0,1,2,3)+2(0,1,2)+3(0,1)
+#0(0,1,2,3)+1(0,1,2,3)+2(0,1,2,3)+3(0,1,2)
+#0(0,1,2,3)+1(0,1,2,3)+2(0,1,2,3)+3(0,1,2,3)
+
+#n=0:exp0exp0
+#n=1:exp0(exp0+exp1)+exp1exp0=1+2exp1
+#n=2:exp0(exp0+exp1+exp2)+exp1(exp0+exp1)+exp2(exp0)=1+2exp1+3exp2
+#n=3:exp0(exp0+exp1+exp2+exp3)+exp1(exp0+exp1+exp2)+exp2(exp0+exp1)+exp3=1+2exp1+3exp2+4exp3
+
+#n: exp0(exp0+exp1+..expn)+exp1(exp0+..exp(n-1))+expn(exp0)
+#n+1: fn+exp0exp(n+1)+exp1(exp(n-1))
+#for n in range(Np+1):
+def recur_exp(N, Np):
+    if N==0:
+        return [(1,0)]
+    tlist=recur_exp(N-1, Np)
+    if N<Np:
+        tlist.append((N+1,N))
+    else:
+        if N<2*Np-1:
+                tlist.append((2*Np-N-1, N))
+    return tlist
+    
+for m in range(8):
+    ans=recur_exp(m, 4)  
+    print ans
+    print sum([el[0]*exp(-1j*el[1]) for el in ans])
+        
+#n=4:exp0(exp0+exp1+exp2+exp3)+exp1(exp0+exp1+exp2+exp3)+exp2(exp0+exp1+exp2)+exp3(exp0+exp1)
+#=1+2exp1+3exp2+4exp3+3exp4
+#n=5:exp0(exp0+exp1+exp2+exp3)+exp1(exp0+exp1+exp2+exp3)+exp2(exp0+exp1+exp2+exp3)
+#+exp3(exp0+exp1+exp2)
+#=1+2exp1+3exp2+4exp3+3exp4+2exp5
+
+#
+#(1,2,3,4)+(2,3,4)+(3,4)+(4)
+#(1, 2*2, 3*3, 4*4)
+#(1,2,3,4)+(2,3,4,5)+(3,4,5)+(4,5)
+#(1, 2*2, 3*3, 4*4, 3*5)
+#(1,2,3,4)+(2,3,4,5)+(3,4,5,6)+(4,5,6)
+#(1, 2*2, 3*3, 4*4, 3*5, 2*6)
+#(1,2,3,4)+(2,3,4,5)+(3,4,5,6)+(4,5,6,7)
+#(1, 2*2, 3*3, 4*4, 3*5, 2*6, 1*7)
+#
+#
+#n=1: exp 
+#n=2: 2exp2+exp
+#n=3: 3exp3 + 2 exp2 +  exp
+#n=4: 4exp4+3exp3 + 2exp2 + exp
+#n:   nexp(n)+(n-1)exp(n-1)+(n-2)exp(n-2)...+2exp2 +  exp 
+#
+#n=Np: Npexp(Np)+(Np-1)exp(Np-1)+...2exp2+exp+1
+#n=Np+1: (Np-1)exp(Np+1)+Npexp(Np)+(Np-1)exp(Np-1)+...2exp2+exp+1
+#n=Np+2: (Np-2)exp(Np+2)+(Np-1)exp(Np+1)+Npexp(Np)+(Np-1)exp(Np-1)+...2exp2+exp+1
+#n=Np+3: (Np-3)exp(Np+3)+(Np-2)exp(Np+2)+(Np-1)exp(Np+1)+Npexp(Np)+(Np-1)exp(Np-1)+...2exp2+exp+1
+#
+#n=Np+m: (Np-m)exp(n)+(Np-m+1)exp(n-1)+(Np-m+2)exp(n-2)...+Npexp(Np)+(Np-1)exp(Np-1)+...2exp2+exp+1
+#2Np-n=Np-m
+#n=Np+m: (2Np-n)exp(n)+(2Np-(n-1))exp(n-1)+(2Np-(n-2))exp(n-2)...(Np-2)exp(Np+2)+(Np-1)exp(Np+1)+Npexp(Np)+(Np-1)exp(Np-1)+...2exp2+exp+1
+#m=Np-1:
+#    
+#Np=4    
+p=0.0#0.5
+
+def comb_A(N, printing=False):
+    if N<Np:
+        if printing:
+            Asum=[(n,n) for n in range(N+1)]
+        else:
+            Asum=sum([n*exp(1j*2*pi*f/f0*(n+p)) for n in range(N+1)])
+        return Asum
+    else:
+        if printing:
+            Asum=[(n,n) for n in range(Np)]
+        else:
+            Asum=sum([n*exp(1j*2*pi*f/f0*(n+p)) for n in range(Np)])
+        if N<2*Np:
+            if printing:
+                Asum2=[(2*Np-n,n) for n in range(Np+1, N)]
+            else:
+                Asum2=sum([(2*Np-n)*exp(1j*2*pi*f/f0*(n+p)) for n in range(Np+1, N)])
+        else:
+            if printing:
+                Asum2=[(2*Np-n,n) for n in range(Np+1, 2*Np)]
+            else:
+                Asum2=sum([(2*Np-n)*exp(1j*2*pi*f/f0*(n+p)) for n in range(Np+1, 2*Np)])
+        return Asum+Asum2
+
+if 0:
+    for m in range(10):
+        print comb_A(m, True)     
+
+#Np=37    
+#n: exp(Np-2)exp(Np+2)+(Np-1)exp(Np+1)+Npexp(Np)+(Np-1)exp(Np-1)+...2exp2+exp+1
+
+
+#Gaexp+2exp2+exp3
+#2Ga1(exp+exp2+exp3+exp4)+ exp3+exp2 + exp + exp2+exp
+#3Ga1(exp+exp2+exp3+exp4)+ exp3 + exp2+exp
+#4Ga1(exp+exp2+exp3+exp4)
+#Ga(1+exp+exp2+exp3+exp4..)(exp+exp2+exp3+exp4)
+#Ga(exp+2exp2+3exp3+4exp4)
+#n:Np+1
+#2exp(Np)+3exp(Np-1)+...(Np-2)exp4 +(Np-1)exp3+Npexp2+Np exp
+#3exp(Np)+4exp(Np-1)+...(Np-1)exp4+Npexp3+Npexp2+Npexp
+#
+#NpexpNp+Npexp(Np-1)+...Npexp2+Npexp 
+#
+#2exp4+3exp3+4exp2+4exp
+#3exp4+4exp3+4exp2+4exp
+#4exp4+4exp3+4exp1+4exp
+def add_data(N):
+    if N<=37.0*2:
+        Ns=N
+    else:
+        Ns=37.0*2
+    #X=N*pi*(f-f0)/f0
+    #A=sin(X)/sin(X/Ns)
+    ans=recur_exp(N, Np=37) 
+    
+    A=sum([el[0]*exp(1j*2*pi*f/f0*el[1])/1.0 for el in ans])
+
+    #A=comb_A(N)
+    Asq=absolute(A)
+    return Asq
+    Ga0=2*mu**2*Y0*Ns**2
+    Ga=Ga0*Asq/Ns**2
+    Ba=Ga0*(sin(2*X)-2*X)/(2*X**2)
+    w=2*pi*f
+    S13=1j*sqrt(2*Ga*GL)/(Ga+1j*Ba+1j*w*C+GL)
+
+    if N>5:
+        Ns=N-5
+    else: 
+        Ns=1
+    X=Ns*pi*(f-f0)/f0
+    A=1*sin(X)/sin(X/Ns)
+    Asq=A**2
+    Ga0=2*mu**2*Y0*(Ns)**2
+    Ga=Ga0*Asq/Ns**2
+    Ba=Ga0*(sin(2*X)-2*X)/(2*X**2)
+    w=2*pi*f
+    S31=1j*sqrt(2*Ga*GL)/(Ga+1j*Ba+1j*w*C+GL)
+        
+    return absolute(S13*S31)
+    
+
+    #if N>1:
+    #    X=(N-1)*pi*(f-f0)/f0
+    #    A=sin(X)/sin(X/(N-1))*A
+    #    Asq=A
+
+    return Asq
+    #dlist.append(Asq)
+
+if 1:
+    dlist.extend([add_data(1) for N in range(1,37+1)])
+    #dlist.extend([add_data(N) for N in range(87*2+1, 0, -1)])
+
+    dlist.extend([add_data(N) for N in range(1,87*2+1)])
+    #dlist.extend([add_data(39*2) for N in range(1,37+1)])
+    dlist.extend([add_data(N) for N in range(87*2+1, 0, -1)])
+    dlist.extend([add_data(1) for N in range(1,37+1+5)])
+    
+    
+    
+    data=array(dlist) 
+    print data.shape
+    colormesh(data)
+    colormesh(10*log10(absolute(data))).show()
+
+
+    
+    
 def read_data(self):
     with File(self.rd_hdf.file_path, 'r') as f:
         print f["Traces"].keys()
@@ -40,8 +263,9 @@ def read_data(self):
         print shape(self.MagcomData)
         self.stop_ind=len(self.yoko)-1
 
-a=TA88_Lyzer( on_res_ind=201, read_data=read_data, # VNA_name="RS VNA",
-        rd_hdf=TA88_Read(main_file="Data_0703/S3A1_pulsing_new_osc_flux_swp.hdf5"))
+#S3A1_pulsing_new_osc_frq_swp.hdf5
+a=TA88_VNA_Lyzer( on_res_ind=251, read_data=read_data, # VNA_name="RS VNA",
+        rd_hdf=TA88_Read(main_file="Data_0704/S3A1_pulsing_new_osc_frq_swp.hdf5"))#"Data_0703/S3A1_pulsing_new_osc_flux_swp.hdf5"))
 a.filt.center=4469
 a.filt.halfwidth=300
 a.filt.reflect=True
@@ -50,7 +274,65 @@ from scipy.signal import decimate, resample
 from numpy import exp
 
 a.read_data()
+#line(a.MagcomData[10000,:])
+#f=a.frequency[250]
 
+pl=line(a.MagcomData[:,250])
+t=a.frequency
+f=a.yoko[250]
+#line(cos(a.frequency), color="red")
+colormesh(a.MagcomData)
+
+def ifft_plot(self, **kwargs):
+        process_kwargs(self, kwargs, pl="hannifft_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
+        on_res=absolute(self.filt.window_ifft(self.MagcomData[:,self.on_res_ind]))
+        strt=absolute(self.filt.window_ifft(self.Magcom[:,self.start_ind]))
+        stop=absolute(self.filt.window_ifft(self.Magcom[:,self.stop_ind]))
+
+        pl=line(self.time_axis, self.filt.fftshift(on_res),  color="red",
+               plot_name="onres_{}".format(self.on_res_ind),label="{:.4g}".format(self.flux_axis[self.on_res_ind]), **kwargs)
+        line(self.time_axis, self.filt.fftshift(strt), pl=pl, linewidth=1.0, color="purple",
+             plot_name="strt {}".format(self.start_ind), label="{:.4g}".format(self.flux_axis[self.start_ind]))
+        line(self.time_axis, self.filt.fftshift(stop), pl=pl, linewidth=1.0, color="blue",
+             plot_name="stop {}".format(self.stop_ind), label="{:.4g}".format(self.flux_axis[self.stop_ind]))
+
+        self.filt.N=len(on_res)
+        filt=self.filt.freqz
+        #filt=filt_prep(len(on_res), self.filt_start_ind, self.filt_end_ind)
+        top=max([amax(on_res), amax(strt), amax(stop)])
+        line(self.time_axis, filt*top, plotter=pl, color="green", label="wdw")
+        pl.xlabel=kwargs.pop("xlabel", self.time_axis_label)
+        pl.ylabel=kwargs.pop("ylabel", "Mag abs")
+        return pl
+
+a.ifft_plot()   
+IQ=a.MagcomFilt[:, 250]*exp(-2.0j*pi*f*t)
+line(absolute(IQ), pl=pl, color="red")
+
+line(a.MagcomFilt[:, 251])
+#array([a.filt.fft_filter(self.MagcomData[:,n]) for n in self.flat_flux_indices]).transpose()
+     
+line(a.MagcomData[:,346])
+line(a.MagcomData[:,285])
+line(a.MagcomData[:,315])
+from scipy.signal import hilbert
+
+#data=hilbert(a.MagcomData)
+#colormesh(absolute(data))
+
+data=hilbert(a.MagcomData, axis=0)
+line(data[:,346])
+line(data[:,285])
+line(data[:,315])
+
+colormesh(absolute(data))
+colormesh(absolute(data)[3500:6500, :]).show()
+
+#data=hilbert(a.MagcomData, axis=1)
+#colormesh(absolute(data)).show()
+
+#data2d=a.MagcomData*exp(-2.0j*pi*f*t[10:-10])
+#data2d1=decimate(data2d, q=q, ftype="fir")
 #T = 1.0 / 800.0
 #x = np.linspace(0.0, N*T, N)
 #y = np.sin(50.0 * 2.0*np.pi*x) + 0.5*np.sin(80.0 * 2.0*np.pi*x)
