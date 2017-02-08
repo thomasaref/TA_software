@@ -152,7 +152,7 @@ class TA88_Lyzer(VNA_Lyzer):
     idt=idt
 
     def _default_save_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/Lamb_shift", main_dir="overall")
+        return Folder(base_dir="/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/test_data/Lamb_shift", main_dir="overall")
 
 
 class TA88_VNA_Pwr_Lyzer(VNA_Pwr_Lyzer):
@@ -160,14 +160,14 @@ class TA88_VNA_Pwr_Lyzer(VNA_Pwr_Lyzer):
     idt=idt
 
     def _default_save_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/Lamb_shift", main_dir="overall")
+        return Folder(base_dir="/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/test_data/Lamb_shift", main_dir="overall")
 
 class TA88_VNA_Lyzer(VNA_Lyzer):
     qdt=qdt
     idt=idt
 
     def _default_save_folder(self):
-        return Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data/Lamb_shift", main_dir="overall")
+        return Folder(base_dir="/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/test_data/Lamb_shift", main_dir="overall")
 
 
     def fft_plots(self):
