@@ -21,7 +21,7 @@ from scipy.interpolate import interp1d
 from taref.physics.fundamentals import bgsub2D
 
 
-a=TA88_VNA_Lyzer(on_res_ind=215,# VNA_name="RS VNA", filt_center=15, filt_halfwidth=15,
+a=TA88_VNA_Lyzer(name="d0704_swp", on_res_ind=215,# VNA_name="RS VNA", filt_center=15, filt_halfwidth=15,
         rd_hdf=TA88_Read(main_file="Data_0704/S4A4_gate_flux_swp.hdf5"))
 
 a.filt.center=40#0 #107
@@ -37,21 +37,21 @@ a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(2
 #a.flux_indices=[range(200, 400)]
 a.read_data()
 a.ifft_plot()
-
+a.save_folder.main_dir=a.name
 a.bgsub_type="dB"
 #a.bgsub_type="Complex"
 if __name__=="__main__":
     fil=Filter(center=0, halfwidth=40)
-    
+
     pl="magabs"
     pl1="centers"
-    a.magabs_colormesh(vmin=0.987, vmax=1.00, cmap="afmhot", auto_zlim=False, pl="mag")#.show()
+    pl1=a.magabs_colormesh(vmin=0.987, vmax=1.00, cmap="afmhot", auto_zlim=False, pl="mag")#.show()
     a.filter_type="FFT"
-    a.magabs_colormesh(vmin=0.987, vmax=1.00, cmap="afmhot", auto_zlim=False)#.show()
+    pl2=a.magabs_colormesh(vmin=0.987, vmax=1.00, cmap="afmhot", auto_zlim=False)#.show()
 
 
     stop_ind=len(a.frequency)-1-a.end_skip*2
-    
+
     def ifft_plot(self, **kwargs):
         process_kwargs(self, kwargs, pl="hannifft_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
         on_res=absolute(fil.window_ifft(self.MagAbs[211,:]))
@@ -74,13 +74,17 @@ if __name__=="__main__":
         pl.ylabel=kwargs.pop("ylabel", "Mag abs")
         return pl
     ifft_plot(a)#.show()
-    df=array([fil.fft_filter(a.MagAbs[n, :]) for n in range(stop_ind)])#.transpose()        
+    df=array([fil.fft_filter(a.MagAbs[n, :]) for n in range(stop_ind)])#.transpose()
     #df_bgsub=bgsub2D(10.0*log10(absolute(df)), 0, 1, 0)
     df_bgsub=absolute(df)
-    colormesh(a.flux_axis[a.end_skip:-a.end_skip], a.frequency[a.end_skip:-a.end_skip]/1e9,
-              df_bgsub[:,a.end_skip:-a.end_skip], 
+    pl3=colormesh(a.flux_axis[a.end_skip:-a.end_skip], a.frequency[a.end_skip:-a.end_skip]/1e9,
+              df_bgsub[:,a.end_skip:-a.end_skip],
             vmin=0.987, vmax=1.00, cmap="afmhot", auto_zlim=False,
-            xlabel="Yoko (V)",  ylabel="Frequency (Ghz)").show()
+            xlabel="Yoko (V)",  ylabel="Frequency (Ghz)")
+    scatter(df_bgsub[210, :])
+    scatter(df_bgsub[:, 210])
+    #a.save_plots([pl1,pl2, pl3])
+    pl1.show()
 if __name__=="__main2__":
 
     class Fitter(LineFitter):
