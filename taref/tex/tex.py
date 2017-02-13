@@ -33,8 +33,8 @@ class TEX(Operative):
     tex_type=Enum("simple", "revtex 2 column", "revtex 1 column")
 
 
-    folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data", main_dir="tex_processed", quality="")
-    source_folder=Folder(base_dir="/Users/thomasaref/Dropbox/Current stuff/test_data", main_dir="", quality="")
+    folder=Folder(base_dir="/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/test_data", main_dir="tex_processed", quality="")
+    source_folder=Folder(base_dir="/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/test_data", main_dir="", quality="")
     read_file=Typed(Read_TXT)
     save_file=Typed(Save_TXT)
     save_code=Typed(Save_TXT)

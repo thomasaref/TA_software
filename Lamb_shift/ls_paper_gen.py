@@ -10,7 +10,7 @@ from taref.core.shower import shower
 from TA88_fundamental import qdt, idt, ideal_qdt, ideal_idt
 from taref.filer.read_file import Read_TXT
 
-tx=TEX(source_path=r"/Users/thomasaref/Dropbox/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/Lamb_shift_paper_source.tex")
+tx=TEX(source_path=r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/Lamb_shift_paper_source.tex")
 #"/Users/thomasaref/Dropbox/Current stuff/test_data/source/TA210715A88_source/TA210715A88_writeup.tex")
 tx.save_file.file_name="Lamb_shift_paper"
 print tx.source_folder.dir_path
@@ -44,7 +44,7 @@ if 1:
     tx.include_image("fig2", label="", caption="fig2 caption", source_folder=fig2.save_folder)
 
 if 1:
-    from fig3_lamb_shift import a as fig3
+    from fig3_lamb_shift2 import a as fig3
     tx.include_image("fig3", label="", caption="fig3 caption", source_folder=fig3.save_folder)
 
     tx.ext("results")

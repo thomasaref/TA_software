@@ -25,7 +25,7 @@ from taref.plotter.api import colormesh
 f0=4.5e9
 f02=4.52e9
 
-f=linspace(4.0e9, 5.0e9, 100)
+f=linspace(4.0e9, 5.0e9, 300)
 
 dlist=[]
 
@@ -77,22 +77,26 @@ C=sqrt(2)*37*Cs*W
 #n: exp0(exp0+exp1+..expn)+exp1(exp0+..exp(n-1))+expn(exp0)
 #n+1: fn+exp0exp(n+1)+exp1(exp(n-1))
 #for n in range(Np+1):
-def recur_exp(N, Np):
+def recur_exp(N, Np, full=False):
     if N==0:
         return [(1,0)]
     tlist=recur_exp(N-1, Np)
     if N<Np:
         tlist.append((N+1,N))
-    else:
+    elif full:
         if N<2*Np-1:
                 tlist.append((2*Np-N-1, N))
     return tlist
+
     
-for m in range(8):
+for m in range(12):
     ans=recur_exp(m, 4)  
     print ans
     print sum([el[0]*exp(-1j*el[1]) for el in ans])
-        
+    
+    #ans=recur_exp2(m, 4)  
+    #print ans
+    #print sum([el[0]*exp(-1j*el[1]) for el in ans])
 #n=4:exp0(exp0+exp1+exp2+exp3)+exp1(exp0+exp1+exp2+exp3)+exp2(exp0+exp1+exp2)+exp3(exp0+exp1)
 #=1+2exp1+3exp2+4exp3+3exp4
 #n=5:exp0(exp0+exp1+exp2+exp3)+exp1(exp0+exp1+exp2+exp3)+exp2(exp0+exp1+exp2+exp3)
@@ -128,34 +132,34 @@ for m in range(8):
 #    
 #Np=4    
 p=0.0#0.5
-
-def comb_A(N, printing=False):
-    if N<Np:
-        if printing:
-            Asum=[(n,n) for n in range(N+1)]
-        else:
-            Asum=sum([n*exp(1j*2*pi*f/f0*(n+p)) for n in range(N+1)])
-        return Asum
-    else:
-        if printing:
-            Asum=[(n,n) for n in range(Np)]
-        else:
-            Asum=sum([n*exp(1j*2*pi*f/f0*(n+p)) for n in range(Np)])
-        if N<2*Np:
-            if printing:
-                Asum2=[(2*Np-n,n) for n in range(Np+1, N)]
-            else:
-                Asum2=sum([(2*Np-n)*exp(1j*2*pi*f/f0*(n+p)) for n in range(Np+1, N)])
-        else:
-            if printing:
-                Asum2=[(2*Np-n,n) for n in range(Np+1, 2*Np)]
-            else:
-                Asum2=sum([(2*Np-n)*exp(1j*2*pi*f/f0*(n+p)) for n in range(Np+1, 2*Np)])
-        return Asum+Asum2
-
-if 0:
-    for m in range(10):
-        print comb_A(m, True)     
+#
+#def comb_A(N, printing=False):
+#    if N<Np:
+#        if printing:
+#            Asum=[(n,n) for n in range(N+1)]
+#        else:
+#            Asum=sum([n*exp(1j*2*pi*f/f0*(n+p)) for n in range(N+1)])
+#        return Asum
+#    else:
+#        if printing:
+#            Asum=[(n,n) for n in range(Np)]
+#        else:
+#            Asum=sum([n*exp(1j*2*pi*f/f0*(n+p)) for n in range(Np)])
+#        if N<2*Np:
+#            if printing:
+#                Asum2=[(2*Np-n,n) for n in range(Np+1, N)]
+#            else:
+#                Asum2=sum([(2*Np-n)*exp(1j*2*pi*f/f0*(n+p)) for n in range(Np+1, N)])
+#        else:
+#            if printing:
+#                Asum2=[(2*Np-n,n) for n in range(Np+1, 2*Np)]
+#            else:
+#                Asum2=sum([(2*Np-n)*exp(1j*2*pi*f/f0*(n+p)) for n in range(Np+1, 2*Np)])
+#        return Asum+Asum2
+#
+#if 0:
+#    for m in range(10):
+#        print comb_A(m, True)     
 
 #Np=37    
 #n: exp(Np-2)exp(Np+2)+(Np-1)exp(Np+1)+Npexp(Np)+(Np-1)exp(Np-1)+...2exp2+exp+1
@@ -177,64 +181,71 @@ if 0:
 #3exp4+4exp3+4exp2+4exp
 #4exp4+4exp3+4exp1+4exp
 def add_data(N):
-    if N<=37.0*2:
+    if N<=37.0:
         Ns=N
     else:
-        Ns=37.0*2
-    #X=N*pi*(f-f0)/f0
-    #A=sin(X)/sin(X/Ns)
-    ans=recur_exp(N, Np=37) 
+        Ns=37.0
+    X=Ns*pi*(f-f0)/f0
+    A=sin(X)/sin(X/Ns)
+    #ans=recur_exp(N, Np=37) 
     
-    A=sum([el[0]*exp(1j*2*pi*f/f0*el[1])/1.0 for el in ans])
+    #A=sum([el[0]*exp(1j*2*pi*f/f0*el[1])/1.0 for el in ans])
+    #A=sum([1.0*exp(1j*2*pi*f/f0*el[1])/1.0 for el in ans])
 
     #A=comb_A(N)
-    Asq=absolute(A)
-    return Asq
+    Asq=absolute(A)**2
+    #return Asq
     Ga0=2*mu**2*Y0*Ns**2
     Ga=Ga0*Asq/Ns**2
     Ba=Ga0*(sin(2*X)-2*X)/(2*X**2)
     w=2*pi*f
     S13=1j*sqrt(2*Ga*GL)/(Ga+1j*Ba+1j*w*C+GL)
-
-    if N>5:
-        Ns=N-5
-    else: 
-        Ns=1
-    X=Ns*pi*(f-f0)/f0
-    A=1*sin(X)/sin(X/Ns)
-    Asq=A**2
-    Ga0=2*mu**2*Y0*(Ns)**2
-    Ga=Ga0*Asq/Ns**2
-    Ba=Ga0*(sin(2*X)-2*X)/(2*X**2)
-    w=2*pi*f
-    S31=1j*sqrt(2*Ga*GL)/(Ga+1j*Ba+1j*w*C+GL)
-        
-    return absolute(S13*S31)
-    
-
-    #if N>1:
-    #    X=(N-1)*pi*(f-f0)/f0
-    #    A=sin(X)/sin(X/(N-1))*A
-    #    Asq=A
-
-    return Asq
-    #dlist.append(Asq)
+#
+#    if N>5:
+#        Ns=N-5
+#    else: 
+#        Ns=1
+#    X=Ns*pi*(f-f0)/f0
+#    A=1*sin(X)/sin(X/Ns)
+#    Asq=A**2
+#    Ga0=2*mu**2*Y0*(Ns)**2
+#    Ga=Ga0*Asq/Ns**2
+#    Ba=Ga0*(sin(2*X)-2*X)/(2*X**2)
+#    w=2*pi*f
+#    S31=1j*sqrt(2*Ga*GL)/(Ga+1j*Ba+1j*w*C+GL)
+#        
+    return absolute(S13**2)
+#    
+#
+#    #if N>1:
+#    #    X=(N-1)*pi*(f-f0)/f0
+#    #    A=sin(X)/sin(X/(N-1))*A
+#    #    Asq=A
+#
+#    return Asq
+#    #dlist.append(Asq)
 
 if 1:
-    dlist.extend([add_data(1) for N in range(1,37+1)])
+    dlist.extend([add_data(1) for N in range(1,30+1)])
     #dlist.extend([add_data(N) for N in range(87*2+1, 0, -1)])
 
-    dlist.extend([add_data(N) for N in range(1,87*2+1)])
+    dlist.extend([add_data(N) for N in range(1,70+1)])
     #dlist.extend([add_data(39*2) for N in range(1,37+1)])
-    dlist.extend([add_data(N) for N in range(87*2+1, 0, -1)])
-    dlist.extend([add_data(1) for N in range(1,37+1+5)])
+    dlist.extend([add_data(N) for N in range(70+1, 0, -1)])
+    dlist.extend([add_data(1) for N in range(1,30+1)])
     
     
     
     data=array(dlist) 
     print data.shape
-    colormesh(data)
-    colormesh(10*log10(absolute(data))).show()
+    #vf=3488.0
+    #lbda0=vf/fc
+    #lbda0/3488.0
+    pl1=colormesh(f/1e9, 1/fc*linspace(0, 200, 201)/1e-9, data,
+                  pl="SAW pulse simple theory", xlabel="Frequency (GHz)", ylabel="Time (ns)",
+                auto_xlim=False, x_min=4.0, x_max=5.0,
+                auto_ylim=False, y_min=0.0, y_max=44.0)
+    colormesh(10*log10(absolute(data)))#.show()
 
 
     
@@ -264,8 +275,9 @@ def read_data(self):
         self.stop_ind=len(self.yoko)-1
 
 #S3A1_pulsing_new_osc_frq_swp.hdf5
-a=TA88_VNA_Lyzer( on_res_ind=251, read_data=read_data, # VNA_name="RS VNA",
+a=TA88_VNA_Lyzer(name="d0703_time_try", on_res_ind=251, read_data=read_data, # VNA_name="RS VNA",
         rd_hdf=TA88_Read(main_file="Data_0704/S3A1_pulsing_new_osc_frq_swp.hdf5"))#"Data_0703/S3A1_pulsing_new_osc_flux_swp.hdf5"))
+a.save_folder.main_dir=a.name
 a.filt.center=4469
 a.filt.halfwidth=300
 a.filt.reflect=True
@@ -326,7 +338,24 @@ line(data[:,285])
 line(data[:,315])
 
 colormesh(absolute(data))
-colormesh(absolute(data)[3500:6500, :]).show()
+pl4=colormesh(a.yoko/1e9, a.frequency/1e-9, absolute(data),
+          pl="full pulse experiment", xlabel="Frequency (GHz)", ylabel="Time (ns)",
+          auto_xlim=False, x_min=4.0, x_max=5.0,
+          auto_ylim=False, y_min=15.0, y_max=1000.0)
+
+pl2=colormesh(a.yoko/1e9, a.frequency[3500:6500]/1e-9, absolute(data)[3500:6500, :],
+          pl="zoom in SAW experiment", xlabel="Frequency (GHz)", ylabel="Time (ns)",
+          auto_xlim=False, x_min=4.0, x_max=5.0,
+          auto_ylim=False, y_min=190.0, y_max=330.0)
+
+pl3=colormesh(a.yoko/1e9, a.frequency[3500:6500]/1e-9, absolute(data)[3500:6500, :],
+          pl="zoom in SAW start experiment", xlabel="Frequency (GHz)", ylabel="Time (ns)",
+          auto_xlim=False, x_min=4.0, x_max=5.0,
+          auto_ylim=False, y_min=190.0, y_max=220.0)
+  
+pls=[pl1,pl2, pl3, pl4]  
+a.save_plots(pls)      
+pl3.show()
 
 #data=hilbert(a.MagcomData, axis=1)
 #colormesh(absolute(data)).show()

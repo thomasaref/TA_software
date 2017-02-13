@@ -12,7 +12,7 @@ from subprocess import call
 from taref.core.universal import write_text
 
 from contextlib import contextmanager
-from os import chdir, getcwd
+from os import chdir, getcwd, listdir
 
 @contextmanager
 def cd(newdir):
@@ -24,10 +24,12 @@ def cd(newdir):
     finally:
         chdir(prevdir)
 
-def compile_tex(dir_path, file_name, cmd="/usr/texbin/pdflatex"):
+def compile_tex(dir_path, file_name, cmd="/Library/TeX/texbin/pdflatex"):#"/usr/texbin/pdflatex"):
     """uses subprocess call to compile and show pdf using pdflatex.
     Might need to check path of pdflatex command with which command in terminal"""
+    print dir_path, file_name
     with cd(dir_path):
+        print listdir(dir_path)
         call([cmd, file_name+".tex"])
         call(["open", file_name+".pdf"])
 

@@ -28,7 +28,7 @@ a.filt.center=40#0 #107
 a.filt.halfwidth=60
 a.fitter.fit_type="lorentzian"
 a.fitter.gamma=0.01
-a.flux_axis_type="yoko"#"flux"
+a.flux_axis_type="flux"#"yoko"#
 a.end_skip=10
 a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(29, 37), range(38, 39), range(44, 46), range(48, 52),
                range(54, 66), range(67, 69), range(70, 85), range(105, 107), range(108, 116), range(122, 129), [130], range(132, 134), [138],
@@ -77,7 +77,10 @@ if __name__=="__main__":
     df=array([fil.fft_filter(a.MagAbs[n, :]) for n in range(stop_ind)])#.transpose()        
     #df_bgsub=bgsub2D(10.0*log10(absolute(df)), 0, 1, 0)
     df_bgsub=absolute(df)
-    colormesh(df_bgsub[:,a.end_skip:-a.end_skip], vmin=0.987, vmax=1.00, cmap="afmhot", auto_zlim=False).show()
+    colormesh(a.flux_axis[a.end_skip:-a.end_skip], a.frequency[a.end_skip:-a.end_skip]/1e9,
+              df_bgsub[:,a.end_skip:-a.end_skip], 
+            vmin=0.987, vmax=1.00, cmap="afmhot", auto_zlim=False,
+            xlabel="Yoko (V)",  ylabel="Frequency (Ghz)").show()
 if __name__=="__main2__":
 
     class Fitter(LineFitter):

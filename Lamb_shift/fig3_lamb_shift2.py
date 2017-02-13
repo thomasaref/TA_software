@@ -22,9 +22,8 @@ from taref.plotter.api import line, colormesh, scatter
 
 from taref.core.api import process_kwargs
 
-from TA88_fundamental import qdt, TA88_Lyzer
+from TA88_fundamental import qdt, TA88_Lyzer, TA88_VNA_Lyzer, TA88_Read
 from TA53_fundamental import TA53_VNA_Pwr_Lyzer, TA53_Read
-
 
 a=TA88_Lyzer( name="combo",
              desc="combined data",
@@ -268,9 +267,32 @@ def combo_plots():
     pl.axes.set_xlabel("Frequency (GHz)")
     pl.axes.set_ylabel("$\Gamma/2\pi$ (GHz)")
     pl.figure.text(0.0, 0.95, "a)")
-    pl.figure.text(0.0, 0.45, "c)")
-    pl.figure.text(0.5, 0.95, "b)")
+    pl.figure.text(0.0, 0.45, "b)")
+    pl.figure.text(0.5, 0.95, "c)")
     pl.figure.text(0.5, 0.45, "d)")
+
+    pl.nplot=4
+    
+    c=TA88_VNA_Lyzer(on_res_ind=215,# VNA_name="RS VNA", filt_center=15, filt_halfwidth=15,
+        rd_hdf=TA88_Read(main_file="Data_0704/S4A4_gate_flux_swp.hdf5"))
+
+    c.filt.center=40#0 #107
+    c.filt.halfwidth=60
+    #a.fitter.fit_type="lorentzian"
+    #a.fitter.gamma=0.01
+    c.flux_axis_type="flux"#"yoko"#
+    c.end_skip=10
+    c.read_data()
+    #a.ifft_plot()
+
+    c.bgsub_type="dB"
+    #a.bgsub_type="Complex"
+    c.filter_type="FFT"
+    c.magabs_colormesh(vmin=0.987, vmax=1.00, cmap="afmhot", 
+                       auto_zlim=False, pl=pl,
+                       auto_xlim=False, x_min=0.0, x_max=1.5,
+                       auto_ylim=False, y_min=3.5, y_max=7.5)#.show()
+
 
     pl.figure.tight_layout()
     return pl
