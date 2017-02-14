@@ -6,8 +6,25 @@ Created on Mon Feb 13 16:13:47 2017
 """
 
 from numpy import sqrt, pi, sin, linspace, absolute
-from matplotlib.pyplot import plot, show, figure
+#from matplotlib.pyplot import plot, show, figure
 
+from taref.plotter.api import line
+from TA88_fundamental import qdt
+
+qdt.gate_type="constant"
+print qdt.f/1e9
+qdt.f=qdt.f0+1.0
+f0=qdt.f0/1e9
+f=linspace(4.0, 6.0, 1001)
+Np=qdt.Np
+w0=2*pi*f0
+gamma=2*pi*qdt.coupling/1e9
+print gamma
+print f0
+print Np
+X=Np*pi*(f-f0)/f0
+pl="fig1"
+line(absolute(-gamma/w0*sin(2*X)-2*X)/(2*X**2)-X/(Np*pi), pl=pl).show()
 f=4.999999
 
 f0=5.000001
