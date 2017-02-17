@@ -40,21 +40,24 @@ if 1:
 if 1:
     tx.include_image("fig1.png", "Setup", caption="sample caption")
 if 1:
-    from fig2_characterization import a as fig2
+    from fig2_characterization2 import a as fig2
     tx.include_image("fig2", label="", caption="fig2 caption", source_folder=fig2.save_folder)
 
 if 1:
     from fig3_lamb_shift2 import a as fig3
     tx.include_image("fig3", label="", caption="fig3 caption", source_folder=fig3.save_folder)
 
+    from fig4_flux_swp import a as fig4
+    tx.include_image("fig4", label="", caption="fig4 caption", source_folder=fig4.save_folder)
+
     tx.ext("results")
     tx.ext("theory")
     #tx.ext("supplementary")
     tx.add(r"\FloatBarrier")
     tx.ext("discussion")
-    
+
     tx.ext("conclusion")
-    
+
     tx.add(r"\bibliographystyle{unsrt}")
     tx.add(r"\bibliography{lamb_shift_bib}")
 
