@@ -7,12 +7,16 @@ Created on Sun Apr 24 18:55:33 2016
 
 
 
-from TA88_fundamental import TA88_VNA_Lyzer, TA88_Read, qdt, TA88_Read_NP, TA88_Save_NP
+from TA88_fundamental import TA88_VNA_Lyzer, TA88_Read, qdt, idt, TA88_Read_NP, TA88_Save_NP
 from TA53_fundamental import TA53_VNA_Pwr_Lyzer, TA53_Read
-from numpy import array, absolute, squeeze, append, sqrt, pi, arccos, shape, linspace
+from numpy import mean, log10, array, absolute, squeeze, append, sqrt, pi, arccos, shape, linspace
 from taref.physics.fundamentals import h
 from taref.plotter.api import colormesh, line, scatter
 from taref.physics.filtering import Filter
+from D0527_trans_careful import a as d0527
+from D0527_trans_careful import MagcomFilt
+from D0317_S4A1_frq_pulse_flux import a as d0317
+from taref.core.api import process_kwargs
 
 a=TA88_VNA_Lyzer(on_res_ind=201, rd_hdf=TA88_Read(main_file="Data_0628/S4A4_just_gate_overnight_flux_swp.hdf5"))
 
@@ -30,7 +34,7 @@ a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(2
 a.filter_type="FFT"
 
 a.bgsub_type="dB" #"Complex" #"Abs"
-a.save_folder.main_dir="fig4_flux_swp"
+a.save_folder.main_dir="fig2_characterization2"
 
 b=TA53_VNA_Pwr_Lyzer(name="d1112", on_res_ind=635,
         rd_hdf=TA53_Read(main_file="Data_1112/S3A4_trans_pwr_swp.hdf5"),
@@ -78,37 +82,128 @@ d.flux_axis_type="flux" #"fq" #"flux"
 d.end_skip=10
 d.filter_type="FFT"
 
-npr=TA88_Read_NP(file_path=r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/TA88_processed/D0629_flux_parabola.txt",
-             show_data_str=True)
+
 
 if __name__=="__main__":
-    from matplotlib.pyplot import colorbar#, tight_layout
-    a.read_data()
-    #b.read_data()
+    pl="fig2"
+    
+    d0527.filter_type="None"
+    d0527.read_data()
+    pl=line(d0527.frequency/1e9, 10*log10(absolute(d0527.MagcomData[:, 0])),
+            color="cyan", alpha=0.5,
+            nrows=2, ncols=2, nplot=1, pl=pl)#.show()
+    #pl=line(a.frequency, 10*log10(absolute(a.MagcomData[:, 1])))#.show()
 
-    pl="fig4"
-    pl, pf=a.magabs_colormesh(vmin=0.995, vmax=1.002, auto_zlim=False, cmap="afmhot",
-                              auto_ylim=False, y_min=3.5, y_max=7.5,
-                              auto_xlim=False, x_min=-3, x_max=3,
-                          nrows=3, ncols=1, nplot=1, pl=pl, pf_too=True,
-                          #fig_width=5.0, fig_height=4.0,
-                          )#.show()
+    #pl=line(a.frequency, a.MagdB)#.show()
+
+    magfilt=MagcomFilt(d0527)
+    magabs=absolute(magfilt)
+    line(d0527.frequency/1e9, magabs)
+    nskip=50
+    pl=scatter(d0527.frequency[::nskip]/1e9, 10.0*log10(magabs[::nskip]), 
+               facecolor="red", edgecolor="red", pl=pl)
+    #idt.Np=56
+    #idt.f0=4.46e9 #4.452
+    #idt.K2=0.032
+    #idt.Np=36.5
+    #idt.f0=4.452e9
+
+
+
+    (S11, S12, S13,
+     S21, S22, S23,
+     S31, S32, S33)=idt._get_simple_S(f=d0527.frequency)
+    print idt.Np, idt.K2
+    print idt.f0
+    print d0527.comment
+    print -d0527.fridge_atten+d0527.fridge_gain-d0527.rt_atten+d0527.rt_gain-10
+
+    line(d0527.frequency/1e9, 10*log10(absolute(S13*S31))-11, color="green", pl=pl,
+         auto_ylim=False, y_min=-30, y_max=-10,
+         auto_xlim=False, x_min=4.2, x_max=4.7, xlabel="Frequency (GHz)",
+         ylabel="Transmission (dB)",
+        )#.show()
+
+    #line(a.frequency, angle(magfilt))
+
+
+    #ifft_plot(a)#.show()
+    
+    d0317.read_data()
+    pl=scatter(d0317.frequency/1e9, 10*log10(mean(absolute(d0317.MagcomData[64:76, :, 0]), axis=0))+8.5,
+            pl=pl, color="purple", marker="x")
+
+    #a.save_plots([pl,])
+    #pl.show()
+
+    def ifft_plot(self, **kwargs):
+        process_kwargs(self, kwargs, pl="hannifft_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
+        on_res=10*log10(absolute(self.filt.window_ifft(self.MagcomData[:,0])))
+    
+        pl=line(self.time_axis-0.05863, self.filt.fftshift(on_res),  color="purple",
+               plot_name="onres_{}".format(self.on_res_ind), alpha=0.8, label="IFFT", **kwargs)
+    
+        self.filt.N=len(on_res)
+        filt=self.filt.freqz
+        #filt=filt_prep(len(on_res), self.filt_start_ind, self.filt_end_ind)
+        top=36.0#amax(on_res)
+        line(self.time_axis-0.05863, filt*top-70, plotter=pl, color="green",
+             linestyle="dotted", label="Filter window", 
+             auto_xlim=False, x_min=-0.2, x_max=1.0,
+             auto_ylim=False, y_min=-65, y_max=-15,)
+        pl.xlabel=kwargs.pop("xlabel", self.time_axis_label)
+        pl.ylabel=kwargs.pop("ylabel", "Transmission (dB) ")
+    
+        ax2 = pl.axes.twinx()
+        ax2.plot(array([0.05863,   0.2,  0.337,   0.48,  0.761, 1.395, 1.455])-0.05863,
+                array([0.0, 500.0, 1000.0, 1500.0, 2500.0, 4500,  200+2500+2500-300])/1000.0, ".",
+                label="IFFT peak")#, marker_size=4.0)
+        t=linspace(0,2,1001) #self.time_axis-0.05863
+        ax2.plot(t, 3488.0*t/1000.0, color="black", linestyle="dashed",  label="$d=v_ft$")    
+             
+        t=array([8.7e-8, 2.64e-7, 3.79e-7, 4.35e-7, 6.6e-7])-8.7e-8
+        ax2.plot(t*1e6, array([0.0, 600.0, 1000.0, 1200.0, 2000.0])/1000.0, "x", color="red", 
+                #facecolor="red", edgecolor="red",
+                 label="100 ns pulse",
+                #marker_size=4.0,
+                 )
+        ax2.set_ylabel('Distance (mm)')
+        ax2.set_ylim(-0.2, 3.0)
+        ax2.set_xlim(-0.2, 1.0)
+        #pl.legend()            
+        #b.line_plot("spd_fit", t*1e6,  (t*qdt.vf)*1e6, label="(3488 m/s)t")
+        
+        return pl
+    pl.nplot=2
+    d0527.time_axis_type="time"
+    ifft_plot(d0527, pl=pl)
+
+    from matplotlib.pyplot import colorbar#, tight_layout
+    #a.read_data()
+    b.read_data()
+
+    #pl, pf=a.magabs_colormesh(vmin=0.995, vmax=1.002, auto_zlim=False, cmap="afmhot",
+    #                          auto_ylim=False, y_min=3.5, y_max=7.5,
+    #                          auto_xlim=False, x_min=-3, x_max=3,
+    #                      nrows=2, ncols=2, nplot=1, pl=pl, pf_too=True,
+    #                      fig_width=5.0, fig_height=4.0,
+    #                      )#.show()
     #line(a.flux_axis, a.qdt._get_flux_parabola(voltage=a.yoko, ng=0.0)/1e9, pl=pl)#.show()
 
     #pl.axes.yaxis.labelpad=-5
     #pl.axes.xaxis.labelpad=-5
 
+    #pl.ncols=2
     #cbr=colorbar(pf.clt, ax=pl.axes, label="$S_{33}$")
     #print dir(cbr)
     #cbr.set_label("$|S_{11}|$", size=8, labelpad=-10)
     #cbr.set_ticks(linspace(0.995, 1.002, 2))
-    pl.axes.set_xticks(linspace(-3, 3, 4))
-    pl.axes.set_yticks(linspace(3.5, 7.5, 5))
+    #pl.axes.set_xticks(linspace(-3, 3, 4))
+    #pl.axes.set_yticks(linspace(3.5, 7.5, 5))
     pl.figure.text(0.0, 0.95, "a)")
-    #pl.figure.text(0.4, 0.8, "b)")
-    pl.figure.text(0.0, 0.65, "b)")
-    pl.figure.text(0.0, 0.32, "c)")
-    pl.figure.text(0.50, 0.32, "d)")
+    pl.figure.text(0.53, 0.95, "b)")
+    pl.figure.text(0.0, 0.45, "c)")
+    pl.figure.text(0.53, 0.45, "d)")
 
     #cbr.set_ticklabels()
     #tight_layout()
@@ -125,34 +220,34 @@ if __name__=="__main__":
     #                 pl=pl)
     #pl.show()
 
-    #b.filter_type="None"
-    #pl_raw=b.magabs_colormesh()
-    #pl_ifft=b.ifft_plot()#.show()
+    b.filter_type="None"
+    pl_raw=b.magabs_colormesh()
+    pl_ifft=b.ifft_plot()#.show()
 
-    #b.filter_type="FFT"
-    #pl_fft=b.magabs_colormesh()#.show()
-    #pl_pwr_frq=colormesh(b.pwr, b.freq_axis[b.end_skip:-b.end_skip], absolute(b.MagcomFilt[b.end_skip:-b.end_skip, 635, :]),
-    #              ylabel="Frequency (GHz)", xlabel=r"Power (dBm")#.show()
+    b.filter_type="FFT"
+    pl_fft=b.magabs_colormesh()#.show()
+    pl_pwr_frq=colormesh(b.pwr, b.freq_axis[b.end_skip:-b.end_skip], absolute(b.MagcomFilt[b.end_skip:-b.end_skip, 635, :]),
+                  ylabel="Frequency (GHz)", xlabel=r"Power (dBm")#.show()
 
-    #pl_pwr_color=colormesh(b.flux_axis, b.pwr, absolute(b.MagcomFilt[69, :, :]).transpose(),
-    #              ylabel="Power (dBm)", xlabel=b.flux_axis_label, #pl=pl,
-    #              auto_ylim=False, y_min=-30, y_max=10,
-    #              auto_xlim=False, x_min=1.0, x_max=2.5,
-    #              auto_zlim=True)
+    pl_pwr_color=colormesh(b.flux_axis, b.pwr, absolute(b.MagcomFilt[69, :, :]).transpose(),
+                  ylabel="Power (dBm)", xlabel=b.flux_axis_label, #pl=pl,
+                  auto_ylim=False, y_min=-30, y_max=10,
+                  auto_xlim=False, x_min=1.0, x_max=2.5,
+                  auto_zlim=True)
 
 
-    #pl.nplot=4
-    #print b.comment
-    #pl_pwr_sat=scatter(b.pwr-30-60, 100*absolute(absolute(b.MagcomFilt[69, 635, :])-absolute(b.MagcomFilt[69,0, :])),
-    #            xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}| \times 100$", pl=pl,
-    #              auto_ylim=False, y_min=100*0.0, y_max=100*0.015, marker_size=3.0,
-    #              auto_xlim=False, x_min=-30-90, x_max=10-90)#.show()
-    #ax=pl.figure.add_subplot(pl.nrows, pl.ncols, 4)
-    #ax.set_xticks(linspace(-30.0-90, 10.0-90, 5))
-    #ax.set_yticks(linspace(0.0, 1.5, 4))
+    pl.nplot=4
+    print b.comment
+    pl_pwr_sat=scatter(b.pwr-30-60, 100*absolute(absolute(b.MagcomFilt[69, 635, :])-absolute(b.MagcomFilt[69,0, :])),
+                xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}| \times 100$", pl=pl,
+                  auto_ylim=False, y_min=100*0.0, y_max=100*0.015, marker_size=3.0,
+                  auto_xlim=False, x_min=-30-90, x_max=10-90)#.show()
+    ax=pl.figure.add_subplot(pl.nrows, pl.ncols, 4)
+    ax.set_xticks(linspace(-30.0-90, 10.0-90, 5))
+    ax.set_yticks(linspace(0.0, 1.5, 4))
 
-    #pl.nplot=3
-    if 0:
+    pl.nplot=3
+    if 1:
         c.read_data()
         c.filter_type="FFT"
         pl, pf=c.magabs_colormesh(pl=pl, pf_too=True, auto_zlim=False,
@@ -163,7 +258,7 @@ if __name__=="__main__":
         cbr.set_ticks(linspace(0.0, 0.02, 2))
         pl.axes.set_xticks(linspace(0.7, 1.5, 5))
 
-    if 0:
+    if 1:
         d.read_data()
         d.bgsub_type="dB"
         pl1, pf1=d.magdB_colormesh(auto_zlim=False, vmin=-3.0, vmax=0.0,
@@ -179,139 +274,8 @@ if __name__=="__main__":
         pl1.axes.set_yticks(linspace(4.2, 4.8, 4))
 
 
-
-
-    def flux_plots():
-        data=npr.read()
-        frequency=linspace(3.5e9, 7.5e9, 1000)
-        freq=append(frequency/1e9, frequency/1e9)
-        freq=append(freq, freq)
-        qdt.gate_type="constant" #"capacitive"
-        V=qdt._get_Vfq0_many(f=frequency)[1]
-
-        #pl1=scatter(data[:, 0], data[:, 1], fig_width=6.0, fig_height=4.0, color="red", pl="fitVvsf")
-        #line(freq, V, pl=pl1, ylabel="Yoko (V)", xlabel="Frequency (GHz)")
-
-        #pl1.add_label("a)")
-
-        #V2=ideal_qdt._get_Vfq0_many(f=frequency)[1]
-
-        #pl2=scatter(data[:, 0], data[:, 1], fig_width=6.0, fig_height=4.0, color="red", pl="idealVvsf")
-        #line(freq, V2, pl=pl2, ylabel="Yoko (V)", xlabel="Frequency (GHz)")
-        #pl2.add_label("b)")
-        flux=qdt._get_flux_over_flux0(voltage=data[:,1], offset=a.offset, flux_factor=a.flux_factor)
-
-
-        pl3=scatter(flux, data[:, 0],  color="red", pl=pl,)
-#                    auto_xlim=False, x_min=-3, x_max=3)
-        flux=qdt._get_flux_over_flux0(V, offset=a.offset, flux_factor=a.flux_factor)
-
-        line(flux, freq, pl=pl3, xlabel="$\Phi/\Phi_0$ ", ylabel="Frequency (GHz) ", color ="red")
-        voltage=linspace(-6,6, 1001)
-        flux=qdt._get_flux_over_flux0(voltage=voltage, offset=a.offset, flux_factor=a.flux_factor)
-
-        line(flux, qdt._get_flux_parabola(voltage=voltage, ng=0.0)/1e9, pl=pl, color="green")#.show()
-        #pl3.add_label("c)")
-
-        #pl4=scatter(data[:, 1], data[:, 0], fig_width=6.0, fig_height=4.0, color="red", pl="idealfvsV")
-        #line(V2, freq, pl=pl4, xlabel="Yoko (V)", ylabel="Frequency (GHz)")
-        #pl4.add_label("d)")
-
-        #pls=[pl1, pl2, pl3, pl4]
-
-        #for pl in pls:
-        return pl3 #[pl1, pl2, pl3, pl4]
-
-    pl.nplot=2
-    flux_plots()
-    #pl.nrows=3
-    pl.ncols=2
-    pl.nplot=5
-
-    c=TA88_VNA_Lyzer(on_res_ind=215,# VNA_name="RS VNA", filt_center=15, filt_halfwidth=15,
-                     rd_hdf=TA88_Read(main_file="Data_0704/S4A4_gate_flux_swp.hdf5"))
-
-    c.fit_indices=[range(0, 141),range(180, 300)]
-    c.filt.center=40#0 #107
-    c.filt.halfwidth=60
-    #a.fitter.fit_type="lorentzian"
-    #a.fitter.gamma=0.01
-    c.flux_axis_type="flux"#"yoko"#
-    c.end_skip=10
-    c.read_data()
-    #a.ifft_plot()
-
-    c.bgsub_type="dB"
-    #a.bgsub_type="Complex"
-    c.filter_type="FFT"
-    c.magabs_colormesh(vmin=0.987, vmax=1.00, cmap="afmhot",
-                       auto_zlim=False, pl=pl,
-                       auto_xlim=False, x_min=0.85, x_max=1.10,
-                       auto_ylim=False, y_min=4.3, y_max=6.0)#.show()
-    pl.nplot=6
-
-    from scipy.signal import argrelmin
-    from numpy import sin
-    qdt.gate_type="constant"
-    print qdt.f/1e9
-    qdt.f=qdt.f0+1.0
-    f0=qdt.f0/1e9
-    f=linspace(2.0, 8.0, 10001)
-    Np=qdt.Np
-    w0=2*pi*f0
-    gamma=qdt.coupling/1e9/1.0
-    print gamma
-    print f0
-    print Np
-    X=Np*pi*(f-f0)/f0
-    #pl="fig1"
-    #print list(argrelmin(absolute(-gamma/f0*(sin(2*X)-2*X)/(2*X**2)-X/(Np*pi)))[0])
-    
-    def argers(gamma):
-        inds=list(argrelmin(absolute(-gamma/f0*(sin(2*X)-2*X)/(2*X**2)-X/(Np*pi)))[0])
-        data=[f0,]
-        if len(inds)>0:
-            data.extend(f[inds])
-        else:
-            data=[f0,f0,f0]
-        return data
-        
-        
-    #print argers(gamma/2.0)
-    gamma_frac=linspace(0.5, 20.0, 1001)
-    
-    gd=gamma/gamma_frac
-    #print array([argers(g)[-1] for g in gd])
-    pl1=line(gd*Np/f0*2*pi, array([argers(g)[-1] for g in gd])/f0, pl=pl,
-             auto_xlim=False, x_min=0.0, x_max=20.0,
-             auto_ylim=False, y_min=0.8, y_max=1.2,
-             xlabel="$N_p\Gamma_0/f_0$", ylabel="Frequency ($f_0$)", color="red")    
-    pl1=line(gd*Np/f0*2*pi, array([argers(g)[-2] for g in gd])/f0, pl=pl, color="red")
-    #pl1=line(gd*Np/f0*2*pi, array([argers(g)[0] for g in gd])/f0, pl=pl)    
-    line(array([0.0, 20.0]), array([1.0, 1.0]), color="green", pl=pl)
-    scatter(array([1.0, 1.0])*gamma*Np/f0*2*pi, array([4.85, 5.75])/f0, pl=pl, marker_size=3.0)
-    #scatter(array([1.0, 1.0, 1.0])*gamma*Np/f0*2*pi, array([5.694, 5.414, 4.784])/f0, pl=pl, marker_size=3.0)
-
-    scatter(array([2.9,]), array([1.0]), pl=pl, marker_size=3.0, facecolor="black", edgecolor="black")
-
-#    def coup(G):
-#        inner=(1.0/3.0-5.0/(2*pi*9*G))*15
-#        if inner<0:
-#            return 0.0
-#        return sqrt(inner)
-#
-#    from numpy import sin
-#    f0=qdt.f0/1e9
-#    f=linspace(4.0, 6.0, 1001)
-#    Np=qdt.Np
-#    w0=2*pi*f0
-#    gamma=2*pi*qdt.coupling/1e9
-#    X=Np*pi*(f-f0)/f0
-#    line(absolute(-gamma/w0*sin(2*X)-2*X)/(2*X**2)-X/(Np*pi), pl=pl)
-
-    #line()
     pl.figure.tight_layout()
-    a.save_plots([pl])
+    a.save_plots([pl])#, pl1])
 
     pl.show()
 

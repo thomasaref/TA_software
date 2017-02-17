@@ -5,26 +5,55 @@ Created on Mon Feb 13 16:13:47 2017
 @author: thomasaref
 """
 
-from numpy import sqrt, pi, sin, linspace, absolute
+from numpy import sqrt, pi, sin, linspace, absolute, array
 #from matplotlib.pyplot import plot, show, figure
 
-from taref.plotter.api import line
+from taref.plotter.api import line, scatter
 from TA88_fundamental import qdt
+from scipy.signal import argrelmin
 
 qdt.gate_type="constant"
 print qdt.f/1e9
 qdt.f=qdt.f0+1.0
 f0=qdt.f0/1e9
-f=linspace(4.0, 6.0, 1001)
+f=linspace(2.0, 8.0, 10001)
 Np=qdt.Np
 w0=2*pi*f0
-gamma=2*pi*qdt.coupling/1e9
+gamma=qdt.coupling/1e9/1.0
 print gamma
 print f0
 print Np
 X=Np*pi*(f-f0)/f0
 pl="fig1"
-line(absolute(-gamma/w0*sin(2*X)-2*X)/(2*X**2)-X/(Np*pi), pl=pl).show()
+print list(argrelmin(absolute(-gamma/f0*(sin(2*X)-2*X)/(2*X**2)-X/(Np*pi)))[0])
+
+def argers(gamma):
+    inds=list(argrelmin(absolute(-gamma/f0*(sin(2*X)-2*X)/(2*X**2)-X/(Np*pi)))[0])
+    data=[f0,]
+    if len(inds)>0:
+        data.extend(f[inds])
+    else:
+        data=[f0,f0,f0]
+    return data
+    
+    
+print argers(gamma/2.0)
+gamma_frac=linspace(0.5, 20.0, 1001)
+
+gd=gamma/gamma_frac
+print array([argers(g)[-1] for g in gd])
+pl1=line(gd/gamma, array([argers(g)[-1] for g in gd]))    
+pl1=line(gd/gamma, array([argers(g)[-2] for g in gd]), pl=pl1)
+pl1=line(gd/gamma, array([argers(g)[0] for g in gd]), pl=pl1)    
+    
+
+#line(gd, f0+sqrt(5.0)*f0/(pi*Np)*sqrt(1.0-3*f0/(Np*gd)), pl=pl1)
+
+line(absolute(-gamma/f0*(sin(2*X)-2*X)/(2*X**2)-X/(Np*pi)), pl=pl)#.show()
+line(-gamma*(sin(2*X)-2*X)/(2*X**2), pl=pl, color="green")#.show()
+line(X*f0/(Np*pi), color="red", pl=pl).show()
+
+
 f=4.999999
 
 f0=5.000001

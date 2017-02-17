@@ -58,7 +58,6 @@ a=TA88_VNA_Lyzer( name="d0527", on_res_ind=0, VNA_name="RS VNA",
 
 a.filt.center=731
 a.filt.halfwidth=200
-a.read_data()
 a.save_folder.main_dir=a.name
 b=TA88_VNA_Lyzer(on_res_ind=0, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0531/S4A4_careful_unswitched.hdf5"),
@@ -69,22 +68,37 @@ b=TA88_VNA_Lyzer(on_res_ind=0, VNA_name="RS VNA",
             ) #33, 70
 b.filt.center=731
 b.filt.halfwidth=200
-b.read_data()
 
 def ifft_plot(self, **kwargs):
     process_kwargs(self, kwargs, pl="hannifft_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
-    on_res=absolute(self.filt.window_ifft(self.MagcomData[:,0]))
+    on_res=10*log10(absolute(self.filt.window_ifft(self.MagcomData[:,0])))
 
-    pl=line(self.time_axis, self.filt.fftshift(on_res),  color="red",
-           plot_name="onres_{}".format(self.on_res_ind),label="blah", **kwargs)
+    pl=line(self.time_axis-0.05863, self.filt.fftshift(on_res),  color="purple",
+           plot_name="onres_{}".format(self.on_res_ind), alpha=0.8, label="IFFT", **kwargs)
 
     self.filt.N=len(on_res)
     filt=self.filt.freqz
     #filt=filt_prep(len(on_res), self.filt_start_ind, self.filt_end_ind)
-    top=amax(on_res)
-    line(self.time_axis, filt*top, plotter=pl, color="green", label="wdw")
+    top=36.0#amax(on_res)
+    line(self.time_axis-0.05863, filt*top-70, plotter=pl, color="green",
+         linestyle="dotted", label="Filter window")
     pl.xlabel=kwargs.pop("xlabel", self.time_axis_label)
     pl.ylabel=kwargs.pop("ylabel", "Mag abs")
+
+    scatter(array([0.05863,   0.2,  0.337,   0.48,  0.761, 1.395, 1.455])-0.05863,
+            array([0.0, 500.0, 1000.0, 1500.0, 2500.0, 4500,  200+2500+2500-300])/100.0-60,
+            marker_size=4.0, pl=pl, label="IFFT peak")
+    t=linspace(0,2,1001) #self.time_axis-0.05863
+    line(t, 3488.0*t/100.0-60, pl=pl, color="black", linestyle="dashed", auto_xlim=False, x_min=-0.2, x_max=1.0,
+         auto_ylim=False, y_min=-65, y_max=-15, label="$d=v_ft$")    
+         
+    t=array([8.7e-8, 2.64e-7, 3.79e-7, 4.35e-7, 6.6e-7])-8.7e-8
+    scatter(t*1e6, array([0.0, 600.0, 1000.0, 1200.0, 2000.0])/100.0-60, pl=pl, 
+            facecolor="red", edgecolor="red", label="100 ns pulse",
+            marker_size=4.0)
+    pl.legend()            
+    #b.line_plot("spd_fit", t*1e6,  (t*qdt.vf)*1e6, label="(3488 m/s)t")
+    
     return pl
 
 def MagcomFilt(self):
@@ -93,7 +107,11 @@ def MagcomFilt(self):
     return self.filt.fft_filter(self.MagcomData[:, 0])
 
 if __name__=="__main__":
+    a.read_data()
+    b.read_data()
+
     a.filter_type="None"
+    a.time_axis_type="time"
     print a.MagAbs.shape
     pl=line(a.frequency, 10*log10(absolute(a.MagcomData[:, 0])), color="cyan")#.show()
     #pl=line(a.frequency, 10*log10(absolute(a.MagcomData[:, 1])))#.show()

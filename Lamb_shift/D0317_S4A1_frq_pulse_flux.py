@@ -132,6 +132,9 @@ if __name__=="__main__":
     colormesh(absolute(a.MagcomData[:,:, 260]))
     pl=line(a.time/1e-6, 10*log10(mean(absolute(a.MagcomData[:, 20:40, 260]), axis=1)))
     line(a.time/1e-6, 10*log10(mean(absolute(a.MagcomData[:, 20:40, 0]), axis=1)), pl=pl, color="red")
+    pl=line(a.frequency/1e9, 10*log10(mean(absolute(a.MagcomData[64:76, :, 0]), axis=0)))
+    #line(a.time/1e-6, 10*log10(mean(absolute(a.MagcomData[:, 20:40, 0]), axis=1)), pl=pl, color="red")
+    
     pl.show()
         
     #pls=S4A1_midpeak_plots()

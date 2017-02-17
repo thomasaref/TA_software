@@ -109,7 +109,7 @@ def combo_plots():
         #pl.set_ylim(3.75, 6.1)
         #pl.add_label("a)")
         pl.axes.set_xlabel("Frequency (GHz)")
-        pl.axes.set_ylabel("Qubit Frequency (GHz)")
+        pl.axes.set_ylabel("$\Delta/2\pi, \, \Gamma/2 \pi$ (GHz)")
         #pl.show()
         pl1="combined_heights"
         for d in lyzers:
@@ -133,11 +133,12 @@ def combo_plots():
         #qdt.gate_type="capacitive"
         #co=qdt._get_coupling(f=frequency)/1.0/1e9
         #line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl1, color="purple")
-        #qdt.gate_type="capacitive"
+        qdt.gate_type="capacitive"
         #co=qdt._get_coupling(f=frequency)/1.0/1e9
         #line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl, color="purple")
-        qdt.gate_type="constant"
-        line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl, color="purple")
+        #qdt.gate_type="constant"
+        line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl,
+             color="purple")
         
  
         #co=(co+(idt.sinc(f=frequency)**2)*qdt._get_coupling(f=frequency)/1.0/1e9)/(1.0+(idt.sinc(f=frequency)**2))
@@ -159,11 +160,12 @@ def combo_plots():
             pl=d.widths_plot(pl=pl, color="black", facecolor="black", edgecolor="black",)
         #qdt.dephasing=dephasing
         #line(frequency/1e9, qdt._get_fFWHM(f=frequency)[2]/2.0/1e9, plotter=pl, color="blue")
-        #qdt.gate_type="capacitive"
+        qdt.gate_type="capacitive"
         #co=qdt._get_coupling(f=frequency)/1.0/1e9
         #line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl, color="purple")
-        qdt.gate_type="constant"
-        line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl, color="purple")
+        #qdt.gate_type="constant"
+        line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl, 
+             color="purple")
 
         #qdt.dephasing=0.0
         #line(frequency/1e9, qdt._get_fFWHM(f=frequency)[2]/2.0/1e9, plotter=pl, color="green")
@@ -171,7 +173,7 @@ def combo_plots():
         pl.set_ylim(-0.01, 0.1)
         #pl.add_label("d)")
         pl.axes.set_xlabel("Frequency (GHz)")
-        pl.axes.set_ylabel("$\Gamma/2\pi$ (GHz)")
+        pl.axes.set_ylabel("$\Gamma/2\pi$ (GHz) ")
 
 
         if 0:
@@ -249,14 +251,14 @@ def combo_plots():
     frequency=linspace(3.5e9, 5.5e9, 1000)
     line(frequency/1e9, frequency/1e9-b.qdt._get_Lamb_shift(f=frequency)/1.0/1e9, plotter=pl, color="blue")
     line(array([3.5, 5.5]), array([3.5, 5.5]), pl=pl_centers, color="green")
-    pl.axes.set_xlabel("Frequency (GHz)")
-    pl.axes.set_ylabel("Qubit Frequency (GHz)")
+    #pl.axes.set_xlabel("Frequency (GHz)")
+    #pl.axes.set_ylabel("Qubit Frequency (GHz)")
     #pl.nplot=4
     pl_widths=b.widths_plot(color="black", facecolor="black", edgecolor="black", auto_xlim=False, x_min=3.5, x_max=5.5,
                             auto_ylim=False, y_min=-0.3, y_max=0.5, pl=pl)#.show()
     #qdt.gate_type="constant"
-    #b.qdt.gate_type="capacitive"
-    b.qdt.gate_type="constant"
+    b.qdt.gate_type="capacitive"
+    #b.qdt.gate_type="constant"
         #co=qdt._get_coupling(f=frequency)/1.0/1e9
     line(frequency/1e9, b.qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl, color="purple")
     #b.qdt.gate_type="constant"
@@ -265,7 +267,7 @@ def combo_plots():
     #line(frequency/1e9, b.qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl, color="green")
 
     pl.axes.set_xlabel("Frequency (GHz)")
-    pl.axes.set_ylabel("$\Gamma/2\pi$ (GHz)")
+    pl.axes.set_ylabel("$\Delta/2\pi, \, \Gamma/2 \pi$ (GHz)")
     pl.figure.text(0.0, 0.95, "a)")
     pl.figure.text(0.0, 0.45, "b)")
     pl.figure.text(0.5, 0.95, "c)")
