@@ -13,11 +13,11 @@ from time import time
 from taref.plotter.api import line, colormesh
 from taref.physics.qubit import Qubit
 from taref.core.api import SProperty, private_property, Array
-from atom.api import Float, Int
+from atom.api import Float, Int, Callable
 
 class Sat_Qubit(Qubit):
-    sample_power_dBm=Float(-30.0)
-
+    #sample_power_dBm=Float(-30.0)
+    atten=Float(83.0)
     phi_arr=Array()
     pwr_arr=Array()
 
@@ -25,9 +25,10 @@ class Sat_Qubit(Qubit):
         return linspace(0.2, 0.3, 101)
 
     def _default_pwr_arr(self):
-        return linspace(-100.0, -50, 31)-100#+70
+        return linspace(-50.0, 0, 31)
 
     gamma=Float(38.0e6)
+    gamma_el=Float(0.750e6)
     gamma_phi=Float(0.0)
 
     T=Float(0.03)
@@ -39,8 +40,6 @@ class Sat_Qubit(Qubit):
     @N_gamma.getter
     def _get_N_gamma(self, fd, T):
         return 1.0/(exp(h*fd/(k*T))-1.0)
-
-    #value_grid=array(meshgrid(phi_arr, Omega_sim_vec))
 
     @private_property
     def a_op(self):
@@ -69,27 +68,53 @@ class Sat_Qubit(Qubit):
     def Ecvec(self):
         return -self.Ec*(6.0*self.nvec**2+6.0*self.nvec+3.0)/12.0
 
-
+    @private_property
+    def pwr_lin(self):
+        pwr_fridge=self.pwr_arr-self.atten
+        return 0.001*10**(pwr_fridge/10.0)
+        
     @private_property
     def Omega_arr(self):
-        pwr_fridge=self.pwr_arr-83.0
-        return sqrt(0.001*10**(pwr_fridge/10.0)/(h*a.fd))*sqrt(2*self.gamma)
-
+        pwr_fridge=self.pwr_arr-self.atten
+        return sqrt(0.001*10**(pwr_fridge/10.0)/(h*a.fd))*sqrt(2*self.gamma_el)
 
     @private_property
     def value_grid(self):
         value_grid=array(meshgrid(self.phi_arr, self.Omega_arr))
         return zip(value_grid[0, :, :].flatten(), value_grid[1, :, :].flatten())
 
-    #@private_property
-    #def find_expect(self):
+    funcer=Callable()
+#    @private_property
+#    def funcer(self):
+#        def find_expect2(vg): #phi=0.1, Omega_vec=3.0):
+#            phi, Omega=vg#.shape
+#            Omega_vec=-0.5j*(Omega*a.a_dag - conj(Omega)*a.a_op)
+#
+#            Ej = a.Ejmax*absolute(cos(pi*phi)) #Josephson energy as function of Phi.
+#
+#            wTvec = (-Ej + sqrt(8.0*Ej*a.Ec)*(a.nvec+0.5)+a.Ecvec)/h #\omega_m
+#
+#            wT = wTvec-a.fdvec #rotating frame of gate drive \omega_m-m*\omega_\gate
+#            transmon_levels = Qobj(diag(wT[range(a.N_dim)]))
+#            H=transmon_levels +Omega_vec #- 0.5j*(Omega_true*adag - conj(Omega_true)*a)
+#            final_state = steadystate(H, a.c_ops) #solve master equation
+#
+#            return expect( a.a_op, final_state) #expectation value of relaxation operator
+#            #Omega=\alpha\sqrt{2\Gamma_10} where |\alpha|^2=phonon flux=number of phonons per second
+#            #Omega=2\alpha\sqrt{\gamma} where |\alpha|^2=phonon flux=number of phonons per second
+#
+#        return find_expect
+    
+#Omega=2 a sqrt(gamma_el)  a^2=number of photons/s=
+#a=sqrt(pwr/hf)
+#t=sqrt(gamma/2/(pwr/hf)<>
 
+#t=log(sqrt(gamma/2)<>-log(pwr/hf)
 
     @private_property
     def fexpt(self):
-        vg=self.value_grid
-        fexpt=parallel_map(find_expect, vg,  progress_bar=True)
-        #return reshape(fexpt, (31, 101))
+        #vg=self.value_grid
+        fexpt=parallel_map(self.funcer, self.value_grid,  progress_bar=True)
         return reshape(fexpt, (len(self.pwr_arr), len(self.phi_arr)))
 
 if __name__=="__main__":
@@ -100,181 +125,37 @@ if __name__=="__main__":
     a.Ec = 0.22e9*h # Charging energy.
     a.Ejmax = 22.2e9*h # Maximum Josephson energy.
 
-    a.gamma = 38.2059e6 # Relaxation rate of the transmon.
-    a.gamma_phi = 0*2*pi/(1e6*2*pi) # Dephasing rate of the transmon.
+    a.gamma = 38.2059e6 # Acoustic relaxation rate of the transmon.
+    a.gamma_el=0.750e6 #electric relaxation rate
+    a.gamma_phi = 0.0e6 # Dephasing rate of the transmon.
     a.fd = 4.8066e9#/1e6 # Drive frequency.
 
-
-
-    Omega_el_squared_coeff = 1.2*3.9666e+21  # Omega^2 in angular frequency = omega_el_square_coeff * gate_power_at_fridgetop
-    #sample_power_sim_dBm = linspace(spk_sample_power_dBm(1), spk_sample_power_dBm(end), Omega_sim_points)
-    gate_fridge_att = -83.0
-    power_fridgetop_sim = 1e-3*10**(0.1*(a.pwr_arr  + gate_fridge_att))
-    #print power_fridgetop_sim
-    Omega_sim_vec = sqrt((power_fridgetop_sim)*Omega_el_squared_coeff)
-    print Omega_sim_vec
-    print a.Omega_arr
-
-    Ec=a.Ec/h/1e6
-    Ejmax=a.Ejmax/h/1e6
-    gamma=a.gamma/1e6
-    fd=a.fd/1e6
-    print Ec, Ejmax, gamma, fd
-    N_dim=a.N_dim
-    nvec=arange(N_dim)
-    Ecvec= -Ec*(6.0*nvec**2+6.0*nvec+3.0)/12.0
-    fdvec=nvec*fd
-
-
-    def find_expect(vg): #phi=0.1, Omega_vec=3.0):
+    def find_expect(vg, self=a): #phi=0.1, Omega_vec=3.0):
             phi, Omega=vg#.shape
-            Omega_vec=- 0.5j*(Omega*a.a_dag - conj(Omega)*a.a_op)
+            Omega_vec=-0.5j*(Omega*self.a_dag - conj(Omega)*self.a_op)
 
-            Ej = Ejmax*absolute(cos(pi*phi)) #Josephson energy as function of Phi.
+            Ej = self.Ejmax*absolute(cos(pi*phi)) #Josephson energy as function of Phi.
 
-            wTvec = -Ej + sqrt(8.0*Ej*Ec)*(nvec+0.5)+Ecvec #\omega_m
+            wTvec = (-Ej + sqrt(8.0*Ej*self.Ec)*(self.nvec+0.5)+self.Ecvec)/h #\omega_m
 
-            wT = wTvec-fdvec #rotating frame of gate drive \omega_m-m*\omega_\gate
-            transmon_levels = Qobj(diag(wT[range(N_dim)]))
+            wT = wTvec-a.fdvec #rotating frame of gate drive \omega_m-m*\omega_\gate
+            transmon_levels = Qobj(diag(wT[range(self.N_dim)]))
             H=transmon_levels +Omega_vec #- 0.5j*(Omega_true*adag - conj(Omega_true)*a)
-            final_state = steadystate(H, a.c_ops) #solve master equation
+            final_state = steadystate(H, self.c_ops) #solve master equation
 
-            return expect( a.a_op, final_state) #expectation value of relaxation operator
+            return expect( self.a_op, final_state) #expectation value of relaxation operator
             #Omega=\alpha\sqrt{2\Gamma_10} where |\alpha|^2=phonon flux=number of phonons per second
             #Omega=2\alpha\sqrt{\gamma} where |\alpha|^2=phonon flux=number of phonons per second
         #return find_expec
-
-    #find_expect=setup_expt(a)
+    a.funcer=find_expect
     colormesh(a.phi_arr, a.pwr_arr, absolute(a.fexpt), cmap="RdBu_r")
     colormesh(absolute(a.fexpt), cmap="RdBu_r")
-    line(a.pwr_arr, 20*log10(absolute(a.fexpt)[:, 77])-a.pwr_arr)
-    line(a.pwr_arr, 10**((20*log10(absolute(a.fexpt)[:, 77])-a.pwr_arr)/10.0)).show()
-
-
-Omega_sim_points = 10
-sample_power_sim_dBm=linspace(-100.0, -50, 31)
-spk_external_att = 0.0
-Omega_el_squared_coeff = 1.2*3.9666e+21  # Omega^2 in angular frequency = omega_el_square_coeff * gate_power_at_fridgetop
-#sample_power_sim_dBm = linspace(spk_sample_power_dBm(1), spk_sample_power_dBm(end), Omega_sim_points)
-gate_fridge_att = -83.0
-power_fridgetop_sim = 1e-3*10**(0.1*(sample_power_sim_dBm + spk_external_att + gate_fridge_att))
-print power_fridgetop_sim
-Omega_sim_vec = sqrt((power_fridgetop_sim)*Omega_el_squared_coeff)
-#Omega_sim_vec=linspace(1.0, 400.0, 31)
-print Omega_sim_vec
-#Omega=Omega_sim_vec
-Ec = 0.22e9/1e6 # Charging energy.
-Ejmax = 22.2e9/1e6 # Maximum Josephson energy.
-
-gamma = 38.2059e6*2*pi/(1e6*2*pi) # Relaxation rate of the transmon.
-gamma_phi = 0*2*pi/(1e6*2*pi) # Dephasing rate of the transmon.
-wd = 4.8066e9/1e6 # Drive frequency.
-
-T = 21000* 0.03  # Temperature of the transmon bath in units of MHz (1K = 21 GHz).
-
-N_gamma = 1.0/(exp(wd/T)-1.0)# % Thermal population of the transmon phonon bath around wd.
-
-print N_gamma
-N = 5  # number of basis states to consider
-
-#Ejmax=30.0
-#Ec=1.0
-phi_arr=linspace(0.2, 0.3, 101)
-
-value_grid=array(meshgrid(phi_arr, Omega_sim_vec))
-
-a = destroy(N)
-print a
-adag=a.dag()
-print adag
-#tdiag = Qobj(diag(range(0, N))) # Diagonal matrix for the transmon.
-#print tdiag
-#It= qeye(N)
-#tdiag_l = kron(It,tdiag) # tdiag operator multiplying rho from the left.
-
-#tm_l = kron(It, a) # tm operator multiplying rho from the left.
-
-#kappa = 0.1  # coupling to oscillator
-
-c_op_list = []
-
-#n_th_a = 2  # temperature with average of 2 excitations
-
-rate = gamma * (1 + N_gamma)
-
-c_op_list.append(sqrt(rate) * a)  # decay operators
-
-rate = gamma * N_gamma
-
-c_op_list.append(sqrt(rate) * adag)  # excitation operators
-
+    pd=20*log10(absolute(a.fexpt)[:, 77]*sqrt(a.gamma/2.0*h*a.fd/a.pwr_lin))
+    line(a.pwr_arr, pd) #20*log10(absolute(a.fexpt)[:, 77]*sqrt(a.gamma/2.0*h*a.fd/a.pwr_lin)))
+    line(a.pwr_arr, 10**(pd/10.0)).show()
 
 # Excitation (at T>0).
 
 #Lindblad_deph = 0.5*gamma_phi*(kron(conj(2*tdiag),2*tdiag) -...
 #                                    0.5*kron(Itot,ctranspose(2*tdiag)*2*tdiag) -...
 #                                    0.5*kron(transpose(2*tdiag)*conj(2*tdiag),Itot));
-nvec=arange(N)
-wdvec=nvec*wd
-Ecvec=-Ec*(6.0*nvec**2+6.0*nvec+3.0)/12.0
-def find_expect(vg): #phi=0.1, Omega_vec=3.0):
-    phi, Omega=vg#.shape
-    Omega_vec=- 0.5j*(Omega*adag - conj(Omega)*a)
-
-    Ej = Ejmax*absolute(cos(pi*phi)) #Josephson energy as function of Phi.
-
-    wTvec = -Ej + sqrt(8.0*Ej*Ec)*(nvec+0.5)+Ecvec #\omega_m
-
-    wT = wTvec-wdvec #rotating frame of gate drive \omega_m-m*\omega_\gate
-    transmon_levels = Qobj(diag(wT[range(N)]))
-    H=transmon_levels +Omega_vec #- 0.5j*(Omega_true*adag - conj(Omega_true)*a)
-    final_state = steadystate(H, c_op_list) #solve master equation
-
-    return expect( a, final_state) #expectation value of relaxation operator
-    #Omega=\alpha\sqrt{2\Gamma_10} where |\alpha|^2=phonon flux=number of phonons per second
-    #Omega=2\alpha\sqrt{\gamma} where |\alpha|^2=phonon flux=number of phonons per second
-
-def expect_update(Omega):
-    tstart=time()
-    Omega_vec=- 0.5j*(Omega*adag - conj(Omega)*a)
-    fexp=parallel_map(find_expect, phi_arr, task_kwargs=dict(Omega_vec=Omega_vec))# for phi in phi_arr]
-    print time()-tstart
-    return fexp
-
-vg=zip(value_grid[0, :, :].flatten(), value_grid[1, :, :].flatten())
-fexpt=parallel_map(find_expect, vg,  progress_bar=True)
-fexpt=reshape(fexpt, (31, 101))
-#fexpt=[expect_update(Omega) for Omega in Omega_sim_vec]
-
-#fexpt=[[find_expect(phi, Omega) for phi in phi_arr] for Omega in Omega_sim_vec]
-#print fexpt
-colormesh(phi_arr, sample_power_sim_dBm, absolute(fexpt), cmap="RdBu_r")
-#figure()
-colormesh(absolute(fexpt), cmap="RdBu_r")
-#figure()
-line(sample_power_sim_dBm, 20*log10(absolute(fexpt)[:, 77])-sample_power_sim_dBm)
-#figure()
-line(sample_power_sim_dBm, 10**((20*log10(absolute(fexpt)[:, 77])-sample_power_sim_dBm)/10.0)).show()
-
-#plot(phi_arr, absolute(fexpt))
-show()
-if 0:
-    print "yo"
-    tlist = linspace(0, 50, 100)
-
-    #In [15]: mcdata = mcsolve(H, psi0, tlist, c_op_list, [a.dag() * a], ntraj=100)
-    medata = mesolve(H, psi0, tlist, c_op_list, [a.dag() * a])
-
-    figure()
-
-    plot(tlist, medata.expect[0], lw=2)
-    axhline(y=fexpt, color='r', lw=1.5) # ss expt. value as horiz line (= 2)
-
-    ylim([0, 10])
-    xlabel('Time', fontsize=14)
-    ylabel('Number of excitations', fontsize=14)
-    #legend(('Monte-Carlo', 'Master Equation', 'Steady State'))
-
-    #title('Decay of Fock state $\left|10\\rangle\\right.$' +
-     #' in a thermal environment with $\langle n\\rangle=2$')
-    show()

@@ -53,7 +53,7 @@ if 1:
     tx.ext("results")
     tx.ext("theory")
     #tx.ext("supplementary")
-    tx.add(r"\FloatBarrier")
+    #tx.add(r"\FloatBarrier")
     tx.ext("discussion")
 
     tx.ext("conclusion")

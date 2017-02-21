@@ -290,10 +290,13 @@ def combo_plots():
     c.bgsub_type="dB"
     #a.bgsub_type="Complex"
     c.filter_type="FFT"
-    c.magabs_colormesh(vmin=0.987, vmax=1.00, cmap="afmhot", 
-                       auto_zlim=False, pl=pl,
-                       auto_xlim=False, x_min=0.0, x_max=1.5,
-                       auto_ylim=False, y_min=3.5, y_max=7.5)#.show()
+    line(c.freq_axis[c.indices], c.MagAbs[:, 222], pl=pl, 
+                             auto_xlim=False, y_min=0.96, y_max=1.02,
+                             auto_ylim=False, x_min=3.5, x_max=7.5)
+    #c.magabs_colormesh(vmin=0.987, vmax=1.00, cmap="afmhot", 
+    #                   auto_zlim=False, pl=pl,
+    #                   auto_xlim=False, x_min=0.0, x_max=1.5,
+    #                   auto_ylim=False, y_min=3.5, y_max=7.5)#.show()
 
 
     pl.figure.tight_layout()
