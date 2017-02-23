@@ -18,6 +18,7 @@ from scipy.ndimage import rotate
 #axes.get_xaxis().set_visible(False)
 #axes.get_yaxis().set_visible(False)
 import_image=True
+show_axes=False
 color="black"
 linewidth=1.0
 fontsize=8
@@ -43,7 +44,8 @@ def box(x=0, y=0, w=5, h=10, g=14, label="$G_a$",
     line([x-w, x-w], [y-g, y+g], color=color, linewidth=linewidth, **kwargs)
     line([x, x, x-w, x+w], [y-h-g, y-g, y-g, y-g], color=color, linewidth=linewidth, **kwargs)
     line([x+w, x+w], [y-g, y+g], color=color, linewidth=linewidth, **kwargs)
-    pl.axes.text(x+lx, y+ly, label, fontsize=fontsize, color=color, ha="center", va="center")
+    if label is not None:
+        pl.axes.text(x+lx, y+ly, label, fontsize=fontsize, color=color, ha="center", va="center")
     return pl
 
 
@@ -86,6 +88,15 @@ def circle(x=0, y=0, r=1, Nsteps=101, color=color, linewidth=linewidth, **kwargs
     y_arr=y+r*sin(theta)
     line(x_arr, y_arr, color=color, linewidth=linewidth, **kwargs)
 
+def arc_arrow(x=0, y=0, angle=13*pi/8.0, sangle=0.0, r=1, Nsteps=101, xa=0.01, ya=0.007, color=color, linewidth=linewidth, **kwargs):
+    theta=linspace(sangle, angle, Nsteps)
+    x_arr=x+r*cos(theta)
+    y_arr=y+r*sin(theta)
+    line(x_arr, y_arr, color=color, linewidth=linewidth, **kwargs)
+    pl.axes.arrow(x_arr[-1], y_arr[-1], xa, ya, shape='full', lw=linewidth, 
+                  length_includes_head=False, edgecolor="black", facecolor="black",
+                  head_width=10)
+
 def wave(x=0, y=0, Nsteps=101, w=8, f=2, A=3, color=color, linewidth=linewidth, **kwargs):
     theta=linspace(0, 2*pi*f, Nsteps)
     x_arr=linspace(x, x+w, Nsteps)
@@ -96,7 +107,7 @@ if __name__=="__main__":
     pl=capacitor(x=50, y=45+23, h=14, g=2,
              ncols=2, nrows=2, nplot=2,
              auto_ylim=False, y_min=0, y_max=100,
-             auto_xlim=False, x_min=0, x_max=100)
+             auto_xlim=False, x_min=0, x_max=100, pl=pl)
 
     IDT(20, 20+8, pl=pl)
     SQUID(80, 20+8, pl=pl)
@@ -114,7 +125,9 @@ if __name__=="__main__":
 
     pl.axes.get_xaxis().set_visible(False)
     pl.axes.get_yaxis().set_visible(False)
-    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.0, hspace = 0.0)
+    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.1, hspace = 0.1)
+
+    #pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.0, hspace = 0.0)
     pl.nplot=1
     if import_image:
         img=imread(r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Logbook/Lamb_shift_source/Good_sample_images/Alignment_Johan-000001.png")
@@ -132,14 +145,76 @@ if __name__=="__main__":
         #             auto_xlim=False, x_min=-200, x_max=1200)
     if 0:
         line([195, 432], [487, 487], pl=pl)
-
     line([80, 80+2*118.5], [250, 250], pl=pl, linewidth=10,
          auto_ylim=False, y_min=150, y_max=1550,
-                 auto_xlim=False, x_min=-200, x_max=1200, color="red")
+                 auto_xlim=False, x_min=-200, x_max=1200, color="black")
+    #left circuit                 
+    circle(-95,578, r=80, pl=pl)
+    arc_arrow(-95, 578, r=50, pl=pl)
+
+    circle(-95,300, r=80, pl=pl)
+    circle(-95,820, r=80, pl=pl)
+    arc_arrow(-95, 820, r=50, pl=pl)
+    box(-95-78, y=820, w=10, g=10, h=0, label=None, pl=pl)
+    
+    line([-175, -15], [1000, 1000], pl=pl, color=color, linewidth=linewidth)
+    line([-175, -95], [1000, 1150], pl=pl, color=color, linewidth=linewidth)
+    line([-15, -95], [1000, 1150], pl=pl, color=color, linewidth=linewidth)
+    wave(-130,300, w=80, A=50, f=1, color="green", pl=pl)
+
+    line([-95, -95], [1150, 1400], pl=pl, color=color, linewidth=linewidth)
+    line([-95, -95], [900, 1000], pl=pl, color=color, linewidth=linewidth)
+    line([-95, -95], [578+80, 820-80], pl=pl, color=color, linewidth=linewidth)
+    line([-95, -95], [300+80, 578-80], pl=pl, color=color, linewidth=linewidth)
+    line([-95+80, -95+80+50], [578, 578], pl=pl, color=color, linewidth=linewidth)
+    
+    #right circuit
+    hshift=1190.0
+    circle(-95+hshift,578, r=80, pl=pl)
+    arc_arrow(-95+hshift, 578, r=50, sangle=-pi, angle=-pi-13*pi/8.0, xa=-0.01, ya=0.007, pl=pl)
+    arc_arrow(-95+hshift, 820, r=50, sangle=-pi, angle=-pi-13*pi/8.0, xa=-0.01, ya=0.007, pl=pl)
+    box(-95+hshift+78, y=820, w=10, g=10, h=0, label=None, pl=pl)
+    circle(-95+hshift,300, r=80, pl=pl)
+    circle(-95+hshift,820, r=80, pl=pl)
+    line([-175+hshift, -15+hshift], [1000, 1000], pl=pl, color=color, linewidth=linewidth)
+    line([-175+hshift, -95+hshift], [1000, 1150], pl=pl, color=color, linewidth=linewidth)
+    line([-15+hshift, -95+hshift], [1000, 1150], pl=pl, color=color, linewidth=linewidth)
+    wave(-130+hshift,300, w=80, A=50, f=1, color="red", pl=pl)
+
+    line([-95+hshift, -95+hshift], [1150, 1520], pl=pl, color=color, linewidth=linewidth)
+    line([-95+hshift, -95+hshift], [900, 1000], pl=pl, color=color, linewidth=linewidth)
+    line([-95+hshift, -95+hshift], [578+80, 820-80], pl=pl, color=color, linewidth=linewidth)
+    line([-95+hshift, -95+hshift], [300+80, 578-80], pl=pl, color=color, linewidth=linewidth)
+    line([-95-80+hshift, -95-80-50+hshift], [578, 578], pl=pl, color=color, linewidth=linewidth)
+
+    #top circuit
+    circle(200,1250, r=80, pl=pl)
+    circle(432,1250, r=80, pl=pl)
+    arc_arrow(432, 1250, r=50, pl=pl)
+    circle(650,1250, r=80, pl=pl)
+    arc_arrow(650, 1250, r=50, pl=pl)
+    box(650, y=1250+78, w=10, g=10, h=0, label=None, pl=pl)
+    
+    line([850-80, 850+80], [1300, 1300], pl=pl, color=color, linewidth=linewidth)
+    line([850-80, 850], [1300, 1450], pl=pl, color=color, linewidth=linewidth)
+    line([850+80, 850], [1300, 1450], pl=pl, color=color, linewidth=linewidth)
+    wave(160,1250, w=80, A=50, f=1, color="blue", pl=pl)
+
+    line([850, 850], [1450, 1520], pl=pl, color=color, linewidth=linewidth)
+    line([280, 432-80], [1250, 1250], pl=pl, color=color, linewidth=linewidth)
+    line([432+80, 650-80], [1250, 1250], pl=pl, color=color, linewidth=linewidth)
+    line([650+80, 850], [1250, 1250], pl=pl, color=color, linewidth=linewidth)
+    line([432, 432], [1250-80, 1250-80-130], pl=pl, color=color, linewidth=linewidth)
+    line([850, 850], [1250, 1300], pl=pl, color=color, linewidth=linewidth)
+    
+
+    pl.axes.axis("off")
+
 
     pl.axes.get_xaxis().set_visible(False)
     pl.axes.get_yaxis().set_visible(False)
-    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.0, hspace = 0.0)
+    #pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.0, hspace = 0.0)
+    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.1, hspace = 0.1)
 
     pl.axes.text(75, 230, "$200\,\mathrm{\mu m}$", color="white")
 
@@ -150,10 +225,10 @@ if __name__=="__main__":
     pl.axes.text(20, 1000, "Au")
 
 
-    pl.figure.text(0.02, 0.97, "a)")
-    pl.figure.text(0.53, 0.97, "b)")
-    pl.figure.text(0.02, 0.47, "c)", color="white")
-    pl.figure.text(0.53, 0.47, "d)")
+    pl.figure.text(0.03, 0.95, "a)")
+    pl.figure.text(0.53, 0.95, "b)")
+    pl.figure.text(0.03, 0.45, "c)", color="white")
+    pl.figure.text(0.53, 0.45, "d)")
 
     pl.nplot=3
     if import_image:
@@ -164,12 +239,13 @@ if __name__=="__main__":
                  auto_xlim=False, x_min=0, x_max=1000)
     pl.axes.get_xaxis().set_visible(False)
     pl.axes.get_yaxis().set_visible(False)
-    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.0, hspace = 0.0)
+    #pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.0, hspace = 0.0)
+    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.1, hspace = 0.1)
 
     #line([100+20.5,100+57.7], [139,139], pl=pl, auto_ylim=False, y_min=100, y_max=665,
     #             auto_xlim=False, x_min=100, x_max=665)
     line([150,150+151], [145,145], pl=pl, auto_ylim=False, y_min=100, y_max=665,
-                 auto_xlim=False, x_min=100, x_max=665, color="red", linewidth=10)
+                 auto_xlim=False, x_min=100, x_max=665, color="black", linewidth=10)
     pl.axes.text(180, 140, "$1\,\mu m$", color="white")
     pl.axes.text(600, 620, "Al", color="white")
 
@@ -183,19 +259,21 @@ if __name__=="__main__":
         pl.axes.imshow(flipud(img), origin='lower')
     line([20.5, 95.5], [39,39], pl=pl, auto_ylim=False, y_min=0, y_max=1000,
                  auto_xlim=False, x_min=0, x_max=1000)
+
     pl.axes.get_xaxis().set_visible(False)
     pl.axes.get_yaxis().set_visible(False)
-    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.0, hspace = 0.0)
+
+    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.1, hspace = 0.1)
 
     pl.axes.text(220, 620, "$2\,\mu m$", color="white")
 
     line([230,230+75], [630, 630], pl=pl, auto_ylim=False, y_min=80, y_max=770,
-                 auto_xlim=False, x_min=180, x_max=870, linewidth=10, color="red")
+                 auto_xlim=False, x_min=180, x_max=870, linewidth=10, color="black")
     #pl.axes.text(20, 100, "$100\,\mathrm{\mu m}$")
 
     #    plt.xlim(0, 100
     #    plt.ylim(0, 100)
-
+    pl.figure.tight_layout()
     a.save_plots([pl,])
     pl.show()
 

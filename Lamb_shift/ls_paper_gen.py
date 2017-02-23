@@ -38,7 +38,10 @@ if 1:
     tx.ext("introduction")
     tx.ext("experiment")
 if 1:
-    tx.include_image("fig1.png", "Setup", caption="sample caption")
+    from fig1_setup2 import a as fig1
+    tx.include_image("fig1", label="", caption="sample caption", source_folder=fig1.save_folder)
+
+    #tx.include_image("fig1.png", "Setup", caption="sample caption")
 if 1:
     from fig2_characterization2 import a as fig2
     tx.include_image("fig2", label="", caption="fig2 caption", source_folder=fig2.save_folder)

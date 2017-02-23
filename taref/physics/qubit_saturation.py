@@ -6,7 +6,6 @@ Created on Mon Dec  5 10:36:14 2016
 """
 
 from qutip import destroy, basis, steadystate, mesolve, expect, Qobj, qeye, parallel_map, parfor
-#from matplotlib.pyplot import figure, plot, axhline, ylim, xlabel, ylabel, show, pcolormesh
 from numpy import log10, sqrt, linspace, cos, pi, arange, diag, absolute, kron, exp, conj, meshgrid, shape, array, reshape
 from scipy.constants import h, k
 from time import time
@@ -16,7 +15,6 @@ from taref.core.api import SProperty, private_property, Array
 from atom.api import Float, Int, Callable
 
 class Sat_Qubit(Qubit):
-    #sample_power_dBm=Float(-30.0)
     atten=Float(83.0)
     phi_arr=Array()
     pwr_arr=Array()
@@ -32,7 +30,7 @@ class Sat_Qubit(Qubit):
     gamma_phi=Float(0.0)
 
     T=Float(0.03)
-    N_dim=Int(5)
+    N_dim=Int(8)
 
     fd=Float(4.5e9)
 
@@ -105,28 +103,23 @@ class Sat_Qubit(Qubit):
 #
 #        return find_expect
     
-#Omega=2 a sqrt(gamma_el)  a^2=number of photons/s=
-#a=sqrt(pwr/hf)
-#t=sqrt(gamma/2/(pwr/hf)<>
-
-#t=log(sqrt(gamma/2)<>-log(pwr/hf)
 
     @private_property
     def fexpt(self):
-        #vg=self.value_grid
         fexpt=parallel_map(self.funcer, self.value_grid,  progress_bar=True)
         return reshape(fexpt, (len(self.pwr_arr), len(self.phi_arr)))
 
 if __name__=="__main__":
     a=Sat_Qubit()
+    a.N_dim=2#5
     #print a.Ec/h
     #raise Exception
-
+    a.atten=83+20
     a.Ec = 0.22e9*h # Charging energy.
     a.Ejmax = 22.2e9*h # Maximum Josephson energy.
 
     a.gamma = 38.2059e6 # Acoustic relaxation rate of the transmon.
-    a.gamma_el=0.750e6 #electric relaxation rate
+    a.gamma_el=a.gamma #0.750e6 #electric relaxation rate
     a.gamma_phi = 0.0e6 # Dephasing rate of the transmon.
     a.fd = 4.8066e9#/1e6 # Drive frequency.
 
@@ -148,12 +141,62 @@ if __name__=="__main__":
             #Omega=2\alpha\sqrt{\gamma} where |\alpha|^2=phonon flux=number of phonons per second
         #return find_expec
     a.funcer=find_expect
-    colormesh(a.phi_arr, a.pwr_arr, absolute(a.fexpt), cmap="RdBu_r")
-    colormesh(absolute(a.fexpt), cmap="RdBu_r")
-    pd=20*log10(absolute(a.fexpt)[:, 77]*sqrt(a.gamma/2.0*h*a.fd/a.pwr_lin))
-    line(a.pwr_arr, pd) #20*log10(absolute(a.fexpt)[:, 77]*sqrt(a.gamma/2.0*h*a.fd/a.pwr_lin)))
-    line(a.pwr_arr, 10**(pd/10.0)).show()
+    if 1:
+        colormesh(a.phi_arr, a.pwr_arr, absolute(a.fexpt), cmap="RdBu_r")
+        colormesh(absolute(a.fexpt), cmap="RdBu_r")
+        pd=10*log10(absolute(a.fexpt)[:, 77]*sqrt(a.gamma/2.0*h*a.fd/a.pwr_lin))
+        line(a.pwr_arr, pd) #20*log10(absolute(a.fexpt)[:, 77]*sqrt(a.gamma/2.0*h*a.fd/a.pwr_lin)))
+        pl=line(a.pwr_arr, 10**(pd/10.0), color="green")#.show()
+        pl=line(a.pwr_arr, ((absolute(a.fexpt)[:, 77])*1.08*sqrt(a.gamma/2.0*h*a.fd/a.pwr_lin)),
+                color="red",
+                pl=pl)
 
+    g=a.gamma/2.0
+    N=a.pwr_lin/(h*a.fd)#*abs(const.S21_0/(1+const.S22_0*exp(2i*const.theta_L)))^2
+    Ej = a.Ejmax*absolute(cos(pi*a.phi_arr)) #Josephson energy as function of Phi.
+    wTvec = (sqrt(8.0*Ej*a.Ec)-a.Ec)/h #\omega_m
+    dw = wTvec-a.fd#rotating frame of gate drive \omega_m-m*\omega_\gate
+    dw=0.0
+    print a.fd
+    print wTvec
+    print dw
+    print N[0]   
+    
+    #Omega=2 a sqrt(gamma_el)  a^2=number of photons/s=
+    #a=sqrt(pwr/hf)
+    #t=sqrt(gamma/2/(pwr/hf)<>
+    
+    #t=log(sqrt(gamma/2)<>-log(pwr/hf)
+
+    #2*(Omega/gamma)**2
+    #Omega =sqrt(N)sqrt(2gamma)
+    #Omega**2/gamma^2=N2/gamma
+    def r_qubit(N):
+        return -sqrt(a.gamma_el*g/2.0)/g*(1+1j*dw/g)/(1.0+dw**2/g**2+2*N/g*(a.gamma_el/(2.0*g)))
+
+        #return -(a.gamma_el/(2.0*g))*(1+1j*dw/g)/(1.0 + dw**2/g**2 + 2*N/g*a.gamma_el/g)            
+
+    #def t_qubit(N):
+        #-sqrt(a.gamma_el*a.gamma/2.0)*(1j*dw+g)/(dw**2+g**2+Omega**2/2)
+    #    return -sqrt(a.gamma_el*a.gamma/2.0)/g*(1+1j*dw)/(1.0+dw**2/g**2+2*N/g)
+
+    #    return -(a.gamma_el/(2.0*g))*(1+1j*dw/g)/(1.0 + dw**2/g**2 + 2*N/g)            
+
+    #P21(d_omega_idx, N_idx) = -sqrt(2*x*(1-x))*0.5*G*(g+1i*dw)./(dw^2 + g^2 + 4*x*g*N);
+    #Omega = 2*sqrt(N_in(N_idx)*const.Gamma_el/(2*pi));
+    #t(d_omega_idx, N_idx) = sqrt(0.5*const.Gamma_ac*const.Gamma_el)*(1i*d_omega(d_omega_idx) - const.Gamma_tot/2)./(d_omega(d_omega_idx).^2 + const.Gamma_tot^2/4 + Omega^2/2);
+    
+    #P21(d_omega_idx, O_idx) = -(g+1i*dw)./(dw^2 + g^2 + (g/G)*Omega(O_idx).^2);
+    
+    #pl="blah"
+    line(a.pwr_arr, absolute(r_qubit(N)), pl=pl).show()
+
+#    for n in N:   
+#        line(absolute(r_qubit(n)), pl=pl)#.show()
+#    def r_maxmin():
+#        return [max(absolute(r_qubit(n))) for n in N]
+#    line(a.pwr_arr, r_maxmin()).show()
+    #line(a.pwr_arr, absolute([max(r_qubit(n) for n in N]))
 # Excitation (at T>0).
 
 #Lindblad_deph = 0.5*gamma_phi*(kron(conj(2*tdiag),2*tdiag) -...
