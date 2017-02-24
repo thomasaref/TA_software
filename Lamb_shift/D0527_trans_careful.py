@@ -5,10 +5,10 @@ Created on Sun Apr 24 18:55:33 2016
 @author: thomasaref
 """
 
-from TA88_fundamental import TA88_VNA_Lyzer, TA88_Read, idt#, qdt
+from TA88_fundamental import TA88_VNA_Lyzer, TA88_Read, idt, bg_A1, bg_A4#, qdt
 from taref.plotter.api import colormesh, line, Plotter, scatter
 from taref.core.api import set_tag, set_all_tags, get_all_tags, get_tag
-from numpy import reshape, amax, exp, array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape, linspace, interp, absolute, fft, log10, angle, unwrap
+from numpy import sin, reshape, amax, exp, array, squeeze, append, sqrt, pi, mod, floor_divide, trunc, arccos, shape, linspace, interp, absolute, fft, log10, angle, unwrap
 from atom.api import FloatRange, Int, Float, Typed, Unicode
 from taref.core.api import tag_property, process_kwargs
 #from taref.core.universal import ODict
@@ -66,8 +66,11 @@ b=TA88_VNA_Lyzer(on_res_ind=0, VNA_name="RS VNA",
             rt_atten=30.0,#indices=range(50, 534),
             read_data=read_data,
             ) #33, 70
-b.filt.center=731
+b.filt.center=0
 b.filt.halfwidth=200
+#def bg_A4(frequency):
+#    return interp(frequency, b.frequency, 20*log10(absolute(b.MagcomData[:, 0])))
+
 
 def ifft_plot(self, **kwargs):
     process_kwargs(self, kwargs, pl="hannifft_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
@@ -90,15 +93,15 @@ def ifft_plot(self, **kwargs):
             marker_size=4.0, pl=pl, label="IFFT peak")
     t=linspace(0,2,1001) #self.time_axis-0.05863
     line(t, 3488.0*t/100.0-60, pl=pl, color="black", linestyle="dashed", auto_xlim=False, x_min=-0.2, x_max=1.0,
-         auto_ylim=False, y_min=-65, y_max=-15, label="$d=v_ft$")    
-         
+         auto_ylim=False, y_min=-65, y_max=-15, label="$d=v_ft$")
+
     t=array([8.7e-8, 2.64e-7, 3.79e-7, 4.35e-7, 6.6e-7])-8.7e-8
-    scatter(t*1e6, array([0.0, 600.0, 1000.0, 1200.0, 2000.0])/100.0-60, pl=pl, 
+    scatter(t*1e6, array([0.0, 600.0, 1000.0, 1200.0, 2000.0])/100.0-60, pl=pl,
             facecolor="red", edgecolor="red", label="100 ns pulse",
             marker_size=4.0)
-    pl.legend()            
+    pl.legend()
     #b.line_plot("spd_fit", t*1e6,  (t*qdt.vf)*1e6, label="(3488 m/s)t")
-    
+
     return pl
 
 def MagcomFilt(self):
@@ -113,7 +116,16 @@ if __name__=="__main__":
     a.filter_type="None"
     a.time_axis_type="time"
     print a.MagAbs.shape
-    pl=line(a.frequency, 10*log10(absolute(a.MagcomData[:, 0])), color="cyan")#.show()
+    def bg(x):
+        return bg_A4(x)
+        return interp(x, b.frequency, 20*log10(absolute(b.MagcomData[:, 0])))
+    pl=line(a.frequency, 20*log10(absolute(a.MagcomData[:, 0]))-bg(a.frequency), color="cyan")#.show()
+    bg_pl=line(b.frequency, 20*log10(absolute(b.MagcomData[:, 0])), color="cyan")#.show()
+    line(b.frequency, 20*log10(absolute(b.MagcomData[:, 1])), color="red", pl=bg_pl)#.show()
+    line(b.frequency, bg(a.frequency), color="green", pl=bg_pl)#.show()
+    line(b.frequency, 20*log10(absolute(MagcomFilt(b))), pl=bg_pl, color="purple")
+    print b.comment
+
     #pl=line(a.frequency, 10*log10(absolute(a.MagcomData[:, 1])))#.show()
 
     #pl=line(a.frequency, a.MagdB)#.show()
@@ -122,7 +134,7 @@ if __name__=="__main__":
     magabs=absolute(magfilt)
     line(a.frequency, magabs)
     nskip=50
-    pl=scatter(a.frequency[::nskip], 10.0*log10(magabs[::nskip]), facecolor="red", edgecolor="red", pl=pl)
+    pl=scatter(a.frequency[::nskip], 20.0*log10(magabs[::nskip])-bg(a.frequency[::nskip]), facecolor="red", edgecolor="red", pl=pl)
     #idt.Np=56
     #idt.f0=4.46e9 #4.452
     #idt.K2=0.032
@@ -139,21 +151,30 @@ if __name__=="__main__":
     print a.comment
     print -a.fridge_atten+a.fridge_gain-a.rt_atten+a.rt_gain-10
 
-    line(a.frequency, 10*log10(absolute(S13*S31))-11, color="green", pl=pl,
-         auto_ylim=False, y_min=-40, y_max=-10,
+    line(a.frequency, 20*log10(absolute(S13*S31))-4*1, color="green", pl=pl,
+         auto_ylim=False, y_min=-40, y_max=-10*0,
          auto_xlim=False, x_min=4e9, x_max=5e9, xlabel="Frequency (Hz)", ylabel="Transmission (dB)",
         title="Pickup IDT (37 fingers)")#.show()
 
     line(a.frequency, angle(magfilt))
 
+    X=idt.Np*pi*(a.frequency-idt.f0)/idt.f0
+
+    #line(a.frequency, 20*log10(0.5*(sin(X)/(X))**2), pl=pl)
+
 
     ifft_plot(a)#.show()
-    
+
     from D0317_S4A1_frq_pulse_flux import a as c
     from numpy import mean
     c.read_data()
-    pl=scatter(c.frequency, 10*log10(mean(absolute(c.MagcomData[64:76, :, 0]), axis=0))+8.5,
+    print c.comment
+    cdata=10.0**((20.0*log10(mean(absolute(c.MagcomData[64:76, :, 0]), axis=0))-c.probe_pwr)/20.0)
+    pl=scatter(c.frequency, 20*log10(cdata)+10-1.0-bg_A1(c.frequency),
             pl=pl, color="purple", marker="x")
+
+    #pl=scatter(c.frequency, 20*log10(mean(absolute(c.MagcomData[64:76, :, 0]), axis=0))+0*8.5-bg(c.frequency),
+    #        pl=pl, color="purple", marker="x")
 
     #a.save_plots([pl,])
     pl.show()

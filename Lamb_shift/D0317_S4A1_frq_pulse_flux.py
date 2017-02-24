@@ -16,10 +16,10 @@ def read_data(self):
         self.comment=f.attrs["comment"]
         #print f["Instrument config"]["Anritsu 68377C Signal generator - GPIB: 8, Pump3 at localhost"].attrs.keys()
         #self.probe_frq=f["Instrument config"]["Anritsu 68377C Signal generator - GPIB: 8, Pump3 at localhost"].attrs["Frequency"]
-        #self.probe_pwr=f["Instrument config"]["Anritsu 68377C Signal generator - GPIB: 8, Pump3 at localhost"].attrs["Power"]
+        self.probe_pwr=f["Instrument config"]["Anritsu 68377C Signal generator - GPIB: 8, Pump3 at localhost"].attrs["Power"]
 
         print f["Data"]["Channel names"][:]
-        Magvec=f["Traces"]["TA - Trace"]#[:]
+        Magvec=f["Traces"]["TA - LC Trace"]#[:]
         #Magvec=f["Traces"]["Digitizer2 - Trace"]#[:]
 
         data=f["Data"]["Data"]
@@ -43,8 +43,8 @@ def read_data(self):
         Magcom=squeeze(Magcom)
         self.MagcomData=Magcom[:]#.transpose()
         print shape(self.MagcomData)
-        
-        
+
+
 def read_data2(self):
     with File(self.rd_hdf.file_path, 'r') as f:
         #print f["Channels"][:]
@@ -134,9 +134,19 @@ if __name__=="__main__":
     line(a.time/1e-6, 10*log10(mean(absolute(a.MagcomData[:, 20:40, 0]), axis=1)), pl=pl, color="red")
     pl=line(a.frequency/1e9, 10*log10(mean(absolute(a.MagcomData[64:76, :, 0]), axis=0)))
     #line(a.time/1e-6, 10*log10(mean(absolute(a.MagcomData[:, 20:40, 0]), axis=1)), pl=pl, color="red")
-    
+    cdata=10.0**((20.0*log10(mean(absolute(a.MagcomData[64:76, :, 0]), axis=0))-a.probe_pwr)/20.0)
+    print a.comment
+    #20*log10(abs(I+1jQ)) + level correction figure
+    from D0316_S4A1_coupling_midpeak import a as d0316
+    d0316.read_data()
+    print d0316.comment
+    pl1=line(d0316.frequency, absolute(d0316.MagcomData[:, 0]))#.show()
+    pl1=line(a.frequency, cdata, pl=pl1)#.show()
+    pl1=line(d0316.frequency, 20*log10(absolute(d0316.MagcomData[:, 0])))#.show()
+    pl1=line(a.frequency, 20*log10(cdata), pl=pl1).show()
+
     pl.show()
-        
+
     #pls=S4A1_midpeak_plots()
     #pls=a.fft_plots()
 

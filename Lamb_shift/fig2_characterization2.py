@@ -86,7 +86,7 @@ d.filter_type="FFT"
 
 if __name__=="__main__":
     pl="fig2"
-    
+
     d0527.filter_type="None"
     d0527.read_data()
     pl=line(d0527.frequency/1e9, 10*log10(absolute(d0527.MagcomData[:, 0])),
@@ -100,7 +100,7 @@ if __name__=="__main__":
     magabs=absolute(magfilt)
     line(d0527.frequency/1e9, magabs)
     nskip=50
-    pl=scatter(d0527.frequency[::nskip]/1e9, 10.0*log10(magabs[::nskip]), 
+    pl=scatter(d0527.frequency[::nskip]/1e9, 10.0*log10(magabs[::nskip]),
                facecolor="red", edgecolor="red", pl=pl)
     #idt.Np=56
     #idt.f0=4.46e9 #4.452
@@ -128,7 +128,7 @@ if __name__=="__main__":
 
 
     #ifft_plot(a)#.show()
-    
+
     d0317.read_data()
     pl=scatter(d0317.frequency/1e9, 10*log10(mean(absolute(d0317.MagcomData[64:76, :, 0]), axis=0))+8.5,
             pl=pl, color="purple", marker="x")
@@ -139,30 +139,30 @@ if __name__=="__main__":
     def ifft_plot(self, **kwargs):
         process_kwargs(self, kwargs, pl="hannifft_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
         on_res=10*log10(absolute(self.filt.window_ifft(self.MagcomData[:,0])))
-    
+
         pl=line(self.time_axis-0.05863, self.filt.fftshift(on_res),  color="purple",
                plot_name="onres_{}".format(self.on_res_ind), alpha=0.8, label="IFFT", **kwargs)
-    
+
         self.filt.N=len(on_res)
         filt=self.filt.freqz
         #filt=filt_prep(len(on_res), self.filt_start_ind, self.filt_end_ind)
         top=36.0#amax(on_res)
         line(self.time_axis-0.05863, filt*top-70, plotter=pl, color="green",
-             linestyle="dotted", label="Filter window", 
+             linestyle="dotted", label="Filter window",
              auto_xlim=False, x_min=-0.2, x_max=1.0,
              auto_ylim=False, y_min=-65, y_max=-15,)
         pl.xlabel=kwargs.pop("xlabel", self.time_axis_label)
         pl.ylabel=kwargs.pop("ylabel", "Transmission (dB) ")
-    
+
         ax2 = pl.axes.twinx()
         ax2.plot(array([0.05863,   0.2,  0.337,   0.48,  0.761, 1.395, 1.455])-0.05863,
                 array([0.0, 500.0, 1000.0, 1500.0, 2500.0, 4500,  200+2500+2500-300])/1000.0, ".",
                 label="IFFT peak")#, marker_size=4.0)
         t=linspace(0,2,1001) #self.time_axis-0.05863
-        ax2.plot(t, 3488.0*t/1000.0, color="black", linestyle="dashed",  label="$d=v_ft$")    
-             
+        ax2.plot(t, 3488.0*t/1000.0, color="black", linestyle="dashed",  label="$d=v_ft$")
+
         t=array([8.7e-8, 2.64e-7, 3.79e-7, 4.35e-7, 6.6e-7])-8.7e-8
-        ax2.plot(t*1e6, array([0.0, 600.0, 1000.0, 1200.0, 2000.0])/1000.0, "x", color="red", 
+        ax2.plot(t*1e6, array([0.0, 600.0, 1000.0, 1200.0, 2000.0])/1000.0, "x", color="red",
                 #facecolor="red", edgecolor="red",
                  label="100 ns pulse",
                 #marker_size=4.0,
@@ -170,9 +170,9 @@ if __name__=="__main__":
         ax2.set_ylabel('Distance (mm)')
         ax2.set_ylim(-0.2, 3.0)
         ax2.set_xlim(-0.2, 1.0)
-        #pl.legend()            
+        #pl.legend()
         #b.line_plot("spd_fit", t*1e6,  (t*qdt.vf)*1e6, label="(3488 m/s)t")
-        
+
         return pl
     pl.nplot=2
     d0527.time_axis_type="time"
@@ -238,13 +238,29 @@ if __name__=="__main__":
 
     pl.nplot=4
     print b.comment
-    pl_pwr_sat=scatter(b.pwr-30-60, 100*absolute(absolute(b.MagcomFilt[69, 635, :])-absolute(b.MagcomFilt[69,0, :])),
-                xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}| \times 100$", pl=pl,
-                  auto_ylim=False, y_min=100*0.0, y_max=100*0.015, marker_size=3.0,
+#    pl_pwr_sat=scatter(b.pwr-30-60, 100*absolute(absolute(b.MagcomFilt[69, 635, :])-absolute(b.MagcomFilt[69,0, :])),
+#                xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}| \times 100$", pl=pl,
+#                  auto_ylim=False, y_min=100*0.0, y_max=100*0.015, marker_size=3.0,
+#                  auto_xlim=False, x_min=-30-90, x_max=10-90)#.show()
+
+    from TA88_fundamental import bg_A1, bg_A4
+    onres=20*log10(absolute(b.MagcomFilt[69, 635, :]))-bg_A4(b.frequency[69])
+    offres=20*log10(absolute(b.MagcomFilt[69, 0, :]))-bg_A4(b.frequency[69])
+    scatter(b.pwr-30-60, absolute(onres-offres))
+    #scatter(b.pwr-30-60, 10**(absolute(onres-offres)/20.0))
+    scatter(b.pwr-30-60, absolute(10**(onres/20.0)-10**(offres/20.0)))
+    #scatter(b.pwr-30-60, absolute(10**(onres/20.0)))
+
+
+    pl_pwr_sat=scatter(b.pwr-30-60, absolute(10**(onres/20.0)-10**(offres/20.0)),
+                xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}|$", pl=pl,
+                  auto_ylim=False, y_min=0.0, y_max=0.12, marker_size=3.0,
                   auto_xlim=False, x_min=-30-90, x_max=10-90)#.show()
+
+
     ax=pl.figure.add_subplot(pl.nrows, pl.ncols, 4)
     ax.set_xticks(linspace(-30.0-90, 10.0-90, 5))
-    ax.set_yticks(linspace(0.0, 1.5, 4))
+    ax.set_yticks(linspace(0.0, 0.10, 3))
 
     pl.nplot=3
     if 1:
@@ -275,7 +291,7 @@ if __name__=="__main__":
 
 
     pl.figure.tight_layout()
-    a.save_plots([pl])#, pl1])
+    #a.save_plots([pl])#, pl1])
 
     pl.show()
 

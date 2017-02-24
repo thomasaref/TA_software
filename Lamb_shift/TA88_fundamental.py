@@ -14,7 +14,7 @@ from taref.filer.save_file import Save_NP
 from taref.core.agent import Agent
 from atom.api import Float, Unicode, Typed, Int, Callable, Enum
 from taref.core.universal import Array
-from numpy import array, log10, sqrt, fft, exp, float64, linspace, shape, reshape, squeeze, mean, angle, absolute, sin, pi
+from numpy import interp, array, log10, sqrt, fft, exp, float64, linspace, shape, reshape, squeeze, mean, angle, absolute, sin, pi
 from h5py import File
 from scipy.optimize import leastsq
 from taref.core.log import log_debug
@@ -299,6 +299,60 @@ def S13_phase_theory(qdt, fig_width=9.0, fig_height=6.0):
     colormesh(fw0/1e9, voltage, angle(S13), plotter=pl)
     line(*qdt._get_ls_voltage_from_flux_par_many(f=fw0), plotter=pl, linewidth=0.5, alpha=0.5, color="cyan")
     return pl
+
+
+def read_data(self):
+    with File(self.rd_hdf.file_path, 'r') as f:
+        Magvec=f["Traces"]["{0} - {1}".format(self.VNA_name, self.port_name)]
+        data=f["Data"]["Data"]
+        print data.shape
+        print Magvec.shape
+        #if self.swp_type=="pwr_first":
+        #    self.pwr=data[:, 0, 0].astype(float64)
+        #    self.yoko=data[0,1,:].astype(float64)
+        #elif self.swp_type=="yoko_first":
+        #    self.pwr=data[0, 1, :].astype(float64)
+        #    self.yoko=data[:, 0, 0].astype(float64)
+        self.comment=f.attrs["comment"]
+        fstart=f["Traces"]['{0} - {1}_t0dt'.format(self.VNA_name, self.port_name)][0][0]
+        fstep=f["Traces"]['{0} - {1}_t0dt'.format(self.VNA_name, self.port_name)][0][1]
+
+        sm=shape(Magvec)[0]
+        sy=shape(data)
+        s=(sm, sy[0], sy[2])
+        Magcom=Magvec[:,0, :]+1j*Magvec[:,1, :]
+        Magcom=reshape(Magcom, s, order="F")
+        self.frequency=linspace(fstart, fstart+fstep*(sm-1), sm)
+        #if self.swp_type=="pwr_first":
+        #    Magcom=swapaxes(Magcom, 1, 2)
+        self.MagcomData=squeeze(Magcom)#[:, 2, :]
+        print self.MagcomData.shape
+        #self.stop_ind=len(self.yoko)-1
+        self.filt.N=len(self.frequency)
+
+bgA4=TA88_VNA_Lyzer(on_res_ind=0, VNA_name="RS VNA",
+              rd_hdf=TA88_Read(main_file="Data_0531/S4A4_careful_unswitched.hdf5"),
+              rt_atten=30.0,
+              read_data=read_data)
+bgA4data=None
+def bg_A4(frequency):
+    global bgA4data
+    if bgA4data is None:
+        bgA4.read_data()
+        bgA4data=20*log10(absolute(bgA4.MagcomData[:, 0]))
+    return interp(frequency, bgA4.frequency, bgA4data)
+
+bgA1=TA88_VNA_Lyzer(on_res_ind=0, VNA_name="RS VNA",
+              rd_hdf=TA88_Read(main_file="Data_0531/S1A1_careful_unswitched.hdf5"),
+              rt_atten=30.0,
+              read_data=read_data)
+bgA1data=None
+def bg_A1(frequency):
+    global bgA1data
+    if bgA1data is None:
+        bgA1.read_data()
+        bgA1data=20*log10(absolute(bgA1.MagcomData[:, 0]))
+    return interp(frequency, bgA1.frequency, bgA1data)
 
 if __name__=="__main__":
     pl0=qdt.lgf1.lgf_test_plot()
