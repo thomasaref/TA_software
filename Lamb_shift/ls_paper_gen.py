@@ -39,7 +39,7 @@ if 1:
     tx.ext("experiment")
 if 1:
     from fig1_setup2 import a as fig1
-    tx.include_image("fig1", label="", caption="sample caption", source_folder=fig1.save_folder)
+    tx.include_image("fig1", label="", caption="fig1 caption", source_folder=fig1.save_folder)
 
     #tx.include_image("fig1.png", "Setup", caption="sample caption")
 if 1:

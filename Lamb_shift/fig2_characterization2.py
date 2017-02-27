@@ -9,7 +9,7 @@ Created on Sun Apr 24 18:55:33 2016
 
 from TA88_fundamental import TA88_VNA_Lyzer, TA88_Read, qdt, idt, TA88_Read_NP, TA88_Save_NP
 from TA53_fundamental import TA53_VNA_Pwr_Lyzer, TA53_Read
-from numpy import mean, log10, array, absolute, squeeze, append, sqrt, pi, arccos, shape, linspace
+from numpy import diag, mean, log10, array, absolute, squeeze, append, sqrt, pi, arccos, shape, linspace
 from taref.physics.fundamentals import h
 from taref.plotter.api import colormesh, line, scatter
 from taref.physics.filtering import Filter
@@ -147,13 +147,45 @@ if __name__=="__main__":
         filt=self.filt.freqz
         #filt=filt_prep(len(on_res), self.filt_start_ind, self.filt_end_ind)
         top=36.0#amax(on_res)
-        line(self.time_axis-0.05863, filt*top-70, plotter=pl, color="green",
-             linestyle="dotted", label="Filter window",
-             auto_xlim=False, x_min=-0.2, x_max=1.0,
-             auto_ylim=False, y_min=-65, y_max=-15,)
+        if 0:
+            line(self.time_axis-0.05863, filt*top-70, plotter=pl, color="green",
+                 linestyle="dotted", label="Filter window",
+                 auto_xlim=False, x_min=-0.2, x_max=1.0,
+                 auto_ylim=False, y_min=-65, y_max=-15,)
         pl.xlabel=kwargs.pop("xlabel", self.time_axis_label)
         pl.ylabel=kwargs.pop("ylabel", "Transmission (dB) ")
 
+        IFFT_trans_t=array([0.05863,   0.2,  0.337,   0.48,  0.761, 1.395, 1.455])-0.05863
+        IFFT_trans_d=array([0.0, 500.0, 1000.0, 1500.0, 2500.0, 4500,  200+2500+2500-300])/1000.0
+        
+        pulse_t=(array([8.7e-8, 2.64e-7, 3.79e-7, 4.35e-7, 6.6e-7])-8.7e-8)*1e6
+        pulse_d=array([0.0, 600.0, 1000.0, 1200.0, 2000.0])/1000.0
+        
+        
+        from scipy.optimize import curve_fit, leastsq
+
+        t=list(IFFT_trans_t)
+        t.extend(pulse_t)
+        d=list(IFFT_trans_d)
+        d.extend(pulse_d)
+        
+        def fit_func(x, a, b):
+            return a*x + b
+
+        params, pcov = curve_fit(fit_func, t, d)
+        
+        print params, pcov
+        perr = sqrt(diag(pcov))
+        print "std", perr
+        def residuals(p, y, x):
+            """residuals of fitting function"""
+            return y-p[0]*x+p[1]
+        p_guess=[1.0, 0.0]
+        pbest= leastsq(residuals, p_guess, args=(array(d), array(t)), full_output=1)
+        print pbest
+        raise Exception
+        #[a, b] = params[0]        
+        
         ax2 = pl.axes.twinx()
         ax2.plot(array([0.05863,   0.2,  0.337,   0.48,  0.761, 1.395, 1.455])-0.05863,
                 array([0.0, 500.0, 1000.0, 1500.0, 2500.0, 4500,  200+2500+2500-300])/1000.0, ".",
