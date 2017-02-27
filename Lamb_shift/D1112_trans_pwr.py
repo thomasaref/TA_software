@@ -5,7 +5,7 @@ Created on Sun Apr 24 18:55:33 2016
 @author: thomasaref
 """
 
-from TA53_fundamental import TA53_VNA_Pwr_Lyzer, TA53_Read, qdt
+from TA53_fundamental import TA53_VNA_Pwr_Lyzer, TA53_Read, qdt, TA53_Save_NP, TA53_Read_NP
 from numpy import (absolute,  trunc, arccos, shape, float64, linspace, reshape,
                    squeeze, argmax, array, log10, swapaxes, amax, angle)
 from taref.plotter.api import colormesh, scatter, line
@@ -13,6 +13,10 @@ from h5py import File
 from taref.core.api import process_kwargs
 from taref.physics.filtering import Filter
 from time import time
+
+
+from TA88_fundamental import bg_A1, bg_A4
+
 
 
 a=TA53_VNA_Pwr_Lyzer(name="d1112", on_res_ind=635,#read_data=read_data, # VNA_name="RS VNA",
@@ -54,6 +58,26 @@ if __name__=="__main__":
 
     pl2=scatter(a.pwr, absolute(absolute(a.MagcomFilt[69, 635, :])-absolute(a.MagcomFilt[69,0, :])), xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}|$")#.show()
 
+    onres=20*log10(absolute(a.MagcomFilt[69, 635, :]))-bg_A4(a.frequency[69])
+    offres=20*log10(absolute(a.MagcomFilt[69, 0, :]))-bg_A4(a.frequency[69])
+    scatter(a.pwr-30-60, absolute(onres-offres))
+    #scatter(b.pwr-30-60, 10**(absolute(onres-offres)/20.0))
+    scatter(a.pwr-30-60, absolute(10**(onres/20.0)-10**(offres/20.0)))
+    #scatter(b.pwr-30-60, absolute(10**(onres/20.0)))
+
+
+    pl_pwr_sat=scatter(a.pwr-30-60, absolute(10**(onres/20.0)-10**(offres/20.0)),
+                xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}|$", #pl=pl,
+                  auto_ylim=False, y_min=0.0, y_max=0.12, marker_size=3.0,
+                  auto_xlim=False, x_min=-30-90, x_max=10-90)#.show()
+
     pls=[pl_raw, pl_ifft, pl_fft, pl1, pl2, pl3]
+    nps=TA53_Save_NP(file_path=r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/test_data/Lamb_shift/extract_data/TA53_pwr_sat.txt")
+    print pl_pwr_sat.savedata()
+    nps.save(pl_pwr_sat.savedata())
+    npr=TA53_Read_NP(file_path=nps.file_path, show_data_str=True)
+    data=npr.read()
+    scatter(data[:, 0], data[:, 1])
+    #nps.data_buffer=pl1.savedata()
     #a.save_plots(pls)
     pls[0].show()

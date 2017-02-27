@@ -30,7 +30,7 @@ colormesh(qdt.MagAbs)
 a=TA88_Lyzer( name="combo",
              desc="combined data",
              )
-a.save_folder.main_dir="fig3_ls2"
+a.save_folder.main_dir="fig3_ls3"
 
 lyzers=[d0514, d0316, d0629, d0518, d0506, d0509, d0503#, d0629wg,
 ]
@@ -85,7 +85,7 @@ def combo_plots():
             #d.fitter.gamma=d.fitter.gamma/10
             d.read_data()
         for d in lyzers:
-            pl=center_plot(d, pl=pl, color="red", nrows=2, ncols=2,
+            pl=center_plot(d, pl=pl, color="red", nrows=1, ncols=3, nplot=2, fig_width=7.3, fig_height=2.5,
                            auto_xlim=False, auto_ylim=False)
 
             #pl=d.center_plot(pl=pl, color="red", nrows=2, ncols=2, auto_xlim=False, auto_ylim=False)
@@ -157,7 +157,7 @@ def combo_plots():
         #pl1.set_ylim(-0.05, 1.15)
         #pl1.add_label("c)")
 
-        pl.nplot=2
+        pl.nplot=3
         for d in lyzers:
             pl=d.widths_plot(pl=pl, color="black", facecolor="black", edgecolor="black",)
         #qdt.dephasing=dephasing
@@ -178,8 +178,8 @@ def combo_plots():
         pl.axes.set_ylabel("$\Gamma/2\pi$ (GHz) ")
 
 
-        pl.nplot=4
-        if 1:
+        pl.nplot=1
+        if 0:
             pl2="FFT_magabs"
             pl1="Fit_magabs"
             f=d.frequency
@@ -251,8 +251,8 @@ def combo_plots():
     #b.magabs_colormesh(pl=pl2)
     #b.magdB_colormesh(pl=pl1)
     #pl.nplot=3
-    pl=center_plot(b, color="red", auto_xlim=False, x_min=3.75, x_max=5.1,
-                             auto_ylim=False, y_min=3.75, y_max=5.1, pl=pl, nrows=2, ncols=2, nplot=3)
+    #pl=center_plot(b, color="red", auto_xlim=False, x_min=3.75, x_max=5.1,
+    #                         auto_ylim=False, y_min=3.75, y_max=5.1, pl=pl, nrows=1, ncols=3, nplot=3)
     b.qdt.gate_type="constant"
     b.qdt.K2=0.032
 
@@ -267,7 +267,7 @@ def combo_plots():
     pl_widths=b.widths_plot(color="black", facecolor="black", edgecolor="black", auto_xlim=False, x_min=3.5, x_max=5.5,
                             auto_ylim=False, y_min=-0.5, y_max=0.5, pl=pl)#.show()
 
-    pl.nplot=3
+    #pl.nplot=1
 
     b.pwr_ind=0
     b.fit_indices=[ range(7, 42), range(79, 120), range(171, 209), range(238, 291), #range(558, 603),
@@ -341,7 +341,7 @@ def combo_plots():
 
 if __name__=="__main__":
     pl=combo_plots()
-    #a.save_plots([pl])
+    a.save_plots([pl])
 
     pl.show()
 

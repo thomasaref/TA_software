@@ -91,7 +91,7 @@ if __name__=="__main__":
     d0527.read_data()
     pl=line(d0527.frequency/1e9, 10*log10(absolute(d0527.MagcomData[:, 0])),
             color="cyan", alpha=0.5,
-            nrows=2, ncols=2, nplot=1, pl=pl)#.show()
+            nrows=2, ncols=2, nplot=1, pl=pl, fig_width=3.5, fig_height=3.5)#.show()
     #pl=line(a.frequency, 10*log10(absolute(a.MagcomData[:, 1])))#.show()
 
     #pl=line(a.frequency, a.MagdB)#.show()
@@ -157,23 +157,23 @@ if __name__=="__main__":
 
         IFFT_trans_t=array([0.05863,   0.2,  0.337,   0.48,  0.761, 1.395, 1.455])-0.05863
         IFFT_trans_d=array([0.0, 500.0, 1000.0, 1500.0, 2500.0, 4500,  200+2500+2500-300])/1000.0
-        
+
         pulse_t=(array([8.7e-8, 2.64e-7, 3.79e-7, 4.35e-7, 6.6e-7])-8.7e-8)*1e6
         pulse_d=array([0.0, 600.0, 1000.0, 1200.0, 2000.0])/1000.0
-        
-        
+
+
         from scipy.optimize import curve_fit, leastsq
 
         t=list(IFFT_trans_t)
         t.extend(pulse_t)
         d=list(IFFT_trans_d)
         d.extend(pulse_d)
-        
+
         def fit_func(x, a, b):
             return a*x + b
 
         params, pcov = curve_fit(fit_func, t, d)
-        
+
         print params, pcov
         perr = sqrt(diag(pcov))
         print "std", perr
@@ -183,9 +183,9 @@ if __name__=="__main__":
         p_guess=[1.0, 0.0]
         pbest= leastsq(residuals, p_guess, args=(array(d), array(t)), full_output=1)
         print pbest
-        raise Exception
-        #[a, b] = params[0]        
-        
+        #raise Exception
+        #[a, b] = params[0]
+
         ax2 = pl.axes.twinx()
         ax2.plot(array([0.05863,   0.2,  0.337,   0.48,  0.761, 1.395, 1.455])-0.05863,
                 array([0.0, 500.0, 1000.0, 1500.0, 2500.0, 4500,  200+2500+2500-300])/1000.0, ".",

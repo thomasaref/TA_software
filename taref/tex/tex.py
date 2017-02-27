@@ -281,7 +281,7 @@ class TEX(Operative):
         mult_fig_end(self.tex_list, self.caption, label)
         self.caption=""
 
-    def include_image(self, fig_name, label="", caption="", source_folder=None, tex_width_factor=0.49):
+    def include_image(self, fig_name, label="", caption="", source_folder=None, tex_width_factor=0.49, fig_star=False):
         if source_folder is None:
             source_folder=self.source_folder
         relative_path=relpath(source_folder.dir_path, self.save_file.folder.dir_path)+source_folder.divider
@@ -292,12 +292,16 @@ class TEX(Operative):
         #relative_path=relpath(self.source_folder.dir_path, self.save_file.folder.dir_path)+self.source_folder.divider
 
         tex_w={"revtex 2 column" : str(tex_width_factor)}.get(self.tex_type, "")
-        self.tex_list.extend([r"\begin{figure}[ht!]",
-                              r"\centering",
-                              r"\includegraphics[width={0}\textwidth]{{{1}}}".format(tex_w, relative_path+fig_name),
+
+        self.tex_list.extend([r"\begin{{figure{}}}[ht!]".format({True : "*", False : ""}[fig_star]),
+                              #r"\centering",
+                              r"\includegraphics{{{0}}}".format(relative_path+fig_name),
+                              #r"\includegraphics[width={0}\textwidth]{{{1}}}".format(tex_w, relative_path+fig_name),
                               r"\caption{{{}}}".format(caption),
                               r"\label{{{}}}".format(label),
-                              r"\end{figure}"])
+                              #r"\end{figure}"
+                              r"\end{{figure{}}}[ht!]".format({True : "*", False : ""}[fig_star]),
+                              ])
         #include_image(self.tex_list, relative_path, fig_name, caption, label)
 
     @cached_property

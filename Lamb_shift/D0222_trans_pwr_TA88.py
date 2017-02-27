@@ -5,9 +5,18 @@ Created on Sun Apr 24 18:55:33 2016
 @author: thomasaref
 """
 
-from TA88_fundamental import TA88_VNA_Lyzer, TA88_Read, TA88_VNA_Pwr_Lyzer, bg_A1
+from TA88_fundamental import TA88_VNA_Lyzer, TA88_Read, TA88_VNA_Pwr_Lyzer, bg_A1, TA88_Read_NP, TA88_Save_NP
 from taref.plotter.api import colormesh, line, scatter
 from numpy import absolute, log10
+
+file_path=r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/test_data/Lamb_shift/extract_data/TA88_pwr_sat.txt"
+npr=TA88_Read_NP(file_path=file_path, show_data_str=True)
+data=npr.read()
+pl=scatter(data[:, 0], data[:, 1])
+file_path=r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/test_data/Lamb_shift/extract_data/TA53_pwr_sat.txt"
+npr=TA88_Read_NP(file_path=file_path, show_data_str=True)
+data=npr.read()
+pl=scatter(data[:, 0], data[:, 1], pl=pl).show()
 
 a=TA88_VNA_Lyzer(name="testing", on_res_ind=182, VNA_name="RS VNA",
               rd_hdf=TA88_Read(main_file="Data_0222/S4A1_TA88_swp_5Vtn5V.hdf5"),
@@ -41,13 +50,20 @@ if 1:
 if __name__=="__main__":
     if 1:
         b.read_data()
+        print b.comment
         scatter(absolute(b.MagcomFilt[50, 370, :]))
         colormesh(absolute(b.MagcomFilt[50, :, :]))#.show()
 
-        onres=20*log10(absolute(b.MagcomFilt[50, 362, :]))-bg_A1(b.frequency[50])
-        offres=20*log10(absolute(a.MagcomFilt[50, 0, :]))-bg_A1(b.frequency[50])
-        scatter(b.pwr-30-60, absolute(onres-offres))
-        scatter(b.pwr-30-60, absolute(10**(onres/20.0)-10**(offres/20.0)))
+        onres=20*log10(absolute(b.MagcomFilt[50, 362, :]))+10-bg_A1(b.frequency[50])
+        offres=20*log10(absolute(b.MagcomFilt[50, 0, :]))+10-bg_A1(b.frequency[50])
+        scatter(b.pwr-40-60, absolute(onres-offres))
+        pl_pwr_sat=scatter(b.pwr-40-60, absolute(10**(onres/20.0)-10**(offres/20.0)))
+
+        nps=TA88_Save_NP(file_path=r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/test_data/Lamb_shift/extract_data/TA88_pwr_sat.txt")
+        nps.save(pl_pwr_sat.savedata())
+        npr=TA88_Read_NP(file_path=nps.file_path, show_data_str=True)
+        data=npr.read()
+        scatter(data[:, 0], data[:, 1]).show()
 
         b.magabs_colormesh()
         b.ifft_plot()
