@@ -50,7 +50,7 @@ if 1:
     from fig3_lamb_shift3 import a as fig3
     tx.include_image("fig3", label="", caption="fig3 caption", source_folder=fig3.save_folder, fig_star=True, tex_width_factor=1.0)
 
-    from fig4_flux_swp import a as fig4
+    from fig4_flux_swp2 import a as fig4
     tx.include_image("fig4", label="", caption="fig4 caption", source_folder=fig4.save_folder)
 
     tx.ext("results")

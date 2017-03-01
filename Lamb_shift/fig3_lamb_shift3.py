@@ -84,9 +84,19 @@ def combo_plots():
             d.flux_axis_type="fq" #"flux"
             #d.fitter.gamma=d.fitter.gamma/10
             d.read_data()
+        #ax2=None
+
         for d in lyzers:
-            pl=center_plot(d, pl=pl, color="red", nrows=1, ncols=3, nplot=2, fig_width=7.3, fig_height=2.5,
+            pl=center_plot(d, pl=pl, color="red", nrows=2, ncols=3, nplot=2, fig_width=7.2, fig_height=5.0,
                            auto_xlim=False, auto_ylim=False)
+            #if ax2 is None:
+            #    ax2 = pl.axes.twinx()
+            #scatter(d.freq_axis[d.flat_indices], array([absolute(fp[0]) for fp in d.fit_params]), 
+                    #marker=".",
+            #       color="black", pl=pl)
+
+        #ax2.set_ylabel('$\Gamma/2\pi$ (GHz)')
+        #ax2.set_ylim(-0.01, 0.2)
 
             #pl=d.center_plot(pl=pl, color="red", nrows=2, ncols=2, auto_xlim=False, auto_ylim=False)
         frequency=linspace(3.5e9, 6.5e9, 1000)
@@ -112,6 +122,8 @@ def combo_plots():
         #pl.add_label("a)")
         pl.axes.set_xlabel("Frequency (GHz)")
         pl.axes.set_ylabel("$\Delta/2\pi, \, \Gamma/2 \pi$ (GHz)")
+
+        #pl.axes.set_ylabel("$\Delta/2\pi$ (GHz)")
         #pl.show()
         pl1="combined_heights"
         for d in lyzers:
@@ -127,6 +139,7 @@ def combo_plots():
         for d in lyzers:
             pl1=d.background_plot(pl=pl1)
 
+        #pl.nplot=3
         pl1="comb_widths"
         for d in lyzers:
             pl1=d.widths_plot(pl=pl, color="black", facecolor="black", edgecolor="black",)
@@ -139,8 +152,8 @@ def combo_plots():
         #co=qdt._get_coupling(f=frequency)/1.0/1e9
         #line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl, color="purple")
         #qdt.gate_type="constant"
-        line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9, plotter=pl,
-             color="purple")
+        line(frequency/1e9, qdt._get_coupling(f=frequency)/1.0/1e9,
+             color="purple", pl=pl)
 
 
         #co=(co+(idt.sinc(f=frequency)**2)*qdt._get_coupling(f=frequency)/1.0/1e9)/(1.0+(idt.sinc(f=frequency)**2))
@@ -175,20 +188,29 @@ def combo_plots():
         pl.set_ylim(-0.01, 0.1)
         #pl.add_label("d)")
         pl.axes.set_xlabel("Frequency (GHz)")
+        
         pl.axes.set_ylabel("$\Gamma/2\pi$ (GHz) ")
 
 
-        pl.nplot=1
-        if 0:
+        pl.nplot=6
+        if 1:
             pl2="FFT_magabs"
             pl1="Fit_magabs"
             f=d.frequency
-            from numpy import pi
-            f=linspace(3e9, 8e9, 501)
+            from numpy import pi, cos
+            #Ej=Ejmax*absolute(cos(phi))
+            #fqq=sqrt(8*Ej*Ec)
+            f=linspace(3e9, 8e9, 500)
             fqq=linspace(2e9, 9e9, 2001)
             magcom=array([qdt._get_simple_S(f=f, YL=-1.0j/f*qdt.Ct*2*pi*fq**2) for fq in fqq])[:, 0, :]
 
-            pl=colormesh(fqq/1e9, f/1e9, 1-absolute(magcom).transpose(),  pl=pl)
+            pl=colormesh(fqq/1e9, f/1e9, 1-absolute(magcom).transpose(),  pl=pl, 
+                         xlabel="$\Phi/\Phi_0$", ylabel="Frequency (GHz)")
+            pl.set_xlim(3.8, 6.05)
+            pl.set_ylim(3.8, 6.05)
+            
+            pl.nplot=5
+        
             for d in lyzers:
                 d.filter_type="Fit"
                 pl1, pf=d.magabs_colormesh(pl=pl1, pf_too=True)#, cmap="nipy_spectral")
@@ -199,14 +221,18 @@ def combo_plots():
                 new_magabs=sqrt(d.fitter.reconstruct_fit(d.flux_axis[d.flat_flux_indices], new_fp))
 
                 #process_kwargs(self, kwargs, pl="magabs_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
+                #d.flux_axis_type="flux"
                 flux_axis=d.flux_axis[d.flat_flux_indices]
                 #freq_axis=d.freq_axis[d.indices]
                 start_ind=0
+
                 for ind in d.fit_indices:
                     pl=colormesh(flux_axis, d.freq_axis[ind], new_magabs[start_ind:start_ind+len(ind), :],  pl=pl)
                     start_ind+=len(ind)
 
-
+            pl.axes.set_xlabel("$\Phi/\Phi_0$")
+            pl.axes.set_ylabel("Frequency (GHz)")
+     
             pl.set_xlim(3.8, 6.05)
             pl.set_ylim(3.8, 6.05)
             pl2.set_xlim(3.8, 6.05)
@@ -229,7 +255,8 @@ def combo_plots():
             pl=colormesh(flux_axis, self.freq_axis[ind], self.MagAbs[start_ind:start_ind+len(ind), :],  **kwargs)
             start_ind+=len(ind)
 
-
+    pl.nplot=1
+        
     b.read_data()
 
     b.filter_type="None"
@@ -251,8 +278,8 @@ def combo_plots():
     #b.magabs_colormesh(pl=pl2)
     #b.magdB_colormesh(pl=pl1)
     #pl.nplot=3
-    #pl=center_plot(b, color="red", auto_xlim=False, x_min=3.75, x_max=5.1,
-    #                         auto_ylim=False, y_min=3.75, y_max=5.1, pl=pl, nrows=1, ncols=3, nplot=3)
+    pl=center_plot(b, color="red", auto_xlim=False, x_min=3.75, x_max=5.1,
+                             auto_ylim=False, y_min=3.75, y_max=5.1, pl=pl)
     b.qdt.gate_type="constant"
     b.qdt.K2=0.032
 
@@ -306,9 +333,11 @@ def combo_plots():
     pl.axes.set_xlabel("Frequency (GHz)")
     pl.axes.set_ylabel("$\Delta/2\pi, \, \Gamma/2 \pi$ (GHz)")
     pl.figure.text(0.0, 0.95, "a)")
-    pl.figure.text(0.0, 0.45, "b)")
-    pl.figure.text(0.5, 0.95, "c)")
-    pl.figure.text(0.5, 0.45, "d)")
+    pl.figure.text(0.35, 0.95, "b)")
+    pl.figure.text(0.67, 0.95, "c)")
+    pl.figure.text(0.0, 0.45, "d)")
+    pl.figure.text(0.35, 0.45, "e)")
+    pl.figure.text(0.67, 0.45, "f)")
 
 #    pl.nplot=4
 #

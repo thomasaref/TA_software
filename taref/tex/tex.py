@@ -300,7 +300,7 @@ class TEX(Operative):
                               r"\caption{{{}}}".format(caption),
                               r"\label{{{}}}".format(label),
                               #r"\end{figure}"
-                              r"\end{{figure{}}}[ht!]".format({True : "*", False : ""}[fig_star]),
+                              r"\end{{figure{}}}".format({True : "*", False : ""}[fig_star]),
                               ])
         #include_image(self.tex_list, relative_path, fig_name, caption, label)
 
