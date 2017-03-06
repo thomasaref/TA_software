@@ -14,7 +14,7 @@ from taref.filer.save_file import Save_NP
 from taref.core.agent import Agent
 from atom.api import Float, Unicode, Typed, Int, Callable, Enum
 from taref.core.universal import Array
-from numpy import interp, array, log10, sqrt, fft, exp, float64, linspace, shape, reshape, squeeze, mean, angle, absolute, sin, pi
+from numpy import cos, arccos, append, interp, array, log10, sqrt, fft, exp, float64, linspace, shape, reshape, squeeze, mean, angle, absolute, sin, pi
 from h5py import File
 from scipy.optimize import leastsq
 from taref.core.log import log_debug
@@ -106,6 +106,32 @@ qdt.fixed_freq_min=3.5e9
 qdt.fixed_freq_max=7.5e9
 qdt.fixed_fq_min=1e9
 qdt.fixed_fq_max=7.0e9
+
+qdt.N_dim=8
+qdt.atten=60+30+10
+#a.Ec = 0.22e9/2*h # Charging energy.
+#a.Ejmax = 2*22.2e9*h # Maximum Josephson energy.
+qdt.gamma = qdt.max_coupling #2*538.2059e6 # Acoustic relaxation rate of the transmon.
+#a.gamma_el=a.gamma #0.750e6 #electric relaxation rate
+#a.gamma_phi = 0.00e6 # Dephasing rate of the transmon.
+qdt.fd = 4.5066e9#/1e6 # Drive frequency.
+print "Ct", qdt.Ct
+print "gamma", qdt.gamma/1e9
+#a.Ct=150e-15
+#    a.Cc=2e-15
+print qdt.Zc
+qdt.Zc=10.0
+#qdt.acoustic_plot=False
+Omega=qdt.Omega_arr[0]
+fd=4.45e9 #a.frq_arr[15]
+    
+def find_expect(vg, self=qdt, fd=fd, Omega=Omega):
+    return self.find_expect(vg=vg, fd=fd, Omega=Omega)
+qdt.funcer=find_expect
+
+print qdt.Ec/h
+print qdt.Ejmax/h
+#print qdt.
 
 #qdt.Ct=1.25e-13
 #qdt.K2=0.038
@@ -355,6 +381,63 @@ def bg_A1(frequency):
     return interp(frequency, bgA1.frequency, bgA1data)
 
 if __name__=="__main__":
+
+
+    if 1:
+        qdt.phi_arr=linspace(0.95, 1.2, 101)
+        qdt.pwr_arr=linspace(-30.0, 10.0, 11)
+        pl=colormesh(qdt.phi_arr, qdt.pwr_arr-qdt.atten, absolute(qdt.fexpt2), cmap="RdBu_r")
+        lp=line(qdt.pwr_arr, absolute(qdt.fexpt2[:, 27]))
+        lp=line(qdt.pwr_arr, absolute(qdt.fexpt2[:, 27+1]), pl=lp)
+        lp=line(qdt.pwr_arr, absolute(qdt.fexpt2[:, 27-1]), pl=lp)
+
+        pl=colormesh(qdt.phi_arr, qdt.pwr_arr-qdt.atten, 1-absolute(qdt.fexpt2), cmap="RdBu_r")
+
+        pl=colormesh(qdt.phi_arr, qdt.pwr_arr, 10*log10(absolute(qdt.fexpt2)), cmap="RdBu_r")
+    qdt.phi_arr=linspace(-1.0, 1.0, 50)*pi
+
+
+    if 1:
+    
+        pl1=colormesh(qdt.phi_arr, qdt.frq_arr, absolute(qdt.fexpt), cmap="RdBu_r")
+        pl1=colormesh(qdt.phi_arr, qdt.frq_arr, 1-absolute(qdt.fexpt), cmap="RdBu_r")
+        
+
+        pl=colormesh(qdt.phi_arr, qdt.frq_arr, 10*log10(absolute(qdt.fexpt)), cmap="RdBu_r")
+
+        #pl=colormesh(a.phi_arr, a.frq_arr, 10*log10(absolute(a.fexpt))-10*log10(absolute(a.fexpt[-1,:])), cmap="RdBu_r")
+        #pl=colormesh(a.phi_arr, a.frq_arr, (10*log10(absolute(a.fexpt)).transpose()-10*log10(absolute(a.fexpt[:,-1]))).transpose(), cmap="RdBu_r")
+
+        #pd=10*log10(absolute(a.fexpt)[:, 77]*sqrt(a.gamma/2.0*h*a.fd/a.pwr_lin))
+        #line(a.pwr_arr, pd) #20*log10(absolute(a.fexpt)[:, 77]*sqrt(a.gamma/2.0*h*a.fd/a.pwr_lin)))
+        #pl=line(a.pwr_arr, 10**(pd/10.0), color="green")#.show()
+        #pl=line(a.pwr_arr, ((absolute(a.fexpt)[:, 77])*1.08*sqrt(a.gamma/2.0*h*a.fd/a.pwr_lin)),
+        #        color="red",
+        #        pl=pl)
+
+        #g=a.gamma/2.0
+        #N=a.pwr_lin/(h*a.fd)#*abs(const.S21_0/(1+const.S22_0*exp(2i*const.theta_L)))^2
+        Ej = qdt.Ejmax*absolute(cos(pi*qdt.phi_arr)) #Josephson energy as function of Phi.
+        wTvec = (sqrt(8.0*Ej*qdt.Ec)-qdt.Ec)/h #\omega_m
+        
+        line(qdt.phi_arr, wTvec, pl=pl)#.show()
+        line(qdt.phi_arr, wTvec, pl=pl1)#.show()
+
+        g, d=qdt._get_GammaDelta(fd=qdt.frq_arr, f0=qdt.f0, Np=qdt.Np, gamma=qdt.gamma)
+        w0=qdt.frq_arr+d
+        Ej=((h*w0+qdt.Ec)**2)/(8.0*qdt.Ec)
+        phi=arccos(Ej/qdt.Ejmax)#/pi #Josephson energy as function of Phi.
+        phi_extend=append(phi, -phi)
+        phi_extend=append(phi_extend, -phi+pi)
+        phi_extend=append(phi_extend, phi-pi)
+        freq=append(qdt.frq_arr, qdt.frq_arr)
+        freq=append(freq, freq)
+
+        line(phi_extend, freq, pl=pl1, color="cyan")        
+        line(phi_extend, freq, pl=pl, color="cyan").show()
+        #line(a.phi_arr, wTvec-d, pl=pl).show()
+
+if __name__=="__main__2":
     pl0=qdt.lgf1.lgf_test_plot()
     from taref.physics.surface_charge import element_factor_plot, metallization_plot, Rho
     pl1=element_factor_plot()

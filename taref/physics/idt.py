@@ -243,7 +243,7 @@ class IDT(Rho):
     max_coupling=SProperty().tag(desc="""Coupling at IDT center frequency""", unit="GHz",
                      label="Coupling at center frequency", tex_str=r"$\gamma_{f0}$")
     @max_coupling.getter
-    def _get_max_coupling(self, f, f0, ft_mult, eta, epsinf, Ct_mult, Dvv, Np, W):
+    def _get_max_coupling(self, f0, ft_mult, eta, epsinf, Ct_mult, Dvv, Np, W):
         return self._get_coupling(f=f0+0.001, f0=f0, ft_mult=ft_mult, eta=eta, epsinf=epsinf, Ct_mult=Ct_mult, Dvv=Dvv, Np=Np, W=W)
 
     max_coupling_approx=SProperty().tag(unit="GHz", label="Qubit coupling ($f$) (no sinc)", expression=r"$\Gamma/2\pi \approx c_g(f) f_0 K^2 N_p$", desc="frequency dependent")

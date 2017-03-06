@@ -54,8 +54,10 @@ if __name__=="__main__":
     pl3=colormesh(a.pwr, a.freq_axis[a.end_skip:-a.end_skip], absolute(a.MagcomFilt[a.end_skip:-a.end_skip, 635, :]),
                   ylabel="Frequency (GHz)", xlabel=r"Power (dBm")#.show()
 
-    pl1=colormesh(a.yoko, a.pwr, absolute(a.MagcomFilt[69, :, :]).transpose(), ylabel="Power (dBm)", xlabel=r"Yoko (V)")#.show()
-
+    print a.frequency[69]                  
+    pl1=colormesh(a.yoko, a.pwr, absolute(a.MagcomFilt[69, :, :]).transpose(), ylabel="Power (dBm)", xlabel=r"Yoko (V)", pl="TA53_pwr")
+    #a.save_plots([pl1])
+    pl1.show()
     pl2=scatter(a.pwr, absolute(absolute(a.MagcomFilt[69, 635, :])-absolute(a.MagcomFilt[69,0, :])), xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}|$")#.show()
 
     onres=20*log10(absolute(a.MagcomFilt[69, 635, :]))-bg_A4(a.frequency[69])

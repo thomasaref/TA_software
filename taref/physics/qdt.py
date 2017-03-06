@@ -11,6 +11,7 @@ from taref.plotter.api import Plotter, line, colormesh
 from taref.core.api import SProperty, s_property, private_property
 from taref.physics.idt import IDT
 from taref.physics.qubit import Qubit
+from taref.physics.qubit_saturation_Lamb import Sat_Qubit
 from taref.physics.fundamentals import sqrt, pi, e, h, array, eig, delete, sin, sinc_sq, sinc, linspace, zeros, absolute, cos, arange
 from atom.api import Float, List, Bool, Int, Typed
 from taref.physics.fitting import LorentzianFitter
@@ -18,7 +19,7 @@ from enaml import imports
 with imports():
     from taref.physics.qdt_e import QDTView
 
-class QDT(IDT, Qubit):
+class QDT(IDT, Sat_Qubit):
     base_name="QDT"
 
     @private_property
@@ -498,6 +499,7 @@ def anton_plots(pl="anton_plot", **kwargs):
 
 if __name__=="__main__":
     qdt=QDT()
+    print qdt.get_member("Np").metadata
     qdt.show()
     anton_plots().show()
     anton_anharm_plot()

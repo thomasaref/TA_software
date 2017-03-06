@@ -370,7 +370,7 @@ def combo_plots():
 
 if __name__=="__main__":
     pl=combo_plots()
-    a.save_plots([pl])
+    #a.save_plots([pl])
 
     pl.show()
 

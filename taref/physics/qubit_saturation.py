@@ -124,7 +124,7 @@ if __name__=="__main__":
 
     a.gamma = 38.2059e6 # Acoustic relaxation rate of the transmon.
     a.gamma_el=a.gamma #0.750e6 #electric relaxation rate
-    a.gamma_phi = 0.003e6 # Dephasing rate of the transmon.
+    a.gamma_phi = 0.00e6 # Dephasing rate of the transmon.
     a.fd = 4.8066e9#/1e6 # Drive frequency.
 
     def find_expect(vg, self=a): #phi=0.1, Omega_vec=3.0):
@@ -155,6 +155,9 @@ if __name__=="__main__":
         pl=line(a.pwr_arr, ((absolute(a.fexpt)[:, 77])*1.08*sqrt(a.gamma/2.0*h*a.fd/a.pwr_lin)),
                 color="red",
                 pl=pl)
+        colormesh(a.phi_arr, a.pwr_arr,
+                  (absolute(a.fexpt).transpose()*1.08*sqrt(a.gamma/2.0*h*a.fd/a.pwr_lin)).transpose())
+                        
 
     g=a.gamma/2.0
     N=a.pwr_lin/(h*a.fd)#*abs(const.S21_0/(1+const.S22_0*exp(2i*const.theta_L)))^2
