@@ -7,7 +7,7 @@ Created on Sun Apr 24 18:55:33 2016
 
 from TA88_fundamental import qdt, TA88_VNA_Lyzer, TA88_Read, TA88_VNA_Pwr_Lyzer, bg_A1, TA88_Read_NP, TA88_Save_NP
 from taref.plotter.api import colormesh, line, scatter
-from numpy import absolute, log10
+from numpy import absolute, log10, linspace
 
 file_path=r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/test_data/Lamb_shift/extract_data/TA88_pwr_sat.txt"
 npr=TA88_Read_NP(file_path=file_path, show_data_str=True)
@@ -41,7 +41,7 @@ if 1:
                                 flux_factor=qdt.flux_factor*1000.0/560.0,
 
                 )
-                
+
     b.filt.center=14
     b.filt.halfwidth=5
     b.fitter.fit_type="lorentzian"
@@ -57,16 +57,27 @@ if __name__=="__main__":
         scatter(absolute(b.MagcomFilt[50, 370, :]))
         print b.frequency[50]
         colormesh(absolute(b.MagcomFilt[b.end_skip:-b.end_skip, 362, :]))#.show()
-        pl1=colormesh(b.flux_axis, b.pwr-40-60, absolute(b.MagcomFilt[50, :, :]).transpose(), pl="TA88_pwr")
+        pl1=colormesh(b.flux_axis, b.pwr-40-60-10, absolute(b.MagcomFilt[50, :, :]).transpose(), pl="TA88_pwr")
+        onres=20*log10(absolute(b.MagcomFilt[50, :, :]))+10-bg_A1(b.frequency[50])
+        colormesh(b.flux_axis, b.pwr-40-60-10, absolute(10**(onres/20.0)).transpose())
         #b.save_plots([pl1])
         print b.pwr
         print b.flux_axis.shape
-        pl1.show()
+        #pl1.show()
 
         onres=20*log10(absolute(b.MagcomFilt[50, 362, :]))+10-bg_A1(b.frequency[50])
         offres=20*log10(absolute(b.MagcomFilt[50, 0, :]))+10-bg_A1(b.frequency[50])
         scatter(b.pwr-40-60, absolute(onres-offres))
-        pl_pwr_sat=scatter(b.pwr-40-60, absolute(10**(onres/20.0)-10**(offres/20.0)))
+        pl_pwr_sat=scatter(b.pwr-40-60-30, (absolute(10**(onres/20.0)-10**(offres/20.0)))/0.18)
+
+        qdt.phi_arr=linspace(0.95, 1.2, 601)
+        qdt.pwr_arr=linspace(-30.0, 10.0, 11)
+        qdt.get_member("Omega_arr").reset(qdt)
+        qdt.get_member("pwr_lin").reset(qdt)
+        pl=colormesh(qdt.phi_arr, qdt.pwr_arr-qdt.atten, 1-absolute(qdt.fexpt2))#, cmap="RdBu_r")
+        lp=line(qdt.pwr_arr-qdt.atten, (absolute(qdt.fexpt2[:, 354])-absolute(qdt.fexpt2[:, 0])), pl=pl_pwr_sat)
+        lp=line(qdt.pwr_arr-qdt.atten, absolute(qdt.fexpt2[:, 354+1])-absolute(qdt.fexpt2[:, 0]), pl=pl_pwr_sat)
+        lp=line(qdt.pwr_arr-qdt.atten, absolute(qdt.fexpt2[:, 354-1])-absolute(qdt.fexpt2[:, 0]), pl=pl_pwr_sat).show()
 
         nps=TA88_Save_NP(file_path=r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/test_data/Lamb_shift/extract_data/TA88_pwr_sat.txt")
         nps.save(pl_pwr_sat.savedata())

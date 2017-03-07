@@ -6,7 +6,7 @@ Created on Mon Dec  5 10:36:14 2016
 """
 
 from qutip import destroy, basis, steadystate, mesolve, expect, Qobj, qeye, parallel_map, parfor
-from numpy import arccos, sin, append, log10, sqrt, linspace, cos, pi, arange, diag, absolute, exp, conj, meshgrid, array, reshape
+from numpy import arccos, sin, append, log10, sqrt, linspace, cos, pi, arange, diag, absolute, exp, conj, meshgrid, array, reshape, shape
 from scipy.constants import h, k
 from taref.plotter.api import line, colormesh
 from taref.physics.qubit import Qubit
@@ -42,9 +42,9 @@ class Sat_Qubit(Qubit):
     N_dim=Int(8)
 
     fd=Float(4.5e9)
-    
+
     Zc=Float(50.0)
-    
+
     def _get_fTvec(self, phi):
         Ej = self.Ejmax*absolute(cos(phi)) #Josephson energy as function of Phi.
         return (-Ej + sqrt(8.0*Ej*self.Ec)*(self.nvec+0.5)+self.Ecvec)/h #\omega_m
@@ -52,11 +52,11 @@ class Sat_Qubit(Qubit):
 
     def _get_X(self, f, f0, Np):
         return Np*pi*(f-f0)/f0
- 
+
     def _get_GammaDelta(self, gamma, fd, f0, Np):
         X=self._get_X(f=fd, f0=f0, Np=Np)
         Delta=gamma*(sin(2*X)-2*X)/(2*X**2)
-        Gamma=gamma*(sin(X)/X)**2    
+        Gamma=gamma*(sin(X)/X)**2
         return Gamma, Delta
 
     Gamma_C=SProperty()
@@ -79,7 +79,7 @@ class Sat_Qubit(Qubit):
 
     @private_property
     def tdiag(self):
-        return Qobj(diag(range(0, 2*self.N_dim, 2))) #dephasing operator, tdiag        
+        return Qobj(diag(range(0, 2*self.N_dim, 2))) #dephasing operator, tdiag
 
     c_ops=SProperty().tag(sub=True)
     @c_ops.getter
@@ -104,7 +104,7 @@ class Sat_Qubit(Qubit):
     def pwr_lin(self):
         pwr_fridge=self.pwr_arr-self.atten
         return 0.001*10**(pwr_fridge/10.0)
-        
+
     @private_property
     def Omega_arr(self):
         return sqrt(self.pwr_lin/h*2.0)
@@ -124,10 +124,10 @@ class Sat_Qubit(Qubit):
     def value_grid2(self):
         value_grid=array(meshgrid(self.phi_arr, self.Omega_arr))
         return zip(value_grid[0, :, :].flatten(), value_grid[1, :, :].flatten())
-    
+
     power_plot=Bool(True)
     acoustic_plot=Bool(True)
-    
+
     @private_property
     def fexpt(self):
         self.power_plot=False
@@ -138,10 +138,10 @@ class Sat_Qubit(Qubit):
     def fexpt2(self):
         self.power_plot=True
         fexpt=parallel_map(self.funcer, self.value_grid2,  progress_bar=True)
-        print self.value_grid2.shape
+        print shape(self.value_grid2)
         print self.pwr_arr.shape
         print self.phi_arr.shape
-        print fexpt.shape
+        print shape(fexpt)
         return reshape(fexpt, (len(self.pwr_arr), len(self.phi_arr)))
 
     def find_expect(self, vg, Omega, fd):
@@ -162,13 +162,13 @@ class Sat_Qubit(Qubit):
             rate2 = (gamma+g_el)*self.N_gamma
             c_ops=[sqrt(rate1)*self.a_op, sqrt(rate2)*self.a_dag]#, sqrt(rate3)*self.a_op, sqrt(rate4)*self.a_dag]
             Omega_vec=-0.5j*(Om*self.a_dag - conj(Om)*self.a_op)
-            H=transmon_levels +Omega_vec 
+            H=transmon_levels +Omega_vec
             final_state = steadystate(H, c_ops) #solve master equation
             fexpt=expect(self.a_op, final_state) #expectation value of relaxation operator
             if self.acoustic_plot:
-                return 1.0*gamma/Om*fexpt            
+                return 1.0*gamma/Om*fexpt
             else:
-                return 1.0*sqrt(g_el*gamma)/Om*fexpt            
+                return 1.0*sqrt(g_el*gamma)/Om*fexpt
 
 if __name__=="__main__":
     a=Sat_Qubit()
@@ -187,7 +187,7 @@ if __name__=="__main__":
     a.acoustic_plot=False
     Omega=a.Omega_arr[0]
     fd=4.5e9 #a.frq_arr[15]
-    
+
     def find_expect(vg, self=a, fd=fd, Omega=Omega):
         return self.find_expect(vg=vg, fd=fd, Omega=Omega)
     a.funcer=find_expect
@@ -206,10 +206,10 @@ if __name__=="__main__":
 
 
     if 1:
-    
+
         pl1=colormesh(a.phi_arr, a.frq_arr, absolute(a.fexpt), cmap="RdBu_r")
         pl1=colormesh(a.phi_arr, a.frq_arr, 1-absolute(a.fexpt), cmap="RdBu_r")
-        
+
 
         pl=colormesh(a.phi_arr, a.frq_arr, 10*log10(absolute(a.fexpt)), cmap="RdBu_r")
 
@@ -227,7 +227,7 @@ if __name__=="__main__":
         N=a.pwr_lin/(h*a.fd)#*abs(const.S21_0/(1+const.S22_0*exp(2i*const.theta_L)))^2
         Ej = a.Ejmax*absolute(cos(pi*a.phi_arr)) #Josephson energy as function of Phi.
         wTvec = (sqrt(8.0*Ej*a.Ec)-a.Ec)/h #\omega_m
-        
+
         line(a.phi_arr, wTvec, pl=pl)#.show()
         line(a.phi_arr, wTvec, pl=pl1)#.show()
 
@@ -241,7 +241,7 @@ if __name__=="__main__":
         freq=append(a.frq_arr, a.frq_arr)
         freq=append(freq, freq)
 
-        line(phi_extend, freq, pl=pl1, color="cyan")        
+        line(phi_extend, freq, pl=pl1, color="cyan")
         line(phi_extend, freq, pl=pl, color="cyan").show()
         #line(a.phi_arr, wTvec-d, pl=pl).show()
 
@@ -252,11 +252,11 @@ if __name__=="__main__":
     print dw
     print N[0]
     print a.a_op*2
-    
+
     #Omega=2 a sqrt(gamma_el)  a^2=number of photons/s=
     #a=sqrt(pwr/hf)
     #t=sqrt(gamma/2/(pwr/hf)<>
-    
+
     #t=log(sqrt(gamma/2)<>-log(pwr/hf)
 
     #2*(Omega/gamma)**2
@@ -265,24 +265,24 @@ if __name__=="__main__":
     def r_qubit(N):
         return -sqrt(a.gamma_el*g/2.0)/g*(1+1j*dw/g)/(1.0+dw**2/g**2+2*N/g*(a.gamma_el/(2.0*g)))
 
-        #return -(a.gamma_el/(2.0*g))*(1+1j*dw/g)/(1.0 + dw**2/g**2 + 2*N/g*a.gamma_el/g)            
+        #return -(a.gamma_el/(2.0*g))*(1+1j*dw/g)/(1.0 + dw**2/g**2 + 2*N/g*a.gamma_el/g)
 
     #def t_qubit(N):
         #-sqrt(a.gamma_el*a.gamma/2.0)*(1j*dw+g)/(dw**2+g**2+Omega**2/2)
     #    return -sqrt(a.gamma_el*a.gamma/2.0)/g*(1+1j*dw)/(1.0+dw**2/g**2+2*N/g)
 
-    #    return -(a.gamma_el/(2.0*g))*(1+1j*dw/g)/(1.0 + dw**2/g**2 + 2*N/g)            
+    #    return -(a.gamma_el/(2.0*g))*(1+1j*dw/g)/(1.0 + dw**2/g**2 + 2*N/g)
 
     #P21(d_omega_idx, N_idx) = -sqrt(2*x*(1-x))*0.5*G*(g+1i*dw)./(dw^2 + g^2 + 4*x*g*N);
     #Omega = 2*sqrt(N_in(N_idx)*const.Gamma_el/(2*pi));
     #t(d_omega_idx, N_idx) = sqrt(0.5*const.Gamma_ac*const.Gamma_el)*(1i*d_omega(d_omega_idx) - const.Gamma_tot/2)./(d_omega(d_omega_idx).^2 + const.Gamma_tot^2/4 + Omega^2/2);
-    
+
     #P21(d_omega_idx, O_idx) = -(g+1i*dw)./(dw^2 + g^2 + (g/G)*Omega(O_idx).^2);
-    
+
     #pl="blah"
     line(a.pwr_arr, absolute(r_qubit(N)), pl=pl).show()
 
-#    for n in N:   
+#    for n in N:
 #        line(absolute(r_qubit(n)), pl=pl)#.show()
 #    def r_maxmin():
 #        return [max(absolute(r_qubit(n))) for n in N]
@@ -307,9 +307,9 @@ if __name__=="__main__":
 #    #    X=self.Np*pi*(fvec-self.f0)/self.f0
 #    #else:
 #    X=self.Np*pi*(fd-self.f0)/self.f0
-#    gamma=(sin(X)/X)**2    
-#    
-#    #gamma=0.0*fd/5e9+(sin(X)/(self.Np*sin(X/self.Np)))**2    
+#    gamma=(sin(X)/X)**2
+#
+#    #gamma=0.0*fd/5e9+(sin(X)/(self.Np*sin(X/self.Np)))**2
 #    data = sqrt(gamma)*sqrt(arange(offset+1, N+offset, dtype=complex))
 #    ind = arange(1,N, dtype=int32)
 #    ptr = arange(N+1, dtype=int32)

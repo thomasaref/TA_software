@@ -108,7 +108,7 @@ qdt.fixed_fq_min=1e9
 qdt.fixed_fq_max=7.0e9
 
 qdt.N_dim=8
-qdt.atten=60+30+10
+qdt.atten=60+40+10+10
 #a.Ec = 0.22e9/2*h # Charging energy.
 #a.Ejmax = 2*22.2e9*h # Maximum Josephson energy.
 qdt.gamma = qdt.max_coupling #2*538.2059e6 # Acoustic relaxation rate of the transmon.
@@ -122,9 +122,12 @@ print "gamma", qdt.gamma/1e9
 print qdt.Zc
 qdt.Zc=10.0
 #qdt.acoustic_plot=False
+qdt.phi_arr=linspace(0.95, 1.2, 601)
+qdt.pwr_arr=linspace(-30.0, 10.0, 11)
 Omega=qdt.Omega_arr[0]
+print Omega
 fd=4.45e9 #a.frq_arr[15]
-    
+
 def find_expect(vg, self=qdt, fd=fd, Omega=Omega):
     return self.find_expect(vg=vg, fd=fd, Omega=Omega)
 qdt.funcer=find_expect
@@ -384,24 +387,22 @@ if __name__=="__main__":
 
 
     if 1:
-        qdt.phi_arr=linspace(0.95, 1.2, 101)
-        qdt.pwr_arr=linspace(-30.0, 10.0, 11)
         pl=colormesh(qdt.phi_arr, qdt.pwr_arr-qdt.atten, absolute(qdt.fexpt2), cmap="RdBu_r")
-        lp=line(qdt.pwr_arr, absolute(qdt.fexpt2[:, 27]))
-        lp=line(qdt.pwr_arr, absolute(qdt.fexpt2[:, 27+1]), pl=lp)
-        lp=line(qdt.pwr_arr, absolute(qdt.fexpt2[:, 27-1]), pl=lp)
+        lp=line(qdt.pwr_arr, absolute(qdt.fexpt2[:, 60]))
+        lp=line(qdt.pwr_arr, absolute(qdt.fexpt2[:, 60+1]), pl=lp)
+        lp=line(qdt.pwr_arr, absolute(qdt.fexpt2[:, 60-1]), pl=lp)
 
         pl=colormesh(qdt.phi_arr, qdt.pwr_arr-qdt.atten, 1-absolute(qdt.fexpt2), cmap="RdBu_r")
 
-        pl=colormesh(qdt.phi_arr, qdt.pwr_arr, 10*log10(absolute(qdt.fexpt2)), cmap="RdBu_r")
+        pl=colormesh(qdt.phi_arr, qdt.pwr_arr, 10*log10(absolute(qdt.fexpt2)), cmap="RdBu_r").show()
     qdt.phi_arr=linspace(-1.0, 1.0, 50)*pi
 
 
     if 1:
-    
+
         pl1=colormesh(qdt.phi_arr, qdt.frq_arr, absolute(qdt.fexpt), cmap="RdBu_r")
         pl1=colormesh(qdt.phi_arr, qdt.frq_arr, 1-absolute(qdt.fexpt), cmap="RdBu_r")
-        
+
 
         pl=colormesh(qdt.phi_arr, qdt.frq_arr, 10*log10(absolute(qdt.fexpt)), cmap="RdBu_r")
 
@@ -419,7 +420,7 @@ if __name__=="__main__":
         #N=a.pwr_lin/(h*a.fd)#*abs(const.S21_0/(1+const.S22_0*exp(2i*const.theta_L)))^2
         Ej = qdt.Ejmax*absolute(cos(pi*qdt.phi_arr)) #Josephson energy as function of Phi.
         wTvec = (sqrt(8.0*Ej*qdt.Ec)-qdt.Ec)/h #\omega_m
-        
+
         line(qdt.phi_arr, wTvec, pl=pl)#.show()
         line(qdt.phi_arr, wTvec, pl=pl1)#.show()
 
@@ -433,7 +434,7 @@ if __name__=="__main__":
         freq=append(qdt.frq_arr, qdt.frq_arr)
         freq=append(freq, freq)
 
-        line(phi_extend, freq, pl=pl1, color="cyan")        
+        line(phi_extend, freq, pl=pl1, color="cyan")
         line(phi_extend, freq, pl=pl, color="cyan").show()
         #line(a.phi_arr, wTvec-d, pl=pl).show()
 
