@@ -124,6 +124,37 @@ qdt.fixed_fq_max=7.0e9
 #qdt.dephasing_slope=3e-3
 qdt.f=qdt.fq
 
+qdt.N_dim=8*2
+qdt.do_ls=False
+qdt.atten=60+30+10+10
+#a.Ec = 0.22e9/2*h # Charging energy.
+#a.Ejmax = 2*22.2e9*h # Maximum Josephson energy.
+qdt.gamma = qdt.max_coupling #2*538.2059e6 # Acoustic relaxation rate of the transmon.
+#a.gamma_el=a.gamma #0.750e6 #electric relaxation rate
+#a.gamma_phi = 0.00e6 # Dephasing rate of the transmon.
+qdt.fd = 4.5066e9#/1e6 # Drive frequency.
+print "Ct", qdt.Ct
+print "gamma", qdt.gamma/1e9
+#a.Ct=150e-15
+#    a.Cc=2e-15
+print qdt.Zc
+qdt.Zc=10.0
+#qdt.acoustic_plot=False
+qdt.phi_arr=linspace(0.95, 2.5, 101)
+qdt.pwr_arr=linspace(-30.0, 10.0, 41)
+#Omega=qdt.Omega_arr[0]
+#print Omega
+pwr=-100.0
+fd=4.45e9 #a.frq_arr[15]
+
+def find_expect(vg, self=qdt, fd=fd, pwr=pwr):
+        return self.find_expect(vg=vg, fd=fd, pwr=pwr)
+qdt.funcer=find_expect
+
+print qdt.Ec/h
+print qdt.Ejmax/h
+
+
 ideal_idt=IDT(name="idealIDT",
               material='LiNbYZ',
         ft="double",

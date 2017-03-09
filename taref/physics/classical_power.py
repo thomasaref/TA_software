@@ -5,55 +5,78 @@ Created on Tue Mar  7 15:36:18 2017
 @author: thomasaref
 """
 
-from numpy import sqrt, pi, sin, linspace, array, absolute
+from numpy import sqrt, pi, sin, cos, linspace, array, absolute, ones, shape
 #import matplotlib.pyplot as plt
 from taref.plotter.api import colormesh, line
+from scipy.constants import h
 
 Np=9
 f0=5.3e9
-f=4.55e9
+f=4.5e9
 frq_arr=linspace(1.0e9, 10.0e9, 1000)
 
-def GaBa(f):
-    X=Np*pi*(f-f0)/f0
+Ec = 0.22e9/2*h # Charging energy.
+Ejmax = 2*22.2e9*h # Maximum Josephson energy.
 
-    Ga0=0.002
-
-    Ga=Ga0*(sin(X)/X)**2
-    Ba=Ga0*(sin(2*X)-2*X)/(2*X**2)
-    return Ga, Ba
-
-Ga, Ba=GaBa(frq_arr)
 
 pwr=-100.0
 Ic=112e-9
 
-fq_arr=linspace(1.0e9, 10.0e9, 1001)
-wq_arr=2*pi*fq_arr
+phi_arr=linspace(-1.0, 1.0, 500)*pi
 
-#L=8.99e-9
 Ct=136e-15
-L_arr=1/(Ct*wq_arr**2)
+Cc=30e-15
+Cground=0.0
 
+Ga0=0.002
 #print sqrt(1/(L*Ct))/(2*pi)
-w=2*pi*frq_arr
+Rn=2800.0
 
-def r(Li, pwr):
+    
+def r(phi, f, pwr):
+    w=2*pi*f
+
+    Ej = Ejmax*absolute(cos(phi)) #Josephson energy as function of Phi.
+    fq = sqrt(8.0*Ej*Ec)/h #\omega_m
+    wq=2*pi*fq
+
+    L=1.0/(Ct*wq**2)
+
+    X=Np*pi*(f-f0)/f0
+
+    Ga=Ga0*(sin(X)/X)**2
+    Ba=Ga0*(sin(2*X)-2*X)/(2*X**2)
+
     Psaw=0.001*10**(pwr/10.0)
-    Isq=4*Ga*Psaw#+0.0j
-    divL=1/Li*sqrt(1.0-Isq/Ic**2)
-    return Ga/(Ga+1j*Ba+1j*w*Ct+divL/(1j*w))
-r_arr=array([r(Li, pwr) for Li in L_arr])
-colormesh(fq_arr, frq_arr, absolute(r_arr).transpose())
+    Isq=4.0*Ga*Psaw#+0.0j
+ 
+    if Isq<Ic**2:
+        divL=1.0/L*sqrt(1.0-Isq/Ic**2)
+        YL=-1.0j/w*divL
+    else:
+        YL=1.0/Rn*ones(shape(L))
+
+    P33plusYL=Ga+1.0j*Ba+1.0j*w*Ct+YL#-1.0j/w*divL
+    Zatom=-1.0j/(w*Cc)+1.0/P33plusYL
+    #Zeff=1.0/(1.0j*w*Cground+1.0/Zatom)
+    ZS=50.0 #1.0/YS
+    S33=(Zatom-ZS)/(Zatom+ZS)
+    S13=S23=S32=S31=(1.0+S33)/2.0
+    #return S33# S33
+    return Ga/P33plusYL
+    C=Ct(1+Ba/wCt)
+    Ga/(Ga+1j*wC+divL/(1j*w))
+#r_arr=array([r(phi=phi_arr, f=f_el, pwr=pwr) for f_el in frq_arr])
+#colormesh(phi_arr, frq_arr, absolute(r_arr))#.show()#.transpose())
 
 
-frq_arr=linspace(4.0e9, 5.0e9, 1000)
-Ga, Ba=GaBa(frq_arr)
-w=2*pi*frq_arr
+f=4.5e9
 
-pwr_arr=linspace(-120.0, -60.0, 1001)
-wq=2*pi*4.5e9
-L=1/(Ct*wq**2)
-r_arr=array([r(L, pw) for pw in pwr_arr])
-colormesh(absolute(r_arr))
-line(pwr_arr, absolute(r_arr)[:, 273]).show()
+phi_arr=linspace(0.01, 0.99, 500)*pi
+
+pwr_arr=linspace(-120.0, -58.0, 1001)
+
+r_arr=array([r(phi=phi_arr, f=f, pwr=pwr_el) for pwr_el in pwr_arr])
+print r_arr.shape
+colormesh(phi_arr, pwr_arr, absolute(r_arr))
+line(pwr_arr, absolute(r_arr)[:, 262]).show()

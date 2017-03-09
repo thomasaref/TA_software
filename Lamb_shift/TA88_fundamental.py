@@ -124,12 +124,13 @@ qdt.Zc=10.0
 #qdt.acoustic_plot=False
 qdt.phi_arr=linspace(0.95, 1.2, 601)
 qdt.pwr_arr=linspace(-30.0, 10.0, 11)
-Omega=qdt.Omega_arr[0]
-print Omega
+#Omega=qdt.Omega_arr[0]
+#print Omega
+pwr=-100.0
 fd=4.45e9 #a.frq_arr[15]
 
-def find_expect(vg, self=qdt, fd=fd, Omega=Omega):
-    return self.find_expect(vg=vg, fd=fd, Omega=Omega)
+def find_expect(vg, self=qdt, fd=fd, pwr=pwr):
+        return self.find_expect(vg=vg, fd=fd, pwr=pwr)
 qdt.funcer=find_expect
 
 print qdt.Ec/h
@@ -384,6 +385,7 @@ def bg_A1(frequency):
     return interp(frequency, bgA1.frequency, bgA1data)
 
 if __name__=="__main__":
+    qdt.show()
 
 
     if 1:
