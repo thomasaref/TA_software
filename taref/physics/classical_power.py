@@ -5,15 +5,15 @@ Created on Tue Mar  7 15:36:18 2017
 @author: thomasaref
 """
 
-from numpy import sqrt, pi, sin, cos, linspace, array, absolute, ones, shape
+from numpy import sqrt, pi, sin, cos, linspace, array, absolute, angle, ones, shape, meshgrid, reshape
 #import matplotlib.pyplot as plt
 from taref.plotter.api import colormesh, line
-from scipy.constants import h
+from scipy.constants import h, e, hbar
 
 Np=9
 f0=5.3e9
 f=4.5e9
-frq_arr=linspace(1.0e9, 10.0e9, 1000)
+frq_arr=linspace(1.0e9, 10.0e9, 100)
 
 Ec = 0.22e9/2*h # Charging energy.
 Ejmax = 2*22.2e9*h # Maximum Josephson energy.
@@ -22,7 +22,7 @@ Ejmax = 2*22.2e9*h # Maximum Josephson energy.
 pwr=-100.0
 Ic=112e-9
 
-phi_arr=linspace(-1.0, 1.0, 500)*pi
+phi_arr=linspace(-1.0, 1.0, 50)*pi
 
 Ct=136e-15
 Cc=30e-15
@@ -30,13 +30,24 @@ Cground=0.0
 
 Ga0=0.002
 #print sqrt(1/(L*Ct))/(2*pi)
-Rn=2800.0
+Rn=2800.0*10
 
-    
-def r(phi, f, pwr):
+def Icer(Isq, Ic, L, w):
+    if Isq<Ic**2:
+        divL=1.0/L*sqrt(1.0-Isq/Ic**2)
+        YL=-1.0j/w*divL
+    else:
+        YL=1.0/Rn*ones(shape(L))
+    return YL
+
+def r(vg):
+    phi, f, pwr=vg
+
     w=2*pi*f
 
     Ej = Ejmax*absolute(cos(phi)) #Josephson energy as function of Phi.
+    Ic=2*e*Ej/hbar
+    #print Ic
     fq = sqrt(8.0*Ej*Ec)/h #\omega_m
     wq=2*pi*fq
 
@@ -49,9 +60,9 @@ def r(phi, f, pwr):
 
     Psaw=0.001*10**(pwr/10.0)
     Isq=4.0*Ga*Psaw#+0.0j
- 
+
     if Isq<Ic**2:
-        divL=1.0/L*sqrt(1.0-Isq/Ic**2)
+        divL=1.0/L*(1.0-Isq/Ic**2)
         YL=-1.0j/w*divL
     else:
         YL=1.0/Rn*ones(shape(L))
@@ -72,11 +83,26 @@ def r(phi, f, pwr):
 
 f=4.5e9
 
-phi_arr=linspace(0.01, 0.99, 500)*pi
+phi_arr=linspace(-1, 0.99, 500/1)*pi
 
-pwr_arr=linspace(-120.0, -58.0, 1001)
+pwr_arr=linspace(-120.0, -80.0, 101)
 
-r_arr=array([r(phi=phi_arr, f=f, pwr=pwr_el) for pwr_el in pwr_arr])
+value_grid=array(meshgrid(phi_arr, f, pwr_arr))
+value_grid=zip(value_grid[0, :, :].flatten(), value_grid[1, :, :].flatten(), value_grid[2, :, :].flatten())
+#from qutip import parallel_map
+from time import time
+if 0:
+    r_arr=parallel_map(r, value_grid,  progress_bar=True)
+    #r_arr=reshape(r_arr, (len(phi_arr), len(pwr_arr))).transpose()
+else:
+    tstart=time()
+    print tstart
+    r_arr=array([r(vg) for vg in value_grid])
+    print time()-tstart
+    print r_arr.shape
+r_arr=reshape(r_arr, (len(phi_arr), len(pwr_arr))).transpose()
+
 print r_arr.shape
-colormesh(phi_arr, pwr_arr, absolute(r_arr))
-line(pwr_arr, absolute(r_arr)[:, 262]).show()
+colormesh(phi_arr, pwr_arr, angle(r_arr))
+line(phi_arr, absolute(r_arr)[32, :])
+line(pwr_arr, absolute(r_arr)[:, 22]).show()
