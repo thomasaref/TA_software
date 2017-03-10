@@ -83,7 +83,7 @@ def r(vg):
 
 f=4.5e9
 
-phi_arr=linspace(-1, 0.99, 500/1)*pi
+phi_arr=linspace(0.01, 0.99, 500/1)*pi
 
 pwr_arr=linspace(-120.0, -80.0, 101)
 
@@ -103,6 +103,6 @@ else:
 r_arr=reshape(r_arr, (len(phi_arr), len(pwr_arr))).transpose()
 
 print r_arr.shape
-colormesh(phi_arr, pwr_arr, angle(r_arr))
+colormesh(phi_arr, pwr_arr, absolute(r_arr))
 line(phi_arr, absolute(r_arr)[32, :])
 line(pwr_arr, absolute(r_arr)[:, 22]).show()

@@ -54,9 +54,9 @@ if __name__=="__main__":
     pl3=colormesh(a.pwr, a.freq_axis[a.end_skip:-a.end_skip], absolute(a.MagcomFilt[a.end_skip:-a.end_skip, 635, :]),
                   ylabel="Frequency (GHz)", xlabel=r"Power (dBm")#.show()
 
-    print a.frequency[69] 
+    print a.frequency[69]
     print a.pwr.shape
-    print a.flux_axis.shape                 
+    print a.flux_axis.shape
     pl1=colormesh(a.flux_axis, a.pwr-30-60, absolute(a.MagcomFilt[69, :, :]).transpose(), ylabel="Power (dBm)", xlabel=r"Yoko (V)", pl="TA53_pwr")
     #a.save_plots([pl1])
     #pl1.show()
@@ -71,14 +71,14 @@ if __name__=="__main__":
 
     if 1:
         pl=colormesh(qdt.phi_arr, qdt.pwr_arr-qdt.atten, absolute(qdt.fexpt2), cmap="RdBu_r")
-        lp=line(qdt.pwr_arr-qdt.atten, 0.12*absolute(qdt.fexpt2[:, 30]))
-        lp=line(qdt.pwr_arr-qdt.atten, 0.12*absolute(qdt.fexpt2[:, 30+1]), pl=lp)
-        lp=line(qdt.pwr_arr-qdt.atten, 0.12*absolute(qdt.fexpt2[:, 30-1]), pl=lp)
+        lp=line(qdt.pwr_arr-qdt.atten, 0.12*absolute(qdt.fexpt2[:, 300]))
+        lp=line(qdt.pwr_arr-qdt.atten, 0.12*absolute(qdt.fexpt2[:, 300+1]), pl=lp)
+        lp=line(qdt.pwr_arr-qdt.atten, 0.12*absolute(qdt.fexpt2[:, 300-1]), pl=lp)
 
         pl=colormesh(qdt.phi_arr, qdt.pwr_arr-qdt.atten, 1-absolute(qdt.fexpt2), cmap="RdBu_r")
 
         pl=colormesh(qdt.phi_arr, qdt.pwr_arr, 10*log10(absolute(qdt.fexpt2)), cmap="RdBu_r")#.show()
-    
+
     pl_pwr_sat=scatter(a.pwr-30-60-20, absolute(10**(onres/20.0)-10**(offres/20.0)),
                 xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}|$", pl=lp,
                   auto_ylim=False, y_min=0.0, y_max=0.12, marker_size=3.0,

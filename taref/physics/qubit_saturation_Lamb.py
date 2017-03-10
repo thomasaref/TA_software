@@ -23,7 +23,7 @@ class Sat_Qubit(Qubit):
     phi_arr=Array()
     pwr_arr=Array()
     frq_arr=Array()
-    
+
     do_ls=Bool(True)
     harm_osc=Bool(False)
 
@@ -36,7 +36,7 @@ class Sat_Qubit(Qubit):
         return linspace(-50.0, 0, 31)
 
     def _default_frq_arr(self):
-        return linspace(3.5e9, 7.5e9, 51)
+        return linspace(3.5e9, 7.5e9, 501)
 
     gamma=Float(38.0e6)
     gamma_el=Float(0.750e6)
@@ -48,7 +48,7 @@ class Sat_Qubit(Qubit):
     fd=Float(4.5e9)
 
     Zc=Float(50.0)
-    
+
     Ic=Float(112.0e-9)
 
     def _get_fTvec(self, phi, gamma, Delta, fd, Psaw):
@@ -56,17 +56,17 @@ class Sat_Qubit(Qubit):
         Ec=e**2/(2*C)
         Ecvec=-Ec*(6.0*self.nvec**2+6.0*self.nvec+3.0)/12.0
 
-        
+
         Isq=0.0*4.0*gamma*2.0*(self.Cc+self.Ct)*Psaw*1#+0.0j
         if Isq<self.Ic**2:
             Ej = self.Ejmax*absolute(cos(phi))*sqrt(1.0-Isq/self.Ic**2) #Josephson energy as function of Phi.
         else:
             Ej=0.0#print sqrt(Isq)
         if self.harm_osc:
-            return sqrt(8.0*Ej*Ec)*(self.nvec+0.5)/h          
+            return sqrt(8.0*Ej*Ec)*(self.nvec+0.5)/h
         return (-Ej + sqrt(8.0*Ej*Ec)*(self.nvec+0.5)+Ecvec)/h #\omega_m
         #return 0.0*(-Ej + 1.0*sqrt(8.0*Ej*self.Ec)*(self.nvec+0.5)+self.Ecvec)/h #\omega_m
-        
+
     def _get_X(self, f, f0, Np):
         return Np*pi*(f-f0)/f0
 
@@ -231,7 +231,7 @@ if __name__=="__main__":
 
         pl=colormesh(a.phi_arr, a.pwr_arr, 10*log10(absolute(a.fexpt2)), cmap="RdBu_r")
         #pl.show()
-    a.phi_arr=linspace(-1.0, 1.0, 50)*pi
+    a.phi_arr=linspace(-1.0, 1.0, 500)*pi
 
 
     if 1:
