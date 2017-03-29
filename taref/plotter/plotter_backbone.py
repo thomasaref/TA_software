@@ -15,12 +15,12 @@ rcParams['xtick.labelsize'] = 8
 rcParams['ytick.labelsize'] = 8
 rcParams['legend.fontsize'] = 8
 
-rcParams['xtick.major.width']=2
-rcParams['lines.linewidth']=2
-rcParams['xtick.major.size']=4
-rcParams['axes.linewidth']=2
-rcParams['ytick.major.width']=2
-rcParams['ytick.major.size']=4
+rcParams['xtick.major.width']=1
+rcParams['lines.linewidth']=1
+rcParams['xtick.major.size']=3
+rcParams['axes.linewidth']=1
+rcParams['ytick.major.width']=1
+rcParams['ytick.major.size']=3
 
 from atom.api import observe, Atom, Typed, Bool, cached_property, Float, Unicode, Instance, Int
 from collections import OrderedDict

@@ -7,7 +7,7 @@ Created on Sun Apr 24 18:55:33 2016
 
 from TA53_fundamental import TA53_VNA_Pwr_Lyzer, TA53_Read, qdt, TA53_Save_NP, TA53_Read_NP
 from numpy import (absolute,  trunc, arccos, shape, float64, linspace, reshape,
-                   squeeze, argmax, array, log10, swapaxes, amax, angle)
+                   squeeze, argmax, array, log10, swapaxes, amax, angle, pi)
 from taref.plotter.api import colormesh, scatter, line
 from h5py import File
 from taref.core.api import process_kwargs
@@ -23,7 +23,7 @@ a=TA53_VNA_Pwr_Lyzer(name="d1112", on_res_ind=635,#read_data=read_data, # VNA_na
         rd_hdf=TA53_Read(main_file="Data_1112/S3A4_trans_pwr_swp.hdf5"), #long_test.hdf5"), #
         #fit_indices=[range(48,154+1), range(276, 578+1)],
          desc="transmission power sweep",
-         offset=-0.3,
+         offset=-0.15,
         # read_data=read_data,
          swp_type="yoko_first",
         )
@@ -57,7 +57,8 @@ if __name__=="__main__":
     print a.frequency[69]
     print a.pwr.shape
     print a.flux_axis.shape
-    pl1=colormesh(a.flux_axis, a.pwr-30-60, absolute(a.MagcomFilt[69, :, :]).transpose(), ylabel="Power (dBm)", xlabel=r"Yoko (V)", pl="TA53_pwr")
+    pl1=colormesh(a.flux_axis/pi, a.pwr-30-60, absolute(a.MagcomFilt[69, :, :]).transpose(), ylabel="Power (dBm)", xlabel=r"$\Phi/\Phi_0$",
+                  auto_xlim=False, x_min=0.35, x_max=0.5, pl="TA53_pwr")
     #a.save_plots([pl1])
     #pl1.show()
     pl2=scatter(a.pwr, absolute(absolute(a.MagcomFilt[69, 635, :])-absolute(a.MagcomFilt[69,0, :])), xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}|$")#.show()
@@ -70,12 +71,13 @@ if __name__=="__main__":
     #scatter(b.pwr-30-60, absolute(10**(onres/20.0)))
 
     if 1:
-        pl=colormesh(qdt.phi_arr, qdt.pwr_arr-qdt.atten, absolute(qdt.fexpt2), cmap="RdBu_r")
-        lp=line(qdt.pwr_arr-qdt.atten, 0.12*absolute(qdt.fexpt2[:, 300]))
-        lp=line(qdt.pwr_arr-qdt.atten, 0.12*absolute(qdt.fexpt2[:, 300+1]), pl=lp)
-        lp=line(qdt.pwr_arr-qdt.atten, 0.12*absolute(qdt.fexpt2[:, 300-1]), pl=lp)
+        pl=colormesh(qdt.phi_arr/pi, qdt.pwr_arr-qdt.atten, absolute(qdt.fexpt2), cmap="RdBu_r")
+        lp=line(qdt.pwr_arr-qdt.atten, 0.12*absolute(qdt.fexpt2[:, 300/10]))
+        lp=line(qdt.pwr_arr-qdt.atten, 0.12*absolute(qdt.fexpt2[:, 300/10+1]), pl=lp)
+        lp=line(qdt.pwr_arr-qdt.atten, 0.12*absolute(qdt.fexpt2[:, 300/10-1]), pl=lp)
 
-        pl=colormesh(qdt.phi_arr, qdt.pwr_arr-qdt.atten, 1-absolute(qdt.fexpt2), cmap="RdBu_r")
+        pl=colormesh(qdt.phi_arr/pi, qdt.pwr_arr-qdt.atten, 1-absolute(qdt.fexpt2), cmap="RdBu_r",
+                     auto_xlim=False, x_min=0.35, x_max=0.5)
 
         pl=colormesh(qdt.phi_arr, qdt.pwr_arr, 10*log10(absolute(qdt.fexpt2)), cmap="RdBu_r")#.show()
 

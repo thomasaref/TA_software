@@ -134,7 +134,7 @@ class LineFormat(PlotFormat):
     alpha=Float(1.0).tag(former="alpha")
     label=Unicode().tag(former="label")
     color=Enum(*colors_tuple[1:]).tag(former="color")
-    linewidth=Float(0.5).tag(former="linewidth")
+    linewidth=Float(1.0).tag(former="linewidth")
     linestyle=Enum('solid', 'dashed', 'dashdot', 'dotted').tag(former="linestyle")
 
     @plot_observe("alpha", "label", "linewidth", "linestyle", "color", update_legend=True)

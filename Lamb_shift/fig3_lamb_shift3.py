@@ -17,12 +17,12 @@ from D0509_lowfrq2sidelobe import a as d0509
 from D0503_lowfrq1sidelobe import a as d0503
 from D0518_highfrq3sidelobe import a as d0518
 
-from numpy import array, linspace, absolute, sqrt
+from numpy import array, linspace, absolute, sqrt, log10
 from taref.plotter.api import line, colormesh, scatter
 
 from taref.core.api import process_kwargs
 
-from TA88_fundamental import qdt, TA88_Lyzer, TA88_VNA_Lyzer, TA88_Read
+from TA88_fundamental import qdt, idt, TA88_Lyzer, TA88_VNA_Lyzer, TA88_Read
 from TA53_fundamental import TA53_VNA_Pwr_Lyzer, TA53_Read
 
 colormesh(qdt.MagAbs)
@@ -190,6 +190,17 @@ def combo_plots():
         pl.axes.set_xlabel("Frequency (GHz)")
         
         pl.axes.set_ylabel("$\Gamma/2\pi$ (GHz) ")
+
+
+        pl.nplot=4
+        line(10*log10(idt._get_coupling(f=frequency)/idt.max_coupling), frequency/1e9,
+             color="red", pl=pl)
+
+        line(10*log10(idt._get_coupling(f=frequency)/idt.max_coupling*qdt._get_coupling(f=frequency)/qdt.max_coupling),
+             frequency/1e9, pl=pl, color="green")
+        line(10*log10(qdt._get_coupling(f=frequency)/qdt.max_coupling), frequency/1e9,
+             color="blue", pl=pl, auto_xlim=False, x_max=-30.0, x_min=0.0,
+             auto_ylim=False, y_min=3.8, y_max=6.05)
 
 
         pl.nplot=6
@@ -370,7 +381,7 @@ def combo_plots():
 
 if __name__=="__main__":
     pl=combo_plots()
-    #a.save_plots([pl])
+    a.save_plots([pl])
 
     pl.show()
 

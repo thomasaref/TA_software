@@ -36,7 +36,7 @@ class Sat_Qubit(Qubit):
         return linspace(-50.0, 0, 31)
 
     def _default_frq_arr(self):
-        return linspace(3.5e9, 7.5e9, 501)
+        return linspace(3.5e9, 7.5e9, 51)
 
     gamma=Float(38.0e6)
     gamma_el=Float(0.750e6)
@@ -201,8 +201,8 @@ if __name__=="__main__":
     #a.do_ls=True #False
     #a.harm_osc=True
     a.atten=83+20
-    a.Ec = 0.22e9/2*h # Charging energy.
-    a.Ejmax = 2*22.2e9*h # Maximum Josephson energy.
+    a.Ec = 0.22e9/1*h # Charging energy.
+    a.Ejmax = 1*22.2e9*h # Maximum Josephson energy.
 
     a.gamma = 1038.2059e6 # Acoustic relaxation rate of the transmon.
     a.gamma_el=a.gamma #0.750e6 #electric relaxation rate
@@ -231,7 +231,7 @@ if __name__=="__main__":
 
         pl=colormesh(a.phi_arr, a.pwr_arr, 10*log10(absolute(a.fexpt2)), cmap="RdBu_r")
         #pl.show()
-    a.phi_arr=linspace(-1.0, 1.0, 500)*pi
+    a.phi_arr=linspace(-1.0, 1.0, 50)*pi
 
 
     if 1:

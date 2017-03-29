@@ -140,7 +140,7 @@ print "gamma", qdt.gamma/1e9
 print qdt.Zc
 qdt.Zc=10.0
 #qdt.acoustic_plot=False
-qdt.phi_arr=linspace(0.95, 2.5, 1001)
+qdt.phi_arr=linspace(0.95, 2.5, 101)
 qdt.pwr_arr=linspace(-30.0, 10.0, 41)
 #Omega=qdt.Omega_arr[0]
 #print Omega

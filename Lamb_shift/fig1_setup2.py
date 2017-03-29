@@ -21,7 +21,7 @@ import_image=True
 show_axes=False
 color="black"
 linewidth=1.0
-fontsize=8
+fontsize=7
 sp=20
 x=20
 y=28
@@ -59,8 +59,8 @@ def hbox(x=0, y=0, w=5, h=10, g=6, label="$Z_C$", color=color,
     return pl
 
 def IDT(x=0, y=0, sp=20, **kwargs):
-    box(x, y, **kwargs)
-    box(x+sp, y, label="$iB_a$", **kwargs)
+    box(x, y, w=6, **kwargs)
+    box(x+sp, y, w=6, label="$iB_a$", **kwargs)
     capacitor(x+2*sp, y, label="$C_t$", **kwargs)
     #plt.plot([x, x+2*sp], [y+3.5, y+3.5], color=color, linewidth=linewidth)
     #plt.plot([x, x+2*sp], [y-3.5, y-3.5], color=color, linewidth=linewidth)
@@ -117,15 +117,16 @@ if __name__=="__main__":
     circle(80,28, r=2, pl=pl)
     circle(80,28, r=0.2, pl=pl)
     pl.axes.text(80, 20, "$\Phi_B$", fontsize=fontsize, color=color, ha="center", va="center")
-    wave(5,28, color="green", pl=pl)
-    wave(5,83, color="blue", pl=pl)
+    wave(4,28, color="green", pl=pl)
+    wave(4,83, color="blue", pl=pl)
 
     #plt.figure(figsize=(6.4, 4.4))
     #f.savefig("testy_circuit_draw", dpi=150, bbox_inches='tight', transparent=True)
 
+    hspace = wspace =0.0
     pl.axes.get_xaxis().set_visible(False)
     pl.axes.get_yaxis().set_visible(False)
-    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.1, hspace = 0.1)
+    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
 
     #pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.0, hspace = 0.0)
     pl.nplot=1
@@ -214,20 +215,20 @@ if __name__=="__main__":
     pl.axes.get_xaxis().set_visible(False)
     pl.axes.get_yaxis().set_visible(False)
     #pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.0, hspace = 0.0)
-    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.1, hspace = 0.1)
+    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
 
-    pl.axes.text(75, 230, "$200\,\mathrm{\mu m}$", color="white")
+    pl.axes.text(75, 230, "$200\,\mathrm{\mu m}$", color="white", fontsize=fontsize)
 
-    pl.axes.text(20, 650, "LiNbO$_3$", color="white")
+    pl.axes.text(20, 650, "LiNbO$_3$", color="white", fontsize=fontsize)
 
     #pl.axes.text(500, 1000, "Al")
 
-    pl.axes.text(20, 1000, "Au")
+    pl.axes.text(20, 1000, "Au", fontsize=fontsize)
 
 
-    pl.figure.text(0.03, 0.95, "a)")
-    pl.figure.text(0.53, 0.95, "b)")
-    pl.figure.text(0.03, 0.45, "c)", color="white")
+    pl.figure.text(0.04, 0.93, "a)")
+    pl.figure.text(0.53, 0.93, "b)")
+    pl.figure.text(0.04, 0.45, "c)", color="white")
     pl.figure.text(0.53, 0.45, "d)")
 
     pl.nplot=3
@@ -240,13 +241,13 @@ if __name__=="__main__":
     pl.axes.get_xaxis().set_visible(False)
     pl.axes.get_yaxis().set_visible(False)
     #pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.0, hspace = 0.0)
-    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.1, hspace = 0.1)
+    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
 
     #line([100+20.5,100+57.7], [139,139], pl=pl, auto_ylim=False, y_min=100, y_max=665,
     #             auto_xlim=False, x_min=100, x_max=665)
     line([150,150+151], [145,145], pl=pl, auto_ylim=False, y_min=100, y_max=665,
                  auto_xlim=False, x_min=100, x_max=665, color="black", linewidth=10)
-    pl.axes.text(180, 140, "$1\,\mu m$", color="white")
+    pl.axes.text(180, 135, "$1\,\mu m$", color="white")
     pl.axes.text(600, 620, "Al", color="white")
 
     pl.nplot=4
@@ -263,7 +264,7 @@ if __name__=="__main__":
     pl.axes.get_xaxis().set_visible(False)
     pl.axes.get_yaxis().set_visible(False)
 
-    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = 0.1, hspace = 0.1)
+    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = hspace, hspace = hspace)
 
     pl.axes.text(220, 620, "$2\,\mu m$", color="white")
 
@@ -274,6 +275,6 @@ if __name__=="__main__":
     #    plt.xlim(0, 100
     #    plt.ylim(0, 100)
     pl.figure.tight_layout()
-    #a.save_plots([pl,])
+    a.save_plots([pl,])
     pl.show()
 
