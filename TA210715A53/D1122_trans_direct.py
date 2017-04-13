@@ -114,7 +114,7 @@ if __name__=="__main__":
 
 
     ifft_plot(a)#.show()
-    a.save_plots([pl,])
+    #a.save_plots([pl,])
     pl.show()
     #pl_raw=a.magabs_colormesh()
     #a.bgsub_type="dB"

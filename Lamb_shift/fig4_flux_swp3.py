@@ -94,7 +94,7 @@ if __name__=="__main__":
                               auto_ylim=False, y_min=3.6, y_max=7.4,
                               auto_xlim=False, x_min=-1.5, x_max=1.5,
                           nrows=2, ncols=2, nplot=1, pl=pl, pf_too=True,
-                          fig_width=3.5, fig_height=3.5,
+                          fig_width=3.0, fig_height=3.5,
                           )#.show()
     #line(a.flux_axis, a.qdt._get_flux_parabola(voltage=a.yoko, ng=0.0)/1e9, pl=pl)#.show()
 
@@ -325,7 +325,7 @@ if __name__=="__main__":
 
     scatter(array([2.9,]), array([1.0]), pl=pl, marker_size=3.0, facecolor="black", edgecolor="black")
 
-    pl.axes.set_xticks(linspace(0, 20, 5))
+    pl.axes.set_xticks(linspace(5, 20, 4))
     pl.axes.set_yticks(linspace(0.9, 1.1, 3))
 
     pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)

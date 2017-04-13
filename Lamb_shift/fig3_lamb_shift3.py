@@ -54,6 +54,10 @@ b.end_skip=10
 #a.flux_indices=[range(len(a.yoko)-1)]
 b.pwr_ind=1
 
+wspace=0.001
+wspace2=0.3
+hspace=0.3
+
 def center_plot(self, **kwargs):
     process_kwargs(self, kwargs, pl="center_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
 
@@ -169,7 +173,8 @@ def combo_plots():
         #pl1.set_xlim(3.8, 6.05)
         #pl1.set_ylim(-0.05, 1.15)
         #pl1.add_label("c)")
-
+        pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace2, hspace = hspace)
+ 
         pl.nplot=3
         for d in lyzers:
             pl=d.widths_plot(pl=pl, color="black", facecolor="black", edgecolor="black",)
@@ -193,14 +198,20 @@ def combo_plots():
 
 
         pl.nplot=4
-        line(10*log10(idt._get_coupling(f=frequency)/idt.max_coupling), frequency/1e9,
+        qdt.gate_type="constant"
+        line(10.0*log10(idt._get_coupling(f=frequency)/idt.max_coupling), frequency/1e9,
              color="red", pl=pl)
 
-        line(10*log10(idt._get_coupling(f=frequency)/idt.max_coupling*qdt._get_coupling(f=frequency)/qdt.max_coupling),
-             frequency/1e9, pl=pl, color="green")
-        line(10*log10(qdt._get_coupling(f=frequency)/qdt.max_coupling), frequency/1e9,
-             color="blue", pl=pl, auto_xlim=False, x_max=-30.0, x_min=0.0,
-             auto_ylim=False, y_min=3.8, y_max=6.05)
+        #line(10.0*log10(idt._get_coupling(f=frequency)/idt.max_coupling*qdt._get_coupling(f=frequency)/qdt.max_coupling),
+        #     frequency/1e9, pl=pl, color="green")
+        line(10.0*log10(qdt._get_coupling(f=frequency)/qdt.max_coupling), frequency/1e9,
+             color="blue", pl=pl, auto_xlim=False, x_max=-30.0, x_min=1.0,
+             auto_ylim=False, y_min=3.8, y_max=6.05, xlabel="Coupling (dB)",
+            ylabel="Frequency (GHz) ")
+        qdt.gate_type="capacitive"
+        
+        pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
+        pl.axes.set_xticks(linspace(0, -20, 3))
 
 
         pl.nplot=6
@@ -219,7 +230,9 @@ def combo_plots():
                          xlabel="$\Phi/\Phi_0$", ylabel="Frequency (GHz)")
             pl.set_xlim(3.8, 6.05)
             pl.set_ylim(3.8, 6.05)
-            
+            pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
+            pl.axes.get_yaxis().set_visible(False)
+
             pl.nplot=5
         
             for d in lyzers:
@@ -254,6 +267,8 @@ def combo_plots():
             pl1.add_label("b)")
             #pls.append(pl)
             #pls.append(pl1)
+            pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
+            pl.axes.get_yaxis().set_visible(False)
 
     def MagAbsFit(self):
         return sqrt(self.fitter.reconstruct_fit(self.flux_axis[self.flat_flux_indices], self.fit_params))
@@ -350,6 +365,9 @@ def combo_plots():
     pl.figure.text(0.35, 0.45, "e)")
     pl.figure.text(0.67, 0.45, "f)")
 
+#    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
+    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace2, hspace = hspace)
+
 #    pl.nplot=4
 #
 #    c=TA88_VNA_Lyzer(on_res_ind=215,# VNA_name="RS VNA", filt_center=15, filt_halfwidth=15,
@@ -376,7 +394,7 @@ def combo_plots():
     #                   auto_ylim=False, y_min=3.5, y_max=7.5)#.show()
 
 
-    pl.figure.tight_layout()
+    #pl.figure.tight_layout()
     return pl
 
 if __name__=="__main__":

@@ -361,7 +361,8 @@ if __name__=="__main__":
                   auto_xlim=False, x_min=-30-90, x_max=10-90)#.show()
 
 
-    ax=pl.figure.add_subplot(pl.nrows, pl.ncols, 4)
+    ax=pl.axes
+    #ax=pl.figure.add_subplot(pl.nrows, pl.ncols, 4)
     ax.set_xticks(linspace(-30.0-90, 10.0-90, 3))
     ax.set_yticks(linspace(0.0, 0.10, 3))
 
@@ -369,9 +370,13 @@ if __name__=="__main__":
 
     pl.nplot=4
     pl3=colormesh(b.flux_axis/pi, b.pwr-30-60, 10**(onres/20.0).transpose(), pl=pl,
-                  ylabel="Power (dBm)", xlabel=r"$\Phi/\Phi_0$",
+                  ylabel="Power (dBm) ", xlabel=r"$\Phi/\Phi_0$ ",
                   auto_xlim=False, x_min=0.35, x_max=0.5, 
                   auto_ylim=False, y_min=-30-90, y_max=10-90)
+
+    ax=pl.axes
+    ax.set_yticks(linspace(-30.0-90, 10.0-90, 3))
+    ax.set_xticks(linspace(0.38, 0.48, 3))
     
     #b.pwr, b.freq_axis[a.end_skip:-b.end_skip], 10**(onres/20.0), #absolute(a.MagcomFilt[a.end_skip:-a.end_skip, 635, :]),
     #              ylabel="Frequency (GHz)", xlabel=r"Power (dBm")#.show()
@@ -382,6 +387,11 @@ if __name__=="__main__":
                   ylabel="Power (dBm)", xlabel=r"$\Phi/\Phi_0$",
                   auto_xlim=False, x_min=0.35, x_max=0.5, 
                   auto_ylim=False, y_min=-30-90, y_max=10-90)
+
+    ax=pl.axes
+    ax.set_yticks(linspace(-30.0-90, 10.0-90, 3))
+    ax.set_xticks(linspace(0.38, 0.48, 3))
+                  
     
     pl.nplot=2
     if 1:
@@ -513,8 +523,11 @@ if __name__=="__main__":
                                        auto_ylim=False, y_min=0.0, y_max=0.12, color="red")
             scatter(flux_axis, 10**(cdata[595, :]/20.0), pl=pl,
                                        auto_xlim=False, x_min=0.65, x_max=1.5,
-                                       auto_ylim=False, y_min=0.0, y_max=0.12)
-                                       
+                                       auto_ylim=False, y_min=0.0, y_max=0.12, 
+                                       xlabel="$|S_{21}|$", ylabel="$\Phi/\Phi_0$")
+            pl.axes.set_xticks(linspace(0.7, 1.5, 3))
+            pl.axes.set_yticks(linspace(0.0, 0.1, 5))
+                                     
         #pl, pf=colormesh(flux_axis, freq_axis, 10**(cdata[c.end_skip:-c.end_skip, :]/20.0),
         #pl, pf=c.magabs_colormesh(pl=pl, pf_too=True, auto_zlim=False,
         #                           auto_xlim=False, x_min=0.65, x_max=1.5,
