@@ -66,7 +66,7 @@ class VNA_Lyzer(Lyzer):
         if self.flux_axis_type=="yoko":
             return self.yoko
         elif self.flux_axis_type=="flux":
-            return self.flux_over_flux0
+            return self.flux_over_flux0/pi
         elif self.flux_axis_type=="fq":
             return self.fq/1e9
 

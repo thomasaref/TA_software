@@ -17,6 +17,7 @@ from D0509_lowfrq2sidelobe import a as d0509
 from D0503_lowfrq1sidelobe import a as d0503
 from D0518_highfrq3sidelobe import a as d0518
 
+from scipy.constants import h
 from numpy import array, linspace, absolute, sqrt, log10
 from taref.plotter.api import line, colormesh, scatter
 
@@ -118,7 +119,7 @@ def combo_plots():
         line(array([3.5, 6.5]), array([-1.5, 1.5])-0.3, pl=pl, color="green", linestyle="dashed")
 
         #pl.set_xlim(3.75, 6.1)
-        pl.set_xlim(3.5, 6.5)
+        pl.set_xlim(3.75, 6.1)
 
         pl.set_ylim(-1, 1.5)
 
@@ -206,12 +207,14 @@ def combo_plots():
         #     frequency/1e9, pl=pl, color="green")
         line(10.0*log10(qdt._get_coupling(f=frequency)/qdt.max_coupling), frequency/1e9,
              color="blue", pl=pl, auto_xlim=False, x_max=-30.0, x_min=1.0,
-             auto_ylim=False, y_min=3.8, y_max=6.05, xlabel="Coupling (dB)",
+             auto_ylim=False, y_min=3.85, y_max=6.01, xlabel="Coupling (dB)",
             ylabel="Frequency (GHz) ")
         qdt.gate_type="capacitive"
         
         pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
         pl.axes.set_xticks(linspace(0, -20, 3))
+        pl.axes.set_yticks(linspace(4.0, 6.0, 3))
+
 
 
         pl.nplot=6
@@ -220,16 +223,23 @@ def combo_plots():
             pl1="Fit_magabs"
             f=d.frequency
             from numpy import pi, cos
-            #Ej=Ejmax*absolute(cos(phi))
-            #fqq=sqrt(8*Ej*Ec)
+            Ejmax=qdt.Ejmax/h
+            Ec=qdt.Ec/h
+            phi_arr=linspace(0.25, 0.4, 2001)
+            Ej=Ejmax*absolute(cos(phi_arr*pi))
+            fqq=sqrt(8*Ej*Ec)-Ec
+            print fqq
             f=linspace(3e9, 8e9, 500)
-            fqq=linspace(2e9, 9e9, 2001)
+            #fqq=linspace(2e9, 9e9, 2001)
             magcom=array([qdt._get_simple_S(f=f, YL=-1.0j/f*qdt.Ct*2*pi*fq**2) for fq in fqq])[:, 0, :]
 
-            pl=colormesh(fqq/1e9, f/1e9, 1-absolute(magcom).transpose(),  pl=pl, 
+            pl=colormesh(phi_arr, f/1e9, 1-absolute(magcom).transpose(),  pl=pl, 
                          xlabel="$\Phi/\Phi_0$", ylabel="Frequency (GHz)")
-            pl.set_xlim(3.8, 6.05)
-            pl.set_ylim(3.8, 6.05)
+            pl.set_xlim(0.25, 0.4)
+            pl.set_ylim(3.85, 6.01)
+            pl.axes.set_xticks(linspace(0.3, 0.35, 2))
+            #pl.axes.set_yticks(linspace(0.9, 1.1, 3))
+
             pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
             pl.axes.get_yaxis().set_visible(False)
 
@@ -239,26 +249,32 @@ def combo_plots():
                 d.filter_type="Fit"
                 pl1, pf=d.magabs_colormesh(pl=pl1, pf_too=True)#, cmap="nipy_spectral")
                 d.bgsub_type="dB"
+                #d.flux_axis_type="flux"
+
                 d.filter_type="FFT"
                 pl2=d.magdB_colormesh(pl=pl2, auto_zlim=False, vmin=-3.0, vmax=0.0)#, cmap="nipy_spectral")
                 new_fp=[[fp[0], fp[1], 1.0, 0.0] for fp in d.fit_params]
                 new_magabs=sqrt(d.fitter.reconstruct_fit(d.flux_axis[d.flat_flux_indices], new_fp))
 
                 #process_kwargs(self, kwargs, pl="magabs_{0}_{1}_{2}".format(self.filter_type, self.bgsub_type, self.name))
-                #d.flux_axis_type="flux"
+                d.flux_axis_type="flux"
                 flux_axis=d.flux_axis[d.flat_flux_indices]
                 #freq_axis=d.freq_axis[d.indices]
                 start_ind=0
 
                 for ind in d.fit_indices:
-                    pl=colormesh(flux_axis, d.freq_axis[ind], new_magabs[start_ind:start_ind+len(ind), :],  pl=pl)
+                    pl=colormesh(flux_axis, d.freq_axis[ind],
+                                 new_magabs[start_ind:start_ind+len(ind), :],  pl=pl)
                     start_ind+=len(ind)
 
             pl.axes.set_xlabel("$\Phi/\Phi_0$")
             pl.axes.set_ylabel("Frequency (GHz)")
      
-            pl.set_xlim(3.8, 6.05)
-            pl.set_ylim(3.8, 6.05)
+            pl.set_xlim(0.25, 0.4)
+            pl.set_ylim(3.85, 6.01)
+            pl.axes.set_xticks(linspace(0.3, 0.35, 2))
+            #pl.axes.set_yticks(linspace(0.9, 1.1, 3))
+
             pl2.set_xlim(3.8, 6.05)
             pl2.set_ylim(3.8, 6.05)
             pl2.add_label("a)")
@@ -331,7 +347,7 @@ def combo_plots():
     b.get_member("fit_params").reset(b)
     b.get_member("MagcomFilt").reset(b)
     b.fitter.fit_params=None
-    pl_centers=center_plot(b, color="red", auto_xlim=False, x_min=3.5, x_max=5.5,
+    pl_centers=center_plot(b, color="red", auto_xlim=False, x_min=3.9, x_max=5.1,
                              auto_ylim=False, y_min=-0.3, y_max=0.3, pl=pl)
 
     #pl_centers=b.center_plot(color="red", auto_xlim=False, x_min=3.75, x_max=5.1,
@@ -344,7 +360,8 @@ def combo_plots():
     #pl.axes.set_xlabel("Frequency (GHz)")
     #pl.axes.set_ylabel("Qubit Frequency (GHz)")
     #pl.nplot=4
-    pl_widths=b.widths_plot(color="black", facecolor="black", edgecolor="black", auto_xlim=False, x_min=3.5, x_max=5.5,
+    pl_widths=b.widths_plot(color="black", facecolor="black", edgecolor="black", 
+                            auto_xlim=False, x_min=3.9, x_max=5.1,
                             auto_ylim=False, y_min=-0.3, y_max=0.5, pl=pl)#.show()
     #qdt.gate_type="constant"
     b.qdt.gate_type="capacitive"
@@ -394,7 +411,7 @@ def combo_plots():
     #                   auto_ylim=False, y_min=3.5, y_max=7.5)#.show()
 
 
-    #pl.figure.tight_layout()
+    pl.figure.tight_layout()
     return pl
 
 if __name__=="__main__":

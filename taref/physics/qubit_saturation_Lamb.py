@@ -30,7 +30,7 @@ class Sat_Qubit(Qubit):
     Np=Int(9)
     f0=Float(5.30001e9)
     def _default_phi_arr(self):
-        return linspace(0.2, 0.4, 150)*pi
+        return linspace(0.35, 0.4, 2*150)*pi
 
     def _default_pwr_arr(self):
         return linspace(-50.0, 0, 31)
@@ -195,20 +195,21 @@ class Sat_Qubit(Qubit):
         else:
             return 1.0*sqrt(g_el*gamma)/Om*fexpt
 
+
 if __name__=="__main__":
     a=Sat_Qubit()
-    a.N_dim=8*2
-    #a.do_ls=True #False
+    a.N_dim=8
+    a.do_ls=False
     #a.harm_osc=True
     a.atten=83+20
     a.Ec = 0.22e9/1*h # Charging energy.
     a.Ejmax = 1*22.2e9*h # Maximum Josephson energy.
 
-    a.gamma = 1038.2059e6 # Acoustic relaxation rate of the transmon.
+    a.gamma = 38.2059e6 # Acoustic relaxation rate of the transmon.
     a.gamma_el=a.gamma #0.750e6 #electric relaxation rate
     a.gamma_phi = 0.00e6 # Dephasing rate of the transmon.
     a.fd = 4.5066e9#/1e6 # Drive frequency.
-    a.Ct=150e-15
+    a.Ct=150e-15/3
     a.Cc=2e-15
     a.Zc=50.0
     a.acoustic_plot=True #False
@@ -223,9 +224,9 @@ if __name__=="__main__":
 
     if 1:
         pl=colormesh(a.phi_arr, a.pwr_arr, absolute(a.fexpt2), cmap="RdBu_r")
-        lp=line(a.pwr_arr, absolute(a.fexpt2[:, 127/4]))
-        lp=line(a.pwr_arr, absolute(a.fexpt2[:, 127/4+1]), pl=lp)
-        lp=line(a.pwr_arr, absolute(a.fexpt2[:, 127/4-1]), pl=lp)
+        lp=line(a.pwr_arr, absolute(a.fexpt2[:, 199])) #127/4
+        lp=line(a.pwr_arr, absolute(a.fexpt2[:, 199+1]), pl=lp)
+        lp=line(a.pwr_arr, absolute(a.fexpt2[:, 199-1]), pl=lp)
 
         pl=colormesh(a.phi_arr, a.pwr_arr, 1-absolute(a.fexpt2), cmap="RdBu_r")
 
@@ -260,7 +261,7 @@ if __name__=="__main__":
         line(a.phi_arr, wTvec, pl=pl)#.show()
         line(a.phi_arr, wTvec, pl=pl1)#.show()
 
-        g, d=a._get_GammaDelta(fd=a.frq_arr, f0=a.f0, Np=a.Np, gamma=a.gamma)
+        g2, d=a._get_GammaDelta(fd=a.frq_arr, f0=a.f0, Np=a.Np, gamma=a.gamma)
         w0=a.frq_arr+d
         Ej=((h*w0+a.Ec)**2)/(8.0*a.Ec)
         phi=arccos(Ej/a.Ejmax)#/pi #Josephson energy as function of Phi.
@@ -271,7 +272,7 @@ if __name__=="__main__":
         freq=append(freq, freq)
 
         line(phi_extend, freq, pl=pl1, color="cyan")
-        line(phi_extend, freq, pl=pl, color="cyan").show()
+        line(phi_extend, freq, pl=pl, color="cyan")#.show()
         #line(a.phi_arr, wTvec-d, pl=pl).show()
 
     dw = wTvec-a.fd#rotating frame of gate drive \omega_m-m*\omega_\gate
@@ -309,7 +310,7 @@ if __name__=="__main__":
     #P21(d_omega_idx, O_idx) = -(g+1i*dw)./(dw^2 + g^2 + (g/G)*Omega(O_idx).^2);
 
     #pl="blah"
-    line(a.pwr_arr, absolute(r_qubit(N)), pl=pl).show()
+    line(a.pwr_arr, absolute(r_qubit(N)), pl=lp).show()
 
 #    for n in N:
 #        line(absolute(r_qubit(n)), pl=pl)#.show()

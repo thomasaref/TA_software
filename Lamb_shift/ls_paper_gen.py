@@ -40,7 +40,9 @@ if 1:
 if 1:
     from fig1_setup2 import a as fig1
     tx.include_image("fig1", label="", caption="fig1 caption", source_folder=fig1.save_folder)
-
+    #print tx.source_dict.keys()
+    #print tx.source_dict["abstract"]
+    #raise Exception
     #tx.include_image("fig1.png", "Setup", caption="sample caption")
 if 1:
     from fig2_characterization3 import a as fig2

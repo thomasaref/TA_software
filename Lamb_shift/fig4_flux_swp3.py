@@ -92,7 +92,7 @@ if __name__=="__main__":
     pl="fig4"
     pl, pf=a.magabs_colormesh(vmin=0.995, vmax=1.002, auto_zlim=False, cmap="afmhot",
                               auto_ylim=False, y_min=3.6, y_max=7.4,
-                              auto_xlim=False, x_min=-1.5, x_max=1.5,
+                              auto_xlim=False, x_min=-0.5, x_max=0.5,
                           nrows=2, ncols=2, nplot=1, pl=pl, pf_too=True,
                           fig_width=3.0, fig_height=3.5,
                           )#.show()
@@ -105,7 +105,7 @@ if __name__=="__main__":
     #print dir(cbr)
     #cbr.set_label("$|S_{11}|$", size=8, labelpad=-10)
     #cbr.set_ticks(linspace(0.995, 1.002, 2))
-    pl.axes.set_xticks(linspace(-1, 1, 3))
+    pl.axes.set_xticks(linspace(-0.4, 0.4, 3))
     pl.axes.set_yticks(linspace(4, 7, 4))
     pl.figure.text(0.03, 0.95, "a)")
     #pl.figure.text(0.4, 0.8, "b)")
@@ -207,15 +207,15 @@ if __name__=="__main__":
         flux=qdt._get_flux_over_flux0(voltage=data[:,1], offset=a.offset, flux_factor=a.flux_factor)
 
 
-        pl3=scatter(flux, data[:, 0],  color="red", pl=pl,)
+        pl3=scatter(flux/pi, data[:, 0],  color="red", pl=pl, marker_size=10.0)
 #                    auto_xlim=False, x_min=-3, x_max=3)
         flux=qdt._get_flux_over_flux0(V, offset=a.offset, flux_factor=a.flux_factor)
 
-        line(flux, freq, pl=pl3, xlabel="$\Phi/\Phi_0$ ", ylabel="Frequency (GHz) ", color ="red")
+        line(flux/pi, freq, pl=pl3, xlabel="$\Phi/\Phi_0$ ", ylabel="Frequency (GHz) ", color ="red")
         voltage=linspace(-6,6, 1001)
         flux=qdt._get_flux_over_flux0(voltage=voltage, offset=a.offset, flux_factor=a.flux_factor)
 
-        line(flux, qdt._get_flux_parabola(voltage=voltage, ng=0.0)/1e9, pl=pl, color="green")#.show()
+        line(flux/pi, qdt._get_flux_parabola(voltage=voltage, ng=0.0)/1e9, pl=pl, color="green")#.show()
         #pl3.add_label("c)")
 
         #pl4=scatter(data[:, 1], data[:, 0], fig_width=6.0, fig_height=4.0, color="red", pl="idealfvsV")
@@ -225,7 +225,7 @@ if __name__=="__main__":
         #pls=[pl1, pl2, pl3, pl4]
 
         #for pl in pls:
-        pl.axes.set_xticks(linspace(-1, 1, 3))
+        pl.axes.set_xticks(linspace(-0.4, 0.4, 3))
         pl.axes.set_yticks(linspace(4, 7, 4))
 
         return pl3 #[pl1, pl2, pl3, pl4]
@@ -262,15 +262,15 @@ if __name__=="__main__":
     colormesh(flux_axis, freq_axis/f0, c.MagAbs,  
               vmin=0.987, vmax=1.00, cmap="afmhot",
                        auto_zlim=False, pl=pl,
-                       auto_xlim=False, x_min=0.85, x_max=1.10,
+                       auto_xlim=False, x_min=0.25, x_max=0.35,
                        auto_ylim=False, y_min=0.85, #4.3/f0,
                        y_max=1.15, #6.0/f0,
                        xlabel="$\Phi/\Phi_0$", ylabel="Frequency ($f_0$)")#.show()
 
-    line(array([0.85, 1.10]), array([4.85/f0, 4.85/f0]), pl=pl, linestyle="dashed", color="cyan", linewidth=1.0)                       
-    line(array([0.85, 1.10]), array([5.75/f0, 5.75/f0]), pl=pl, linestyle="dashed", color="cyan", linewidth=1.0)                       
+    line(array([0.25, 0.35]), array([4.85/f0, 4.85/f0]), pl=pl, linestyle="dashed", color="cyan", linewidth=1.0)                       
+    line(array([0.25, 0.35]), array([5.75/f0, 5.75/f0]), pl=pl, linestyle="dashed", color="cyan", linewidth=1.0)                       
 
-    pl.axes.set_xticks(linspace(0.9, 1.0, 2))
+    pl.axes.set_xticks(linspace(0.25, 0.35, 3))
     #pl.axes.set_yticks(linspace(4.5, 6.0, 4))
     pl.axes.set_yticks(linspace(0.9, 1.1, 3))
 
@@ -317,13 +317,13 @@ if __name__=="__main__":
     pl1=line(gd*Np/f0*2*pi, array([argers(g)[-2] for g in gd])/f0, pl=pl, color="red")
     #pl1=line(gd*Np/f0*2*pi, array([argers(g)[0] for g in gd])/f0, pl=pl)    
     line(array([0.0, 20.0]), array([1.0, 1.0]), color="green", pl=pl)
-    scatter(array([1.0, 1.0])*gamma*Np/f0*2*pi, array([4.85, 5.75])/f0, pl=pl, marker_size=3.0)
+    scatter(array([1.0, 1.0])*gamma*Np/f0*2*pi, array([4.85, 5.75])/f0, pl=pl, marker_size=10.0)
     #scatter(array([1.0, 1.0, 1.0])*gamma*Np/f0*2*pi, array([5.694, 5.414, 4.784])/f0, pl=pl, marker_size=3.0)
 
     line(array([0.0, 20.0]), array([4.85/f0, 4.85/f0]), pl=pl, linestyle="dashed", color="cyan", linewidth=1.0)                       
     line(array([0.0, 20.0]), array([5.75/f0, 5.75/f0]), pl=pl, linestyle="dashed", color="cyan", linewidth=1.0)                       
 
-    scatter(array([2.9,]), array([1.0]), pl=pl, marker_size=3.0, facecolor="black", edgecolor="black")
+    scatter(array([2.9,]), array([1.0]), pl=pl, marker_size=10.0, facecolor="black", edgecolor="black")
 
     pl.axes.set_xticks(linspace(5, 20, 4))
     pl.axes.set_yticks(linspace(0.9, 1.1, 3))

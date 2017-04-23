@@ -115,7 +115,7 @@ class Sat_Qubit(Qubit):
 
 if __name__=="__main__":
     a=Sat_Qubit()
-    a.N_dim=8
+    a.N_dim=2#8
     #print a.Ec/h
     #raise Exception
     a.atten=83+20
