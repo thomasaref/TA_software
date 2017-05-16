@@ -192,6 +192,10 @@ if __name__=="__main__":
      S21, S22, S23,
      S31, S32, S33)=idt._get_simple_S(f=d1122.frequency)
     
+    print d1122.comment
+    print -d1122.fridge_atten+d1122.fridge_gain-d1122.rt_atten+d1122.rt_gain-10
+    print -d1122.fridge_atten, d1122.fridge_gain, -d1122.rt_atten, d1122.rt_gain, -10
+    
     line(d1122.frequency/1e9, 20*log10(absolute(S13*S31))-4-5, color="red", pl=pl,
          auto_ylim=False, y_min=-60, y_max=-10,
          auto_xlim=False, x_min=4.1, x_max=4.8, xlabel="Frequency (GHz)",
@@ -388,6 +392,7 @@ if __name__=="__main__":
 
     #pl.nplot=6
     print b.comment
+    raise Exception
 #    pl_pwr_sat=scatter(b.pwr-30-60, 100*absolute(absolute(b.MagcomFilt[69, 635, :])-absolute(b.MagcomFilt[69,0, :])),
 #                xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}| \times 100$", pl=pl,
 #                  auto_ylim=False, y_min=100*0.0, y_max=100*0.015, marker_size=3.0,

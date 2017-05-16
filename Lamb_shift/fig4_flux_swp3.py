@@ -211,7 +211,7 @@ if __name__=="__main__":
 #                    auto_xlim=False, x_min=-3, x_max=3)
         flux=qdt._get_flux_over_flux0(V, offset=a.offset, flux_factor=a.flux_factor)
 
-        line(flux/pi, freq, pl=pl3, xlabel="$\Phi/\Phi_0$ ", ylabel="Frequency (GHz) ", color ="red")
+        line(flux/pi, freq, pl=pl3, xlabel="$\Phi/\Phi_0$ ", color ="red")
         voltage=linspace(-6,6, 1001)
         flux=qdt._get_flux_over_flux0(voltage=voltage, offset=a.offset, flux_factor=a.flux_factor)
 
@@ -232,8 +232,9 @@ if __name__=="__main__":
 
     pl.nplot=2
     flux_plots()
-    pl.axes.get_yaxis().set_visible(False)
-
+    #pl.axes.get_yaxis().set_visible(False)
+    pl.axes.set_yticklabels([])
+            
     pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
 
     #pl.nrows=3
@@ -329,8 +330,9 @@ if __name__=="__main__":
     pl.axes.set_yticks(linspace(0.9, 1.1, 3))
 
     pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
-    pl.axes.get_yaxis().set_visible(False)
-
+    #pl.axes.get_yaxis().set_visible(False)
+    pl.axes.set_yticklabels([])
+            
 #    def coup(G):
 #        inner=(1.0/3.0-5.0/(2*pi*9*G))*15
 #        if inner<0:

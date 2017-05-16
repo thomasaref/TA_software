@@ -78,7 +78,11 @@ class PlotMaster(Atom):
     nrows=Int(1)
     ncols=Int(1)
     nplot=Int(1)
-
+    
+    def new_axes(self, *args, **kwargs):
+        self.axes=self.figure.add_axes(*args, **kwargs)
+        return self.axes
+        
     def _observe_nplot(self, change):
         if change["type"]!="create":
             self.axes=self.figure.add_subplot(self.nrows, self.ncols, self.nplot)

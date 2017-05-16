@@ -198,7 +198,9 @@ def combo_plots():
         pl.axes.set_ylabel("$\Gamma/2\pi$ (GHz) ")
 
 
-        pl.nplot=4
+        #pl.nplot=4
+        pl.new_axes([0.09, 0.1, 0.3, 0.35])
+
         qdt.gate_type="constant"
         line(10.0*log10(idt._get_coupling(f=frequency)/idt.max_coupling), frequency/1e9,
              color="red", pl=pl)
@@ -217,7 +219,8 @@ def combo_plots():
 
 
 
-        pl.nplot=6
+        #pl.nplot=6
+        pl.new_axes([0.69, 0.1, 0.3, 0.35])
         if 1:
             pl2="FFT_magabs"
             pl1="Fit_magabs"
@@ -234,16 +237,18 @@ def combo_plots():
             magcom=array([qdt._get_simple_S(f=f, YL=-1.0j/f*qdt.Ct*2*pi*fq**2) for fq in fqq])[:, 0, :]
 
             pl=colormesh(phi_arr, f/1e9, 1-absolute(magcom).transpose(),  pl=pl, 
-                         xlabel="$\Phi/\Phi_0$", ylabel="Frequency (GHz)")
+                         xlabel="$\Phi/\Phi_0$")#, ylabel="Frequency (GHz)")
             pl.set_xlim(0.25, 0.4)
             pl.set_ylim(3.85, 6.01)
             pl.axes.set_xticks(linspace(0.3, 0.35, 2))
             #pl.axes.set_yticks(linspace(0.9, 1.1, 3))
 
             pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
-            pl.axes.get_yaxis().set_visible(False)
-
-            pl.nplot=5
+            #pl.axes.get_yaxis().set_visible(False)
+            pl.axes.set_yticklabels([])
+            
+            #pl.nplot=5
+            pl.new_axes([0.39, 0.1, 0.3, 0.35])
         
             for d in lyzers:
                 d.filter_type="Fit"
@@ -268,7 +273,7 @@ def combo_plots():
                     start_ind+=len(ind)
 
             pl.axes.set_xlabel("$\Phi/\Phi_0$")
-            pl.axes.set_ylabel("Frequency (GHz)")
+            #pl.axes.set_ylabel("Frequency (GHz)")
      
             pl.set_xlim(0.25, 0.4)
             pl.set_ylim(3.85, 6.01)
@@ -284,8 +289,9 @@ def combo_plots():
             #pls.append(pl)
             #pls.append(pl1)
             pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
-            pl.axes.get_yaxis().set_visible(False)
-
+            #pl.axes.get_yaxis().set_visible(False)
+            pl.axes.set_yticklabels([])
+            
     def MagAbsFit(self):
         return sqrt(self.fitter.reconstruct_fit(self.flux_axis[self.flat_flux_indices], self.fit_params))
 
@@ -375,12 +381,12 @@ def combo_plots():
 
     pl.axes.set_xlabel("Frequency (GHz)")
     pl.axes.set_ylabel("$\Delta/2\pi, \, \Gamma/2 \pi$ (GHz)")
-    pl.figure.text(0.0, 0.95, "a)")
-    pl.figure.text(0.35, 0.95, "b)")
-    pl.figure.text(0.67, 0.95, "c)")
-    pl.figure.text(0.0, 0.45, "d)")
-    pl.figure.text(0.35, 0.45, "e)")
-    pl.figure.text(0.67, 0.45, "f)")
+    pl.figure.text(0.095, 0.93, "a)")
+    pl.figure.text(0.425, 0.93, "b)")
+    pl.figure.text(0.75, 0.93, "c)")
+    pl.figure.text(0.095, 0.42, "d)")
+    pl.figure.text(0.395, 0.42, "e)", color="white")
+    pl.figure.text(0.695, 0.42, "f)", color="white")
 
 #    pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace, hspace = hspace)
     pl.figure.subplots_adjust(left = 0.0, right = 1.0, bottom = 0.0, top = 1.0, wspace = wspace2, hspace = hspace)
