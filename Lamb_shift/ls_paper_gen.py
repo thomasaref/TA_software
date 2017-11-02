@@ -45,9 +45,14 @@ if 1:
     #raise Exception
     #tx.include_image("fig1.png", "Setup", caption="sample caption")
 if 1:
-    from fig2_characterization3 import a as fig2
-    tx.include_image("fig2", label="", caption="fig2 caption", source_folder=fig2.save_folder, fig_star=True, tex_width_factor=1.0)
+    tx.mult_fig_start()
+    from fig2_characterization4 import a as fig2
+    tx.add_mult_image("fig2", label="", caption="fig2 caption", source_folder=fig2.save_folder)#, fig_star=True, tex_width_factor=1.0)
 
+    from sup1_fig2_for_88 import c as fig2_for_TA88
+    tx.add_mult_image("fig2_TA88", label="", caption="fig2_TA88 caption", source_folder=fig2_for_TA88.save_folder)#, fig_star=True, tex_width_factor=1.0)
+    tx.mult_fig_end()
+    
 if 1:
     from fig3_lamb_shift3 import a as fig3
     tx.include_image("fig3", label="", caption="fig3 caption", source_folder=fig3.save_folder, fig_star=True, tex_width_factor=1.0)
@@ -58,13 +63,16 @@ if 1:
     tx.ext("results")
 if 1:    
     tx.ext("theory")
-    #tx.ext("supplementary")
     #tx.add(r"\FloatBarrier")
     
     tx.ext("discussion")
 
 if 1:
     tx.ext("conclusion")
+    from sup2_filtering import c as sup2
+    tx.include_image("fig2_sup", label="", caption="sup1 caption", source_folder=sup2.save_folder, fig_star=True, tex_width_factor=1.0)
+
+    tx.ext("supplementary")
 
 if 1:
     tx.add(r"\bibliographystyle{unsrt}")

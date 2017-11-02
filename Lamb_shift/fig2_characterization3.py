@@ -42,7 +42,7 @@ a.fit_indices=[range(2, 14), range(15, 17), range(19,23), range(24, 26), range(2
 a.filter_type="FFT"
 
 a.bgsub_type="dB" #"Complex" #"Abs"
-a.save_folder.main_dir="fig2_characterization3"
+a.save_folder.main_dir="fig2_characterization3t"
 
 b=TA53_VNA_Pwr_Lyzer(name="d1112", on_res_ind=635,
         rd_hdf=TA53_Read(main_file="Data_1112/S3A4_trans_pwr_swp.hdf5"),
@@ -392,7 +392,7 @@ if __name__=="__main__":
 
     #pl.nplot=6
     print b.comment
-    raise Exception
+    #raise Exception
 #    pl_pwr_sat=scatter(b.pwr-30-60, 100*absolute(absolute(b.MagcomFilt[69, 635, :])-absolute(b.MagcomFilt[69,0, :])),
 #                xlabel="Power (dBm)", ylabel=r"$|\Delta S_{21}| \times 100$", pl=pl,
 #                  auto_ylim=False, y_min=100*0.0, y_max=100*0.015, marker_size=3.0,
@@ -583,6 +583,8 @@ if __name__=="__main__":
         cdata=(20*log10(absolute(c.MagcomFilt)).transpose()-bg_A1(c.frequency)).transpose()
         flux_axis=c.flux_axis[c.flat_flux_indices]
         freq_axis=c.freq_axis[c.indices]
+        
+        pl88.nplot=2
         pl88, pf88=colormesh(flux_axis, freq_axis, 10**(cdata[c.end_skip:-c.end_skip, :]/20.0),
                              pl=pl88, pf_too=True, auto_zlim=False,
                                    auto_xlim=False, x_min=0.65, x_max=1.5,
@@ -733,7 +735,7 @@ if __name__=="__main__":
     pl.figure.tight_layout()
     plbg.figure.tight_layout()
 
-    a.save_plots([pl, plbg])#, pl1])
+    a.save_plots([pl, plbg, pl88])#, pl1])
 
     pl.show()
 
