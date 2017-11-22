@@ -9,12 +9,18 @@ from taref.tex.tex import TEX
 from taref.core.shower import shower
 from TA88_fundamental import qdt, idt, ideal_qdt, ideal_idt
 from taref.filer.read_file import Read_TXT
+from taref.filer.filer import Folder
 
-tx=TEX(source_path=r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/Lamb_shift_paper_source.tex")
+tx=TEX(source_path=r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Lamb_shift_paper/Lamb_shift_paper_source.tex")
 #"/Users/thomasaref/Dropbox/Current stuff/test_data/source/TA210715A88_source/TA210715A88_writeup.tex")
-tx.save_file.file_name="Lamb_shift_paper"
+tx.folder.base_dir="/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Lamb_shift_paper"
+tx.folder.main_dir="tex_processed"
+tx.folder.quality=""
+
+
+tx.save_file.file_name="Lamb_shift_supp"
 print tx.source_folder.dir_path
-tx.tex_type="revtex 2 column"
+tx.tex_type="simple" #"revtex 1 column"
 #tx.locals_dict=dict(idt=idt, qdt=qdt)
 #sample holder 12
 include_all=False #True
@@ -33,25 +39,25 @@ def fft_plots(a, desc=None, label="None", caption="None"):
 
 tx.TEX_start()
 
-if 1:
+if 0:
     tx.ext("abstract")
     tx.ext("introduction")
     tx.ext("experiment")
-if 1:
+if 0:
     from fig1_setup2 import a as fig1
     tx.include_image("fig1", label="", caption="fig1 caption", source_folder=fig1.save_folder)
     #print tx.source_dict.keys()
     #print tx.source_dict["abstract"]
     #raise Exception
     #tx.include_image("fig1.png", "Setup", caption="sample caption")
-if 1:
+if 0:
     #tx.mult_fig_start()
     from fig2_characterization4 import a as fig2
     tx.include_image("fig2", label="", caption="fig2 caption", source_folder=fig2.save_folder, fig_star=True, tex_width_factor=1.0)
 
     #tx.mult_fig_end()
     
-if 1:
+if 0:
     from fig3_lamb_shift3 import a as fig3
     tx.include_image("fig3", label="", caption="fig3 caption", source_folder=fig3.save_folder, fig_star=True, tex_width_factor=1.0)
 
@@ -59,21 +65,39 @@ if 1:
     tx.include_image("fig4", label="", caption="fig4 caption", source_folder=fig4.save_folder)
 
     tx.ext("results")
-if 1:    
+if 0:    
     tx.ext("theory")
     #tx.add(r"\FloatBarrier")
     
     tx.ext("discussion")
 
 if 1:
-    tx.ext("conclusion")
+    #tx.ext("conclusion")
+    tx.ext("sup title")
+
+    tx.ext("unresolved issues")
+
+
     from sup2_filtering import c as sup2
     tx.include_image("fig2_sup", label="", caption="sup1 caption", source_folder=sup2.save_folder, fig_star=True, tex_width_factor=1.0)
 
     from sup1_fig2_for_88 import c as fig2_for_TA88
     tx.include_image("fig2_TA88", label="", caption="fig2 TA88 caption", source_folder=fig2_for_TA88.save_folder, fig_star=True, tex_width_factor=1.0)
     
-    tx.ext("supplementary")
+    from sup3_pwr_sat import b as sup_pwr_sat
+    tx.include_image("pwr_sat", label="", caption="pwr sat caption", source_folder=sup_pwr_sat.save_folder, fig_star=True, tex_width_factor=1.0)
+
+    tx.ext("supplementary sample fab")
+
+    tx.ext("supplementary filtering")
+
+    tx.ext("supplementary power saturation")
+    
+    tx.ext("sup semiclassical model")
+    
+    tx.ext("sup critical coupling")
+
+    tx.ext("supplementary theory")
 
 if 1:
     tx.add(r"\bibliographystyle{unsrt}")

@@ -111,12 +111,12 @@ class TEX(Operative):
                 r"",
                 r"",
                 r"\begin{document}"])
-        if self.tex_type=="simple":
-                list_start.extend([
-                r"\author{{{0}}}".format(self.user_name),
-                r"%\inst{{3}} {{{0}}}".format(self.department),
-                r"\title{{{0}}}".format(self.tex_title),
-                r"\maketitle", r"\noindent"])
+        #if self.tex_type=="simple":
+        #        list_start.extend([
+        #        r"\author{{{0}}}".format(self.user_name),
+        #        r"%\inst{{3}} {{{0}}}".format(self.department),
+        #        r"\title{{{0}}}".format(self.tex_title),
+        #        r"\maketitle", r"\noindent"])
         return list_start
 
     def _default_tex_end(self):

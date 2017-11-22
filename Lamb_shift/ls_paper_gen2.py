@@ -9,9 +9,15 @@ from taref.tex.tex import TEX
 from taref.core.shower import shower
 from TA88_fundamental import qdt, idt, ideal_qdt, ideal_idt
 from taref.filer.read_file import Read_TXT
+from taref.filer.filer import Folder
 
-tx=TEX(source_path=r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Logbook/TA210715A88_cooldown210216/tex_source_files/Lamb_shift_paper_source.tex")
+tx=TEX(source_path=r"/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Lamb_shift_paper/Lamb_shift_paper_source.tex")
 #"/Users/thomasaref/Dropbox/Current stuff/test_data/source/TA210715A88_source/TA210715A88_writeup.tex")
+tx.folder.base_dir="/Users/thomasaref/Dropbox (Clan Aref)/Current stuff/Lamb_shift_paper"
+tx.folder.main_dir="tex_processed"
+tx.folder.quality=""
+
+
 tx.save_file.file_name="Lamb_shift_paper"
 print tx.source_folder.dir_path
 tx.tex_type="revtex 2 column"
@@ -67,6 +73,8 @@ if 1:
 
 if 1:
     tx.ext("conclusion")
+    
+if 0:
     from sup2_filtering import c as sup2
     tx.include_image("fig2_sup", label="", caption="sup1 caption", source_folder=sup2.save_folder, fig_star=True, tex_width_factor=1.0)
 
